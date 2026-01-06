@@ -3,122 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Intentions</title>
+    <title>Gestion des Intentions - Paroisse</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .status-pill { padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
+        .en_attente { background: #fff3cd; color: #856404; }
+        .valide { background: #d4edda; color: #155724; }
+        .refuse { background: #f8d7da; color: #721c24; }
+        .action-group { display: flex; flex-direction: column; gap: 5px; }
+        .btn-action { cursor: pointer; border: none; padding: 8px; border-radius: 4px; color: white; transition: 0.3s; }
+        .btn-valider { background-color: #28a745; }
+        .btn-refuser { background-color: #dc3545; }
+        .btn-proposer { background-color: #ffc107; color: black; }
+        input[type="text"], input[type="date"] { padding: 5px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+    </style>
 </head>
 <body>
     <div id="menu-container"></div>
 
     <main>
-        <h1>Gestion des Intentions</h1>
-
-        <section class="card">
-            <h3>Ajouter manuellement</h3>
-            <form id="form-intention" style="display: grid; gap: 10px;">
-                <input type="text" id="nom_donateur" placeholder="Nom du demandeur" required>
-                <input type="text" id="nom_intention" placeholder="Prénom/Nom pour la messe" required>
-                <input type="date" id="date_messe" required>
-                <select id="type_intention">
-                    <option value="Défunt">Défunt</option>
-                    <option value="Vivant">Vivant / Action de grâce</option>
-                    <option value="Particulière">Particulière</option>
-                </select>
-                <button type="submit" style="background-color: #2c3e50; color: white; padding: 10px;">Enregistrer</button>
-            </form>
-        </section>
-
-        <br><hr><br>
-
-        <section>
-            <h3>Demandes à traiter</h3>
-            <table border="1" style="width: 100%; border-collapse: collapse; background: white;">
-                <thead style="background: #f4f7f6;">
-                    <tr>
-                        <th>Date Messe</th>
+        <h1>Gestion des demandes d'intentions</h1>
+        
+        <div class="card">
+            <h3>Liste des demandes à traiter</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                    <tr style="background: #f4f7f6; text-align: left;">
+                        <th style="padding: 10px;">Date demandée</th>
                         <th>Intention pour</th>
-                        <th>Type</th>
                         <th>Demandeur</th>
-                        <th>Actions</th>
+                        <th>Statut</th>
+                        <th style="width: 250px;">Décision du prêtre</th>
                     </tr>
                 </thead>
-                <tbody id="liste-intentions">
+                <tbody id="table-body">
                     </tbody>
             </table>
-        </section>
+        </div>
     </main>
 
     <script src="config.js"></script>
     <script src="menu.js"></script>
-
     <script>
-        // 1. Charger les intentions au démarrage
-        async function chargerIntentions() {
+        async function chargerDemandes() {
             const { data, error } = await maConnexion
                 .from('intentions')
                 .select('*')
                 .order('date_messe', { ascending: true });
 
-            if (error) {
-                console.error("Erreur de chargement:", error);
-                return;
-            }
+            if (error) return console.error(error);
 
-            const corpsTableau = document.getElementById('liste-intentions');
-            corpsTableau.innerHTML = ""; // On vide pour rafraîchir
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = "";
 
             data.forEach(item => {
-                const ligne = `
-                    <tr>
-                        <td>${item.date_messe}</td>
-                        <td><b>${item.nom_intention}</b></td>
-                        <td>${item.type_intention}</td>
-                        <td>${item.nom_donateur}</td>
-                        <td>
-                            <button onclick="changerStatut(${item.id}, 'valide')" style="color: green;">Valider</button>
-                            <button onclick="changerStatut(${item.id}, 'refuse')" style="color: red;">Refuser</button>
-                        </td>
-                    </tr>
+                const dateFr = new Date(item.date_messe).toLocaleDateString('fr-FR');
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = "1px solid #eee";
+                
+                tr.innerHTML = `
+                    <td style="padding: 15px;">${dateFr}</td>
+                    <td><strong>${item.nom_intention}</strong><br><small>${item.type_intention}</small></td>
+                    <td>${item.nom_donateur}<br><small>${item.email_donateur}</small></td>
+                    <td><span class="status-pill ${item.statut}">${item.statut.replace('_', ' ')}</span></td>
+                    <td style="padding: 10px;">
+                        ${item.statut === 'en_attente' ? `
+                            <div class="action-group">
+                                <button class="btn-action btn-valider" onclick="modifierStatut(${item.id}, 'valide')">✅ Valider</button>
+                                
+                                <hr>
+                                
+                                <input type="text" id="motif-${item.id}" placeholder="Raison du refus...">
+                                <button class="btn-action btn-refuser" onclick="modifierStatut(${item.id}, 'refuse')">❌ Refuser</button>
+                                
+                                <hr>
+                                
+                                <label><small>Proposer une autre date :</small></label>
+                                <input type="date" id="newdate-${item.id}">
+                                <button class="btn-action btn-proposer" onclick="proposerAutreDate(${item.id})">📅 Proposer date</button>
+                            </div>
+                        ` : `<small>Traité (Mail envoyé: ${item.mail_envoye ? 'Oui' : 'Non'})</small>`}
+                    </td>
                 `;
-                corpsTableau.innerHTML += ligne;
+                tbody.appendChild(tr);
             });
         }
 
-        // 2. Fonction pour changer le statut (Valider/Refuser)
-        async function changerStatut(id, nouveauStatut) {
+        async function modifierStatut(id, nouveauStatut) {
+            const motif = document.getElementById(`motif-${id}`)?.value || "";
+            
             const { error } = await maConnexion
                 .from('intentions')
-                .update({ statut: nouveauStatut })
+                .update({ 
+                    statut: nouveauStatut, 
+                    reponse_pretre: motif,
+                    mail_envoye: false // On réinitialise pour que le script Google renvoie un mail
+                })
                 .eq('id', id);
 
-            if (error) {
-                alert("Erreur lors de la mise à jour");
-            } else {
-                alert("Statut mis à jour : " + nouveauStatut);
-                chargerIntentions(); // On recharge la liste
+            if (!error) chargerDemandes();
+        }
+
+        async function proposerAutreDate(id) {
+            const nouvelleDate = document.getElementById(`newdate-${id}`).value;
+            if (!nouvelleDate) return alert("Veuillez choisir une date à proposer.");
+
+            const dateFr = new Date(nouvelleDate).toLocaleDateString('fr-FR');
+            const message = "La date initiale était prise. Nous vous proposons le " + dateFr;
+
+            const { error } = await maConnexion
+                .from('intentions')
+                .update({ 
+                    statut: 'refuse', // On le marque comme refusé pour la date initiale
+                    reponse_pretre: message,
+                    mail_envoye: false 
+                })
+                .eq('id', id);
+
+            if (!error) {
+                alert("Proposition envoyée au demandeur.");
+                chargerDemandes();
             }
         }
 
-        // 3. Gestion du formulaire d'ajout
-        document.getElementById('form-intention').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const nouvelleIntention = {
-                nom_donateur: document.getElementById('nom_donateur').value,
-                nom_intention: document.getElementById('nom_intention').value,
-                date_messe: document.getElementById('date_messe').value,
-                type_intention: document.getElementById('type_intention').value,
-                email_donateur: "test@test.fr", // Email temporaire pour le test
-                statut: 'en_attente'
-            };
-
-            const { error } = await maConnexion.from('intentions').insert([nouvelleIntention]);
-            if (!error) {
-                document.getElementById('form-intention').reset();
-                chargerIntentions();
-            }
-        });
-
-        window.onload = chargerIntentions;
+        window.onload = chargerDemandes;
     </script>
 </body>
 </html>
