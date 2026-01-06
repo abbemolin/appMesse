@@ -3,20 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des Messes et Disponibilités</title>
+    <title>Planification des Messes - Paroisse</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .messe-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 6px solid;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .libre { border-left-color: #28a745; }
+        .prise { border-left-color: #dc3545; background: #fff5f5; }
+        
+        .date-info { flex: 1; }
+        .date-principale { font-size: 1.1em; font-weight: bold; color: #2c3e50; text-transform: capitalize; }
+        .horaire { color: #5a67d8; font-weight: bold; }
+        .nom-messe { color: #666; font-style: italic; font-size: 0.9em; }
+
+        .btn-proposer {
+            background-color: #5a67d8;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-proposer:hover { background-color: #434190; }
+        
+        .badge-prise { color: #c53030; font-weight: bold; font-size: 0.9em; }
+    </style>
 </head>
 <body>
     <div id="menu-container"></div>
 
     <main>
-        <h1>Prochaines Messes</h1>
-        <p>Consultez les dates disponibles pour proposer une nouvelle intention au paroissien.</p>
+        <h1>Agenda des Messes & Disponibilités</h1>
+        <p>Toutes les messes extraites de votre calendrier Google pour les 60 prochains jours.</p>
 
-        <div id="liste-messes-container" class="card">
-            <div id="chargement">Chargement des messes depuis l'agenda...</div>
-            <ul id="messes-list" style="list-style: none; padding: 0;"></ul>
+        <div id="liste-messes-container">
+            <div id="chargement" style="text-align: center; padding: 50px;">
+                <strong>Chargement des dates du calendrier en cours...</strong>
+            </div>
+            <div id="messes-wrapper"></div>
         </div>
     </main>
 
@@ -26,7 +62,7 @@
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
 
-        async function fetchMessesEtIntentions() {
+        async function chargerAgenda() {
             try {
                 // 1. Récupérer les intentions validées sur Supabase
                 const { data: intentions } = await maConnexion
@@ -34,61 +70,67 @@
                     .select('date_messe, nom_intention')
                     .eq('statut', 'valide');
 
-                // 2. Récupérer les événements Google Calendar (30 prochains jours)
+                // 2. Récupérer les événements Google Calendar (60 prochains jours pour avoir plus de choix)
                 const now = new Date().toISOString();
-                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now}&singleEvents=true&orderBy=startTime&maxResults=20`;
+                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now}&singleEvents=true&orderBy=startTime&maxResults=50`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                const listElement = document.getElementById('messes-list');
+                const wrapper = document.getElementById('messes-wrapper');
                 document.getElementById('chargement').style.display = 'none';
-                listElement.innerHTML = "";
+                wrapper.innerHTML = "";
 
                 if (data.items) {
                     data.items.forEach(event => {
-                        // On ne garde que ce qui contient "Messe"
                         if (event.summary.toLowerCase().includes('messe')) {
                             const start = event.start.dateTime || event.start.date;
                             const dateObj = new Date(start);
                             const dateISO = dateObj.toISOString().split('T')[0];
+                            
+                            // Formatage complet
                             const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                            const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                            const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
 
-                            // Vérification de la disponibilité
                             const intention = intentions ? intentions.find(i => i.date_messe === dateISO) : null;
                             const estLibre = !intention;
 
-                            const li = document.createElement('li');
-                            li.style.padding = "15px";
-                            li.style.borderBottom = "1px solid #eee";
-                            li.style.display = "flex";
-                            li.style.justifyContent = "space-between";
-                            li.style.alignItems = "center";
+                            const div = document.createElement('div');
+                            div.className = `messe-item ${estLibre ? 'libre' : 'prise'}`;
 
-                            li.innerHTML = `
-                                <div>
-                                    <strong style="text-transform: capitalize;">${dateFr}</strong> à ${heureFr}<br>
-                                    <span style="color: #666;">${event.summary}</span>
+                            div.innerHTML = `
+                                <div class="date-info">
+                                    <div class="date-principale">${dateFr}</div>
+                                    <div class="horaire">🕒 ${heureFr}</div>
+                                    <div class="nom-messe">${event.summary}</div>
                                 </div>
                                 <div>
                                     ${estLibre 
-                                        ? `<span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold;">LIBRE</span>` 
-                                        : `<span style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold;">PRISE : ${intention.nom_intention}</span>`
+                                        ? `<button class="btn-proposer" onclick="copierProposition('${dateFr}', '${heureFr}')">📧 Proposer cette date</button>` 
+                                        : `<div class="badge-prise">⚠️ OCCUPÉE<br><small>Intention : ${intention.nom_intention}</small></div>`
                                     }
                                 </div>
                             `;
-                            listElement.appendChild(li);
+                            wrapper.appendChild(div);
                         }
                     });
                 }
             } catch (error) {
                 console.error("Erreur:", error);
-                document.getElementById('chargement').innerHTML = "Erreur lors du chargement des données.";
+                document.getElementById('chargement').innerHTML = "Erreur de connexion au calendrier.";
             }
         }
 
-        window.onload = fetchMessesEtIntentions;
+        function copierProposition(date, heure) {
+            const texte = `Nous ne pouvons malheureusement pas retenir votre date initiale. Nous vous proposons de célébrer cette intention le ${date} à ${heure}. Est-ce que cela vous convient ?`;
+            
+            // Copie dans le presse-papier pour le coller dans la fiche d'intention
+            navigator.clipboard.writeText(texte).then(() => {
+                alert("Le texte de proposition a été copié ! \n\nAllez dans 'Gérer les intentions', cliquez sur 'Proposer date' et collez ce texte dans le motif de refus.");
+            });
+        }
+
+        window.onload = chargerAgenda;
     </script>
 </body>
 </html>
