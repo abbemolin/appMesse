@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter une Intention</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="menu-container"></div>
+
+    <main>
+        <h1>Nouvelle Intention de Messe</h1>
+        
+        <form id="form-intention" class="form-container">
+            <div class="form-group">
+                <label>Nom du donateur (celui qui demande) :</label>
+                <input type="text" id="nom_donateur" required placeholder="Ex: Jean Dupont">
+            </div>
+
+            <div class="form-group">
+                <label>Email du donateur :</label>
+                <input type="email" id="email_donateur" required placeholder="jean.dupont@email.com">
+            </div>
+
+            <hr>
+
+            <div class="form-group">
+                <label>Type d'intention :</label>
+                <select id="type_intention">
+                    <option value="Défunt">Pour un défunt</option>
+                    <option value="Vivant">Pour un vivant / Action de grâce</option>
+                    <option value="Particulière">Intention particulière</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Prénom/Nom de la personne concernée :</label>
+                <input type="text" id="nom_intention" required placeholder="Ex: Famille Martin">
+            </div>
+
+            <div class="form-group">
+                <label>Date de la messe souhaitée :</label>
+                <input type="date" id="date_messe" required>
+            </div>
+
+            <button type="submit" id="btn-save">Enregistrer l'intention</button>
+        </form>
+
+        <p id="msg-retour"></p>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="menu.js"></script>
+
+    <script>
+        const form = document.getElementById('form-intention');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('msg-retour');
+            msg.innerText = "Enregistrement en cours...";
+
+            // Récupération des données du formulaire
+            const nouvelleIntention = {
+                nom_donateur: document.getElementById('nom_donateur').value,
+                email_donateur: document.getElementById('email_donateur').value,
+                type_intention: document.getElementById('type_intention').value,
+                nom_intention: document.getElementById('nom_intention').value,
+                date_messe: document.getElementById('date_messe').value,
+                statut: 'en_attente'
+            };
+
+            // Envoi vers Supabase
+            const { data, error } = await supabase
+                .from('intentions')
+                .insert([nouvelleIntention]);
+
+            if (error) {
+                msg.innerText = "Erreur : " + error.message;
+                msg.style.color = "red";
+            } else {
+                msg.innerText = "Intention enregistrée avec succès !";
+                msg.style.color = "green";
+                form.reset(); // Vide le formulaire
+            }
+        });
+    </script>
+</body>
+</html>
