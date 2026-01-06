@@ -3,64 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendrier des Messes</title>
+    <title>Agenda des Messes</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div id="menu-container"></div>
 
     <main>
-        <h1>Calendrier & Planification</h1>
+        <h1>Agenda des Messes</h1>
         
-        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            
-            <div class="card" style="flex: 2; min-width: 300px;">
-                <h3>Horaires des Messes (Google Calendar)</h3>
-                <iframe src="https://calendar.google.com/calendar/embed?src=saintlouisenville67%40gmail.com&ctz=Europe%2FParis" 
-                        style="border: 0" width="100%" height="600" frameborder="0" scrolling="no"></iframe>
-            </div>
-
-            <div class="card" style="flex: 1; min-width: 250px;">
-                <h3>Intentions Validées</h3>
-                <p><small>À inscrire sur le calendrier papier ou numérique</small></p>
-                <ul id="liste-placees" style="list-style: none; padding: 0;">
-                    <li>Chargement des intentions...</li>
-                </ul>
-            </div>
-
+        <div class="card" style="padding: 10px; height: 80vh;">
+            <iframe 
+                src="https://calendar.google.com/calendar/embed?src=saintlouisenville67%40gmail.com&ctz=Europe%2FParis&hl=fr&wkst=2&bgcolor=%23ffffff&showPrint=0&showTabs=1&showCalendars=0" 
+                style="border: 0" 
+                width="100%" 
+                height="100%" 
+                frameborder="0" 
+                scrolling="no">
+            </iframe>
         </div>
+        
+        <p style="margin-top: 15px; font-style: italic; color: #666;">
+            Note : Pour ajouter ou modifier une messe, utilisez votre application Google Calendar habituelle. Les modifications apparaîtront ici automatiquement.
+        </p>
     </main>
 
-    <script src="config.js"></script>
     <script src="menu.js"></script>
-    <script>
-        async function chargerIntentionsValidees() {
-            const { data, error } = await maConnexion
-                .from('intentions')
-                .select('*')
-                .eq('statut', 'valide') // On ne montre que celles que le prêtre a acceptées
-                .order('date_messe', { ascending: true });
-
-            const liste = document.getElementById('liste-placees');
-            liste.innerHTML = "";
-
-            if (data && data.length > 0) {
-                data.forEach(item => {
-                    const dateFr = new Date(item.date_messe).toLocaleDateString('fr-FR');
-                    liste.innerHTML += `
-                        <li style="margin-bottom: 15px; padding: 10px; border-left: 4px solid #2c3e50; background: #f9f9f9;">
-                            <strong>${dateFr}</strong><br>
-                            ${item.nom_intention} (${item.type_intention})<br>
-                            <small>Demandé par: ${item.nom_donateur}</small>
-                        </li>`;
-                });
-            } else {
-                liste.innerHTML = "<li>Aucune intention validée pour le moment.</li>";
-            }
-        }
-
-        window.onload = chargerIntentionsValidees;
-    </script>
 </body>
 </html>
