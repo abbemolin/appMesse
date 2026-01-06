@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planification des Messes - Paroisse</title>
+    <title>Toutes les Messes - Paroisse</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -11,46 +11,51 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            margin-bottom: 10px;
+            padding: 15px 20px;
+            margin-bottom: 8px;
             border-radius: 8px;
             border-left: 6px solid;
             background: white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .libre { border-left-color: #28a745; }
-        .prise { border-left-color: #dc3545; background: #fff5f5; }
+        .prise { border-left-color: #dc3545; background: #fff5f5; opacity: 0.9; }
         
         .date-info { flex: 1; }
-        .date-principale { font-size: 1.1em; font-weight: bold; color: #2c3e50; text-transform: capitalize; }
-        .horaire { color: #5a67d8; font-weight: bold; }
-        .nom-messe { color: #666; font-style: italic; font-size: 0.9em; }
+        .date-principale { font-size: 1em; font-weight: bold; color: #2c3e50; text-transform: capitalize; }
+        .horaire { color: #5a67d8; font-weight: bold; font-size: 0.9em; }
+        .nom-messe { color: #666; font-style: italic; font-size: 0.85em; }
 
         .btn-proposer {
             background-color: #5a67d8;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 0.85em;
             font-weight: bold;
-            transition: 0.2s;
         }
-        .btn-proposer:hover { background-color: #434190; }
+        .badge-prise { color: #c53030; font-weight: bold; font-size: 0.85em; text-align: right; }
         
-        .badge-prise { color: #c53030; font-weight: bold; font-size: 0.9em; }
+        #filtre-container { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
+        input[type="text"] { padding: 8px; border-radius: 4px; border: 1px solid #ccc; flex: 1; }
     </style>
 </head>
 <body>
     <div id="menu-container"></div>
 
     <main>
-        <h1>Agenda des Messes & Disponibilités</h1>
-        <p>Toutes les messes extraites de votre calendrier Google pour les 60 prochains jours.</p>
+        <h1>Agenda Complet des Messes</h1>
+        
+        <div id="filtre-container" class="card">
+            <input type="text" id="recherche" placeholder="Rechercher une date ou une fête (ex: Pâques, 15 août...)" onkeyup="filtrerMesses()">
+            <span id="compteur" style="font-size: 0.9em; color: #666;"></span>
+        </div>
 
         <div id="liste-messes-container">
-            <div id="chargement" style="text-align: center; padding: 50px;">
-                <strong>Chargement des dates du calendrier en cours...</strong>
+            <div id="chargement" style="text-align: center; padding: 40px;">
+                <strong>Chargement de l'année liturgique...</strong>
             </div>
             <div id="messes-wrapper"></div>
         </div>
@@ -62,17 +67,17 @@
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
 
-        async function chargerAgenda() {
+        async function chargerAgendaComplet() {
             try {
-                // 1. Récupérer les intentions validées sur Supabase
+                // 1. Récupérer TOUTES les intentions validées
                 const { data: intentions } = await maConnexion
                     .from('intentions')
                     .select('date_messe, nom_intention')
                     .eq('statut', 'valide');
 
-                // 2. Récupérer les événements Google Calendar (60 prochains jours pour avoir plus de choix)
+                // 2. Récupérer les événements Google sur 1 an (maxResults 250)
                 const now = new Date().toISOString();
-                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now}&singleEvents=true&orderBy=startTime&maxResults=50`;
+                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now}&singleEvents=true&orderBy=startTime&maxResults=250`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
@@ -82,13 +87,14 @@
                 wrapper.innerHTML = "";
 
                 if (data.items) {
+                    let count = 0;
                     data.items.forEach(event => {
                         if (event.summary.toLowerCase().includes('messe')) {
+                            count++;
                             const start = event.start.dateTime || event.start.date;
                             const dateObj = new Date(start);
                             const dateISO = dateObj.toISOString().split('T')[0];
                             
-                            // Formatage complet
                             const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                             const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
 
@@ -97,6 +103,7 @@
 
                             const div = document.createElement('div');
                             div.className = `messe-item ${estLibre ? 'libre' : 'prise'}`;
+                            div.setAttribute('data-search', dateFr.toLowerCase() + " " + event.summary.toLowerCase());
 
                             div.innerHTML = `
                                 <div class="date-info">
@@ -106,31 +113,39 @@
                                 </div>
                                 <div>
                                     ${estLibre 
-                                        ? `<button class="btn-proposer" onclick="copierProposition('${dateFr}', '${heureFr}')">📧 Proposer cette date</button>` 
-                                        : `<div class="badge-prise">⚠️ OCCUPÉE<br><small>Intention : ${intention.nom_intention}</small></div>`
+                                        ? `<button class="btn-proposer" onclick="copierProposition('${dateFr}', '${heureFr}')">📧 Proposer</button>` 
+                                        : `<div class="badge-prise">OCCUPÉE<br><small>${intention.nom_intention}</small></div>`
                                     }
                                 </div>
                             `;
                             wrapper.appendChild(div);
                         }
                     });
+                    document.getElementById('compteur').innerText = count + " messes trouvées";
                 }
             } catch (error) {
                 console.error("Erreur:", error);
-                document.getElementById('chargement').innerHTML = "Erreur de connexion au calendrier.";
+                document.getElementById('chargement').innerHTML = "Erreur de chargement.";
             }
         }
 
-        function copierProposition(date, heure) {
-            const texte = `Nous ne pouvons malheureusement pas retenir votre date initiale. Nous vous proposons de célébrer cette intention le ${date} à ${heure}. Est-ce que cela vous convient ?`;
-            
-            // Copie dans le presse-papier pour le coller dans la fiche d'intention
-            navigator.clipboard.writeText(texte).then(() => {
-                alert("Le texte de proposition a été copié ! \n\nAllez dans 'Gérer les intentions', cliquez sur 'Proposer date' et collez ce texte dans le motif de refus.");
+        function filtrerMesses() {
+            const val = document.getElementById('recherche').value.toLowerCase();
+            const items = document.querySelectorAll('.messe-item');
+            items.forEach(item => {
+                const text = item.getAttribute('data-search');
+                item.style.display = text.includes(val) ? 'flex' : 'none';
             });
         }
 
-        window.onload = chargerAgenda;
+        function copierProposition(date, heure) {
+            const texte = `Nous vous proposons de célébrer cette intention le ${date} à ${heure}. Est-ce que cela vous convient ?`;
+            navigator.clipboard.writeText(texte).then(() => {
+                alert("Message copié !");
+            });
+        }
+
+        window.onload = chargerAgendaComplet;
     </script>
 </body>
 </html>
