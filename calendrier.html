@@ -3,79 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planification des Messes - Paroisse</title>
+    <title>Liste des Messes et Disponibilités</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/google-calendar@6.1.8/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div id="menu-container"></div>
 
     <main>
-        <h1>Disponibilité des Messes</h1>
-        <div style="margin-bottom: 20px;">
-            <span style="color: #28a745;">● Messe Libre</span> | 
-            <span style="color: #dc3545;">● Messe avec Intention</span>
-        </div>
-        <div class="card">
-            <div id='calendar'></div>
+        <h1>Prochaines Messes</h1>
+        <p>Consultez les dates disponibles pour proposer une nouvelle intention au paroissien.</p>
+
+        <div id="liste-messes-container" class="card">
+            <div id="chargement">Chargement des messes depuis l'agenda...</div>
+            <ul id="messes-list" style="list-style: none; padding: 0;"></ul>
         </div>
     </main>
 
     <script src="config.js"></script>
     <script src="menu.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', async function() {
-            const calendarEl = document.getElementById('calendar');
+        const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
+        const CALENDAR_ID = 'saintlouisenville67@gmail.com';
 
-            // 1. Récupérer les intentions validées sur Supabase
-            const { data: intentions } = await maConnexion
-                .from('intentions')
-                .select('date_messe, nom_intention')
-                .eq('statut', 'valide');
+        async function fetchMessesEtIntentions() {
+            try {
+                // 1. Récupérer les intentions validées sur Supabase
+                const { data: intentions } = await maConnexion
+                    .from('intentions')
+                    .select('date_messe, nom_intention')
+                    .eq('statut', 'valide');
 
-            // 2. Initialisation du Calendrier interactif
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'fr',
-                googleCalendarApiKey: 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ',
-                events: {
-                    googleCalendarId: 'saintlouisenville67@gmail.com'
-                },
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
-                },
-                // Filtrage et coloration en fonction de Supabase
-                eventDataTransform: function(eventData) {
-                    // On ne garde que les événements contenant "Messe"
-                    if (!eventData.title.toLowerCase().includes('messe')) {
-                        return false; 
-                    }
+                // 2. Récupérer les événements Google Calendar (30 prochains jours)
+                const now = new Date().toISOString();
+                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now}&singleEvents=true&orderBy=startTime&maxResults=20`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const listElement = document.getElementById('messes-list');
+                document.getElementById('chargement').style.display = 'none';
+                listElement.innerHTML = "";
 
-                    const dateEvent = eventData.start.split('T')[0];
-                    const intentionTrouvee = intentions ? intentions.find(i => i.date_messe === dateEvent) : null;
+                if (data.items) {
+                    data.items.forEach(event => {
+                        // On ne garde que ce qui contient "Messe"
+                        if (event.summary.toLowerCase().includes('messe')) {
+                            const start = event.start.dateTime || event.start.date;
+                            const dateObj = new Date(start);
+                            const dateISO = dateObj.toISOString().split('T')[0];
+                            const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                            const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
-                    if (intentionTrouvee) {
-                        eventData.backgroundColor = '#dc3545'; // Rouge
-                        eventData.title = "PRISE : " + intentionTrouvee.nom_intention;
-                    } else {
-                        eventData.backgroundColor = '#28a745'; // Vert
-                        eventData.title = "LIBRE : " + eventData.title;
-                    }
-                    return eventData;
+                            // Vérification de la disponibilité
+                            const intention = intentions ? intentions.find(i => i.date_messe === dateISO) : null;
+                            const estLibre = !intention;
+
+                            const li = document.createElement('li');
+                            li.style.padding = "15px";
+                            li.style.borderBottom = "1px solid #eee";
+                            li.style.display = "flex";
+                            li.style.justifyContent = "space-between";
+                            li.style.alignItems = "center";
+
+                            li.innerHTML = `
+                                <div>
+                                    <strong style="text-transform: capitalize;">${dateFr}</strong> à ${heureFr}<br>
+                                    <span style="color: #666;">${event.summary}</span>
+                                </div>
+                                <div>
+                                    ${estLibre 
+                                        ? `<span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold;">LIBRE</span>` 
+                                        : `<span style="background: #dc3545; color: white; padding: 5px 10px; border-radius: 4px; font-weight: bold;">PRISE : ${intention.nom_intention}</span>`
+                                    }
+                                </div>
+                            `;
+                            listElement.appendChild(li);
+                        }
+                    });
                 }
-            });
+            } catch (error) {
+                console.error("Erreur:", error);
+                document.getElementById('chargement').innerHTML = "Erreur lors du chargement des données.";
+            }
+        }
 
-            calendar.render();
-        });
+        window.onload = fetchMessesEtIntentions;
     </script>
-    
-    <style>
-        #calendar { background: white; padding: 15px; border-radius: 8px; min-height: 600px; }
-        .fc-event { cursor: help; border: none !important; color: white !important; padding: 3px; }
-    </style>
 </body>
 </html>
