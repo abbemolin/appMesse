@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Intentions de Messe</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="menu-container"></div>
+
+    <main id="app-content">
+        <h1>Bienvenue, monsieur l'abbé</h1>
+        <p>Sélectionnez une option dans le menu pour commencer.</p>
+        
+        <div class="dashboard-cards">
+            <div class="card">
+                <h3>Messes du jour</h3>
+                <p id="today-masses">Chargement...</p>
+            </div>
+            <div class="card">
+                <h3>Intentions en attente</h3>
+                <p id="pending-intentions">0</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="menu.js"></script>
+</body>
+</html>
