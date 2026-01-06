@@ -42,42 +42,44 @@
     <script src="config.js"></script>
     
     <script>
-        async function checkConnection() {
-            const statusBadge = document.getElementById('status-badge');
-            
-            try {
-                // Test de lecture sur la table 'intentions'
-                const { data, error } = await supabase
-                    .from('intentions')
-                    .select('*')
-                    .limit(1);
-
-                if (error) throw error;
-
-                statusBadge.innerText = "● Base de données connectée";
-                statusBadge.style.color = "green";
-                console.log("Connexion Supabase réussie !");
-                
-                // On appelle la fonction pour compter les intentions en attente
-                countPendingIntentions();
-
-            } catch (err) {
-                statusBadge.innerText = "● Erreur de connexion";
-                statusBadge.style.color = "red";
-                console.error("Erreur:", err.message);
-            }
-        }
-
-        async function countPendingIntentions() {
-            const { count, error } = await supabase
+    async function checkConnection() {
+        const statusBadge = document.getElementById('status-badge');
+        
+        try {
+            // On utilise "maConnexion" définie dans config.js
+            const { data, error } = await maConnexion
                 .from('intentions')
-                .select('*', { count: 'exact', head: true })
-                .eq('statut', 'en_attente');
+                .select('*')
+                .limit(1);
 
-            if (!error) {
-                document.getElementById('pending-intentions').innerText = count || 0;
-            }
+            if (error) throw error;
+
+            statusBadge.innerText = "● Base de données connectée";
+            statusBadge.style.color = "green";
+            console.log("Succès ! Connexion établie.");
+            
+            countPendingIntentions();
+
+        } catch (err) {
+            statusBadge.innerText = "● Erreur de connexion";
+            statusBadge.style.color = "red";
+            console.error("Détail de l'erreur:", err.message);
         }
+    }
+
+    async function countPendingIntentions() {
+        const { count, error } = await maConnexion
+            .from('intentions')
+            .select('*', { count: 'exact', head: true })
+            .eq('statut', 'en_attente');
+
+        if (!error) {
+            document.getElementById('pending-intentions').innerText = count || 0;
+        }
+    }
+
+    window.onload = checkConnection;
+</script>
 
         // Lancement au chargement de la page
         window.onload = checkConnection;
