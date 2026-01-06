@@ -3,31 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda des Messes</title>
+    <title>Planification des Messes - Paroisse</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/google-calendar@6.1.8/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div id="menu-container"></div>
 
     <main>
-        <h1>Agenda des Messes</h1>
-        
-        <div class="card" style="padding: 10px; height: 80vh;">
-            <iframe 
-                src="https://calendar.google.com/calendar/embed?src=saintlouisenville67%40gmail.com&ctz=Europe%2FParis&hl=fr&wkst=2&bgcolor=%23ffffff&showPrint=0&showTabs=1&showCalendars=0" 
-                style="border: 0" 
-                width="100%" 
-                height="100%" 
-                frameborder="0" 
-                scrolling="no">
-            </iframe>
+        <h1>Disponibilité des Messes</h1>
+        <div style="margin-bottom: 20px;">
+            <span style="color: #28a745;">● Messe Libre</span> | 
+            <span style="color: #dc3545;">● Messe avec Intention</span>
         </div>
-        
-        <p style="margin-top: 15px; font-style: italic; color: #666;">
-            Note : Pour ajouter ou modifier une messe, utilisez votre application Google Calendar habituelle. Les modifications apparaîtront ici automatiquement.
-        </p>
+        <div class="card">
+            <div id='calendar'></div>
+        </div>
     </main>
 
+    <script src="config.js"></script>
     <script src="menu.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const calendarEl = document.getElementById('calendar');
+
+            // 1. Récupérer les intentions validées sur Supabase
+            const { data: intentions } = await maConnexion
+                .from('intentions')
+                .select('date_messe, nom_intention')
+                .eq('statut', 'valide');
+
+            // 2. Initialisation du Calendrier interactif
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                googleCalendarApiKey: 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ',
+                events: {
+                    googleCalendarId: 'saintlouisenville67@gmail.com'
+                },
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
+                // Filtrage et coloration en fonction de Supabase
+                eventDataTransform: function(eventData) {
+                    // On ne garde que les événements contenant "Messe"
+                    if (!eventData.title.toLowerCase().includes('messe')) {
+                        return false; 
+                    }
+
+                    const dateEvent = eventData.start.split('T')[0];
+                    const intentionTrouvee = intentions ? intentions.find(i => i.date_messe === dateEvent) : null;
+
+                    if (intentionTrouvee) {
+                        eventData.backgroundColor = '#dc3545'; // Rouge
+                        eventData.title = "PRISE : " + intentionTrouvee.nom_intention;
+                    } else {
+                        eventData.backgroundColor = '#28a745'; // Vert
+                        eventData.title = "LIBRE : " + eventData.title;
+                    }
+                    return eventData;
+                }
+            });
+
+            calendar.render();
+        });
+    </script>
+    
+    <style>
+        #calendar { background: white; padding: 15px; border-radius: 8px; min-height: 600px; }
+        .fc-event { cursor: help; border: none !important; color: white !important; padding: 3px; }
+    </style>
 </body>
 </html>
