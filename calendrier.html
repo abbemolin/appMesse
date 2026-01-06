@@ -3,41 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda Annuel des Messes</title>
+    <title>Agenda des Messes - Paroisse</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .mois-container { margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
-        .mois-header { 
-            background: #f8f9fa; padding: 15px; cursor: pointer; 
-            font-weight: bold; font-size: 1.2em; display: flex; 
-            justify-content: space-between; align-items: center;
-            text-transform: capitalize;
-        }
-        .mois-header:hover { background: #edf2f7; }
-        .messes-content { display: none; padding: 10px; background: white; }
-        .messes-content.active { display: block; }
-
+        .section-title { margin-top: 30px; color: #2c3e50; border-bottom: 2px solid #5a67d8; padding-bottom: 5px; }
         .messe-item {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 12px; margin-bottom: 8px; border-radius: 6px;
-            border-left: 5px solid; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 15px; margin-bottom: 8px; border-radius: 8px;
+            border-left: 6px solid; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .libre { border-left-color: #28a745; }
         .prise { border-left-color: #dc3545; background: #fff5f5; }
+        .date-principale { font-weight: bold; text-transform: capitalize; }
+        .horaire { color: #5a67d8; font-weight: bold; font-size: 0.9em; }
+        .btn-proposer { background: #5a67d8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
-        .date-principale { font-weight: bold; color: #2c3e50; text-transform: capitalize; }
-        .horaire { color: #5a67d8; font-size: 0.9em; font-weight: bold; }
-        .btn-proposer { background: #5a67d8; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        #search-bar { width: 100%; padding: 12px; margin: 20px 0; border-radius: 8px; border: 2px solid #5a67d8; font-size: 1em; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div id="menu-container"></div>
 
     <main>
-        <h1>Agenda des Messes 2026</h1>
-        <div id="chargement" style="text-align: center; padding: 40px;"><strong>Chargement de l'année...</strong></div>
-        <div id="accordeon-messes"></div>
+        <h1>Planification des Messes</h1>
+
+        <h2 class="section-title">📅 Prochains 15 jours</h2>
+        <div id="liste-proche"></div>
+
+        <h2 class="section-title">🔍 Rechercher dans toute l'année</h2>
+        <input type="text" id="search-bar" placeholder="Ex: 'Mars', '15 août', 'Dimanche'..." onkeyup="filtrerMesses()">
+        
+        <div id="liste-globale"></div>
+        
+        <div id="chargement" style="text-align: center; padding: 20px;"><strong>Chargement du calendrier...</strong></div>
     </main>
 
     <script src="config.js"></script>
@@ -46,80 +46,84 @@
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
 
-        async function chargerAgendaMensuel() {
+        async function chargerAgenda() {
             try {
+                // 1. Récupérer les intentions validées sur Supabase
                 const { data: intentions } = await maConnexion.from('intentions').select('date_messe, nom_intention').eq('statut', 'valide');
+
+                // 2. Récupérer les événements Google (Max 250 pour couvrir l'année)
                 const now = new Date();
-                const startOfYear = new Date(now.getFullYear(), 0, 1).toISOString();
-                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${startOfYear}&singleEvents=true&orderBy=startTime&maxResults=250`;
+                const limite15Jours = new Date();
+                limite15Jours.setDate(now.getDate() + 15);
+
+                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=250`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
                 
-                const container = document.getElementById('accordeon-messes');
+                const divProche = document.getElementById('liste-proche');
+                const divGlobale = document.getElementById('liste-globale');
                 document.getElementById('chargement').style.display = 'none';
 
-                const messesParMois = {};
+                if (data.items) {
+                    data.items.forEach(event => {
+                        if (event.summary.toLowerCase().includes('messe')) {
+                            const start = event.start.dateTime || event.start.date;
+                            const dateObj = new Date(start);
+                            const dateISO = dateObj.toISOString().split('T')[0];
+                            
+                            const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                            const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
 
-                data.items.forEach(event => {
-                    if (event.summary.toLowerCase().includes('messe')) {
-                        const start = event.start.dateTime || event.start.date;
-                        const dateObj = new Date(start);
-                        const moisNom = dateObj.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-                        
-                        if (!messesParMois[moisNom]) messesParMois[moisNom] = [];
-                        messesParMois[moisNom].push({ event, dateObj });
-                    }
-                });
+                            const intention = intentions ? intentions.find(i => i.date_messe === dateISO) : null;
+                            const estLibre = !intention;
 
-                for (const [mois, messes] of Object.entries(messesParMois)) {
-                    const moisDiv = document.createElement('div');
-                    moisDiv.className = 'mois-container';
-                    
-                    moisDiv.innerHTML = `
-                        <div class="mois-header" onclick="toggleMois(this)">
-                            <span>${mois}</span>
-                            <span>${messes.length} messes ▾</span>
-                        </div>
-                        <div class="messes-content"></div>
-                    `;
+                            const html = `
+                                <div class="messe-item ${estLibre ? 'libre' : 'prise'}" data-search="${dateFr.toLowerCase()} ${event.summary.toLowerCase()}">
+                                    <div>
+                                        <div class="date-principale">${dateFr}</div>
+                                        <div class="horaire">🕒 ${heureFr} - ${event.summary}</div>
+                                    </div>
+                                    <div>
+                                        ${estLibre ? `<button class="btn-proposer" onclick="copierProposition('${dateFr}', '${heureFr}')">📧 Proposer</button>` 
+                                                   : `<span style="color:#c53030; font-weight:bold;">${intention.nom_intention}</span>`}
+                                    </div>
+                                </div>`;
 
-                    const contentDiv = moisDiv.querySelector('.messes-content');
-                    messes.forEach(({event, dateObj}) => {
-                        const dateISO = dateObj.toISOString().split('T')[0];
-                        const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' });
-                        const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
-                        const intention = intentions ? intentions.find(i => i.date_messe === dateISO) : null;
-                        const estLibre = !intention;
-
-                        const item = document.createElement('div');
-                        item.className = `messe-item ${estLibre ? 'libre' : 'prise'}`;
-                        item.innerHTML = `
-                            <div>
-                                <div class="date-principale">${dateFr}</div>
-                                <div class="horaire">🕒 ${heureFr} - ${event.summary}</div>
-                            </div>
-                            <div>
-                                ${estLibre ? `<button class="btn-proposer" onclick="copierProposition('${dateFr} ${mois}', '${heureFr}')">📧 Proposer</button>` 
-                                           : `<span style="color:#c53030; font-weight:bold;">${intention.nom_intention}</span>`}
-                            </div>
-                        `;
-                        contentDiv.appendChild(item);
+                            if (dateObj <= limite15Jours) {
+                                divProche.innerHTML += html;
+                            } else {
+                                divGlobale.innerHTML += html;
+                            }
+                        }
                     });
-                    container.appendChild(moisDiv);
                 }
-            } catch (e) { document.getElementById('chargement').innerText = "Erreur de chargement."; }
+            } catch (e) { console.error(e); }
         }
 
-        function toggleMois(header) {
-            header.nextElementSibling.classList.toggle('active');
+        function filtrerMesses() {
+            const query = document.getElementById('search-bar').value.toLowerCase();
+            const globalItems = document.querySelectorAll('#liste-globale .messe-item');
+            
+            globalItems.forEach(item => {
+                const text = item.getAttribute('data-search');
+                if (query.length > 0) {
+                    item.classList.toggle('hidden', !text.includes(query));
+                } else {
+                    item.classList.add('hidden'); // On cache tout si la barre est vide pour ne garder que les 15J
+                }
+            });
         }
 
         function copierProposition(date, heure) {
             navigator.clipboard.writeText(`Nous vous proposons de célébrer cette intention le ${date} à ${heure}.`).then(() => alert("Copié !"));
         }
 
-        window.onload = chargerAgendaMensuel;
+        // Initialisation : on cache la liste globale au début, elle n'apparaît que si on cherche
+        window.onload = async () => {
+            await chargerAgenda();
+            document.querySelectorAll('#liste-globale .messe-item').forEach(item => item.classList.add('hidden'));
+        };
     </script>
 </body>
 </html>
