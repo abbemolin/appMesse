@@ -16,7 +16,6 @@
         td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
         .date-col { width: 130px; text-align: center; }
         .date-badge { background: #eef2ff; color: #4f46e5; border-radius: 8px; padding: 10px; text-align: center; font-weight: 700; width: 70px; border: 1px solid #e0e7ff; margin: 0 auto; }
-        .date-badge span { display: block; font-size: 0.65rem; font-weight: 400; text-transform: uppercase; }
         .heure-info { display: block; margin-top: 8px; font-size: 0.85rem; color: #4f46e5; font-weight: 700; }
         .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; }
         .en_attente { background: #fef3c7; color: #92400e; }
@@ -25,10 +24,12 @@
         .action-group { display: flex; flex-direction: column; gap: 8px; width: 250px; }
         .btn-action { cursor: pointer; border: none; padding: 10px; border-radius: 8px; color: white; font-weight: 600; font-size: 0.8rem; transition: 0.2s; }
         .btn-valider { background: #16a34a; }
+        .btn-valider:disabled { background: #cbd5e1; cursor: not-allowed; color: #64748b; }
         .btn-refuser { background: #dc2626; }
         .btn-imposer { background: #4f46e5; }
         input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; }
         .traite-info { font-size: 0.85rem; background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid #cbd5e1; }
+        .warning-text { color: #dc2626; font-size: 0.7rem; font-weight: bold; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -58,49 +59,52 @@
     <script>
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
+        let intentionsGlobal = []; // Pour vérifier les doublons en local
 
-        // Fonction pour transformer "2026-01-08" en "20260108" pour comparer sans erreur
         const normaliserDate = (d) => d ? d.split('T')[0].replace(/-/g, '') : '';
 
         async function chargerDemandes() {
             if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 500); return; }
 
             try {
-                // 1. Récupération Google Calendar (comme dans calendrier.html)
                 const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&timeMin=${new Date().toISOString()}`;
                 const resp = await fetch(url);
                 const googleData = await resp.json();
                 const events = googleData.items || [];
 
-                // 2. Récupération Supabase
                 const { data: intentions, error } = await maConnexion.from('intentions').select('*').order('date_messe', { ascending: true });
                 if (error) throw error;
+                
+                intentionsGlobal = intentions; // Stockage pour vérification
 
                 const tbody = document.getElementById('table-body');
                 tbody.innerHTML = "";
 
+                // Compter les intentions validées par date
+                const occupations = {};
+                intentions.forEach(i => {
+                    if (i.statut === 'valide') {
+                        occupations[i.date_messe] = (occupations[i.date_messe] || 0) + 1;
+                    }
+                });
+
                 intentions.forEach(item => {
-                    // On cherche l'événement correspondant
                     const dateDb = normaliserDate(item.date_messe);
-                    
-                    const match = events.find(e => {
-                        const dateEv = normaliserDate(e.start.dateTime || e.start.date);
-                        return dateEv === dateDb && e.summary.toLowerCase().includes('messe');
-                    });
+                    const match = events.find(e => normaliserDate(e.start.dateTime || e.start.date) === dateDb && e.summary.toLowerCase().includes('messe'));
 
                     let heureAffiche = "à confirmer";
                     let heureInput = "";
-
                     if (match && match.start.dateTime) {
                         const d = new Date(match.start.dateTime);
                         heureInput = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                         heureAffiche = "à " + heureInput.replace(':', 'h');
                     }
 
+                    const estOccupe = occupations[item.date_messe] >= 1 && item.statut !== 'valide';
                     const dateObj = new Date(item.date_messe);
-                    const tr = document.createElement('tr');
                     const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
 
+                    const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="date-col">
                             <div class="date-badge">
@@ -113,26 +117,26 @@
                             <div style="font-weight:700;">${item.nom_intention || 'Sans nom'}</div>
                             <div style="font-size:0.8rem; color:#64748b;">${item.type_intention}</div>
                         </td>
-                        <td>
-                            <div style="font-size:0.9rem;">${item.nom_donateur}</div>
-                        </td>
-                        <td>
-                            <span class="status-pill ${item.statut}">${item.statut}</span>
-                        </td>
+                        <td><div style="font-size:0.9rem;">${item.nom_donateur}</div></td>
+                        <td><span class="status-pill ${item.statut}">${item.statut}</span></td>
                         <td>
                             ${estEnCours ? `
                                 <div class="action-group">
-                                    <button class="btn-action btn-valider" onclick="valider('${item.id}', '${heureAffiche}')">✅ Valider</button>
+                                    <button class="btn-action btn-valider" ${estOccupe ? 'disabled' : ''} onclick="valider('${item.id}', '${heureAffiche}')">
+                                        ${estOccupe ? '🔒 Messe déjà prise' : '✅ Valider pour cette date'}
+                                    </button>
+                                    ${estOccupe ? '<span class="warning-text">Veuillez déplacer cette intention</span>' : ''}
                                     <button class="btn-action btn-refuser" onclick="refuser('${item.id}')">❌ Refuser</button>
                                     <hr>
+                                    <label style="font-size:0.7rem; font-weight:bold">DÉPLACER VERS :</label>
                                     <input type="date" id="d-${item.id}" value="${item.date_messe}">
                                     <input type="text" id="h-${item.id}" placeholder="10:30" value="${heureInput}">
-                                    <button class="btn-action btn-imposer" onclick="forcer('${item.id}')">📅 Déplacer / Forcer</button>
+                                    <button class="btn-action btn-imposer" onclick="forcer('${item.id}')">📅 Confirmer le déplacement</button>
                                 </div>
                             ` : `
                                 <div class="traite-info">
                                     ${item.reponse_pretre}<br>
-                                    <button style="margin-top:10px" onclick="editer('${item.id}')">✏️ Modifier</button>
+                                    <button style="margin-top:10px" onclick="editer('${item.id}')">✏️ Modifier / Libérer</button>
                                 </div>
                             `}
                         </td>
@@ -142,18 +146,34 @@
             } catch (err) { console.error(err); }
         }
 
+        async function forcer(id) {
+            const nouvelleDate = document.getElementById(`d-${id}`).value;
+            const nouvelleHeure = document.getElementById(`h-${id}`).value;
+
+            // VÉRIFICATION DE DISPONIBILITÉ
+            const dejaPris = intentionsGlobal.some(i => i.date_messe === nouvelleDate && i.statut === 'valide' && i.id != id);
+            
+            if (dejaPris) {
+                alert("Impossible : Il y a déjà une intention validée pour le " + new Date(nouvelleDate).toLocaleDateString('fr-FR') + ". Veuillez choisir une autre date.");
+                return;
+            }
+
+            const txt = `Confirmée pour le ${new Date(nouvelleDate).toLocaleDateString('fr-FR')} à ${nouvelleHeure.replace(':', 'h')}.`;
+            await maConnexion.from('intentions').update({ 
+                date_messe: nouvelleDate, 
+                heure_messe: nouvelleHeure, 
+                statut: 'valide', 
+                reponse_pretre: txt, 
+                mail_envoye: false, 
+                en_edition: false 
+            }).eq('id', id);
+            chargerDemandes();
+        }
+
         async function valider(id, h) {
             const { data } = await maConnexion.from('intentions').select('date_messe').eq('id', id).single();
             const txt = `Confirmée pour le ${new Date(data.date_messe).toLocaleDateString('fr-FR')} ${h}.`;
             await maConnexion.from('intentions').update({ statut: 'valide', reponse_pretre: txt, mail_envoye: false, en_edition: false }).eq('id', id);
-            chargerDemandes();
-        }
-
-        async function forcer(id) {
-            const d = document.getElementById(`d-${id}`).value;
-            const h = document.getElementById(`h-${id}`).value;
-            const txt = `Confirmée pour le ${new Date(d).toLocaleDateString('fr-FR')} à ${h.replace(':', 'h')}.`;
-            await maConnexion.from('intentions').update({ date_messe: d, heure_messe: h, statut: 'valide', reponse_pretre: txt, mail_envoye: false, en_edition: false }).eq('id', id);
             chargerDemandes();
         }
 
