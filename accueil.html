@@ -11,7 +11,6 @@
 
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Grille adaptative */
         .dashboard-cards { 
             display: grid; 
             grid-template-columns: 1fr; 
@@ -70,7 +69,6 @@
         .messe-item:last-child { border-bottom: none; }
         .time-badge { color: #4f46e5; font-weight: 800; margin-right: 8px; }
         
-        /* Style des intentions sur l'accueil */
         .intention-detail { 
             display: block; 
             color: #ef4444; 
@@ -187,19 +185,22 @@
         const listDiv = document.getElementById('today-masses-list');
         try {
             const today = new Date();
-            const dateISO = today.toISOString().split('T')[0];
+            // Calcul date locale YYYY-MM-DD
+            const tzOffset = today.getTimezoneOffset() * 60000;
+            const localISODate = (new Date(today - tzOffset)).toISOString().split('T')[0];
             
             today.setHours(0,0,0,0);
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
             
-            // Récupération des intentions validées
+            // 1. Charger intentions validées du jour
             const { data: intentions } = await maConnexion
                 .from('intentions')
-                .select('nom_intention, google_event_id, type_intention')
-                .eq('date_messe', dateISO)
+                .select('*')
+                .eq('date_messe', localISODate)
                 .eq('statut', 'valide');
 
+            // 2. Charger Google Calendar
             const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${today.toISOString()}&timeMax=${tomorrow.toISOString()}&singleEvents=true&orderBy=startTime`;
             const response = await fetch(url);
             const data = await response.json();
@@ -209,12 +210,24 @@
                 
                 listDiv.innerHTML = messes.map(e => {
                     const start = e.start.dateTime || e.start.date;
-                    const heure = new Date(start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+                    const dateObj = new Date(start);
+                    const heureGo = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                     
-                    // Recherche d'intention
-                    const intention = intentions?.find(i => i.google_event_id === e.id) || intentions?.[0]; 
+                    // --- RECHERCHE DE L'INTENTION ---
+                    let intention = intentions?.find(i => i.google_event_id === e.id);
                     
-                    let intentionHtml = `<span class="intention-detail" style="color:#94a3b8; font-weight:normal; background:#f8fafc; border-left-color:#cbd5e1;">🕯️ Pas d'intention</span>`;
+                    if (!intention && intentions) {
+                        // Match par heure si pas d'ID
+                        intention = intentions.find(i => {
+                            const hDb = i.heure_messe ? i.heure_messe.substring(0, 5).replace('h', ':') : "";
+                            return hDb === heureGo.substring(0, 5);
+                        });
+                    }
+                    
+                    if (!intention && intentions?.length === 1) intention = intentions[0];
+                    // --------------------------------
+
+                    let intentionHtml = `<span class="intention-detail" style="color:#94a3b8; font-weight:normal; background:#f8fafc; border-left-color:#cbd5e1;">🕯️ Pas d'intention enregistrée</span>`;
                     
                     if (intention) {
                         const emoji = intention.type_intention === 'Défunt' ? '✝️' : (intention.type_intention === 'Vivant' ? '🙏' : '✨');
@@ -227,7 +240,7 @@
 
                     return `
                         <div class="messe-item">
-                            <div><span class="time-badge">${heure}</span> <strong>${e.summary}</strong></div>
+                            <div><span class="time-badge">${heureGo.replace(':', 'h')}</span> <strong>${e.summary}</strong></div>
                             ${intentionHtml}
                         </div>`;
                 }).join('');
@@ -235,8 +248,7 @@
                 listDiv.innerHTML = "<p style='color: #94a3b8; font-size: 0.8rem;'>Aucune messe aujourd'hui.</p>"; 
             }
         } catch (err) { 
-            console.error(err);
-            listDiv.innerHTML = "<p style='color: #ef4444; font-size: 0.8rem;'>Erreur agenda.</p>"; 
+            listDiv.innerHTML = "<p style='color: #ef4444; font-size: 0.8rem;'>Erreur de chargement.</p>"; 
         }
     }
 
