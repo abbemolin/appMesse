@@ -7,9 +7,23 @@
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://img.icons8.com/ios-filled/192/4f46e5/cross.png">
 
     <link rel="stylesheet" href="style.css">
+    
+    <script>
+        // Enregistrement du Service Worker IMMEDIATEMENT
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW enregistré !', reg))
+                    .catch(err => console.log('Erreur SW', err));
+            });
+        }
+    </script>
+
     <style>
         .dashboard-cards { 
             display: grid; 
@@ -185,7 +199,6 @@
         const listDiv = document.getElementById('today-masses-list');
         try {
             const today = new Date();
-            // Calcul date locale YYYY-MM-DD
             const tzOffset = today.getTimezoneOffset() * 60000;
             const localISODate = (new Date(today - tzOffset)).toISOString().split('T')[0];
             
@@ -193,14 +206,12 @@
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
             
-            // 1. Charger intentions validées du jour
             const { data: intentions } = await maConnexion
                 .from('intentions')
                 .select('*')
                 .eq('date_messe', localISODate)
                 .eq('statut', 'valide');
 
-            // 2. Charger Google Calendar
             const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${today.toISOString()}&timeMax=${tomorrow.toISOString()}&singleEvents=true&orderBy=startTime`;
             const response = await fetch(url);
             const data = await response.json();
@@ -213,21 +224,15 @@
                     const dateObj = new Date(start);
                     const heureGo = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                     
-                    // --- RECHERCHE DE L'INTENTION ---
                     let intention = intentions?.find(i => i.google_event_id === e.id);
-                    
                     if (!intention && intentions) {
-                        // Match par heure si pas d'ID
                         intention = intentions.find(i => {
                             const hDb = i.heure_messe ? i.heure_messe.substring(0, 5).replace('h', ':') : "";
                             return hDb === heureGo.substring(0, 5);
                         });
                     }
                     
-                    if (!intention && intentions?.length === 1) intention = intentions[0];
-                    // --------------------------------
-
-                    let intentionHtml = `<span class="intention-detail" style="color:#94a3b8; font-weight:normal; background:#f8fafc; border-left-color:#cbd5e1;">🕯️ Pas d'intention enregistrée</span>`;
+                    let intentionHtml = `<span class="intention-detail" style="color:#94a3b8; font-weight:normal; background:#f8fafc; border-left-color:#cbd5e1;">🕯️ Pas d'intention</span>`;
                     
                     if (intention) {
                         const emoji = intention.type_intention === 'Défunt' ? '✝️' : (intention.type_intention === 'Vivant' ? '🙏' : '✨');
@@ -250,12 +255,6 @@
         } catch (err) { 
             listDiv.innerHTML = "<p style='color: #ef4444; font-size: 0.8rem;'>Erreur de chargement.</p>"; 
         }
-    }
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
-        });
     }
 
     window.onload = initDashboard;
