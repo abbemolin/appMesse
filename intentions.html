@@ -102,13 +102,15 @@
                 intentions.forEach(item => {
                     const idPropre = String(item.id);
                     const dateObj = new Date(item.date_messe);
-                    const isoDate = item.date_messe; 
+                    const isoDateSupabase = item.date_messe; // Format YYYY-MM-DD
                     const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
 
-                    // --- RÉCUPÉRATION AUTO DE L'HORAIRE DEPUIS GOOGLE ---
+                    // --- RECHERCHE AMÉLIORÉE DANS GOOGLE CALENDAR ---
                     let googleEvent = events.find(e => {
-                        const start = e.start.dateTime || e.start.date;
-                        return start.startsWith(isoDate) && e.summary.toLowerCase().includes('messe');
+                        const startStr = e.start.dateTime || e.start.date;
+                        // On compare seulement la date (10 premiers caractères)
+                        const datePart = startStr.substring(0, 10);
+                        return datePart === isoDateSupabase && e.summary.toLowerCase().includes('messe');
                     });
 
                     let heurePure = "";
@@ -116,9 +118,14 @@
 
                     if (googleEvent && googleEvent.start.dateTime) {
                         const d = new Date(googleEvent.start.dateTime);
-                        heurePure = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        // Force le format 24h français pour Paris
+                        heurePure = d.toLocaleTimeString('fr-FR', { 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            timeZone: 'Europe/Paris' 
+                        });
                         texteAffiche = "à " + heurePure.replace(':', 'h');
-                    } else if (item.heure_messe && item.heure_messe.includes(':')) {
+                    } else if (item.heure_messe && item.heure_messe.includes(':') && !item.heure_messe.includes('confirmer')) {
                         heurePure = item.heure_messe.substring(0, 5);
                         texteAffiche = "à " + heurePure.replace(':', 'h');
                     }
@@ -159,7 +166,7 @@
                                 </div>
                             ` : `
                                 <div class="traite-info">
-                                    <strong>Réponse envoyée :</strong><br>${item.reponse_pretre || 'Validée'}<br>
+                                    <strong>Réponse :</strong><br>${item.reponse_pretre || 'Acceptée'}<br>
                                     <div style="margin-top:8px; font-size:0.75rem;">Mail : ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}</div>
                                     <button class="btn-action btn-edit" onclick="activerEdition('${idPropre}')">✏️ Modifier / Déplacer</button>
                                 </div>
