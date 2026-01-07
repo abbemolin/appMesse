@@ -73,9 +73,7 @@
     <script src="menu.js"></script>
     <script>
         async function chargerDemandes() {
-            // Sécurité : Vérifie si la connexion Supabase est prête
             if (typeof maConnexion === 'undefined') {
-                console.warn("maConnexion n'est pas encore définie, nouvel essai dans 500ms...");
                 setTimeout(chargerDemandes, 500);
                 return;
             }
@@ -97,7 +95,10 @@
                     
                     const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
                     const idPropre = String(item.id);
-                    const heureAffichee = item.heure_messe ? item.heure_messe.substring(0, 5).replace(':', 'h') : '--:--';
+                    
+                    // Correction affichage heure pour le tableau
+                    const heureBrute = item.heure_messe || '--:--';
+                    const heureAffichee = heureBrute.includes(':') ? heureBrute.substring(0, 5).replace(':', 'h') : heureBrute;
 
                     tr.innerHTML = `
                         <td class="date-col">
@@ -132,7 +133,7 @@
                                     <div>
                                         <span style="font-size:0.7rem; font-weight:bold; color:#64748b; text-transform:uppercase;">Changer Date/Heure :</span>
                                         <input type="date" id="newdate-${idPropre}" style="margin-top:4px" value="${item.date_messe}">
-                                        <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" style="margin-top:4px" value="${heureAffichee}">
+                                        <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" style="margin-top:4px" value="${heureBrute}">
                                         <button class="btn-action btn-imposer" style="width:100%; margin-top:6px;" onclick="imposerNouveauCreneau('${idPropre}')">📅 Valider ce créneau</button>
                                     </div>
                                 </div>
@@ -151,22 +152,23 @@
                 });
             } catch (err) {
                 console.error("Erreur de chargement:", err);
-                document.getElementById('table-body').innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Erreur: ${err.message}</td></tr>`;
             }
         }
 
         async function modifierStatut(id, nouveauStatut) {
-            // Récupère les infos pour inclure date/heure dans le message auto
             const { data: item } = await maConnexion.from('intentions').select('date_messe, heure_messe').eq('id', id).single();
             const dateFr = new Date(item.date_messe).toLocaleDateString('fr-FR');
-            const heureFr = item.heure_messe ? item.heure_messe.substring(0, 5).replace(':', 'h') : '';
+            
+            // Correction "à con" : On ne coupe que si c'est une heure au format HH:MM
+            const h = item.heure_messe || '';
+            const heureFr = h.includes(':') ? h.substring(0, 5).replace(':', 'h') : h;
 
             const motifInput = document.getElementById(`motif-${id}`);
             const messageAuto = nouveauStatut === 'valide' 
                 ? `Votre intention a été validée pour la messe du ${dateFr} à ${heureFr}.`
                 : `Désolé, nous ne pouvons pas honorer votre demande pour le ${dateFr}.`;
 
-            const motif = motifInput?.value || messageAuto;
+            const motif = (motifInput && motifInput.value) ? motifInput.value : messageAuto;
 
             const { error } = await maConnexion
                 .from('intentions')
@@ -184,15 +186,18 @@
 
         async function imposerNouveauCreneau(id) {
             const nDate = document.getElementById(`newdate-${id}`).value;
-            const nHeure = document.getElementById(`newhour-${id}`).value.replace('h', ':');
+            let nHeure = document.getElementById(`newhour-${id}`).value;
             
             if (!nDate) return alert("Veuillez choisir une date.");
             
+            // On nettoie l'heure pour Supabase
+            const hPropre = nHeure.replace('h', ':');
+
             const { error } = await maConnexion
                 .from('intentions')
                 .update({ 
                     date_messe: nDate, 
-                    heure_messe: nHeure,
+                    heure_messe: hPropre,
                     statut: 'valide', 
                     reponse_pretre: `La date a été modifiée. Votre intention est confirmée pour le ${new Date(nDate).toLocaleDateString('fr-FR')} à ${nHeure}.`, 
                     mail_envoye: false,
@@ -205,11 +210,7 @@
         }
 
         async function activerEdition(id) {
-            const { error } = await maConnexion
-                .from('intentions')
-                .update({ en_edition: true })
-                .eq('id', id);
-            
+            const { error } = await maConnexion.from('intentions').update({ en_edition: true }).eq('id', id);
             if (error) alert(error.message);
             else chargerDemandes();
         }
