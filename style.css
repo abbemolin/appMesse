@@ -1,37 +1,94 @@
+/* Variables pour une gestion facile des couleurs */
+:root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --bg-app: #f8fafc;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --white: #ffffff;
+    --radius: 12px;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent; /* Optimisation mobile */
+}
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
     margin: 0;
-    display: flex;
-    background-color: #f4f7f6;
+    padding: 0;
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    line-height: 1.5;
+    display: block; /* On annule le flex qui bloquait le layout mobile */
 }
 
-#menu-container {
-    width: 250px;
-    background-color: #2c3e50;
-    height: 100vh;
-    color: white;
-    padding: 20px;
-}
-
+/* --- Layout --- */
 main {
-    flex-grow: 1;
-    padding: 40px;
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    /* On laisse de la place pour le menu du bas */
+    padding-bottom: 90px; 
 }
 
+h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    margin-bottom: 1.5rem;
+}
+
+/* --- Cartes du Tableau de bord --- */
 .dashboard-cards {
-    display: flex;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
     margin-top: 20px;
 }
 
 .card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    width: 200px;
+    background: var(--white);
+    padding: 24px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid #e2e8f0;
+    width: 100%; /* S'adapte à la grille */
 }
 
-nav ul { list-style: none; padding: 0; }
-nav li { margin: 15px 0; cursor: pointer; }
-nav a { color: white; text-decoration: none; }
+/* --- Accessibilité et Boutons --- */
+button, .btn-action, .nav-item {
+    min-height: 44px; /* Taille minimale recommandée pour le toucher */
+    cursor: pointer;
+}
+
+input, select, textarea {
+    font-size: 16px !important; /* Évite le zoom automatique forcé sur iPhone */
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    width: 100%;
+}
+
+/* --- Menu (Container) --- */
+#menu-container {
+    /* Le style est géré dynamiquement par menu.js pour être en bas */
+    width: 100%;
+}
+
+/* --- Utilitaires --- */
+.text-center { text-align: center; }
+.mt-4 { margin-top: 1rem; }
+
+/* --- Adaptations Tablettes/PC --- */
+@media (min-width: 768px) {
+    main {
+        padding: 40px;
+    }
+    
+    .dashboard-cards {
+        grid-template-columns: 1fr 1fr;
+    }
+}
