@@ -7,49 +7,104 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Inter', 'Segoe UI', sans-serif; background-color: #f0f2f5; color: #1a202c; margin: 0; padding: 20px; }
-        main { max-width: 1100px; margin: 0 auto; }
-        h1 { color: #2d3748; font-weight: 800; text-align: center; margin-bottom: 30px; }
-        .card { background: white; padding: 0; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0; }
-        .card-header { padding: 20px; border-bottom: 1px solid #edf2f7; background: #fff; }
-        .card-header h3 { margin: 0; color: #4a5568; font-size: 1.1em; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th { background: #f8fafc; text-align: left; padding: 15px; font-size: 0.85em; text-transform: uppercase; color: #718096; border-bottom: 2px solid #edf2f7; }
-        td { padding: 18px 15px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
-        tr:nth-child(even) { background-color: #fcfcfd; }
-        .date-badge { display: inline-block; padding: 6px 12px; background: #edf2ff; color: #434190; border-radius: 8px; font-weight: 700; text-align: center; min-width: 80px; }
-        .date-badge span { display: block; font-size: 0.75em; text-transform: uppercase; color: #5a67d8; font-weight: 400; }
-        .heure-badge { font-size: 0.85em; color: #5a67d8; font-weight: bold; margin-top: 2px; }
-        .status-pill { padding: 5px 12px; border-radius: 20px; font-size: 0.75em; font-weight: 700; text-transform: uppercase; display: inline-block; }
-        .en_attente { background: #fef3c7; color: #92400e; }
-        .valide { background: #def7ec; color: #03543f; }
-        .refuse { background: #fde8e8; color: #9b1c1c; }
-        .action-group { display: flex; flex-direction: column; gap: 8px; max-width: 250px; }
-        .btn-action { cursor: pointer; border: none; padding: 10px; border-radius: 6px; color: white; font-weight: 600; font-size: 0.85em; transition: 0.2s; }
-        .btn-valider { background-color: #38a169; }
-        .btn-refuser { background-color: #e53e3e; }
-        .btn-imposer { background-color: #667eea; }
-        input { padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85em; width: 100%; }
-        .traite-info { font-size: 0.85em; color: #718096; background: #f8fafc; padding: 10px; border-radius: 8px; }
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
+        main { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #0f172a; font-weight: 800; text-align: center; margin-bottom: 30px; }
+
+        /* Conteneur de table avec scroll si trop petit */
+        .table-container { 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+            overflow-x: auto; 
+            border: 1px solid #e2e8f0; 
+        }
+
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { 
+            background: #f1f5f9; 
+            text-align: left; 
+            padding: 16px; 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em; 
+            color: #475569; 
+            border-bottom: 2px solid #e2e8f0; 
+        }
+        td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        tr:hover { background-color: #f8fafc; }
+
+        /* Badges & Heure */
+        .date-col { width: 120px; }
+        .date-badge { 
+            background: #4f46e5; 
+            color: white; 
+            border-radius: 8px; 
+            padding: 8px; 
+            text-align: center; 
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+        }
+        .date-badge span { display: block; font-size: 0.7rem; font-weight: 400; text-transform: uppercase; opacity: 0.9; }
+        .heure-info { 
+            display: block; 
+            margin-top: 6px; 
+            font-size: 0.85rem; 
+            color: #4f46e5; 
+            font-weight: 700; 
+            text-align: center;
+        }
+
+        /* Texte et Détails */
+        .intention-nom { font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .intention-type { font-size: 0.8rem; color: #64748b; font-weight: 500; }
+        .demandeur-info { font-size: 0.9rem; color: #334155; }
+        .demandeur-mail { font-size: 0.75rem; color: #94a3b8; }
+
+        /* Statuts */
+        .status-pill { padding: 4px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
+        .en_attente { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .valide { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .refuse { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        /* Formulaires d'action */
+        .action-group { display: flex; flex-direction: column; gap: 8px; width: 220px; }
+        .btn-action { 
+            cursor: pointer; border: none; padding: 8px 12px; border-radius: 6px; 
+            color: white; font-weight: 600; font-size: 0.8rem; transition: all 0.2s; 
+        }
+        .btn-valider { background: #16a34a; }
+        .btn-refuser { background: #dc2626; }
+        .btn-imposer { background: #4f46e5; }
+        
+        input[type="text"], input[type="date"] { 
+            padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; width: 100%; box-sizing: border-box;
+        }
+
+        .traite-info { font-size: 0.8rem; color: #475569; background: #f1f5f9; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        hr { border: 0; border-top: 1px solid #e2e8f0; margin: 10px 0; }
+        .small-label { font-size: 0.7rem; color: #64748b; font-weight: 600; margin-bottom: 2px; display: block; }
     </style>
 </head>
 <body>
     <div id="menu-container"></div>
+
     <main>
         <h1>Gestion des Intentions</h1>
-        <div class="card">
-            <div class="card-header"><h3>📋 Liste des demandes à traiter</h3></div>
+        
+        <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Date & Heure</th>
+                        <th>Messe</th>
                         <th>Détails Intention</th>
                         <th>Demandeur</th>
                         <th>Statut</th>
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="table-body"></tbody>
+                <tbody id="table-body">
+                    </tbody>
             </table>
         </div>
     </main>
@@ -63,7 +118,8 @@
                 .select('*')
                 .order('date_messe', { ascending: true });
 
-            if (error) return console.error(error);
+            if (error) return console.error("Erreur :", error);
+
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = "";
 
@@ -71,40 +127,56 @@
                 const dateObj = new Date(item.date_messe);
                 const jour = dateObj.toLocaleDateString('fr-FR', { day: 'numeric' });
                 const mois = dateObj.toLocaleDateString('fr-FR', { month: 'short' });
-                
+
                 const tr = document.createElement('tr');
+                
                 tr.innerHTML = `
-                    <td>
+                    <td class="date-col">
                         <div class="date-badge">
-                            <span>${mois}</span>${jour}
+                            <span>${mois}</span>
+                            ${jour}
                         </div>
-                        <div class="heure-badge">${item.heure_messe || ''}</div>
+                        <span class="heure-info">${item.heure_messe || '--:--'}</span>
                     </td>
                     <td>
-                        <div style="font-weight: 700;">${item.nom_intention || 'Sans nom'}</div>
-                        <div style="font-size: 0.8em; color: #718096;">${item.type_intention}</div>
+                        <div class="intention-nom">${item.nom_intention || 'Sans nom'}</div>
+                        <div class="intention-type">${item.type_intention}</div>
+                        ${item.commentaire ? `<div style="font-size:0.75rem; color:#64748b; margin-top:5px; font-style:italic;">"${item.commentaire}"</div>` : ''}
                     </td>
                     <td>
-                        <div style="font-size: 0.9em;">${item.nom_donateur}</div>
-                        <div style="font-size: 0.75em; color: #a0aec0;">${item.email_donateur || ''}</div>
+                        <div class="demandeur-info">${item.nom_donateur}</div>
+                        <div class="demandeur-mail">${item.email_donateur || ''}</div>
                     </td>
                     <td>
-                        <span class="status-pill ${item.statut}">${item.statut.replace('_', ' ')}</span>
+                        <span class="status-pill ${item.statut}">
+                            ${item.statut.replace('_', ' ')}
+                        </span>
                     </td>
                     <td>
                         ${item.statut === 'en_attente' ? `
                             <div class="action-group">
                                 <button class="btn-action btn-valider" onclick="modifierStatut(${item.id}, 'valide')">✅ Valider</button>
-                                <input type="text" id="motif-${item.id}" placeholder="Note de refus...">
-                                <button class="btn-action btn-refuser" onclick="modifierStatut(${item.id}, 'refuse')">❌ Refuser</button>
+                                
+                                <div>
+                                    <input type="text" id="motif-${item.id}" placeholder="Note de refus...">
+                                    <button class="btn-action btn-refuser" style="width:100%; margin-top:4px;" onclick="modifierStatut(${item.id}, 'refuse')">❌ Refuser</button>
+                                </div>
+                                
                                 <hr>
-                                <input type="date" id="newdate-${item.id}">
-                                <button class="btn-action btn-imposer" onclick="imposerNouvelleDate(${item.id})">📅 Imposer cette date</button>
+                                
+                                <div>
+                                    <span class="small-label">Déplacer :</span>
+                                    <input type="date" id="newdate-${item.id}">
+                                    <button class="btn-action btn-imposer" style="width:100%; margin-top:4px;" onclick="imposerNouvelleDate(${item.id})">📅 Valider ici</button>
+                                </div>
                             </div>
                         ` : `
                             <div class="traite-info">
-                                <strong>Message :</strong> ${item.reponse_pretre || 'Telle quelle'}<br>
-                                <strong>Mail :</strong> ${item.mail_envoye ? '✅ Envoyé' : '⏳ Attente'}
+                                <strong>Réponse :</strong><br>
+                                ${item.reponse_pretre || 'Validée'}<br>
+                                <div style="margin-top:8px; font-weight:700; font-size:0.7rem;">
+                                    📧 Mail : ${item.mail_envoye ? 'ENVOYÉ' : 'EN ATTENTE'}
+                                </div>
                             </div>
                         `}
                     </td>
@@ -115,30 +187,32 @@
 
         async function modifierStatut(id, nouveauStatut) {
             const motif = document.getElementById(`motif-${id}`)?.value || "";
-            await maConnexion.from('intentions')
+            const { error } = await maConnexion
+                .from('intentions')
                 .update({ statut: nouveauStatut, reponse_pretre: motif, mail_envoye: false })
                 .eq('id', id);
-            chargerDemandes();
+
+            if (!error) chargerDemandes();
         }
 
         async function imposerNouvelleDate(id) {
             const nouvelleDate = document.getElementById(`newdate-${id}`).value;
             if (!nouvelleDate) return alert("Choisissez une date.");
             
-            const d = new Date(nouvelleDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-            const message = "La date demandée n'était plus disponible. Votre intention a été déplacée au " + d + ".";
+            const message = "Déplacée et validée pour le " + new Date(nouvelleDate).toLocaleDateString('fr-FR');
 
-            await maConnexion.from('intentions')
+            const { error } = await maConnexion
+                .from('intentions')
                 .update({ 
                     date_messe: nouvelleDate, 
-                    google_event_id: null, // On reset l'ID car on change de messe
-                    heure_messe: '',       // L'heure sera à préciser ou choisie par le prêtre
+                    google_event_id: null, 
                     statut: 'valide', 
                     reponse_pretre: message, 
                     mail_envoye: false 
                 })
                 .eq('id', id);
-            chargerDemandes();
+
+            if (!error) chargerDemandes();
         }
 
         window.onload = chargerDemandes;
