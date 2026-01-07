@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Intentions - Paroisse</title>
+    <title>Gestion des Intentions - Paroisse La Croix Glorieuse</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -82,7 +82,6 @@
             }
 
             try {
-                // 1. Récupérer les intentions
                 const { data: intentions, error } = await maConnexion
                     .from('intentions')
                     .select('*')
@@ -90,7 +89,6 @@
 
                 if (error) throw error;
 
-                // 2. Récupérer Google Calendar
                 const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&maxResults=1000`;
                 const resp = await fetch(url);
                 const googleData = await resp.json();
@@ -102,20 +100,13 @@
                 intentions.forEach(item => {
                     const idPropre = String(item.id);
                     const dateObj = new Date(item.date_messe);
-                    
-                    // On s'assure que la comparaison de date est propre (YYYY-MM-DD)
                     const isoDateSupabase = item.date_messe; 
-
                     const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
 
-                    // --- RECHERCHE D'HEURE ---
-                    // On cherche par ID d'abord, puis par DATE
+                    // --- RÉCUPÉRATION DE L'HEURE DEPUIS CALENDAR OU BASE ---
                     let googleEvent = events.find(e => e.id === item.google_event_id);
                     if (!googleEvent) {
-                        googleEvent = events.find(e => {
-                            const start = e.start.dateTime || e.start.date;
-                            return start.startsWith(isoDateSupabase);
-                        });
+                        googleEvent = events.find(e => (e.start.dateTime || e.start.date).startsWith(isoDateSupabase));
                     }
 
                     let heureFinale = "à confirmer";
@@ -128,10 +119,12 @@
                     } else if (item.heure_messe && item.heure_messe.includes(':')) {
                         heurePurePourInput = item.heure_messe.substring(0, 5);
                         heureFinale = heurePurePourInput.replace(':', 'h');
+                    } else if (item.heure_messe && item.heure_messe !== "à confirmer") {
+                        heureFinale = item.heure_messe.replace(':', 'h');
                     }
 
-                    // On évite le "à à confirmer"
-                    const texteAffiche = heureFinale.includes("confirmer") ? heureFinale : "à " + heureFinale;
+                    // --- NETTOYAGE AFFICHAGE (ANTI-DOUBLON "À") ---
+                    let texteAffiche = heureFinale.includes("confirmer") ? "à confirmer" : "à " + heureFinale;
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -159,18 +152,18 @@
                             ${estEnCours ? `
                                 <div class="action-group">
                                     <button class="btn-action btn-valider" onclick="modifierStatut('${idPropre}', 'valide', '${heureFinale}')">✅ Valider</button>
-                                    <input type="text" id="motif-${idPropre}" placeholder="Note / Motif de refus">
+                                    <input type="text" id="motif-${idPropre}" placeholder="Message personnalisé (optionnel)">
                                     <button class="btn-action btn-refuser" onclick="modifierStatut('${idPropre}', 'refuse', '${heureFinale}')">❌ Refuser</button>
                                     <hr style="border:0; border-top:1px solid #e2e8f0; margin: 10px 0;">
                                     <span style="font-size:0.7rem; font-weight:bold; color:#64748b;">DÉPLACER / FORCER :</span>
                                     <input type="date" id="newdate-${idPropre}" value="${item.date_messe}">
                                     <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" value="${heurePurePourInput}">
-                                    <button class="btn-action btn-imposer" onclick="imposerNouveauCreneau('${idPropre}')">📅 Valider ce créneau</button>
+                                    <button class="btn-action btn-imposer" onclick="imposerNouveauCreneau('${idPropre}')">📅 Confirmer ce créneau</button>
                                 </div>
                             ` : `
                                 <div class="traite-info">
-                                    <strong>Réponse envoyée :</strong><br>${item.reponse_pretre || 'Acceptée'}<br>
-                                    <div style="margin-top:8px; font-size:0.75rem;">Status : ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}</div>
+                                    <strong>Réponse :</strong><br>${item.reponse_pretre || 'Acceptée'}<br>
+                                    <div style="margin-top:8px; font-size:0.75rem;">Mail : ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}</div>
                                     <button class="btn-action btn-edit" onclick="activerEdition('${idPropre}')">✏️ Modifier / Déplacer</button>
                                 </div>
                             `}
@@ -188,17 +181,23 @@
             const dateFr = new Date(item.date_messe).toLocaleDateString('fr-FR');
             
             const motifInput = document.getElementById(`motif-${id}`);
-            const texteHeure = heureFixee.includes("confirmer") ? "heure à confirmer" : "à " + heureFixee;
+            
+            // On prépare un texte propre pour l'heure dans le mail
+            let texteHeureMail = heureFixee.includes("confirmer") ? "à une heure à confirmer" : "à " + heureFixee.replace(':', 'h');
             
             const messageAuto = nouveauStatut === 'valide' 
-                ? `Votre intention a été validée pour la messe du ${dateFr} ${texteHeure}.`
-                : `Désolé, nous ne pouvons pas honorer votre demande pour le ${dateFr}.`;
+                ? `Votre intention a été validée pour la messe du ${dateFr} ${texteHeureMail}.`
+                : `Désolé, nous ne pouvons pas honorer votre demande pour la messe du ${dateFr}.`;
 
-            const motif = (motifInput && motifInput.value) ? motifInput.value : messageAuto;
+            const reponseFinale = (motifInput && motifInput.value.trim() !== "") ? motifInput.value : messageAuto;
 
             await maConnexion.from('intentions').update({ 
-                statut: nouveauStatut, reponse_pretre: motif, mail_envoye: false, en_edition: false 
+                statut: nouveauStatut, 
+                reponse_pretre: reponseFinale, 
+                mail_envoye: false, 
+                en_edition: false 
             }).eq('id', id);
+            
             chargerDemandes();
         }
 
@@ -207,13 +206,19 @@
             let nHeure = document.getElementById(`newhour-${id}`).value;
             if (!nDate) return alert("Veuillez choisir une date.");
             
-            const hAffichee = nHeure.replace(':', 'h');
+            // Formatage propre de l'heure pour l'affichage
+            let hAffichage = nHeure ? nHeure.replace(':', 'h') : "à confirmer";
+            let texteHeureMail = hAffichage.includes("confirmer") ? "à une heure à confirmer" : "à " + hAffichage;
 
             await maConnexion.from('intentions').update({ 
-                date_messe: nDate, heure_messe: nHeure, statut: 'valide', 
-                reponse_pretre: `La date a été modifiée. Votre intention est confirmée pour le ${new Date(nDate).toLocaleDateString('fr-FR')} à ${hAffichee}.`, 
-                mail_envoye: false, en_edition: false
+                date_messe: nDate, 
+                heure_messe: nHeure || "à confirmer", 
+                statut: 'valide', 
+                reponse_pretre: `Votre intention est confirmée pour la messe du ${new Date(nDate).toLocaleDateString('fr-FR')} ${texteHeureMail}.`, 
+                mail_envoye: false, 
+                en_edition: false
             }).eq('id', id);
+            
             chargerDemandes();
         }
 
