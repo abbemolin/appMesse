@@ -21,14 +21,14 @@
         td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
         tr:hover { background-color: #f8fafc; }
 
-        .date-col { width: 100px; }
+        .date-col { width: 110px; text-align: center; }
         .date-badge { 
             background: #eef2ff; color: #4f46e5; border-radius: 8px; padding: 10px; 
-            text-align: center; font-weight: 700; width: 70px; border: 1px solid #e0e7ff;
+            text-align: center; font-weight: 700; width: 70px; border: 1px solid #e0e7ff; margin: 0 auto;
         }
         .date-badge span { display: block; font-size: 0.65rem; font-weight: 400; text-transform: uppercase; margin-bottom: 2px; }
         .date-badge .annee { font-size: 0.6rem; color: #818cf8; margin-top: 2px; }
-        .heure-info { display: block; margin-top: 6px; font-size: 0.85rem; color: #4f46e5; font-weight: 700; text-align: center; }
+        .heure-info { display: block; margin-top: 8px; font-size: 0.85rem; color: #4f46e5; font-weight: 700; }
 
         .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: lowercase; border: 1px solid transparent; }
         .en_attente { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
@@ -82,7 +82,7 @@
             }
 
             try {
-                // 1. Récupérer les intentions de Supabase
+                // 1. Récupérer les intentions
                 const { data: intentions, error } = await maConnexion
                     .from('intentions')
                     .select('*')
@@ -90,7 +90,7 @@
 
                 if (error) throw error;
 
-                // 2. Récupérer les événements Google (Plage large 1000 résultats)
+                // 2. Récupérer Google Calendar
                 const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&maxResults=1000`;
                 const resp = await fetch(url);
                 const googleData = await resp.json();
@@ -100,43 +100,38 @@
                 tbody.innerHTML = "";
 
                 intentions.forEach(item => {
-                    const dateObj = new Date(item.date_messe);
-                    const isoDate = item.date_messe; // Format YYYY-MM-DD
                     const idPropre = String(item.id);
+                    const dateObj = new Date(item.date_messe);
+                    
+                    // On s'assure que la comparaison de date est propre (YYYY-MM-DD)
+                    const isoDateSupabase = item.date_messe; 
+
                     const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
 
-                    // --- RECHERCHE DE L'HEURE (DOUBLE SÉCURITÉ) ---
-                    // Tentative 1 : Par l'ID Google
+                    // --- RECHERCHE D'HEURE ---
+                    // On cherche par ID d'abord, puis par DATE
                     let googleEvent = events.find(e => e.id === item.google_event_id);
-
-                    // Tentative 2 : Par la DATE si l'ID ne correspond plus
                     if (!googleEvent) {
                         googleEvent = events.find(e => {
                             const start = e.start.dateTime || e.start.date;
-                            return start.startsWith(isoDate);
+                            return start.startsWith(isoDateSupabase);
                         });
                     }
 
-                    let heurePure = "";
-                    let heureAffichee = "";
-                    let prefixe = "à ";
+                    let heureFinale = "à confirmer";
+                    let heurePurePourInput = "";
 
-                    if (googleEvent) {
-                        if (googleEvent.start.dateTime) {
-                            const d = new Date(googleEvent.start.dateTime);
-                            heurePure = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                            heureAffichee = heurePure.replace(':', 'h');
-                        } else {
-                            heureAffichee = "Heure non fixée";
-                            prefixe = "";
-                        }
+                    if (googleEvent && googleEvent.start.dateTime) {
+                        const d = new Date(googleEvent.start.dateTime);
+                        heurePurePourInput = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        heureFinale = heurePurePourInput.replace(':', 'h');
                     } else if (item.heure_messe && item.heure_messe.includes(':')) {
-                        heurePure = item.heure_messe.substring(0, 5);
-                        heureAffichee = heurePure.replace(':', 'h');
-                    } else {
-                        heureAffichee = "à confirmer";
-                        prefixe = "";
+                        heurePurePourInput = item.heure_messe.substring(0, 5);
+                        heureFinale = heurePurePourInput.replace(':', 'h');
                     }
+
+                    // On évite le "à à confirmer"
+                    const texteAffiche = heureFinale.includes("confirmer") ? heureFinale : "à " + heureFinale;
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -146,7 +141,7 @@
                                 ${dateObj.getDate()}
                                 <div class="annee">${dateObj.getFullYear()}</div>
                             </div>
-                            <span class="heure-info">${prefixe}${heureAffichee}</span>
+                            <span class="heure-info">${texteAffiche}</span>
                         </td>
                         <td>
                             <div style="font-weight:700; color:#0f172a">${item.nom_intention || 'Sans nom'}</div>
@@ -163,25 +158,19 @@
                         <td>
                             ${estEnCours ? `
                                 <div class="action-group">
-                                    <button class="btn-action btn-valider" onclick="modifierStatut('${idPropre}', 'valide', '${heureAffichee}')">✅ Valider</button>
-                                    <div>
-                                        <input type="text" id="motif-${idPropre}" placeholder="Note / Motif de refus">
-                                        <button class="btn-action btn-refuser" style="width:100%; margin-top:6px;" onclick="modifierStatut('${idPropre}', 'refuse', '${heureAffichee}')">❌ Refuser</button>
-                                    </div>
-                                    <hr style="width:100%; border:0; border-top:1px solid #e2e8f0; margin: 5px 0;">
-                                    <div>
-                                        <span style="font-size:0.7rem; font-weight:bold; color:#64748b; text-transform:uppercase;">Changer Date/Heure :</span>
-                                        <input type="date" id="newdate-${idPropre}" style="margin-top:4px" value="${item.date_messe}">
-                                        <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" style="margin-top:4px" value="${heurePure}">
-                                        <button class="btn-action btn-imposer" style="width:100%; margin-top:6px;" onclick="imposerNouveauCreneau('${idPropre}')">📅 Valider ce créneau</button>
-                                    </div>
+                                    <button class="btn-action btn-valider" onclick="modifierStatut('${idPropre}', 'valide', '${heureFinale}')">✅ Valider</button>
+                                    <input type="text" id="motif-${idPropre}" placeholder="Note / Motif de refus">
+                                    <button class="btn-action btn-refuser" onclick="modifierStatut('${idPropre}', 'refuse', '${heureFinale}')">❌ Refuser</button>
+                                    <hr style="border:0; border-top:1px solid #e2e8f0; margin: 10px 0;">
+                                    <span style="font-size:0.7rem; font-weight:bold; color:#64748b;">DÉPLACER / FORCER :</span>
+                                    <input type="date" id="newdate-${idPropre}" value="${item.date_messe}">
+                                    <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" value="${heurePurePourInput}">
+                                    <button class="btn-action btn-imposer" onclick="imposerNouveauCreneau('${idPropre}')">📅 Valider ce créneau</button>
                                 </div>
                             ` : `
                                 <div class="traite-info">
                                     <strong>Réponse envoyée :</strong><br>${item.reponse_pretre || 'Acceptée'}<br>
-                                    <div style="margin-top:8px; font-size:0.75rem;">
-                                        Status Email : ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}
-                                    </div>
+                                    <div style="margin-top:8px; font-size:0.75rem;">Status : ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}</div>
                                     <button class="btn-action btn-edit" onclick="activerEdition('${idPropre}')">✏️ Modifier / Déplacer</button>
                                 </div>
                             `}
@@ -199,19 +188,18 @@
             const dateFr = new Date(item.date_messe).toLocaleDateString('fr-FR');
             
             const motifInput = document.getElementById(`motif-${id}`);
+            const texteHeure = heureFixee.includes("confirmer") ? "heure à confirmer" : "à " + heureFixee;
+            
             const messageAuto = nouveauStatut === 'valide' 
-                ? `Votre intention a été validée pour la messe du ${dateFr} à ${heureFixee}.`
+                ? `Votre intention a été validée pour la messe du ${dateFr} ${texteHeure}.`
                 : `Désolé, nous ne pouvons pas honorer votre demande pour le ${dateFr}.`;
 
             const motif = (motifInput && motifInput.value) ? motifInput.value : messageAuto;
 
-            const { error } = await maConnexion
-                .from('intentions')
-                .update({ statut: nouveauStatut, reponse_pretre: motif, mail_envoye: false, en_edition: false })
-                .eq('id', id);
-
-            if (error) alert(error.message);
-            else chargerDemandes();
+            await maConnexion.from('intentions').update({ 
+                statut: nouveauStatut, reponse_pretre: motif, mail_envoye: false, en_edition: false 
+            }).eq('id', id);
+            chargerDemandes();
         }
 
         async function imposerNouveauCreneau(id) {
@@ -219,26 +207,19 @@
             let nHeure = document.getElementById(`newhour-${id}`).value;
             if (!nDate) return alert("Veuillez choisir une date.");
             
-            const hPropre = nHeure.includes('h') ? nHeure.replace('h', ':') : nHeure;
-            const hAffichee = nHeure.includes(':') ? nHeure.replace(':', 'h') : nHeure;
+            const hAffichee = nHeure.replace(':', 'h');
 
-            const { error } = await maConnexion
-                .from('intentions')
-                .update({ 
-                    date_messe: nDate, heure_messe: hPropre, statut: 'valide', 
-                    reponse_pretre: `La date a été modifiée. Votre intention est confirmée pour le ${new Date(nDate).toLocaleDateString('fr-FR')} à ${hAffichee}.`, 
-                    mail_envoye: false, en_edition: false
-                })
-                .eq('id', id);
-
-            if (error) alert(error.message);
-            else chargerDemandes();
+            await maConnexion.from('intentions').update({ 
+                date_messe: nDate, heure_messe: nHeure, statut: 'valide', 
+                reponse_pretre: `La date a été modifiée. Votre intention est confirmée pour le ${new Date(nDate).toLocaleDateString('fr-FR')} à ${hAffichee}.`, 
+                mail_envoye: false, en_edition: false
+            }).eq('id', id);
+            chargerDemandes();
         }
 
         async function activerEdition(id) {
-            const { error } = await maConnexion.from('intentions').update({ en_edition: true }).eq('id', id);
-            if (error) alert(error.message);
-            else chargerDemandes();
+            await maConnexion.from('intentions').update({ en_edition: true }).eq('id', id);
+            chargerDemandes();
         }
 
         window.onload = chargerDemandes;
