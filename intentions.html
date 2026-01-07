@@ -10,39 +10,26 @@
         body { font-family: 'Inter', 'Segoe UI', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
         main { max-width: 1200px; margin: 0 auto; }
         h1 { color: #0f172a; font-weight: 800; text-align: center; margin-bottom: 30px; }
-
-        .table-container { 
-            background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
-            overflow-x: auto; border: 1px solid #e2e8f0; 
-        }
-
+        .table-container { background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); overflow-x: auto; border: 1px solid #e2e8f0; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
         th { background: #f1f5f9; text-align: left; padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #475569; border-bottom: 2px solid #e2e8f0; }
         td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
         tr:hover { background-color: #f8fafc; }
-
         .date-col { width: 130px; text-align: center; }
-        .date-badge { 
-            background: #eef2ff; color: #4f46e5; border-radius: 8px; padding: 10px; 
-            text-align: center; font-weight: 700; width: 70px; border: 1px solid #e0e7ff; margin: 0 auto;
-        }
+        .date-badge { background: #eef2ff; color: #4f46e5; border-radius: 8px; padding: 10px; text-align: center; font-weight: 700; width: 70px; border: 1px solid #e0e7ff; margin: 0 auto; }
         .date-badge span { display: block; font-size: 0.65rem; font-weight: 400; text-transform: uppercase; margin-bottom: 2px; }
         .date-badge .annee { font-size: 0.6rem; color: #818cf8; margin-top: 2px; }
         .heure-info { display: block; margin-top: 8px; font-size: 0.85rem; color: #4f46e5; font-weight: 700; }
-
         .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: lowercase; border: 1px solid transparent; }
         .en_attente { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
         .valide { background: #dcfce7; color: #166534; border-color: #86efac; }
         .refuse { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
-
         .action-group { display: flex; flex-direction: column; gap: 10px; width: 240px; }
         .btn-action { cursor: pointer; border: none; padding: 10px 14px; border-radius: 8px; color: white; font-weight: 600; font-size: 0.85rem; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-valider { background: #16a34a; }
         .btn-refuser { background: #dc2626; }
         .btn-imposer { background: #4f46e5; }
         .btn-edit { background: #64748b; margin-top: 10px; width: 100%; }
-        .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        
         input[type="text"], input[type="date"] { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; width: 100%; box-sizing: border-box; }
         .traite-info { font-size: 0.85rem; color: #475569; background: #f1f5f9; padding: 15px; border-radius: 10px; border-left: 4px solid #cbd5e1; }
     </style>
@@ -82,7 +69,6 @@
             }
 
             try {
-                // 1. Récupérer les intentions depuis Supabase
                 const { data: intentions, error } = await maConnexion
                     .from('intentions')
                     .select('*')
@@ -90,8 +76,7 @@
 
                 if (error) throw error;
 
-                // 2. Récupérer l'agenda Google
-                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&maxResults=1000`;
+                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&maxResults=500`;
                 const resp = await fetch(url);
                 const googleData = await resp.json();
                 const events = googleData.items || [];
@@ -103,32 +88,27 @@
                     const idPropre = String(item.id);
                     const dateObj = new Date(item.date_messe);
                     const isoDateSupabase = item.date_messe; // Format YYYY-MM-DD
-                    const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
-
-                    // --- RECHERCHE AMÉLIORÉE DANS GOOGLE CALENDAR ---
-                    let googleEvent = events.find(e => {
-                        const startStr = e.start.dateTime || e.start.date;
-                        // On compare seulement la date (10 premiers caractères)
-                        const datePart = startStr.substring(0, 10);
-                        return datePart === isoDateSupabase && e.summary.toLowerCase().includes('messe');
+                    
+                    // --- RECHERCHE DE L'HORAIRE DANS GOOGLE ---
+                    let eventTrouve = events.find(e => {
+                        const start = e.start.dateTime || e.start.date;
+                        const dateGoogle = start.split('T')[0];
+                        return dateGoogle === isoDateSupabase && e.summary.toLowerCase().includes('messe');
                     });
 
-                    let heurePure = "";
-                    let texteAffiche = "à confirmer";
+                    let heureAffiche = "à confirmer";
+                    let heureInput = "";
 
-                    if (googleEvent && googleEvent.start.dateTime) {
-                        const d = new Date(googleEvent.start.dateTime);
-                        // Force le format 24h français pour Paris
-                        heurePure = d.toLocaleTimeString('fr-FR', { 
-                            hour: '2-digit', 
-                            minute: '2-digit', 
-                            timeZone: 'Europe/Paris' 
-                        });
-                        texteAffiche = "à " + heurePure.replace(':', 'h');
-                    } else if (item.heure_messe && item.heure_messe.includes(':') && !item.heure_messe.includes('confirmer')) {
-                        heurePure = item.heure_messe.substring(0, 5);
-                        texteAffiche = "à " + heurePure.replace(':', 'h');
+                    if (eventTrouve && eventTrouve.start.dateTime) {
+                        const d = new Date(eventTrouve.start.dateTime);
+                        heureInput = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+                        heureAffiche = "à " + heureInput.replace(':', 'h');
+                    } else if (item.heure_messe && item.heure_messe !== "à confirmer") {
+                        heureInput = item.heure_messe;
+                        heureAffiche = "à " + item.heure_messe.replace(':', 'h');
                     }
+
+                    const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -138,7 +118,7 @@
                                 ${dateObj.getDate()}
                                 <div class="annee">${dateObj.getFullYear()}</div>
                             </div>
-                            <span class="heure-info">${texteAffiche}</span>
+                            <span class="heure-info">${heureAffiche}</span>
                         </td>
                         <td>
                             <div style="font-weight:700; color:#0f172a">${item.nom_intention || 'Sans nom'}</div>
@@ -155,20 +135,19 @@
                         <td>
                             ${estEnCours ? `
                                 <div class="action-group">
-                                    <button class="btn-action btn-valider" onclick="modifierStatut('${idPropre}', 'valide', '${texteAffiche}')">✅ Valider</button>
+                                    <button class="btn-action btn-valider" onclick="modifierStatut('${idPropre}', 'valide', '${heureAffiche}')">✅ Valider</button>
                                     <input type="text" id="motif-${idPropre}" placeholder="Message personnalisé (optionnel)">
-                                    <button class="btn-action btn-refuser" onclick="modifierStatut('${idPropre}', 'refuse', '${texteAffiche}')">❌ Refuser</button>
+                                    <button class="btn-action btn-refuser" onclick="modifierStatut('${idPropre}', 'refuse', '${heureAffiche}')">❌ Refuser</button>
                                     <hr style="border:0; border-top:1px solid #e2e8f0; margin: 10px 0;">
-                                    <span style="font-size:0.7rem; font-weight:bold; color:#64748b;">DÉPLACER / FORCER :</span>
                                     <input type="date" id="newdate-${idPropre}" value="${item.date_messe}">
-                                    <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" value="${heurePure}">
+                                    <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" value="${heureInput}">
                                     <button class="btn-action btn-imposer" onclick="imposerNouveauCreneau('${idPropre}')">📅 Confirmer ce créneau</button>
                                 </div>
                             ` : `
                                 <div class="traite-info">
                                     <strong>Réponse :</strong><br>${item.reponse_pretre || 'Acceptée'}<br>
                                     <div style="margin-top:8px; font-size:0.75rem;">Mail : ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}</div>
-                                    <button class="btn-action btn-edit" onclick="activerEdition('${idPropre}')">✏️ Modifier / Déplacer</button>
+                                    <button class="btn-action btn-edit" onclick="activerEdition('${idPropre}')">✏️ Modifier</button>
                                 </div>
                             `}
                         </td>
@@ -176,47 +155,33 @@
                     tbody.appendChild(tr);
                 });
             } catch (err) {
-                console.error("Erreur de chargement:", err);
+                console.error("Erreur:", err);
             }
         }
 
-        async function modifierStatut(id, nouveauStatut, texteHeureAffiche) {
+        async function modifierStatut(id, nouveauStatut, heureTxt) {
             const { data: item } = await maConnexion.from('intentions').select('date_messe').eq('id', id).single();
             const dateFr = new Date(item.date_messe).toLocaleDateString('fr-FR');
-            const motifInput = document.getElementById(`motif-${id}`);
+            const motif = document.getElementById(`motif-${id}`).value.trim();
             
-            const messageAuto = nouveauStatut === 'valide' 
-                ? `Votre intention a été validée pour la messe du ${dateFr} ${texteHeureAffiche}.`
-                : `Désolé, nous ne pouvons pas honorer votre demande pour la messe du ${dateFr}.`;
+            const reponse = motif !== "" ? motif : 
+                (nouveauStatut === 'valide' ? `Votre intention a été validée pour la messe du ${dateFr} ${heureTxt}.` : `Désolé, nous ne pouvons pas honorer votre demande pour le ${dateFr}.`);
 
-            const reponseFinale = (motifInput && motifInput.value.trim() !== "") ? motifInput.value : messageAuto;
-
-            await maConnexion.from('intentions').update({ 
-                statut: nouveauStatut, 
-                reponse_pretre: reponseFinale, 
-                mail_envoye: false, 
-                en_edition: false 
-            }).eq('id', id);
-            
+            await maConnexion.from('intentions').update({ statut: nouveauStatut, reponse_pretre: reponse, mail_envoye: false, en_edition: false }).eq('id', id);
             chargerDemandes();
         }
 
         async function imposerNouveauCreneau(id) {
-            const nDate = document.getElementById(`newdate-${id}`).value;
-            let nHeure = document.getElementById(`newhour-${id}`).value;
-            if (!nDate) return alert("Veuillez choisir une date.");
-            
-            let hAffichage = nHeure ? "à " + nHeure.replace(':', 'h') : "à une heure à confirmer";
+            const nD = document.getElementById(`newdate-${id}`).value;
+            const nH = document.getElementById(`newhour-${id}`).value;
+            if (!nD) return alert("Date requise");
+            const hAffiche = nH ? "à " + nH.replace(':', 'h') : "à une heure à confirmer";
 
             await maConnexion.from('intentions').update({ 
-                date_messe: nDate, 
-                heure_messe: nHeure || "à confirmer", 
-                statut: 'valide', 
-                reponse_pretre: `Votre intention est confirmée pour la messe du ${new Date(nDate).toLocaleDateString('fr-FR')} ${hAffichage}.`, 
-                mail_envoye: false, 
-                en_edition: false
+                date_messe: nD, heure_messe: nH || "à confirmer", statut: 'valide', 
+                reponse_pretre: `Intention confirmée pour le ${new Date(nD).toLocaleDateString('fr-FR')} ${hAffiche}.`, 
+                mail_envoye: false, en_edition: false 
             }).eq('id', id);
-            
             chargerDemandes();
         }
 
