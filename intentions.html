@@ -20,7 +20,7 @@
         
         .table-container { background: transparent; border: none; }
         table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
-        thead { display: none; } /* Masqué sur mobile pour le mode "cartes" */
+        thead { display: none; } 
         
         tr { background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; padding: 15px; border: 1px solid #e2e8f0; }
         td { border: none; padding: 5px 0; display: block; }
@@ -39,11 +39,11 @@
         .btn-valider:disabled { background: #cbd5e1; color: #64748b; }
         .btn-refuser { background: #ef4444; }
         .btn-imposer { background: #0f172a; }
+        .btn-supprimer { background: #b91c1c; margin-top: 5px; } /* Nouveau bouton rouge foncé */
 
         input, select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box; }
         .traite-info { font-size: 0.9rem; color: #64748b; font-style: italic; background: #f1f5f9; padding: 10px; border-radius: 8px; }
 
-        /* Version Bureau (Tableau classique) */
         @media (min-width: 768px) {
             thead { display: table-header-group; }
             tr { display: table-row; box-shadow: none; }
@@ -143,6 +143,7 @@
                                     <input type="text" id="h-${item.id}" placeholder="10:30" value="${heureInput}">
                                     <button class="btn-action btn-imposer" onclick="forcer('${item.id}')">📅 Confirmer changement</button>
                                     <button class="btn-action btn-refuser" onclick="refuser('${item.id}')">❌ Refuser</button>
+                                    <button class="btn-action btn-supprimer" onclick="supprimer('${item.id}')">🗑️ Supprimer définitivement</button>
                                 </div>
                             ` : `
                                 <div class="traite-info">
@@ -182,6 +183,13 @@
             if(!confirm("Refuser cette demande ?")) return;
             await maConnexion.from('intentions').update({ statut: 'refuse', reponse_pretre: 'Demande refusée.', mail_envoye: false, en_edition: false }).eq('id', id);
             chargerDemandes();
+        }
+
+        async function supprimer(id) {
+            if(!confirm("⚠️ ATTENTION : Voulez-vous supprimer DÉFINITIVEMENT cette intention ? Cette action libérera le calendrier et ne peut pas être annulée.")) return;
+            const { error } = await maConnexion.from('intentions').delete().eq('id', id);
+            if (error) alert("Erreur lors de la suppression : " + error.message);
+            else chargerDemandes();
         }
 
         async function editer(id) {
