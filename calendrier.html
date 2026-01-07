@@ -32,8 +32,8 @@
         .date-principale { font-weight: 700; font-size: 1rem; color: #0f172a; }
         .horaire { color: #4f46e5; font-weight: 600; font-size: 0.85rem; margin-top: 4px; }
         
-        .nom-intention-display { font-size: 0.9rem; font-weight: 700; color: #ef4444; display: block; }
-        .type-intention-badge { font-size: 0.75rem; color: #64748b; font-style: italic; }
+        .nom-intention-display { font-size: 0.9rem; font-weight: 700; color: #ef4444; display: block; text-align: right; }
+        .type-intention-badge { font-size: 0.75rem; color: #64748b; font-style: italic; display: block; text-align: right; }
 
         .btn-action { background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
         .btn-search { background: #0f172a; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; }
@@ -44,7 +44,7 @@
         
         #modal-saisie {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5); align-items: flex-end;
+            background-color: rgba(0,0,0,0.5); align-items: flex-end; justify-content: center;
         }
         .modal-content { 
             background: white; padding: 25px; border-radius: 20px 20px 0 0; width: 100%; 
@@ -127,7 +127,7 @@
             }
 
             try {
-                // On récupère uniquement les intentions validées
+                // RÉCUPÉRATION DES INTENTIONS (Toutes sauf refusées)
                 const { data: intentions } = await maConnexion.from('intentions').select('*').neq('statut', 'refuse');
                 
                 const now = new Date();
@@ -140,6 +140,8 @@
                 
                 const divProche = document.getElementById('liste-proche');
                 const divGlobale = document.getElementById('liste-globale');
+                divProche.innerHTML = "";
+                divGlobale.innerHTML = "";
                 document.getElementById('chargement').style.display = 'none';
 
                 if (data.items) {
@@ -151,8 +153,12 @@
                             const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
                             const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
 
-                            // Vérification si une intention existe pour cet ID Google
-                            const intention = intentions ? intentions.find(i => i.google_event_id === event.id) : null;
+                            // LOGIQUE DE CORRESPONDANCE AMÉLIORÉE :
+                            // On cherche soit par google_event_id, soit par date_messe
+                            const intention = intentions ? intentions.find(i => 
+                                (i.google_event_id === event.id) || (i.date_messe === dateISO && i.statut === 'valide')
+                            ) : null;
+                            
                             const estLibre = !intention;
 
                             let contenuAction = "";
@@ -161,7 +167,7 @@
                             } else {
                                 const icone = intention.type_intention === 'Défunt' ? '✝️' : (intention.type_intention === 'Vivant' ? '🙏' : '✨');
                                 contenuAction = `
-                                    <div style="text-align: right; max-width: 160px;">
+                                    <div style="text-align: right;">
                                         <span class="nom-intention-display">${intention.nom_intention}</span>
                                         <span class="type-intention-badge">${icone} ${intention.type_intention}</span>
                                     </div>`;
@@ -188,12 +194,9 @@
         }
 
         function ouvrirModal(iso, dateFr, googleId, heure) {
-            // Reset du formulaire
             document.getElementById('nom_intention').value = "";
             document.getElementById('nom_donateur').value = "";
             document.getElementById('commentaire').value = "";
-            
-            // Assignation des valeurs cachées
             document.getElementById('input-date-iso').value = iso;
             document.getElementById('input-google-id').value = googleId;
             document.getElementById('input-heure').value = heure;
@@ -215,7 +218,6 @@
 
             if (!nom_intention) return alert("Veuillez indiquer le nom de l'intention.");
 
-            // Enregistrement pur en base de données, sans aucune gestion d'email
             const { error } = await maConnexion.from('intentions').insert([{
                 date_messe,
                 google_event_id,
@@ -224,7 +226,9 @@
                 type_intention,
                 nom_donateur: nom_donateur || "Paroisse",
                 commentaire,
-                statut: 'valide'
+                statut: 'valide',
+                email_donateur: 'non@renseigne.fr', // Pour éviter les erreurs du script mail
+                mail_envoye: true // Pas besoin de mail pour une saisie manuelle
             }]);
 
             if (error) {
@@ -254,4 +258,3 @@
     </script>
 </body>
 </html>
-
