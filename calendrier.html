@@ -73,10 +73,13 @@
         async function chargerAgenda() {
             if (typeof maConnexion === 'undefined') { setTimeout(chargerAgenda, 500); return; }
             try {
+                // On récupère toutes les intentions
                 const { data: intentions } = await maConnexion.from('intentions').select('*').neq('statut', 'refuse');
+                
                 const now = new Date();
                 const limite15Jours = new Date(); limite15Jours.setDate(now.getDate() + 15);
                 const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=500`;
+                
                 const response = await fetch(url);
                 const data = await response.json();
                 
@@ -92,9 +95,18 @@
                             const dateObj = new Date(start);
                             const dateISO = dateObj.toISOString().split('T')[0];
                             const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-                            const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+                            const heureBrute = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                            const heureFr = heureBrute.replace(':', 'h');
 
-                            const intention = intentions ? intentions.find(i => (i.google_event_id === event.id) || (i.date_messe === dateISO && i.statut === 'valide')) : null;
+                            // --- CORRECTION DE LA LOGIQUE DE RECHERCHE ---
+                            // On cherche d'abord par ID Google (le plus précis)
+                            // Sinon on cherche par Date ET Heure exacte (pour éviter le doublon du dimanche)
+                            const intention = intentions ? intentions.find(i => {
+                                const memeId = i.google_event_id === event.id;
+                                const memeDateHeure = (i.date_messe === dateISO && i.heure_messe === heureBrute.replace('h', ':') && i.statut === 'valide');
+                                return memeId || memeDateHeure;
+                            }) : null;
+
                             const estLibre = !intention;
 
                             let contenuAction = "";
@@ -133,9 +145,13 @@
         }
 
         function ouvrirModal(iso, dateFr, googleId, heure) {
-            document.getElementById('nom_intention').value = ""; document.getElementById('nom_donateur').value = "";
-            document.getElementById('input-date-iso').value = iso; document.getElementById('input-google-id').value = googleId;
-            document.getElementById('input-heure').value = heure; document.getElementById('modal-title').innerText = dateFr + " à " + heure;
+            document.getElementById('nom_intention').value = ""; 
+            document.getElementById('nom_donateur').value = "";
+            document.getElementById('commentaire').value = "";
+            document.getElementById('input-date-iso').value = iso; 
+            document.getElementById('input-google-id').value = googleId;
+            document.getElementById('input-heure').value = heure; 
+            document.getElementById('modal-title').innerText = dateFr + " à " + heure;
             document.getElementById('modal-saisie').style.display = 'flex';
         }
 
@@ -145,15 +161,21 @@
             const date_messe = document.getElementById('input-date-iso').value;
             const google_event_id = document.getElementById('input-google-id').value;
             const nom_intention = document.getElementById('nom_intention').value;
+            const heure_brute = document.getElementById('input-heure').value.replace('h', ':');
+
             if (!nom_intention) return alert("Indiquez l'intention.");
 
             const { error } = await maConnexion.from('intentions').insert([{
-                date_messe, google_event_id, 
-                heure_messe: document.getElementById('input-heure').value.replace('h', ':'),
-                nom_intention, type_intention: document.getElementById('type_intention').value,
+                date_messe, 
+                google_event_id, 
+                heure_messe: heure_brute,
+                nom_intention, 
+                type_intention: document.getElementById('type_intention').value,
                 nom_donateur: document.getElementById('nom_donateur').value || "Paroisse",
                 commentaire: document.getElementById('commentaire').value,
-                statut: 'valide', email_donateur: 'non@renseigne.fr', mail_envoye: true
+                statut: 'valide', 
+                email_donateur: 'non@renseigne.fr', 
+                mail_envoye: true
             }]);
 
             if (error) alert(error.message);
