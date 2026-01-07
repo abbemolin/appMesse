@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Traitement des Intentions</title>
+    <title>Gestion des Intentions</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -39,10 +39,10 @@
         .btn-valider:disabled { background: #cbd5e1; color: #64748b; }
         .btn-refuser { background: #ef4444; }
         .btn-imposer { background: #0f172a; }
-        .btn-supprimer { background: #b91c1c; margin-top: 5px; } /* Nouveau bouton rouge foncé */
+        .btn-supprimer { background: #b91c1c; margin-top: 5px; } 
 
         input, select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box; }
-        .traite-info { font-size: 0.9rem; color: #64748b; font-style: italic; background: #f1f5f9; padding: 10px; border-radius: 8px; }
+        .traite-info { font-size: 0.9rem; color: #1e293b; background: #f1f5f9; padding: 15px; border-radius: 10px; line-height: 1.4; border-left: 4px solid #cbd5e1; }
 
         @media (min-width: 768px) {
             thead { display: table-header-group; }
@@ -147,8 +147,8 @@
                                 </div>
                             ` : `
                                 <div class="traite-info">
-                                    ${item.reponse_pretre}
-                                    <button style="width:100%; margin-top:10px; padding:8px; border-radius:6px; border:1px solid #cbd5e1;" onclick="editer('${item.id}')">✏️ Modifier</button>
+                                    <strong>Réponse :</strong><br>${item.reponse_pretre}
+                                    <button style="width:100%; margin-top:12px; padding:8px; border-radius:6px; border:1px solid #cbd5e1; background:white; cursor:pointer;" onclick="editer('${item.id}')">✏️ Modifier ou Déplacer</button>
                                 </div>
                             `}
                         </td>
@@ -158,24 +158,33 @@
             } catch (err) { console.error(err); }
         }
 
+        async function valider(id, h) {
+            const { data } = await maConnexion.from('intentions').select('date_messe, nom_intention').eq('id', id).single();
+            const dateFr = new Date(data.date_messe).toLocaleDateString('fr-FR');
+            const txt = `Votre intention (${data.nom_intention}) sera célébrée le ${dateFr} à la Messe de ${h.replace('à ', '')}`;
+            
+            await maConnexion.from('intentions').update({ statut: 'valide', reponse_pretre: txt, mail_envoye: false, en_edition: false }).eq('id', id);
+            chargerDemandes();
+        }
+
         async function forcer(id) {
             const nDate = document.getElementById(`d-${id}`).value;
             const nHeure = document.getElementById(`h-${id}`).value;
+            const { data: info } = await maConnexion.from('intentions').select('date_messe, nom_intention').eq('id', id).single();
+            
             const dejaPris = intentionsGlobal.some(i => i.date_messe === nDate && i.statut === 'valide' && i.id != id);
             if (dejaPris) return alert("Date déjà prise par une autre intention validée.");
             
-            const txt = `Déplacée au ${new Date(nDate).toLocaleDateString('fr-FR')} à ${nHeure.replace(':', 'h')}`;
+            const jourDemande = new Date(info.date_messe).toLocaleDateString('fr-FR');
+            const nouveauJour = new Date(nDate).toLocaleDateString('fr-FR');
+            const horaireNettoye = nHeure.replace(':', 'h');
+
+            const txt = `Il y a déjà une intention de Messe le ${jourDemande}. La Messe à votre intention (${info.nom_intention}) sera célébrée le ${nouveauJour} à ${horaireNettoye}`;
+
             await maConnexion.from('intentions').update({ 
                 date_messe: nDate, heure_messe: nHeure, statut: 'valide', 
                 reponse_pretre: txt, mail_envoye: false, en_edition: false 
             }).eq('id', id);
-            chargerDemandes();
-        }
-
-        async function valider(id, h) {
-            const { data } = await maConnexion.from('intentions').select('date_messe').eq('id', id).single();
-            const txt = `Validée pour le ${new Date(data.date_messe).toLocaleDateString('fr-FR')} ${h}`;
-            await maConnexion.from('intentions').update({ statut: 'valide', reponse_pretre: txt, mail_envoye: false, en_edition: false }).eq('id', id);
             chargerDemandes();
         }
 
