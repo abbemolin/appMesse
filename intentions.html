@@ -21,25 +21,31 @@
         td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
         tr:hover { background-color: #f8fafc; }
 
-        .date-badge { background: #4f46e5; color: white; border-radius: 8px; padding: 8px; text-align: center; font-weight: 700; width: 60px; }
-        .date-badge span { display: block; font-size: 0.7rem; font-weight: 400; text-transform: uppercase; }
+        /* Style Badge Date - Format Image */
+        .date-col { width: 100px; }
+        .date-badge { 
+            background: #eef2ff; color: #4f46e5; border-radius: 8px; padding: 10px; 
+            text-align: center; font-weight: 700; width: 70px; border: 1px solid #e0e7ff;
+        }
+        .date-badge span { display: block; font-size: 0.65rem; font-weight: 400; text-transform: uppercase; margin-bottom: 2px; }
+        .date-badge .annee { font-size: 0.6rem; color: #818cf8; margin-top: 2px; }
         .heure-info { display: block; margin-top: 6px; font-size: 0.85rem; color: #4f46e5; font-weight: 700; text-align: center; }
 
-        .status-pill { padding: 4px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; border: 1px solid transparent; }
+        .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: lowercase; border: 1px solid transparent; }
         .en_attente { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
         .valide { background: #dcfce7; color: #166534; border-color: #86efac; }
         .refuse { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
 
-        .action-group { display: flex; flex-direction: column; gap: 8px; width: 220px; }
-        .btn-action { cursor: pointer; border: none; padding: 8px 12px; border-radius: 6px; color: white; font-weight: 600; font-size: 0.8rem; transition: 0.2s; }
+        .action-group { display: flex; flex-direction: column; gap: 10px; width: 240px; }
+        .btn-action { cursor: pointer; border: none; padding: 10px 14px; border-radius: 8px; color: white; font-weight: 600; font-size: 0.85rem; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-valider { background: #16a34a; }
         .btn-refuser { background: #dc2626; }
         .btn-imposer { background: #4f46e5; }
         .btn-edit { background: #64748b; margin-top: 10px; width: 100%; }
-        .btn-action:hover { opacity: 0.8; }
+        .btn-action:hover { filter: brightness(1.1); transform: translateY(-1px); }
         
-        input[type="text"], input[type="date"] { padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; width: 100%; box-sizing: border-box; }
-        .traite-info { font-size: 0.8rem; color: #475569; background: #f1f5f9; padding: 12px; border-radius: 8px; }
+        input[type="text"], input[type="date"] { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; width: 100%; box-sizing: border-box; }
+        .traite-info { font-size: 0.85rem; color: #475569; background: #f1f5f9; padding: 15px; border-radius: 10px; border-left: 4px solid #cbd5e1; }
     </style>
 </head>
 <body>
@@ -54,11 +60,11 @@
                         <th>Détails</th>
                         <th>Demandeur</th>
                         <th>Statut</th>
-                        <th>Action</th>
+                        <th>Action / Décision</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    <tr><td colspan="5" style="text-align:center;">Chargement...</td></tr>
+                    <tr><td colspan="5" style="text-align:center; padding: 40px;">Chargement des données...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -67,6 +73,9 @@
     <script src="config.js"></script>
     <script src="menu.js"></script>
     <script>
+        // Log pour vérifier que config.js est bien chargé
+        console.log("Supabase Client Initialisé :", typeof maConnexion !== 'undefined');
+
         async function chargerDemandes() {
             try {
                 const { data, error } = await maConnexion
@@ -84,23 +93,25 @@
                     const tr = document.createElement('tr');
                     
                     const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
+                    const idPropre = String(item.id); // Sécurité pour les IDs complexes
 
-                    // Note : Les IDs dans les fonctions onclick sont entourés de guillemets simples '${item.id}'
                     tr.innerHTML = `
                         <td class="date-col">
                             <div class="date-badge">
                                 <span>${dateObj.toLocaleDateString('fr-FR', { month: 'short' })}</span>
                                 ${dateObj.getDate()}
+                                <div class="annee">${dateObj.getFullYear()}</div>
                             </div>
                             <span class="heure-info">${item.heure_messe || '--:--'}</span>
                         </td>
                         <td>
-                            <div style="font-weight:700">${item.nom_intention || 'Sans nom'}</div>
-                            <div style="font-size:0.8rem; color:gray">${item.type_intention}</div>
-                            ${item.commentaire ? `<div style="font-size:0.75rem; font-style:italic; margin-top:4px;">"${item.commentaire}"</div>` : ''}
+                            <div style="font-weight:700; color:#0f172a">${item.nom_intention || 'Sans nom'}</div>
+                            <div style="font-size:0.8rem; color:#64748b">${item.type_intention}</div>
+                            ${item.commentaire ? `<div style="font-size:0.75rem; font-style:italic; margin-top:6px; color:#94a3b8">"${item.commentaire}"</div>` : ''}
                         </td>
                         <td>
-                            <div style="font-size:0.9rem">${item.nom_donateur}</div>
+                            <div style="font-size:0.9rem; font-weight:500">${item.nom_donateur}</div>
+                            <div style="font-size:0.75rem; color:#94a3b8">${item.email_donateur || ''}</div>
                         </td>
                         <td>
                             <span class="status-pill ${item.statut}">${item.statut.replace('_', ' ')}</span>
@@ -108,24 +119,26 @@
                         <td>
                             ${estEnCours ? `
                                 <div class="action-group">
-                                    <button class="btn-action btn-valider" onclick="modifierStatut('${item.id}', 'valide')">✅ Valider</button>
+                                    <button class="btn-action btn-valider" onclick="modifierStatut('${idPropre}', 'valide')">✅ Valider</button>
                                     <div>
-                                        <input type="text" id="motif-${item.id}" placeholder="Note / Motif de refus">
-                                        <button class="btn-action btn-refuser" style="width:100%; margin-top:4px;" onclick="modifierStatut('${item.id}', 'refuse')">❌ Refuser</button>
+                                        <input type="text" id="motif-${idPropre}" placeholder="Note / Motif de refus">
+                                        <button class="btn-action btn-refuser" style="width:100%; margin-top:6px;" onclick="modifierStatut('${idPropre}', 'refuse')">❌ Refuser</button>
                                     </div>
-                                    <hr style="width:100%; border:0; border-top:1px solid #eee;">
+                                    <hr style="width:100%; border:0; border-top:1px solid #e2e8f0; margin: 5px 0;">
                                     <div>
-                                        <span style="font-size:0.7rem; font-weight:bold; color:#64748b">DÉPLACER L'INTENTION :</span>
-                                        <input type="date" id="newdate-${item.id}" style="margin-top:4px">
-                                        <input type="text" id="newhour-${item.id}" placeholder="ex: 18:30" style="margin-top:4px">
-                                        <button class="btn-action btn-imposer" style="width:100%; margin-top:4px;" onclick="imposerNouveauCreneau('${item.id}')">📅 Déplacer & Valider</button>
+                                        <span style="font-size:0.7rem; font-weight:bold; color:#64748b; text-transform:uppercase;">Déplacer l'intention :</span>
+                                        <input type="date" id="newdate-${idPropre}" style="margin-top:4px">
+                                        <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" style="margin-top:4px">
+                                        <button class="btn-action btn-imposer" style="width:100%; margin-top:6px;" onclick="imposerNouveauCreneau('${idPropre}')">📅 Déplacer & Valider</button>
                                     </div>
                                 </div>
                             ` : `
                                 <div class="traite-info">
                                     <strong>Réponse :</strong> ${item.reponse_pretre || 'Acceptée'}<br>
-                                    <strong>Email :</strong> ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}
-                                    <button class="btn-action btn-edit" onclick="activerEdition('${item.id}')">✏️ Modifier / Déplacer</button>
+                                    <div style="margin-top:4px;">
+                                        <strong>Email :</strong> ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}
+                                    </div>
+                                    <button class="btn-action btn-edit" onclick="activerEdition('${idPropre}')">✏️ Modifier / Déplacer</button>
                                 </div>
                             `}
                         </td>
@@ -134,12 +147,14 @@
                 });
             } catch (err) {
                 console.error("Erreur de chargement:", err);
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Erreur: ${err.message}</td></tr>`;
             }
         }
 
         async function modifierStatut(id, nouveauStatut) {
+            console.log("Appel modifierStatut pour:", id, nouveauStatut);
             const motifInput = document.getElementById(`motif-${id}`);
-            const motif = motifInput?.value || (nouveauStatut === 'valide' ? "Votre demande a été acceptée." : "Demande refusée.");
+            const motif = motifInput?.value || (nouveauStatut === 'valide' ? "Votre demande a été acceptée." : "Désolé, cette date n'est plus disponible.");
             
             const { error } = await maConnexion
                 .from('intentions')
@@ -162,7 +177,7 @@
             const nouvelleDate = document.getElementById(`newdate-${id}`).value;
             const nouvelleHeure = document.getElementById(`newhour-${id}`).value;
             
-            if (!nouvelleDate) return alert("Veuillez choisir au moins une date.");
+            if (!nouvelleDate) return alert("Veuillez choisir une date.");
             
             const { error } = await maConnexion
                 .from('intentions')
@@ -171,7 +186,7 @@
                     heure_messe: nouvelleHeure || "00:00",
                     google_event_id: null, 
                     statut: 'valide', 
-                    reponse_pretre: "Déplacée au " + nouvelleDate + (nouvelleHeure ? " à " + nouvelleHeure : ""), 
+                    reponse_pretre: "La date initialement demandée était déjà prise. Votre intention a été déplacée au " + nouvelleDate + (nouvelleHeure ? " à " + nouvelleHeure : ""), 
                     mail_envoye: false,
                     en_edition: false
                 })
