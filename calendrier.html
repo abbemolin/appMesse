@@ -32,8 +32,8 @@
         .date-principale { font-weight: 700; font-size: 1rem; color: #0f172a; }
         .horaire { color: #4f46e5; font-weight: 600; font-size: 0.85rem; margin-top: 4px; }
         
-        .nom-intention-display { font-size: 0.85rem; font-weight: 700; color: #ef4444; display: block; }
-        .type-intention-badge { font-size: 0.7rem; color: #64748b; font-style: italic; }
+        .nom-intention-display { font-size: 0.9rem; font-weight: 700; color: #ef4444; display: block; }
+        .type-intention-badge { font-size: 0.75rem; color: #64748b; font-style: italic; }
 
         .btn-action { background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
         .btn-search { background: #0f172a; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; }
@@ -127,7 +127,9 @@
             }
 
             try {
+                // On récupère uniquement les intentions validées
                 const { data: intentions } = await maConnexion.from('intentions').select('*').neq('statut', 'refuse');
+                
                 const now = new Date();
                 const limite15Jours = new Date();
                 limite15Jours.setDate(now.getDate() + 15);
@@ -149,17 +151,17 @@
                             const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
                             const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
 
+                            // Vérification si une intention existe pour cet ID Google
                             const intention = intentions ? intentions.find(i => i.google_event_id === event.id) : null;
                             const estLibre = !intention;
 
-                            // Déterminer le contenu du côté droit
                             let contenuAction = "";
                             if (estLibre) {
                                 contenuAction = `<button class="btn-action" onclick="ouvrirModal('${dateISO}', '${dateFr}', '${event.id}', '${heureFr}')">✍️</button>`;
                             } else {
                                 const icone = intention.type_intention === 'Défunt' ? '✝️' : (intention.type_intention === 'Vivant' ? '🙏' : '✨');
                                 contenuAction = `
-                                    <div style="text-align: right; max-width: 150px;">
+                                    <div style="text-align: right; max-width: 160px;">
                                         <span class="nom-intention-display">${intention.nom_intention}</span>
                                         <span class="type-intention-badge">${icone} ${intention.type_intention}</span>
                                     </div>`;
@@ -186,9 +188,12 @@
         }
 
         function ouvrirModal(iso, dateFr, googleId, heure) {
+            // Reset du formulaire
             document.getElementById('nom_intention').value = "";
             document.getElementById('nom_donateur').value = "";
             document.getElementById('commentaire').value = "";
+            
+            // Assignation des valeurs cachées
             document.getElementById('input-date-iso').value = iso;
             document.getElementById('input-google-id').value = googleId;
             document.getElementById('input-heure').value = heure;
@@ -210,6 +215,7 @@
 
             if (!nom_intention) return alert("Veuillez indiquer le nom de l'intention.");
 
+            // Enregistrement pur en base de données, sans aucune gestion d'email
             const { error } = await maConnexion.from('intentions').insert([{
                 date_messe,
                 google_event_id,
@@ -217,15 +223,16 @@
                 nom_intention,
                 type_intention,
                 nom_donateur: nom_donateur || "Paroisse",
-                email_donateur: "cure@croix-glorieuse.org",
                 commentaire,
-                statut: 'valide',
-                mail_envoye: true,
-                reponse_pretre: "Saisie manuelle App"
+                statut: 'valide'
             }]);
 
-            if (error) alert("Erreur : " + error.message);
-            else { alert("Intention enregistrée !"); location.reload(); }
+            if (error) {
+                alert("Erreur lors de l'enregistrement : " + error.message);
+            } else { 
+                alert("Intention enregistrée avec succès !"); 
+                location.reload(); 
+            }
         }
 
         function validerRecherche() {
