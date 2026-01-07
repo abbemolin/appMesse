@@ -79,11 +79,8 @@ const menuHTML = `
             <span class="nav-icon">✍️</span>
             <span class="nav-label">Gérer</span>
         </a>
-        <a href="#" class="nav-item">
-            <span class="nav-icon">⚙️</span>
-            <span class="nav-label">Profil</span>
-        </a>
-    </nav>
+   </nav>
 `;
 
 document.getElementById('menu-container').innerHTML = menuHTML;
+
