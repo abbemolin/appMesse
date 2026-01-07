@@ -134,7 +134,7 @@
                 const limite15Jours = new Date();
                 limite15Jours.setDate(now.getDate() + 15);
 
-                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=250`;
+                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=500`;
                 const response = await fetch(url);
                 const data = await response.json();
                 
@@ -254,3 +254,4 @@
     </script>
 </body>
 </html>
+
