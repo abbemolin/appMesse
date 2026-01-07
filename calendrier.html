@@ -4,79 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Planification - Intentions</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/ios-filled/192/4f46e5/cross.png">
-    <meta name="theme-color" content="#4f46e5">
-
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', -apple-system, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding-bottom: 50px; }
         main { max-width: 600px; margin: 0 auto; padding: 15px; }
-        
         h1 { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 20px; text-align: center; }
         .section-title { margin-top: 25px; font-size: 1rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
-        
-        .messe-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px; margin-bottom: 12px; border-radius: 12px;
-            background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border: 1px solid #e2e8f0;
-        }
+        .messe-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 12px; border-radius: 12px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
         .libre { border-left: 5px solid #22c55e; }
         .prise { border-left: 5px solid #ef4444; background: #fffcfc; }
-
         .date-principale { font-weight: 700; font-size: 1rem; color: #0f172a; }
         .horaire { color: #4f46e5; font-weight: 600; font-size: 0.85rem; margin-top: 4px; }
-        
         .nom-intention-display { font-size: 0.9rem; font-weight: 700; color: #ef4444; display: block; text-align: right; }
         .type-intention-badge { font-size: 0.75rem; color: #64748b; font-style: italic; display: block; text-align: right; }
-
         .btn-action { background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
-        .btn-search { background: #0f172a; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; }
-        .btn-save { background: #16a34a; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; }
-
+        .btn-delete { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: 5px; margin-left: 10px; font-size: 1.1rem; transition: color 0.2s; }
+        .btn-delete:hover { color: #ef4444; }
         .search-container { background: white; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #e2e8f0; }
         #date-picker { padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 1rem; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
-        
-        #modal-saisie {
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5); align-items: flex-end; justify-content: center;
-        }
-        .modal-content { 
-            background: white; padding: 25px; border-radius: 20px 20px 0 0; width: 100%; 
-            max-width: 500px; box-sizing: border-box; animation: slideUp 0.3s ease-out;
-        }
+        #modal-saisie { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: flex-end; justify-content: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px 20px 0 0; width: 100%; max-width: 500px; box-sizing: border-box; animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
         .modal-content label { display: block; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-top: 15px; text-transform: uppercase; }
-        .modal-content input, .modal-content select, .modal-content textarea { 
-            width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 1rem;
-        }
-
+        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 1rem; }
+        .btn-save { background: #16a34a; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; }
         .hidden { display: none; }
         #chargement { color: #64748b; font-size: 0.9rem; text-align: center; padding: 40px; }
     </style>
 </head>
 <body>
     <div id="menu-container"></div>
-
     <main>
         <h1>Planification</h1>
-
         <h2 class="section-title">📅 Prochains 15 jours</h2>
         <div id="liste-proche"></div>
-
         <div class="search-container">
             <h2 style="margin-top:0; font-size: 1rem;">🔍 Trouver une autre date</h2>
             <input type="date" id="date-picker">
-            <button class="btn-search" onclick="validerRecherche()">Rechercher</button>
+            <button style="background:#0f172a; color:white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold;" onclick="validerRecherche()">Rechercher</button>
             <div id="no-result" class="hidden" style="margin-top:10px; text-align:center; color:#ef4444;">Aucune messe à cette date.</div>
         </div>
-        
         <div id="liste-globale"></div>
         <div id="chargement">⌛ Chargement du calendrier...</div>
     </main>
@@ -84,33 +52,15 @@
     <div id="modal-saisie">
         <div class="modal-content">
             <h3 id="modal-title" style="margin-top:0; color:#0f172a;">Nouvelle Intention</h3>
-            <input type="hidden" id="input-date-iso">
-            <input type="hidden" id="input-google-id">
-            <input type="hidden" id="input-heure">
-            
-            <label>Intention pour :</label>
-            <input type="text" id="nom_intention" placeholder="ex: Défunts Famille Dupont">
-            
+            <input type="hidden" id="input-date-iso"><input type="hidden" id="input-google-id"><input type="hidden" id="input-heure">
+            <label>Intention pour :</label><input type="text" id="nom_intention" placeholder="ex: Défunts Famille Dupont">
             <div style="display: flex; gap: 10px;">
-                <div style="flex:1;">
-                    <label>Type :</label>
-                    <select id="type_intention">
-                        <option value="Défunt">✝️ Défunt</option>
-                        <option value="Vivant">🙏 Vivant</option>
-                        <option value="Action de grâce">✨ Action de grâce</option>
-                    </select>
-                </div>
-                <div style="flex:1;">
-                    <label>Demandeur :</label>
-                    <input type="text" id="nom_donateur" placeholder="Mme Dupont">
-                </div>
+                <div style="flex:1;"><label>Type :</label><select id="type_intention"><option value="Défunt">✝️ Défunt</option><option value="Vivant">🙏 Vivant</option><option value="Action de grâce">✨ Action de grâce</option></select></div>
+                <div style="flex:1;"><label>Demandeur :</label><input type="text" id="nom_donateur" placeholder="Mme Dupont"></div>
             </div>
-
-            <label>Note privée (optionnel) :</label>
-            <textarea id="commentaire" rows="2" placeholder="Ajouter une précision..."></textarea>
-
+            <label>Note privée :</label><textarea id="commentaire" rows="2"></textarea>
             <button class="btn-save" style="margin-top:20px;" onclick="enregistrerIntention()">Confirmer l'intention</button>
-            <button onclick="fermerModal()" style="background:none; border:none; color:#94a3b8; cursor:pointer; width:100%; margin-top:15px; font-weight:600;">Fermer sans enregistrer</button>
+            <button onclick="fermerModal()" style="background:none; border:none; color:#94a3b8; cursor:pointer; width:100%; margin-top:15px; font-weight:600;">Fermer</button>
         </div>
     </div>
 
@@ -121,27 +71,18 @@
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
 
         async function chargerAgenda() {
-            if (typeof maConnexion === 'undefined') {
-                setTimeout(chargerAgenda, 500);
-                return;
-            }
-
+            if (typeof maConnexion === 'undefined') { setTimeout(chargerAgenda, 500); return; }
             try {
-                // RÉCUPÉRATION DES INTENTIONS (Toutes sauf refusées)
                 const { data: intentions } = await maConnexion.from('intentions').select('*').neq('statut', 'refuse');
-                
                 const now = new Date();
-                const limite15Jours = new Date();
-                limite15Jours.setDate(now.getDate() + 15);
-
+                const limite15Jours = new Date(); limite15Jours.setDate(now.getDate() + 15);
                 const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=500`;
                 const response = await fetch(url);
                 const data = await response.json();
                 
                 const divProche = document.getElementById('liste-proche');
                 const divGlobale = document.getElementById('liste-globale');
-                divProche.innerHTML = "";
-                divGlobale.innerHTML = "";
+                divProche.innerHTML = ""; divGlobale.innerHTML = "";
                 document.getElementById('chargement').style.display = 'none';
 
                 if (data.items) {
@@ -153,12 +94,7 @@
                             const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
                             const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
 
-                            // LOGIQUE DE CORRESPONDANCE AMÉLIORÉE :
-                            // On cherche soit par google_event_id, soit par date_messe
-                            const intention = intentions ? intentions.find(i => 
-                                (i.google_event_id === event.id) || (i.date_messe === dateISO && i.statut === 'valide')
-                            ) : null;
-                            
+                            const intention = intentions ? intentions.find(i => (i.google_event_id === event.id) || (i.date_messe === dateISO && i.statut === 'valide')) : null;
                             const estLibre = !intention;
 
                             let contenuAction = "";
@@ -167,22 +103,18 @@
                             } else {
                                 const icone = intention.type_intention === 'Défunt' ? '✝️' : (intention.type_intention === 'Vivant' ? '🙏' : '✨');
                                 contenuAction = `
-                                    <div style="text-align: right;">
-                                        <span class="nom-intention-display">${intention.nom_intention}</span>
-                                        <span class="type-intention-badge">${icone} ${intention.type_intention}</span>
+                                    <div style="display: flex; align-items: center;">
+                                        <div style="text-align: right;">
+                                            <span class="nom-intention-display">${intention.nom_intention}</span>
+                                            <span class="type-intention-badge">${icone} ${intention.type_intention}</span>
+                                        </div>
+                                        <button class="btn-delete" title="Supprimer l'intention" onclick="supprimerIntention('${intention.id}')">🗑️</button>
                                     </div>`;
                             }
 
-                            const html = `
-                                <div class="messe-item ${estLibre ? 'libre' : 'prise'}" data-iso="${dateISO}">
-                                    <div>
-                                        <div class="date-principale">${dateFr}</div>
-                                        <div class="horaire">🕒 ${heureFr} - ${event.summary}</div>
-                                    </div>
-                                    <div>
-                                        ${contenuAction}
-                                    </div>
-                                </div>`;
+                            const html = `<div class="messe-item ${estLibre ? 'libre' : 'prise'}" data-iso="${dateISO}">
+                                <div><div class="date-principale">${dateFr}</div><div class="horaire">🕒 ${heureFr} - ${event.summary}</div></div>
+                                <div>${contenuAction}</div></div>`;
 
                             if (dateObj <= limite15Jours) divProche.innerHTML += html;
                             else divGlobale.innerHTML += html;
@@ -193,14 +125,17 @@
             } catch (e) { console.error(e); }
         }
 
+        async function supprimerIntention(id) {
+            if (!confirm("Voulez-vous vraiment libérer cette messe et supprimer l'intention ?")) return;
+            const { error } = await maConnexion.from('intentions').delete().eq('id', id);
+            if (error) alert("Erreur : " + error.message);
+            else location.reload();
+        }
+
         function ouvrirModal(iso, dateFr, googleId, heure) {
-            document.getElementById('nom_intention').value = "";
-            document.getElementById('nom_donateur').value = "";
-            document.getElementById('commentaire').value = "";
-            document.getElementById('input-date-iso').value = iso;
-            document.getElementById('input-google-id').value = googleId;
-            document.getElementById('input-heure').value = heure;
-            document.getElementById('modal-title').innerText = dateFr + " à " + heure;
+            document.getElementById('nom_intention').value = ""; document.getElementById('nom_donateur').value = "";
+            document.getElementById('input-date-iso').value = iso; document.getElementById('input-google-id').value = googleId;
+            document.getElementById('input-heure').value = heure; document.getElementById('modal-title').innerText = dateFr + " à " + heure;
             document.getElementById('modal-saisie').style.display = 'flex';
         }
 
@@ -209,47 +144,29 @@
         async function enregistrerIntention() {
             const date_messe = document.getElementById('input-date-iso').value;
             const google_event_id = document.getElementById('input-google-id').value;
-            let heure_messe = document.getElementById('input-heure').value.replace('h', ':'); 
-
             const nom_intention = document.getElementById('nom_intention').value;
-            const type_intention = document.getElementById('type_intention').value;
-            const nom_donateur = document.getElementById('nom_donateur').value;
-            const commentaire = document.getElementById('commentaire').value;
-
-            if (!nom_intention) return alert("Veuillez indiquer le nom de l'intention.");
+            if (!nom_intention) return alert("Indiquez l'intention.");
 
             const { error } = await maConnexion.from('intentions').insert([{
-                date_messe,
-                google_event_id,
-                heure_messe,
-                nom_intention,
-                type_intention,
-                nom_donateur: nom_donateur || "Paroisse",
-                commentaire,
-                statut: 'valide',
-                email_donateur: 'non@renseigne.fr', // Pour éviter les erreurs du script mail
-                mail_envoye: true // Pas besoin de mail pour une saisie manuelle
+                date_messe, google_event_id, 
+                heure_messe: document.getElementById('input-heure').value.replace('h', ':'),
+                nom_intention, type_intention: document.getElementById('type_intention').value,
+                nom_donateur: document.getElementById('nom_donateur').value || "Paroisse",
+                commentaire: document.getElementById('commentaire').value,
+                statut: 'valide', email_donateur: 'non@renseigne.fr', mail_envoye: true
             }]);
 
-            if (error) {
-                alert("Erreur lors de l'enregistrement : " + error.message);
-            } else { 
-                alert("Intention enregistrée avec succès !"); 
-                location.reload(); 
-            }
+            if (error) alert(error.message);
+            else location.reload();
         }
 
         function validerRecherche() {
-            const selectedDate = document.getElementById('date-picker').value;
-            const globalItems = document.querySelectorAll('#liste-globale .messe-item');
+            const val = document.getElementById('date-picker').value;
+            if (!val) return;
             let trouve = false;
-            if (!selectedDate) return alert("Choisissez une date.");
-
-            globalItems.forEach(item => {
-                if (item.getAttribute('data-iso') === selectedDate) {
-                    item.classList.remove('hidden');
-                    trouve = true;
-                } else item.classList.add('hidden');
+            document.querySelectorAll('#liste-globale .messe-item').forEach(item => {
+                if (item.getAttribute('data-iso') === val) { item.classList.remove('hidden'); trouve = true; }
+                else item.classList.add('hidden');
             });
             document.getElementById('no-result').classList.toggle('hidden', trouve);
         }
