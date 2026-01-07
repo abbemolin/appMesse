@@ -171,31 +171,33 @@
         }
 
         async function enregistrerIntention() {
-            const date_messe = document.getElementById('input-date-iso').value;
-            const nom_intention = document.getElementById('nom_intention').value;
-            const type_intention = document.getElementById('type_intention').value;
-            const nom_donateur = document.getElementById('nom_donateur').value;
-            const commentaire = document.getElementById('commentaire').value;
+    const date_messe = document.getElementById('input-date-iso').value;
+    const nom_intention = document.getElementById('nom_intention').value;
+    const type_intention = document.getElementById('type_intention').value;
+    const nom_donateur = document.getElementById('nom_donateur').value;
+    const commentaire = document.getElementById('commentaire').value;
 
-            if (!nom_intention) return alert("Le nom de l'intention est obligatoire.");
+    if (!nom_intention) return alert("Le nom de l'intention est obligatoire.");
 
-            const { error } = await maConnexion.from('intentions').insert([{
-                date_messe,
-                nom_intention,
-                type_intention,
-                nom_donateur,
-                commentaire,
-                statut: 'valide',
-                mail_envoye: true // On marque envoyé pour ne pas déclencher d'automatisme
-            }]);
+    const { data, error } = await maConnexion.from('intentions').insert([{
+        date_messe,
+        nom_intention,
+        type_intention,
+        nom_donateur: nom_donateur || "Paroisse", // Si vide, met "Paroisse"
+        email_donateur: "cure@croix-glorieuse.org", // Ajout d'un mail par défaut si la colonne est NOT NULL
+        commentaire,
+        statut: 'valide',
+        mail_envoye: true
+    }]);
 
-            if (error) {
-                alert("Erreur lors de l'enregistrement.");
-            } else {
-                alert("Intention enregistrée !");
-                location.reload();
-            }
-        }
+    if (error) {
+        console.error("Détails de l'erreur Supabase :", error);
+        alert("Erreur : " + error.message);
+    } else {
+        alert("Intention enregistrée !");
+        location.reload();
+    }
+}
 
         function validerRecherche() {
             const selectedDate = document.getElementById('date-picker').value;
@@ -221,3 +223,4 @@
     </script>
 </body>
 </html>
+
