@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        body { font-family: sans-serif; background-color: #f7fafc; color: #4a5568; }
+        main { max-width: 800px; margin: 0 auto; padding: 20px; }
         .section-title { margin-top: 30px; color: #2c3e50; border-bottom: 2px solid #5a67d8; padding-bottom: 5px; }
         .messe-item {
             display: flex; justify-content: space-between; align-items: center;
@@ -19,7 +21,11 @@
         .horaire { color: #5a67d8; font-weight: bold; font-size: 0.9em; }
         .btn-proposer { background: #5a67d8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
-        #search-bar { width: 100%; padding: 12px; margin: 20px 0; border-radius: 8px; border: 2px solid #5a67d8; font-size: 1em; }
+        .search-container { background: #edf2f7; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #cbd5e0; }
+        .search-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        #search-bar { flex: 2; padding: 10px; border-radius: 6px; border: 1px solid #5a67d8; }
+        #date-picker { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #5a67d8; }
+        
         .hidden { display: none; }
     </style>
 </head>
@@ -32,8 +38,14 @@
         <h2 class="section-title">📅 Prochains 15 jours</h2>
         <div id="liste-proche"></div>
 
-        <h2 class="section-title">🔍 Rechercher dans toute l'année</h2>
-        <input type="text" id="search-bar" placeholder="Ex: 'Mars', '15 août', 'Dimanche'..." onkeyup="filtrerMesses()">
+        <div class="search-container">
+            <h2 style="margin-top:0; font-size: 1.2em;">🔍 Rechercher une date précise</h2>
+            <div class="search-row">
+                <input type="text" id="search-bar" placeholder="Ex: 'Mars', '15 août', 'Dimanche'..." onkeyup="filtrerMesses()">
+                <input type="date" id="date-picker" onchange="rechercheParDateCalendrier()">
+            </div>
+            <small>Tapez un mot-clé ou sélectionnez une date dans le calendrier.</small>
+        </div>
         
         <div id="liste-globale"></div>
         
@@ -46,12 +58,13 @@
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
 
+        // Helper pour enlever les accents (ex: "août" devient "aout")
+        const cleanString = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
         async function chargerAgenda() {
             try {
-                // 1. Récupérer les intentions validées sur Supabase
                 const { data: intentions } = await maConnexion.from('intentions').select('date_messe, nom_intention').eq('statut', 'valide');
 
-                // 2. Récupérer les événements Google (Max 250 pour couvrir l'année)
                 const now = new Date();
                 const limite15Jours = new Date();
                 limite15Jours.setDate(now.getDate() + 15);
@@ -70,7 +83,7 @@
                         if (event.summary.toLowerCase().includes('messe')) {
                             const start = event.start.dateTime || event.start.date;
                             const dateObj = new Date(start);
-                            const dateISO = dateObj.toISOString().split('T')[0];
+                            const dateISO = dateObj.toISOString().split('T')[0]; // Format YYYY-MM-DD
                             
                             const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                             const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
@@ -78,8 +91,14 @@
                             const intention = intentions ? intentions.find(i => i.date_messe === dateISO) : null;
                             const estLibre = !intention;
 
+                            // LOGIQUE DE RECHERCHE : On stocke plusieurs formats pour que la recherche "match" à tous les coups
+                            const dateFrNumerique = dateObj.toLocaleDateString('fr-FR'); // 15/08/2026
+                            const searchTerms = cleanString(`${dateFr} ${dateISO} ${dateFrNumerique} ${event.summary}`);
+
                             const html = `
-                                <div class="messe-item ${estLibre ? 'libre' : 'prise'}" data-search="${dateFr.toLowerCase()} ${event.summary.toLowerCase()}">
+                                <div class="messe-item ${estLibre ? 'libre' : 'prise'}" 
+                                     data-search="${searchTerms}" 
+                                     data-iso="${dateISO}">
                                     <div>
                                         <div class="date-principale">${dateFr}</div>
                                         <div class="horaire">🕒 ${heureFr} - ${event.summary}</div>
@@ -98,32 +117,45 @@
                         }
                     });
                 }
-            } catch (e) { console.error(e); }
+                // Cacher la liste globale initialement
+                document.querySelectorAll('#liste-globale .messe-item').forEach(item => item.classList.add('hidden'));
+            } catch (e) { console.error("Erreur chargement agenda:", e); }
         }
 
+        // RECHERCHE TEXTUELLE
         function filtrerMesses() {
-            const query = document.getElementById('search-bar').value.toLowerCase();
-            const globalItems = document.querySelectorAll('#liste-globale .messe-item');
+            const query = cleanString(document.getElementById('search-bar').value);
+            const items = document.querySelectorAll('#liste-globale .messe-item');
             
-            globalItems.forEach(item => {
+            // On vide le date-picker si on utilise la barre de texte
+            if(query.length > 0) document.getElementById('date-picker').value = "";
+
+            items.forEach(item => {
                 const text = item.getAttribute('data-search');
-                if (query.length > 0) {
-                    item.classList.toggle('hidden', !text.includes(query));
-                } else {
-                    item.classList.add('hidden'); // On cache tout si la barre est vide pour ne garder que les 15J
-                }
+                item.classList.toggle('hidden', query.length === 0 || !text.includes(query));
             });
         }
 
-        function copierProposition(date, heure) {
-            navigator.clipboard.writeText(`Nous vous proposons de célébrer cette intention le ${date} à ${heure}.`).then(() => alert("Copié !"));
+        // RECHERCHE PAR CALENDRIER
+        function rechercheParDateCalendrier() {
+            const selectedDate = document.getElementById('date-picker').value; // YYYY-MM-DD
+            const items = document.querySelectorAll('#liste-globale .messe-item');
+
+            if (selectedDate) {
+                document.getElementById('search-bar').value = ""; // Vider l'autre recherche
+                items.forEach(item => {
+                    const itemISO = item.getAttribute('data-iso');
+                    item.classList.toggle('hidden', itemISO !== selectedDate);
+                });
+            }
         }
 
-        // Initialisation : on cache la liste globale au début, elle n'apparaît que si on cherche
-        window.onload = async () => {
-            await chargerAgenda();
-            document.querySelectorAll('#liste-globale .messe-item').forEach(item => item.classList.add('hidden'));
-        };
+        function copierProposition(date, heure) {
+            const texte = `Nous vous proposons de célébrer cette intention le ${date} à ${heure}.`;
+            navigator.clipboard.writeText(texte).then(() => alert("Message copié !"));
+        }
+
+        window.onload = chargerAgenda;
     </script>
 </body>
 </html>
