@@ -20,7 +20,6 @@
         h1 { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 20px; text-align: center; }
         .section-title { margin-top: 25px; font-size: 1rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
         
-        /* Items optimisés pour le toucher (Mobile) */
         .messe-item {
             display: flex; justify-content: space-between; align-items: center;
             padding: 16px; margin-bottom: 12px; border-radius: 12px;
@@ -28,12 +27,14 @@
             border: 1px solid #e2e8f0;
         }
         .libre { border-left: 5px solid #22c55e; }
-        .prise { border-left: 5px solid #ef4444; background: #fef2f2; }
+        .prise { border-left: 5px solid #ef4444; background: #fffcfc; }
 
         .date-principale { font-weight: 700; font-size: 1rem; color: #0f172a; }
-        .horaire { color: #4f46e5; font-weight: 600; font-size: 0.9rem; margin-top: 4px; }
+        .horaire { color: #4f46e5; font-weight: 600; font-size: 0.85rem; margin-top: 4px; }
         
-        /* Boutons larges pour smartphone */
+        .nom-intention-display { font-size: 0.85rem; font-weight: 700; color: #ef4444; display: block; }
+        .type-intention-badge { font-size: 0.7rem; color: #64748b; font-style: italic; }
+
         .btn-action { background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
         .btn-search { background: #0f172a; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; }
         .btn-save { background: #16a34a; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; }
@@ -41,10 +42,9 @@
         .search-container { background: white; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #e2e8f0; }
         #date-picker { padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 1rem; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
         
-        /* Modal Plein Écran Mobile */
         #modal-saisie {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5); align-items: flex-end; /* Apparaît par le bas sur mobile */
+            background-color: rgba(0,0,0,0.5); align-items: flex-end;
         }
         .modal-content { 
             background: white; padding: 25px; border-radius: 20px 20px 0 0; width: 100%; 
@@ -58,7 +58,7 @@
         }
 
         .hidden { display: none; }
-        #chargement { color: #64748b; font-size: 0.9rem; }
+        #chargement { color: #64748b; font-size: 0.9rem; text-align: center; padding: 40px; }
     </style>
 </head>
 <body>
@@ -78,7 +78,7 @@
         </div>
         
         <div id="liste-globale"></div>
-        <div id="chargement" style="text-align: center; padding: 40px;">⌛ Chargement du calendrier...</div>
+        <div id="chargement">⌛ Chargement du calendrier...</div>
     </main>
 
     <div id="modal-saisie">
@@ -95,9 +95,9 @@
                 <div style="flex:1;">
                     <label>Type :</label>
                     <select id="type_intention">
-                        <option value="Défunt">Défunt</option>
-                        <option value="Vivant">Vivant</option>
-                        <option value="Action de grâce">Action de grâce</option>
+                        <option value="Défunt">✝️ Défunt</option>
+                        <option value="Vivant">🙏 Vivant</option>
+                        <option value="Action de grâce">✨ Action de grâce</option>
                     </select>
                 </div>
                 <div style="flex:1;">
@@ -152,6 +152,19 @@
                             const intention = intentions ? intentions.find(i => i.google_event_id === event.id) : null;
                             const estLibre = !intention;
 
+                            // Déterminer le contenu du côté droit
+                            let contenuAction = "";
+                            if (estLibre) {
+                                contenuAction = `<button class="btn-action" onclick="ouvrirModal('${dateISO}', '${dateFr}', '${event.id}', '${heureFr}')">✍️</button>`;
+                            } else {
+                                const icone = intention.type_intention === 'Défunt' ? '✝️' : (intention.type_intention === 'Vivant' ? '🙏' : '✨');
+                                contenuAction = `
+                                    <div style="text-align: right; max-width: 150px;">
+                                        <span class="nom-intention-display">${intention.nom_intention}</span>
+                                        <span class="type-intention-badge">${icone} ${intention.type_intention}</span>
+                                    </div>`;
+                            }
+
                             const html = `
                                 <div class="messe-item ${estLibre ? 'libre' : 'prise'}" data-iso="${dateISO}">
                                     <div>
@@ -159,8 +172,7 @@
                                         <div class="horaire">🕒 ${heureFr} - ${event.summary}</div>
                                     </div>
                                     <div>
-                                        ${estLibre ? `<button class="btn-action" onclick="ouvrirModal('${dateISO}', '${dateFr}', '${event.id}', '${heureFr}')">✍️</button>` 
-                                                   : `<span style="font-size:0.8rem; color:#ef4444; font-weight:700;">OCCUPÉ</span>`}
+                                        ${contenuAction}
                                     </div>
                                 </div>`;
 
@@ -174,6 +186,9 @@
         }
 
         function ouvrirModal(iso, dateFr, googleId, heure) {
+            document.getElementById('nom_intention').value = "";
+            document.getElementById('nom_donateur').value = "";
+            document.getElementById('commentaire').value = "";
             document.getElementById('input-date-iso').value = iso;
             document.getElementById('input-google-id').value = googleId;
             document.getElementById('input-heure').value = heure;
@@ -210,7 +225,7 @@
             }]);
 
             if (error) alert("Erreur : " + error.message);
-            else { alert("Enregistré !"); location.reload(); }
+            else { alert("Intention enregistrée !"); location.reload(); }
         }
 
         function validerRecherche() {
