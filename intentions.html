@@ -82,7 +82,6 @@
             }
 
             try {
-                // 1. Récupérer les intentions depuis Supabase
                 const { data: intentions, error } = await maConnexion
                     .from('intentions')
                     .select('*')
@@ -90,7 +89,6 @@
 
                 if (error) throw error;
 
-                // 2. Récupérer les événements Google Calendar pour synchroniser les horaires
                 const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&maxResults=500`;
                 const resp = await fetch(url);
                 const googleData = await resp.json();
@@ -103,22 +101,27 @@
                     const dateObj = new Date(item.date_messe);
                     const tr = document.createElement('tr');
                     const idPropre = String(item.id);
+                    
+                    // Une intention est modifiable si elle est "en attente" OU si l'utilisateur a cliqué sur "Modifier" (en_edition: true)
                     const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
 
-                    // --- LOGIQUE D'AFFICHAGE DE L'HORAIRE ---
+                    // --- LOGIQUE D'HEURE ---
                     const googleEvent = events.find(e => e.id === item.google_event_id);
+                    let heurePure = "";
                     let heureAffichee = "";
                     let prefixe = "à ";
 
                     if (googleEvent) {
                         const start = googleEvent.start.dateTime || googleEvent.start.date;
                         const d = new Date(start);
-                        heureAffichee = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+                        heurePure = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        heureAffichee = heurePure.replace(':', 'h');
                     } else if (item.heure_messe && item.heure_messe.includes(':')) {
-                        heureAffichee = item.heure_messe.substring(0, 5).replace(':', 'h');
+                        heurePure = item.heure_messe.substring(0, 5);
+                        heureAffichee = heurePure.replace(':', 'h');
                     } else {
                         heureAffichee = "à confirmer";
-                        prefixe = ""; // Évite d'écrire "à à confirmer"
+                        prefixe = "";
                     }
 
                     tr.innerHTML = `
@@ -154,7 +157,7 @@
                                     <div>
                                         <span style="font-size:0.7rem; font-weight:bold; color:#64748b; text-transform:uppercase;">Changer Date/Heure :</span>
                                         <input type="date" id="newdate-${idPropre}" style="margin-top:4px" value="${item.date_messe}">
-                                        <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" style="margin-top:4px" value="${heureAffichee}">
+                                        <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" style="margin-top:4px" value="${heurePure || heureAffichee}">
                                         <button class="btn-action btn-imposer" style="width:100%; margin-top:6px;" onclick="imposerNouveauCreneau('${idPropre}')">📅 Valider ce créneau</button>
                                     </div>
                                 </div>
@@ -227,7 +230,11 @@
         }
 
         async function activerEdition(id) {
-            const { error } = await maConnexion.from('intentions').update({ en_edition: true }).eq('id', id);
+            const { error } = await maConnexion
+                .from('intentions')
+                .update({ en_edition: true })
+                .eq('id', id);
+                
             if (error) alert(error.message);
             else chargerDemandes();
         }
