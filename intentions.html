@@ -73,90 +73,101 @@
     <script src="menu.js"></script>
     <script>
         async function chargerDemandes() {
-            if (typeof maConnexion === 'undefined') {
-                setTimeout(chargerDemandes, 500);
-                return;
+    if (typeof maConnexion === 'undefined') {
+        setTimeout(chargerDemandes, 500);
+        return;
+    }
+
+    try {
+        // 1. Récupérer les intentions de la base de données
+        const { data: intentions, error } = await maConnexion
+            .from('intentions')
+            .select('*')
+            .order('date_messe', { ascending: true });
+
+        if (error) throw error;
+
+        // 2. Récupérer les événements Google Calendar pour avoir les vrais horaires
+        const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
+        const CALENDAR_ID = 'saintlouisenville67@gmail.com';
+        const now = new Date().toISOString();
+        const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now}&singleEvents=true&orderBy=startTime`;
+        
+        const resp = await fetch(url);
+        const googleData = await resp.json();
+        const events = googleData.items || [];
+
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = "";
+
+        intentions.forEach(item => {
+            const dateObj = new Date(item.date_messe);
+            const tr = document.createElement('tr');
+            const idPropre = String(item.id);
+            const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
+
+            // --- NOUVELLE LOGIQUE DE RÉCUPÉRATION D'HEURE ---
+            // On cherche l'événement correspondant dans Google Calendar par son ID
+            const googleEvent = events.find(e => e.id === item.google_event_id);
+            let heureAffichee = "à confirmer";
+
+            if (googleEvent) {
+                // Si l'événement est trouvé, on prend l'heure de l'agenda
+                const start = googleEvent.start.dateTime || googleEvent.start.date;
+                const d = new Date(start);
+                heureAffichee = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+            } else if (item.heure_messe && item.heure_messe.includes(':')) {
+                // Sinon, on utilise l'heure forcée dans Supabase si elle est valide
+                heureAffichee = item.heure_messe.substring(0, 5).replace(':', 'h');
             }
 
-            try {
-                const { data, error } = await maConnexion
-                    .from('intentions')
-                    .select('*')
-                    .order('date_messe', { ascending: true });
-
-                if (error) throw error;
-                
-                const tbody = document.getElementById('table-body');
-                tbody.innerHTML = "";
-
-                data.forEach(item => {
-                    const dateObj = new Date(item.date_messe);
-                    const tr = document.createElement('tr');
-                    
-                    const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
-                    const idPropre = String(item.id);
-                    
-                    // --- LOGIQUE CALENDRIER POUR L'HORAIRE ---
-                    const heureBrute = item.heure_messe || 'à confirmer';
-                    // Si contient ":" c'est une heure HH:MM, sinon on garde le texte tel quel (ex: à confirmer)
-                    const heureAffichee = heureBrute.includes(':') 
-                        ? heureBrute.substring(0, 5).replace(':', 'h') 
-                        : heureBrute;
-
-                    tr.innerHTML = `
-                        <td class="date-col">
-                            <div class="date-badge">
-                                <span>${dateObj.toLocaleDateString('fr-FR', { month: 'short' })}</span>
-                                ${dateObj.getDate()}
-                                <div class="annee">${dateObj.getFullYear()}</div>
+            tr.innerHTML = `
+                <td class="date-col">
+                    <div class="date-badge">
+                        <span>${dateObj.toLocaleDateString('fr-FR', { month: 'short' })}</span>
+                        ${dateObj.getDate()}
+                        <div class="annee">${dateObj.getFullYear()}</div>
+                    </div>
+                    <span class="heure-info">à ${heureAffichee}</span>
+                </td>
+                <td>
+                    <div style="font-weight:700; color:#0f172a">${item.nom_intention || 'Sans nom'}</div>
+                    <div style="font-size:0.8rem; color:#64748b">${item.type_intention}</div>
+                    ${item.commentaire ? `<div style="font-size:0.75rem; font-style:italic; margin-top:6px; color:#94a3b8">"${item.commentaire}"</div>` : ''}
+                </td>
+                <td>
+                    <div style="font-size:0.9rem; font-weight:500">${item.nom_donateur}</div>
+                    <div style="font-size:0.75rem; color:#94a3b8">${item.email_donateur || ''}</div>
+                </td>
+                <td>
+                    <span class="status-pill ${item.statut}">${item.statut.replace('_', ' ')}</span>
+                </td>
+                <td>
+                    ${estEnCours ? `
+                        <div class="action-group">
+                            <button class="btn-action btn-valider" onclick="modifierStatut('${idPropre}', 'valide')">✅ Valider</button>
+                            <div>
+                                <input type="text" id="motif-${idPropre}" placeholder="Note / Motif de refus">
+                                <button class="btn-action btn-refuser" style="width:100%; margin-top:6px;" onclick="modifierStatut('${idPropre}', 'refuse')">❌ Refuser</button>
                             </div>
-                            <span class="heure-info">${heureAffichee}</span>
-                        </td>
-                        <td>
-                            <div style="font-weight:700; color:#0f172a">${item.nom_intention || 'Sans nom'}</div>
-                            <div style="font-size:0.8rem; color:#64748b">${item.type_intention}</div>
-                            ${item.commentaire ? `<div style="font-size:0.75rem; font-style:italic; margin-top:6px; color:#94a3b8">"${item.commentaire}"</div>` : ''}
-                        </td>
-                        <td>
-                            <div style="font-size:0.9rem; font-weight:500">${item.nom_donateur}</div>
-                            <div style="font-size:0.75rem; color:#94a3b8">${item.email_donateur || ''}</div>
-                        </td>
-                        <td>
-                            <span class="status-pill ${item.statut}">${item.statut.replace('_', ' ')}</span>
-                        </td>
-                        <td>
-                            ${estEnCours ? `
-                                <div class="action-group">
-                                    <button class="btn-action btn-valider" onclick="modifierStatut('${idPropre}', 'valide')">✅ Valider</button>
-                                    <div>
-                                        <input type="text" id="motif-${idPropre}" placeholder="Note / Motif de refus">
-                                        <button class="btn-action btn-refuser" style="width:100%; margin-top:6px;" onclick="modifierStatut('${idPropre}', 'refuse')">❌ Refuser</button>
-                                    </div>
-                                    <hr style="width:100%; border:0; border-top:1px solid #e2e8f0; margin: 5px 0;">
-                                    <div>
-                                        <span style="font-size:0.7rem; font-weight:bold; color:#64748b; text-transform:uppercase;">Changer Date/Heure :</span>
-                                        <input type="date" id="newdate-${idPropre}" style="margin-top:4px" value="${item.date_messe}">
-                                        <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30 ou à confirmer" style="margin-top:4px" value="${heureBrute}">
-                                        <button class="btn-action btn-imposer" style="width:100%; margin-top:6px;" onclick="imposerNouveauCreneau('${idPropre}')">📅 Valider ce créneau</button>
-                                    </div>
-                                </div>
-                            ` : `
-                                <div class="traite-info">
-                                    <strong>Réponse envoyée :</strong><br>${item.reponse_pretre || 'Acceptée'}<br>
-                                    <div style="margin-top:8px; font-size:0.75rem;">
-                                        Status Email : ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}
-                                    </div>
-                                    <button class="btn-action btn-edit" onclick="activerEdition('${idPropre}')">✏️ Modifier / Déplacer</button>
-                                </div>
-                            `}
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (err) {
-                console.error("Erreur de chargement:", err);
-            }
-        }
+                            </div>
+                    ` : `
+                        <div class="traite-info">
+                            <strong>Réponse envoyée :</strong><br>${item.reponse_pretre || 'Acceptée'}<br>
+                            <div style="margin-top:8px; font-size:0.75rem;">
+                                Status Email : ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}
+                            </div>
+                            <button class="btn-action btn-edit" onclick="activerEdition('${idPropre}')">✏️ Modifier / Déplacer</button>
+                        </div>
+                    `}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error("Erreur de chargement:", err);
+    }
+}
 
         async function modifierStatut(id, nouveauStatut) {
             const { data: item } = await maConnexion.from('intentions').select('date_messe, heure_messe').eq('id', id).single();
@@ -223,3 +234,4 @@
     </script>
 </body>
 </html>
+
