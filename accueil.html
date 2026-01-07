@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des Intentions - Accueil</title>
+    <title>Intentions de Messe</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Messes">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/ios-filled/192/4f46e5/cross.png">
+    <meta name="theme-color" content="#4f46e5">
+
     <link rel="stylesheet" href="style.css">
     <style>
         .dashboard-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
@@ -54,7 +62,6 @@
     <script src="menu.js"></script>
     
     <script>
-    // Configuration Google (doit correspondre à calendrier.html)
     const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
     const CALENDAR_ID = 'saintlouisenville67@gmail.com';
 
@@ -63,22 +70,15 @@
             setTimeout(initDashboard, 500);
             return;
         }
-
         const statusBadge = document.getElementById('status-badge');
-        
         try {
-            // 1. Vérification connexion Supabase
             const { error } = await maConnexion.from('intentions').select('id').limit(1);
             if (error) throw error;
-
             statusBadge.innerText = "● Base de données connectée";
             statusBadge.style.color = "green";
-            
-            // 2. Lancer les compteurs et listes
             countPendingIntentions();
             getRecentActivity();
             getTodayMasses();
-
         } catch (err) {
             statusBadge.innerText = "● Erreur de connexion";
             statusBadge.style.color = "red";
@@ -91,7 +91,6 @@
             .from('intentions')
             .select('*', { count: 'exact', head: true })
             .eq('statut', 'en_attente');
-
         if (!error) {
             document.getElementById('pending-intentions').innerText = count || 0;
         }
@@ -104,13 +103,12 @@
             .eq('statut', 'valide')
             .order('created_at', { ascending: false })
             .limit(5);
-
         const log = document.getElementById('activity-log');
         if (!error && data.length > 0) {
             log.innerHTML = data.map(item => `
                 <div style="font-size: 0.9rem; padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
                     <strong>${item.nom_intention}</strong> (${item.type_intention}) 
-                    <span style="color: #64748b;">validée pour le ${new Date(item.date_messe).toLocaleDateString('fr-FR')}</span>
+                    <span style="color: #64748b;">le ${new Date(item.date_messe).toLocaleDateString('fr-FR')}</span>
                 </div>
             `).join('');
         } else {
@@ -125,33 +123,20 @@
             today.setHours(0,0,0,0);
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
-
             const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${today.toISOString()}&timeMax=${tomorrow.toISOString()}&singleEvents=true&orderBy=startTime`;
-            
             const response = await fetch(url);
             const data = await response.json();
-
             if (data.items && data.items.length > 0) {
                 const messes = data.items.filter(e => e.summary.toLowerCase().includes('messe'));
                 if (messes.length > 0) {
                     listDiv.innerHTML = messes.map(e => {
                         const start = e.start.dateTime || e.start.date;
                         const heure = new Date(start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
-                        return `
-                            <div class="messe-du-jour">
-                                <span class="badge-heure">${heure}</span> ${e.summary}
-                            </div>
-                        `;
+                        return `<div class="messe-du-jour"><span class="badge-heure">${heure}</span> ${e.summary}</div>`;
                     }).join('');
-                } else {
-                    listDiv.innerHTML = "Pas de messe enregistrée aujourd'hui.";
-                }
-            } else {
-                listDiv.innerHTML = "Aucun événement aujourd'hui.";
-            }
-        } catch (err) {
-            listDiv.innerHTML = "Erreur agenda.";
-        }
+                } else { listDiv.innerHTML = "Pas de messe aujourd'hui."; }
+            } else { listDiv.innerHTML = "Aucun événement aujourd'hui."; }
+        } catch (err) { listDiv.innerHTML = "Erreur agenda."; }
     }
 
     window.onload = initDashboard;
