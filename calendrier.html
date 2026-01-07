@@ -23,10 +23,10 @@
         .horaire { color: #5a67d8; font-weight: bold; }
         
         /* Boutons */
-        .btn-proposer { background: #5a67d8; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-proposer:hover { background: #434190; }
+        .btn-action { background: #5a67d8; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-action:hover { background: #434190; }
         .btn-search { background: #2d3748; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-search:hover { background: #1a202c; }
+        .btn-save { background: #28a745; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
 
         /* Zone de recherche */
         .search-container { 
@@ -37,6 +37,16 @@
         .search-controls { display: flex; gap: 10px; width: 100%; justify-content: center; }
         #date-picker { padding: 10px; border-radius: 5px; border: 1px solid #cbd5e0; font-size: 1em; width: 200px; }
         
+        /* Modal */
+        #modal-saisie {
+            display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;
+        }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; }
+        .modal-content input, .modal-content select, .modal-content textarea { 
+            width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; 
+        }
+
         .hidden { display: none; }
         #no-result { color: #718096; margin-top: 10px; font-style: italic; }
     </style>
@@ -64,6 +74,32 @@
         <div id="chargement" style="text-align: center; padding: 20px;"><strong>Chargement du calendrier...</strong></div>
     </main>
 
+    <div id="modal-saisie">
+        <div class="modal-content">
+            <h3 id="modal-title">Nouvelle Intention</h3>
+            <input type="hidden" id="input-date-iso">
+            
+            <label>Intention pour :</label>
+            <input type="text" id="nom_intention" placeholder="ex: Défunts Famille Dupont">
+            
+            <label>Type :</label>
+            <select id="type_intention">
+                <option value="Défunt">Défunt</option>
+                <option value="Vivant">Vivant</option>
+                <option value="Action de grâce">Action de grâce</option>
+            </select>
+
+            <label>Demandeur :</label>
+            <input type="text" id="nom_donateur" placeholder="ex: Mme Dupont">
+
+            <label>Commentaire :</label>
+            <textarea id="commentaire" rows="2"></textarea>
+
+            <button class="btn-save" onclick="enregistrerIntention()">Enregistrer l'intention</button>
+            <button onclick="fermerModal()" style="background:none; border:none; color:gray; cursor:pointer; width:100%; margin-top:10px;">Annuler</button>
+        </div>
+    </div>
+
     <script src="config.js"></script>
     <script src="menu.js"></script>
     <script>
@@ -72,7 +108,7 @@
 
         async function chargerAgenda() {
             try {
-                const { data: intentions } = await maConnexion.from('intentions').select('date_messe, nom_intention').eq('statut', 'valide');
+                const { data: intentions } = await maConnexion.from('intentions').select('*').neq('statut', 'refuse');
 
                 const now = new Date();
                 const limite15Jours = new Date();
@@ -107,7 +143,7 @@
                                         <div class="horaire">🕒 ${heureFr} - ${event.summary}</div>
                                     </div>
                                     <div>
-                                        ${estLibre ? `<button class="btn-proposer" onclick="copierProposition('${dateFr}', '${heureFr}')">📧 Proposer</button>` 
+                                        ${estLibre ? `<button class="btn-action" onclick="ouvrirModal('${dateISO}', '${dateFr}')">✍️ Saisir</button>` 
                                                    : `<span style="color:#c53030; font-weight:bold;">${intention.nom_intention}</span>`}
                                     </div>
                                 </div>`;
@@ -120,9 +156,45 @@
                         }
                     });
                 }
-                // On cache la liste globale par défaut
                 document.querySelectorAll('#liste-globale .messe-item').forEach(item => item.classList.add('hidden'));
             } catch (e) { console.error(e); }
+        }
+
+        function ouvrirModal(iso, dateFr) {
+            document.getElementById('input-date-iso').value = iso;
+            document.getElementById('modal-title').innerText = "Messe du " + dateFr;
+            document.getElementById('modal-saisie').style.display = 'flex';
+        }
+
+        function fermerModal() {
+            document.getElementById('modal-saisie').style.display = 'none';
+        }
+
+        async function enregistrerIntention() {
+            const date_messe = document.getElementById('input-date-iso').value;
+            const nom_intention = document.getElementById('nom_intention').value;
+            const type_intention = document.getElementById('type_intention').value;
+            const nom_donateur = document.getElementById('nom_donateur').value;
+            const commentaire = document.getElementById('commentaire').value;
+
+            if (!nom_intention) return alert("Le nom de l'intention est obligatoire.");
+
+            const { error } = await maConnexion.from('intentions').insert([{
+                date_messe,
+                nom_intention,
+                type_intention,
+                nom_donateur,
+                commentaire,
+                statut: 'valide',
+                mail_envoye: true // On marque envoyé pour ne pas déclencher d'automatisme
+            }]);
+
+            if (error) {
+                alert("Erreur lors de l'enregistrement.");
+            } else {
+                alert("Intention enregistrée !");
+                location.reload();
+            }
         }
 
         function validerRecherche() {
@@ -131,10 +203,7 @@
             const noResultMsg = document.getElementById('no-result');
             let trouve = false;
 
-            if (!selectedDate) {
-                alert("Veuillez sélectionner une date.");
-                return;
-            }
+            if (!selectedDate) return alert("Sélectionnez une date.");
 
             globalItems.forEach(item => {
                 const itemISO = item.getAttribute('data-iso');
@@ -145,13 +214,7 @@
                     item.classList.add('hidden');
                 }
             });
-
             noResultMsg.classList.toggle('hidden', trouve);
-        }
-
-        function copierProposition(date, heure) {
-            const texte = `Nous vous proposons de célébrer cette intention le ${date} à ${heure}.`;
-            navigator.clipboard.writeText(texte).then(() => alert("Copié dans le presse-papier !"));
         }
 
         window.onload = chargerAgenda;
