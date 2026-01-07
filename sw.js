@@ -1,28 +1,26 @@
-const CACHE_NAME = 'messes-v1';
+const CACHE_NAME = 'messes-v3';
 
-// Liste des fichiers à mettre en cache pour le mode hors-ligne
+// Liste mise à jour avec les bons noms de fichiers
 const ASSETS_TO_CACHE = [
     './',
-    './index.html',
+    './accueil.html',
     './intentions.html',
-    './planification.html',
     './style.css',
     './config.js',
     './menu.js',
     './manifest.json'
 ];
 
-// Installation : on met les fichiers en cache
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
+            // On utilise addAll pour les fichiers critiques
             return cache.addAll(ASSETS_TO_CACHE);
         })
     );
     self.skipWaiting();
 });
 
-// Activation : on nettoie les anciens caches
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => {
@@ -33,7 +31,6 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch : on répond avec le cache si disponible, sinon on va sur le réseau
 self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(event.request).then((response) => {
