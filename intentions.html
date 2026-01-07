@@ -7,31 +7,28 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Inter', 'Segoe UI', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }
         main { max-width: 1200px; margin: 0 auto; }
         h1 { color: #0f172a; font-weight: 800; text-align: center; margin-bottom: 30px; }
         .table-container { background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); overflow-x: auto; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        table { width: 100%; border-collapse: collapse; min-width: 950px; }
         th { background: #f1f5f9; text-align: left; padding: 16px; font-size: 0.75rem; text-transform: uppercase; color: #475569; border-bottom: 2px solid #e2e8f0; }
         td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
-        tr:hover { background-color: #f8fafc; }
         .date-col { width: 130px; text-align: center; }
         .date-badge { background: #eef2ff; color: #4f46e5; border-radius: 8px; padding: 10px; text-align: center; font-weight: 700; width: 70px; border: 1px solid #e0e7ff; margin: 0 auto; }
-        .date-badge span { display: block; font-size: 0.65rem; font-weight: 400; text-transform: uppercase; margin-bottom: 2px; }
-        .date-badge .annee { font-size: 0.6rem; color: #818cf8; margin-top: 2px; }
+        .date-badge span { display: block; font-size: 0.65rem; font-weight: 400; text-transform: uppercase; }
         .heure-info { display: block; margin-top: 8px; font-size: 0.85rem; color: #4f46e5; font-weight: 700; }
-        .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: lowercase; border: 1px solid transparent; }
-        .en_attente { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
-        .valide { background: #dcfce7; color: #166534; border-color: #86efac; }
-        .refuse { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
-        .action-group { display: flex; flex-direction: column; gap: 10px; width: 240px; }
-        .btn-action { cursor: pointer; border: none; padding: 10px 14px; border-radius: 8px; color: white; font-weight: 600; font-size: 0.85rem; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; }
+        .en_attente { background: #fef3c7; color: #92400e; }
+        .valide { background: #dcfce7; color: #166534; }
+        .refuse { background: #fee2e2; color: #991b1b; }
+        .action-group { display: flex; flex-direction: column; gap: 8px; width: 250px; }
+        .btn-action { cursor: pointer; border: none; padding: 10px; border-radius: 8px; color: white; font-weight: 600; font-size: 0.8rem; transition: 0.2s; }
         .btn-valider { background: #16a34a; }
         .btn-refuser { background: #dc2626; }
         .btn-imposer { background: #4f46e5; }
-        .btn-edit { background: #64748b; margin-top: 10px; width: 100%; }
-        input[type="text"], input[type="date"] { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; width: 100%; box-sizing: border-box; }
-        .traite-info { font-size: 0.85rem; color: #475569; background: #f1f5f9; padding: 15px; border-radius: 10px; border-left: 4px solid #cbd5e1; }
+        input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; }
+        .traite-info { font-size: 0.85rem; background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid #cbd5e1; }
     </style>
 </head>
 <body>
@@ -43,14 +40,14 @@
                 <thead>
                     <tr>
                         <th>Messe</th>
-                        <th>Détails</th>
+                        <th>Intention</th>
                         <th>Demandeur</th>
                         <th>Statut</th>
                         <th>Action / Décision</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    <tr><td colspan="5" style="text-align:center; padding: 40px;">Chargement des données...</td></tr>
+                    <tr><td colspan="5" style="text-align:center; padding: 40px;">Initialisation...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -62,130 +59,110 @@
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
 
+        // Fonction pour transformer "2026-01-08" en "20260108" pour comparer sans erreur
+        const normaliserDate = (d) => d ? d.split('T')[0].replace(/-/g, '') : '';
+
         async function chargerDemandes() {
-            if (typeof maConnexion === 'undefined') {
-                setTimeout(chargerDemandes, 500);
-                return;
-            }
+            if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 500); return; }
 
             try {
-                const { data: intentions, error } = await maConnexion
-                    .from('intentions')
-                    .select('*')
-                    .order('date_messe', { ascending: true });
-
-                if (error) throw error;
-
-                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&maxResults=500`;
+                // 1. Récupération Google Calendar (comme dans calendrier.html)
+                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&timeMin=${new Date().toISOString()}`;
                 const resp = await fetch(url);
                 const googleData = await resp.json();
                 const events = googleData.items || [];
+
+                // 2. Récupération Supabase
+                const { data: intentions, error } = await maConnexion.from('intentions').select('*').order('date_messe', { ascending: true });
+                if (error) throw error;
 
                 const tbody = document.getElementById('table-body');
                 tbody.innerHTML = "";
 
                 intentions.forEach(item => {
-                    const idPropre = String(item.id);
-                    const dateObj = new Date(item.date_messe);
-                    const isoDateSupabase = item.date_messe; // Format YYYY-MM-DD
+                    // On cherche l'événement correspondant
+                    const dateDb = normaliserDate(item.date_messe);
                     
-                    // --- RECHERCHE DE L'HORAIRE DANS GOOGLE ---
-                    let eventTrouve = events.find(e => {
-                        const start = e.start.dateTime || e.start.date;
-                        const dateGoogle = start.split('T')[0];
-                        return dateGoogle === isoDateSupabase && e.summary.toLowerCase().includes('messe');
+                    const match = events.find(e => {
+                        const dateEv = normaliserDate(e.start.dateTime || e.start.date);
+                        return dateEv === dateDb && e.summary.toLowerCase().includes('messe');
                     });
 
                     let heureAffiche = "à confirmer";
                     let heureInput = "";
 
-                    if (eventTrouve && eventTrouve.start.dateTime) {
-                        const d = new Date(eventTrouve.start.dateTime);
-                        heureInput = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+                    if (match && match.start.dateTime) {
+                        const d = new Date(match.start.dateTime);
+                        heureInput = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                         heureAffiche = "à " + heureInput.replace(':', 'h');
-                    } else if (item.heure_messe && item.heure_messe !== "à confirmer") {
-                        heureInput = item.heure_messe;
-                        heureAffiche = "à " + item.heure_messe.replace(':', 'h');
                     }
 
+                    const dateObj = new Date(item.date_messe);
+                    const tr = document.createElement('tr');
                     const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
 
-                    const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="date-col">
                             <div class="date-badge">
                                 <span>${dateObj.toLocaleDateString('fr-FR', { month: 'short' })}</span>
                                 ${dateObj.getDate()}
-                                <div class="annee">${dateObj.getFullYear()}</div>
                             </div>
                             <span class="heure-info">${heureAffiche}</span>
                         </td>
                         <td>
-                            <div style="font-weight:700; color:#0f172a">${item.nom_intention || 'Sans nom'}</div>
-                            <div style="font-size:0.8rem; color:#64748b">${item.type_intention}</div>
-                            ${item.commentaire ? `<div style="font-size:0.75rem; font-style:italic; margin-top:6px; color:#94a3b8">"${item.commentaire}"</div>` : ''}
+                            <div style="font-weight:700;">${item.nom_intention || 'Sans nom'}</div>
+                            <div style="font-size:0.8rem; color:#64748b;">${item.type_intention}</div>
                         </td>
                         <td>
-                            <div style="font-size:0.9rem; font-weight:500">${item.nom_donateur}</div>
-                            <div style="font-size:0.75rem; color:#94a3b8">${item.email_donateur || ''}</div>
+                            <div style="font-size:0.9rem;">${item.nom_donateur}</div>
                         </td>
                         <td>
-                            <span class="status-pill ${item.statut}">${item.statut.replace('_', ' ')}</span>
+                            <span class="status-pill ${item.statut}">${item.statut}</span>
                         </td>
                         <td>
                             ${estEnCours ? `
                                 <div class="action-group">
-                                    <button class="btn-action btn-valider" onclick="modifierStatut('${idPropre}', 'valide', '${heureAffiche}')">✅ Valider</button>
-                                    <input type="text" id="motif-${idPropre}" placeholder="Message personnalisé (optionnel)">
-                                    <button class="btn-action btn-refuser" onclick="modifierStatut('${idPropre}', 'refuse', '${heureAffiche}')">❌ Refuser</button>
-                                    <hr style="border:0; border-top:1px solid #e2e8f0; margin: 10px 0;">
-                                    <input type="date" id="newdate-${idPropre}" value="${item.date_messe}">
-                                    <input type="text" id="newhour-${idPropre}" placeholder="ex: 18:30" value="${heureInput}">
-                                    <button class="btn-action btn-imposer" onclick="imposerNouveauCreneau('${idPropre}')">📅 Confirmer ce créneau</button>
+                                    <button class="btn-action btn-valider" onclick="valider('${item.id}', '${heureAffiche}')">✅ Valider</button>
+                                    <button class="btn-action btn-refuser" onclick="refuser('${item.id}')">❌ Refuser</button>
+                                    <hr>
+                                    <input type="date" id="d-${item.id}" value="${item.date_messe}">
+                                    <input type="text" id="h-${item.id}" placeholder="10:30" value="${heureInput}">
+                                    <button class="btn-action btn-imposer" onclick="forcer('${item.id}')">📅 Déplacer / Forcer</button>
                                 </div>
                             ` : `
                                 <div class="traite-info">
-                                    <strong>Réponse :</strong><br>${item.reponse_pretre || 'Acceptée'}<br>
-                                    <div style="margin-top:8px; font-size:0.75rem;">Mail : ${item.mail_envoye ? '✅ Envoyé' : '⏳ En attente'}</div>
-                                    <button class="btn-action btn-edit" onclick="activerEdition('${idPropre}')">✏️ Modifier</button>
+                                    ${item.reponse_pretre}<br>
+                                    <button style="margin-top:10px" onclick="editer('${item.id}')">✏️ Modifier</button>
                                 </div>
                             `}
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
-            } catch (err) {
-                console.error("Erreur:", err);
-            }
+            } catch (err) { console.error(err); }
         }
 
-        async function modifierStatut(id, nouveauStatut, heureTxt) {
-            const { data: item } = await maConnexion.from('intentions').select('date_messe').eq('id', id).single();
-            const dateFr = new Date(item.date_messe).toLocaleDateString('fr-FR');
-            const motif = document.getElementById(`motif-${id}`).value.trim();
-            
-            const reponse = motif !== "" ? motif : 
-                (nouveauStatut === 'valide' ? `Votre intention a été validée pour la messe du ${dateFr} ${heureTxt}.` : `Désolé, nous ne pouvons pas honorer votre demande pour le ${dateFr}.`);
-
-            await maConnexion.from('intentions').update({ statut: nouveauStatut, reponse_pretre: reponse, mail_envoye: false, en_edition: false }).eq('id', id);
+        async function valider(id, h) {
+            const { data } = await maConnexion.from('intentions').select('date_messe').eq('id', id).single();
+            const txt = `Confirmée pour le ${new Date(data.date_messe).toLocaleDateString('fr-FR')} ${h}.`;
+            await maConnexion.from('intentions').update({ statut: 'valide', reponse_pretre: txt, mail_envoye: false, en_edition: false }).eq('id', id);
             chargerDemandes();
         }
 
-        async function imposerNouveauCreneau(id) {
-            const nD = document.getElementById(`newdate-${id}`).value;
-            const nH = document.getElementById(`newhour-${id}`).value;
-            if (!nD) return alert("Date requise");
-            const hAffiche = nH ? "à " + nH.replace(':', 'h') : "à une heure à confirmer";
-
-            await maConnexion.from('intentions').update({ 
-                date_messe: nD, heure_messe: nH || "à confirmer", statut: 'valide', 
-                reponse_pretre: `Intention confirmée pour le ${new Date(nD).toLocaleDateString('fr-FR')} ${hAffiche}.`, 
-                mail_envoye: false, en_edition: false 
-            }).eq('id', id);
+        async function forcer(id) {
+            const d = document.getElementById(`d-${id}`).value;
+            const h = document.getElementById(`h-${id}`).value;
+            const txt = `Confirmée pour le ${new Date(d).toLocaleDateString('fr-FR')} à ${h.replace(':', 'h')}.`;
+            await maConnexion.from('intentions').update({ date_messe: d, heure_messe: h, statut: 'valide', reponse_pretre: txt, mail_envoye: false, en_edition: false }).eq('id', id);
             chargerDemandes();
         }
 
-        async function activerEdition(id) {
+        async function refuser(id) {
+            await maConnexion.from('intentions').update({ statut: 'refuse', reponse_pretre: 'Demande refusée.', mail_envoye: false, en_edition: false }).eq('id', id);
+            chargerDemandes();
+        }
+
+        async function editer(id) {
             await maConnexion.from('intentions').update({ en_edition: true }).eq('id', id);
             chargerDemandes();
         }
