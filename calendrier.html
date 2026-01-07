@@ -7,26 +7,38 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; background-color: #f7fafc; color: #4a5568; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; }
         main { max-width: 800px; margin: 0 auto; padding: 20px; }
         .section-title { margin-top: 30px; color: #2c3e50; border-bottom: 2px solid #5a67d8; padding-bottom: 5px; }
+        
+        /* Style des items */
         .messe-item {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px; margin-bottom: 8px; border-radius: 8px;
-            border-left: 6px solid; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 15px; margin-bottom: 10px; border-radius: 8px;
+            border-left: 6px solid; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .libre { border-left-color: #28a745; }
         .prise { border-left-color: #dc3545; background: #fff5f5; }
-        .date-principale { font-weight: bold; text-transform: capitalize; }
-        .horaire { color: #5a67d8; font-weight: bold; font-size: 0.9em; }
-        .btn-proposer { background: #5a67d8; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .date-principale { font-weight: bold; text-transform: capitalize; font-size: 1.1em; }
+        .horaire { color: #5a67d8; font-weight: bold; }
         
-        .search-container { background: #edf2f7; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #cbd5e0; }
-        .search-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        #search-bar { flex: 2; padding: 10px; border-radius: 6px; border: 1px solid #5a67d8; }
-        #date-picker { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #5a67d8; }
+        /* Boutons */
+        .btn-proposer { background: #5a67d8; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-proposer:hover { background: #434190; }
+        .btn-search { background: #2d3748; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-search:hover { background: #1a202c; }
+
+        /* Zone de recherche */
+        .search-container { 
+            background: white; padding: 20px; border-radius: 10px; 
+            margin: 25px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; gap: 10px; align-items: center;
+        }
+        .search-controls { display: flex; gap: 10px; width: 100%; justify-content: center; }
+        #date-picker { padding: 10px; border-radius: 5px; border: 1px solid #cbd5e0; font-size: 1em; width: 200px; }
         
         .hidden { display: none; }
+        #no-result { color: #718096; margin-top: 10px; font-style: italic; }
     </style>
 </head>
 <body>
@@ -39,12 +51,12 @@
         <div id="liste-proche"></div>
 
         <div class="search-container">
-            <h2 style="margin-top:0; font-size: 1.2em;">🔍 Rechercher une date précise</h2>
-            <div class="search-row">
-                <input type="text" id="search-bar" placeholder="Ex: 'Mars', '15 août', 'Dimanche'..." onkeyup="filtrerMesses()">
-                <input type="date" id="date-picker" onchange="rechercheParDateCalendrier()">
+            <h2 style="margin-top:0; font-size: 1.2em;">🔍 Rechercher une messe par date</h2>
+            <div class="search-controls">
+                <input type="date" id="date-picker">
+                <button class="btn-search" onclick="validerRecherche()">Afficher la messe</button>
             </div>
-            <small>Tapez un mot-clé ou sélectionnez une date dans le calendrier.</small>
+            <div id="no-result" class="hidden">Aucune messe trouvée pour cette date.</div>
         </div>
         
         <div id="liste-globale"></div>
@@ -57,9 +69,6 @@
     <script>
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
-
-        // Helper pour enlever les accents (ex: "août" devient "aout")
-        const cleanString = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
         async function chargerAgenda() {
             try {
@@ -83,7 +92,7 @@
                         if (event.summary.toLowerCase().includes('messe')) {
                             const start = event.start.dateTime || event.start.date;
                             const dateObj = new Date(start);
-                            const dateISO = dateObj.toISOString().split('T')[0]; // Format YYYY-MM-DD
+                            const dateISO = dateObj.toISOString().split('T')[0];
                             
                             const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                             const heureFr = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
@@ -91,14 +100,8 @@
                             const intention = intentions ? intentions.find(i => i.date_messe === dateISO) : null;
                             const estLibre = !intention;
 
-                            // LOGIQUE DE RECHERCHE : On stocke plusieurs formats pour que la recherche "match" à tous les coups
-                            const dateFrNumerique = dateObj.toLocaleDateString('fr-FR'); // 15/08/2026
-                            const searchTerms = cleanString(`${dateFr} ${dateISO} ${dateFrNumerique} ${event.summary}`);
-
                             const html = `
-                                <div class="messe-item ${estLibre ? 'libre' : 'prise'}" 
-                                     data-search="${searchTerms}" 
-                                     data-iso="${dateISO}">
+                                <div class="messe-item ${estLibre ? 'libre' : 'prise'}" data-iso="${dateISO}">
                                     <div>
                                         <div class="date-principale">${dateFr}</div>
                                         <div class="horaire">🕒 ${heureFr} - ${event.summary}</div>
@@ -117,42 +120,38 @@
                         }
                     });
                 }
-                // Cacher la liste globale initialement
+                // On cache la liste globale par défaut
                 document.querySelectorAll('#liste-globale .messe-item').forEach(item => item.classList.add('hidden'));
-            } catch (e) { console.error("Erreur chargement agenda:", e); }
+            } catch (e) { console.error(e); }
         }
 
-        // RECHERCHE TEXTUELLE
-        function filtrerMesses() {
-            const query = cleanString(document.getElementById('search-bar').value);
-            const items = document.querySelectorAll('#liste-globale .messe-item');
-            
-            // On vide le date-picker si on utilise la barre de texte
-            if(query.length > 0) document.getElementById('date-picker').value = "";
+        function validerRecherche() {
+            const selectedDate = document.getElementById('date-picker').value;
+            const globalItems = document.querySelectorAll('#liste-globale .messe-item');
+            const noResultMsg = document.getElementById('no-result');
+            let trouve = false;
 
-            items.forEach(item => {
-                const text = item.getAttribute('data-search');
-                item.classList.toggle('hidden', query.length === 0 || !text.includes(query));
-            });
-        }
-
-        // RECHERCHE PAR CALENDRIER
-        function rechercheParDateCalendrier() {
-            const selectedDate = document.getElementById('date-picker').value; // YYYY-MM-DD
-            const items = document.querySelectorAll('#liste-globale .messe-item');
-
-            if (selectedDate) {
-                document.getElementById('search-bar').value = ""; // Vider l'autre recherche
-                items.forEach(item => {
-                    const itemISO = item.getAttribute('data-iso');
-                    item.classList.toggle('hidden', itemISO !== selectedDate);
-                });
+            if (!selectedDate) {
+                alert("Veuillez sélectionner une date.");
+                return;
             }
+
+            globalItems.forEach(item => {
+                const itemISO = item.getAttribute('data-iso');
+                if (itemISO === selectedDate) {
+                    item.classList.remove('hidden');
+                    trouve = true;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            noResultMsg.classList.toggle('hidden', trouve);
         }
 
         function copierProposition(date, heure) {
             const texte = `Nous vous proposons de célébrer cette intention le ${date} à ${heure}.`;
-            navigator.clipboard.writeText(texte).then(() => alert("Message copié !"));
+            navigator.clipboard.writeText(texte).then(() => alert("Copié dans le presse-papier !"));
         }
 
         window.onload = chargerAgenda;
