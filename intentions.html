@@ -16,8 +16,21 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 10px; }
         main { max-width: 1000px; margin: 0 auto; }
-        h1 { color: #0f172a; font-weight: 800; text-align: center; font-size: 1.4rem; margin: 15px 0; }
+        h1 { color: #0f172a; font-weight: 800; text-align: center; font-size: 1.4rem; margin: 15px 0 5px 0; }
         
+        /* Style du compteur */
+        .stats-banner { 
+            text-align: center; 
+            margin-bottom: 20px; 
+            background: white; 
+            padding: 10px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .stats-count { font-weight: 800; color: #4f46e5; font-size: 1.2rem; }
+        .stats-label { color: #64748b; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
         .table-container { background: transparent; border: none; }
         table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
         thead { display: none; } 
@@ -57,6 +70,12 @@
     <div id="menu-container"></div>
     <main>
         <h1>Gestion des Intentions</h1>
+        
+        <div class="stats-banner">
+            <div class="stats-label">Intentions célébrées en 2026</div>
+            <div id="annual-count" class="stats-count">...</div>
+        </div>
+
         <div id="loading-status" style="text-align:center; color:#64748b;">Chargement des demandes...</div>
         <div class="table-container">
             <table>
@@ -95,6 +114,17 @@
                 if (error) throw error;
                 
                 intentionsGlobal = intentions;
+                
+                // --- CALCUL DU COMPTEUR ANNUEL ---
+                const anneeEnCours = new Date().getFullYear();
+                const count2026 = intentions.filter(i => 
+                    i.statut === 'valide' && 
+                    i.date_messe && 
+                    i.date_messe.startsWith(anneeEnCours.toString())
+                ).length;
+                document.getElementById('annual-count').innerText = count2026;
+                // ---------------------------------
+
                 document.getElementById('loading-status').style.display = 'none';
                 const tbody = document.getElementById('table-body');
                 tbody.innerHTML = "";
