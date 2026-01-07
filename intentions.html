@@ -7,16 +7,30 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .status-pill { padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; color: #333; }
+        main { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #f8fafc; text-align: left; padding: 12px; border-bottom: 2px solid #edf2f7; }
+        td { padding: 12px; border-bottom: 1px solid #edf2f7; vertical-align: top; }
+        
+        .status-pill { padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; display: inline-block; }
         .en_attente { background: #fff3cd; color: #856404; }
         .valide { background: #d4edda; color: #155724; }
         .refuse { background: #f8d7da; color: #721c24; }
-        .action-group { display: flex; flex-direction: column; gap: 5px; }
-        .btn-action { cursor: pointer; border: none; padding: 8px; border-radius: 4px; color: white; transition: 0.3s; }
+        
+        .action-group { display: flex; flex-direction: column; gap: 8px; background: #f8fafc; padding: 10px; border-radius: 6px; }
+        .btn-action { cursor: pointer; border: none; padding: 8px; border-radius: 4px; color: white; font-weight: bold; transition: 0.2s; }
         .btn-valider { background-color: #28a745; }
+        .btn-valider:hover { background-color: #218838; }
         .btn-refuser { background-color: #dc3545; }
-        .btn-proposer { background-color: #ffc107; color: black; }
-        input[type="text"], input[type="date"] { padding: 5px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+        .btn-refuser:hover { background-color: #c82333; }
+        .btn-imposer { background-color: #5a67d8; color: white; }
+        .btn-imposer:hover { background-color: #434190; }
+        
+        input[type="text"], input[type="date"] { padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 0.9em; }
+        hr { border: 0; border-top: 1px solid #e2e8f0; margin: 5px 0; }
+        small { color: #718096; line-height: 1.2; display: block; }
     </style>
 </head>
 <body>
@@ -27,14 +41,14 @@
         
         <div class="card">
             <h3>Liste des demandes à traiter</h3>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <table id="table-intentions">
                 <thead>
-                    <tr style="background: #f4f7f6; text-align: left;">
-                        <th style="padding: 10px;">Date demandée</th>
-                        <th>Intention pour</th>
+                    <tr>
+                        <th>Date messe</th>
+                        <th>Intention</th>
                         <th>Demandeur</th>
                         <th>Statut</th>
-                        <th style="width: 250px;">Décision du prêtre</th>
+                        <th style="width: 280px;">Décision du prêtre</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
@@ -52,25 +66,34 @@
                 .select('*')
                 .order('date_messe', { ascending: true });
 
-            if (error) return console.error(error);
+            if (error) return console.error("Erreur chargement :", error);
 
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = "";
 
             data.forEach(item => {
-                const dateFr = new Date(item.date_messe).toLocaleDateString('fr-FR');
+                const dateFr = new Date(item.date_messe).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
                 const tr = document.createElement('tr');
-                tr.style.borderBottom = "1px solid #eee";
                 
                 tr.innerHTML = `
-                    <td style="padding: 15px;">${dateFr}</td>
-                    <td><strong>${item.nom_intention}</strong><br><small>${item.type_intention}</small></td>
-                    <td>${item.nom_donateur}<br><small>${item.email_donateur}</small></td>
-                    <td><span class="status-pill ${item.statut}">${item.statut.replace('_', ' ')}</span></td>
-                    <td style="padding: 10px;">
+                    <td><strong>${dateFr}</strong></td>
+                    <td>
+                        <strong>${item.nom_intention || 'Non spécifié'}</strong><br>
+                        <small>${item.type_intention}</small>
+                    </td>
+                    <td>
+                        ${item.nom_donateur}<br>
+                        <small>${item.email_donateur || ''}</small>
+                    </td>
+                    <td>
+                        <span class="status-pill ${item.statut}">
+                            ${item.statut.replace('_', ' ')}
+                        </span>
+                    </td>
+                    <td>
                         ${item.statut === 'en_attente' ? `
                             <div class="action-group">
-                                <button class="btn-action btn-valider" onclick="modifierStatut(${item.id}, 'valide')">✅ Valider</button>
+                                <button class="btn-action btn-valider" onclick="modifierStatut(${item.id}, 'valide')">✅ Valider telle quelle</button>
                                 
                                 <hr>
                                 
@@ -79,17 +102,24 @@
                                 
                                 <hr>
                                 
-                                <label><small>Proposer une autre date :</small></label>
+                                <label><small>Déplacer à une autre date :</small></label>
                                 <input type="date" id="newdate-${item.id}">
-                                <button class="btn-action btn-proposer" onclick="proposerAutreDate(${item.id})">📅 Proposer date</button>
+                                <button class="btn-action btn-imposer" onclick="imposerNouvelleDate(${item.id})">📅 Valider à cette date</button>
                             </div>
-                        ` : `<small>Traité (Mail envoyé: ${item.mail_envoye ? 'Oui' : 'Non'})</small>`}
+                        ` : `
+                            <div style="font-size: 0.85em; color: #4a5568;">
+                                <strong>Traité</strong><br>
+                                <span>Note : ${item.reponse_pretre || 'aucune'}</span><br>
+                                <span>Mail envoyé : ${item.mail_envoye ? '✅' : '⏳'}</span>
+                            </div>
+                        `}
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
+        // Fonction pour Valider ou Refuser classiquement
         async function modifierStatut(id, nouveauStatut) {
             const motif = document.getElementById(`motif-${id}`)?.value || "";
             
@@ -98,32 +128,46 @@
                 .update({ 
                     statut: nouveauStatut, 
                     reponse_pretre: motif,
-                    mail_envoye: false // On réinitialise pour que le script Google renvoie un mail
-                })
-                .eq('id', id);
-
-            if (!error) chargerDemandes();
-        }
-
-        async function proposerAutreDate(id) {
-            const nouvelleDate = document.getElementById(`newdate-${id}`).value;
-            if (!nouvelleDate) return alert("Veuillez choisir une date à proposer.");
-
-            const dateFr = new Date(nouvelleDate).toLocaleDateString('fr-FR');
-            const message = "La date initiale était prise. Nous vous proposons le " + dateFr;
-
-            const { error } = await maConnexion
-                .from('intentions')
-                .update({ 
-                    statut: 'refuse', // On le marque comme refusé pour la date initiale
-                    reponse_pretre: message,
-                    mail_envoye: false 
+                    mail_envoye: false // Déclenche le script de mail automatique
                 })
                 .eq('id', id);
 
             if (!error) {
-                alert("Proposition envoyée au demandeur.");
+                alert(nouveauStatut === 'valide' ? "Intention validée !" : "Intention refusée.");
                 chargerDemandes();
+            } else {
+                alert("Erreur lors de la mise à jour.");
+            }
+        }
+
+        // Fonction pour imposer une nouvelle date et valider
+        async function imposerNouvelleDate(id) {
+            const nouvelleDate = document.getElementById(`newdate-${id}`).value;
+            if (!nouvelleDate) return alert("Veuillez choisir la nouvelle date.");
+
+            const dateLisible = new Date(nouvelleDate).toLocaleDateString('fr-FR', { 
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+            });
+            
+            // Ce message sera inclus dans le mail de confirmation
+            const message = "La date initialement demandée était déjà prise. Votre intention a été déplacée et validée pour la messe du " + dateLisible + ".";
+
+            const { error } = await maConnexion
+                .from('intentions')
+                .update({ 
+                    date_messe: nouvelleDate, // Modification de la date en base
+                    statut: 'valide',         // Validation forcée
+                    reponse_pretre: message,  // Explication pour le fidèle
+                    mail_envoye: false        // Déclenche l'envoi du mail
+                })
+                .eq('id', id);
+
+            if (!error) {
+                alert("Date modifiée et intention validée. Le fidèle sera informé par mail.");
+                chargerDemandes();
+            } else {
+                alert("Erreur lors de la modification.");
+                console.error(error);
             }
         }
 
