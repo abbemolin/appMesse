@@ -21,6 +21,9 @@
         .btn-action { background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
         .btn-delete { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: 5px; margin-left: 10px; font-size: 1.1rem; transition: color 0.2s; }
         .btn-delete:hover { color: #ef4444; }
+        /* Style spécifique pour le bouton copier pour qu'il soit discret mais accessible */
+        .btn-copy { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: 5px; margin-left: 10px; font-size: 1.1rem; transition: color 0.2s; }
+        .btn-copy:hover { color: #4f46e5; }
         .search-container { background: white; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #e2e8f0; }
         #date-picker { padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 1rem; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
         #modal-saisie { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: flex-end; justify-content: center; }
@@ -73,7 +76,6 @@
         async function chargerAgenda() {
             if (typeof maConnexion === 'undefined') { setTimeout(chargerAgenda, 500); return; }
             try {
-                // On récupère toutes les intentions
                 const { data: intentions } = await maConnexion.from('intentions').select('*').neq('statut', 'refuse');
                 
                 const now = new Date();
@@ -98,9 +100,6 @@
                             const heureBrute = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                             const heureFr = heureBrute.replace(':', 'h');
 
-                            // --- CORRECTION DE LA LOGIQUE DE RECHERCHE ---
-                            // On cherche d'abord par ID Google (le plus précis)
-                            // Sinon on cherche par Date ET Heure exacte (pour éviter le doublon du dimanche)
                             const intention = intentions ? intentions.find(i => {
                                 const memeId = i.google_event_id === event.id;
                                 const memeDateHeure = (i.date_messe === dateISO && i.heure_messe === heureBrute.replace('h', ':') && i.statut === 'valide');
@@ -114,13 +113,19 @@
                                 contenuAction = `<button class="btn-action" onclick="ouvrirModal('${dateISO}', '${dateFr}', '${event.id}', '${heureFr}')">✍️</button>`;
                             } else {
                                 const icone = intention.type_intention === 'Défunt' ? '✝️' : (intention.type_intention === 'Vivant' ? '🙏' : '✨');
+                                // Nettoyage du nom pour éviter les erreurs JS lors du clic
+                                const nomEscaped = intention.nom_intention.replace(/'/g, "\\'");
+                                
                                 contenuAction = `
                                     <div style="display: flex; align-items: center;">
                                         <div style="text-align: right;">
                                             <span class="nom-intention-display">${intention.nom_intention}</span>
                                             <span class="type-intention-badge">${icone} ${intention.type_intention}</span>
                                         </div>
-                                        <button class="btn-delete" title="Supprimer l'intention" onclick="supprimerIntention('${intention.id}')">🗑️</button>
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <button class="btn-copy" title="Copier le message" onclick="copierMessage('${nomEscaped}', '${dateFr}', '${heureFr}')">📋</button>
+                                            <button class="btn-delete" title="Supprimer l'intention" onclick="supprimerIntention('${intention.id}')">🗑️</button>
+                                        </div>
                                     </div>`;
                             }
 
@@ -135,6 +140,28 @@
                 }
                 document.querySelectorAll('#liste-globale .messe-item').forEach(item => item.classList.add('hidden'));
             } catch (e) { console.error(e); }
+        }
+
+        // Nouvelle fonction de copie demandée
+        function copierMessage(nomIntention, dateFr, heureFr) {
+            const texte = `Bonjour, \n\nLa Messe à votre intention (${nomIntention}) sera célébrée le ${dateFr} à ${heureFr}.\n\nJe vous assure de ma prière, \nAbbé Molin`;
+
+            navigator.clipboard.writeText(texte).then(() => {
+                alert("Message copié !");
+            }).catch(err => {
+                // Fallback pour les anciens navigateurs ou contextes non sécurisés
+                const textArea = document.createElement("textarea");
+                textArea.value = texte;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    alert("Message copié !");
+                } catch (err) {
+                    console.error('Erreur lors de la copie', err);
+                }
+                document.body.removeChild(textArea);
+            });
         }
 
         async function supprimerIntention(id) {
