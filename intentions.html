@@ -91,7 +91,7 @@
                 const tbody = document.getElementById('table-body');
                 tbody.innerHTML = "";
 
-                intentionsGlobal.forEach(item => {
+intentionsGlobal.forEach(item => {
                     const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
                     const dateObj = new Date(item.date_messe);
                     
@@ -101,6 +101,12 @@
                             <span class="date-badge">${dateObj.toLocaleDateString('fr-FR', {day:'numeric', month:'short'})}</span>
                             <div style="font-weight:800; font-size:1.1rem; margin-top:10px;">${item.nom_intention}</div>
                             <div style="color:#64748b; font-size:0.8rem;">Demandeur: ${item.nom_donateur} (${item.type_intention})</div>
+                            
+                            ${item.commentaire ? `
+                                <div style="margin-top:10px; padding:10px; background:#fff7ed; border-left:4px solid #f97316; border-radius:4px; font-size:0.85rem; color:#9a3412;">
+                                    <strong>Note :</strong> ${item.commentaire}
+                                </div>
+                            ` : ''}
                         </td>
                         <td>
                             ${estEnCours ? `
@@ -208,3 +214,4 @@
     </script>
 </body>
 </html>
+
