@@ -190,7 +190,7 @@
     <!-- ===== MODAL VÉRIFICATION MAIL ===== -->
     <div id="modal-mail">
         <div class="modal-mail-content">
-            <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 1.1rem;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Vérifier le mail avant envoi</h3>
+            <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 1.1rem;">📧 Vérifier le mail avant envoi</h3>
 
             <label>Destinataire</label>
             <div id="mail-destinataire"></div>
@@ -198,7 +198,7 @@
             <label>Contenu du mail (modifiable)</label>
             <textarea id="mail-corps"></textarea>
 
-            <button class="btn-approuver" onclick="approuverMail()"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="20 6 9 17 4 12"/></svg> Approuver et autoriser l'envoi</button>
+            <button class="btn-approuver" onclick="approuverMail()"> Approuver et autoriser l'envoi</button>
             <button class="btn-fermer-mail" onclick="fermerModalMail()">Fermer sans envoyer</button>
         </div>
     </div>
@@ -258,13 +258,13 @@
                     headerTr.style.cssText = 'background:#4f46e5; border-radius:12px; padding:14px 18px; cursor:pointer; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;';
                     headerTr.innerHTML =
                         '<div style="color:white; font-weight:800; font-size:1rem;">' +
-                            '<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;15&quot; height=&quot;15&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display:inline;vertical-align:middle;&quot;><rect x=&quot;3&quot; y=&quot;4&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot;/><line x1=&quot;16&quot; y1=&quot;2&quot; x2=&quot;16&quot; y2=&quot;6&quot;/><line x1=&quot;8&quot; y1=&quot;2&quot; x2=&quot;8&quot; y2=&quot;6&quot;/><line x1=&quot;3&quot; y1=&quot;10&quot; x2=&quot;21&quot; y2=&quot;10&quot;/></svg> ' + labelMois +
+                            '📅 ' + labelMois +
                             '<span style="margin-left:10px; background:rgba(255,255,255,0.2); border-radius:20px; padding:2px 10px; font-size:0.8rem;">' +
                                 itemsDuMois.length + ' intention' + (itemsDuMois.length > 1 ? 's' : '') +
                             '</span>' +
-                            (nbEnAttente > 0 ? '<span style="margin-left:6px; background:#fbbf24; color:#1e293b; border-radius:20px; padding:2px 10px; font-size:0.75rem; font-weight:700;"><svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;15&quot; height=&quot;15&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display:inline;vertical-align:middle;&quot;><path d=&quot;M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z&quot;/><line x1=&quot;12&quot; y1=&quot;9&quot; x2=&quot;12&quot; y2=&quot;13&quot;/><line x1=&quot;12&quot; y1=&quot;17&quot; x2=&quot;12.01&quot; y2=&quot;17&quot;/></svg> ' + nbEnAttente + ' en attente</span>' : '') +
+                            (nbEnAttente > 0 ? '<span style="margin-left:6px; background:#fbbf24; color:#1e293b; border-radius:20px; padding:2px 10px; font-size:0.75rem; font-weight:700;"> ' + nbEnAttente + ' en attente</span>' : '') +
                         '</div>' +
-                        '<span id="arrow-' + moisKey + '" class="accord-arrow">' + (moisIndex === 0 ? '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="18 15 12 9 6 15"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="6 9 12 15 18 9"/></svg>') + '</span>';
+                        '<span id="arrow-' + moisKey + '" class="accord-arrow">' + (moisIndex === 0 ? '' : '') + '</span>';
                     headerTr.onclick = function() { toggleMois(moisKey); };
                     tbody.appendChild(headerTr);
 
@@ -282,11 +282,11 @@
                         let badgeMail = '';
                         if (!estEnCours) {
                             if (item.mail_envoye) {
-                                badgeMail = '<span class="mail-badge mail-badge-sent"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Mail envoyé</span>';
+                                badgeMail = '<span class="mail-badge mail-badge-sent"> Mail envoyé</span>';
                             } else if (item.mail_approuve) {
-                                badgeMail = '<span class="mail-badge" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> En attente d’envoi</span>';
+                                badgeMail = '<span class="mail-badge" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">⏳ En attente d’envoi</span>';
                             } else {
-                                badgeMail = '<span class="mail-badge"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Non approuvé</span>';
+                                badgeMail = '<span class="mail-badge">⚠️ Non approuvé</span>';
                             }
                         }
 
@@ -302,24 +302,24 @@
                                 '<div style="color:#64748b; font-size:0.8rem;">Demandeur : ' + item.nom_donateur + ' (' + item.type_intention + ')</div>' +
                                 '<div style="color:#94a3b8; font-size:0.75rem;">' + (item.email_donateur || '') + '</div>' +
                                 badgeMail +
-                                (item.commentaire ? '<div style="margin-top:10px; padding:10px; background:#fff7ed; border-left:4px solid #f97316; border-radius:4px; font-size:0.85rem; color:#9a3412;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> <strong>Note :</strong> ' + item.commentaire + '</div>' : '') +
+                                (item.commentaire ? '<div style="margin-top:10px; padding:10px; background:#fff7ed; border-left:4px solid #f97316; border-radius:4px; font-size:0.85rem; color:#9a3412;"> <strong>Note :</strong> ' + item.commentaire + '</div>' : '') +
                             '</td>' +
                             '<td>' + (estEnCours ?
                                 '<div class="action-group">' +
                                     '<label style="font-size:0.7rem; font-weight:800; color:#64748b;">DISPONIBILITÉS :</label>' +
                                     '<input type="date" id="d-' + item.id + '" value="' + item.date_messe + '" onchange="refreshTimeChoicesFromInput(this)">' +
                                     '<div id="times-' + item.id + '" class="time-selector-container"></div>' +
-                                    '<button class="btn-action btn-imposer" onclick="getIdAndCall(this, finaliser)"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="20 6 9 17 4 12"/></svg> Valider cet horaire</button>' +
-                                    '<button style="background:none; border:none; color:#ef4444; font-weight:600; cursor:pointer; font-size:0.8rem;" onclick="getIdAndCall(this, refuser)"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Refuser</button>' +
-                                    '<button style="background:none; border:none; color:#94a3b8; font-weight:600; cursor:pointer; font-size:0.75rem; margin-top:4px;" onclick="getIdAndCall(this, supprimerIntention)"><svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;15&quot; height=&quot;15&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display:inline;vertical-align:middle;&quot;><polyline points=&quot;3 6 5 6 21 6&quot;/><path d=&quot;M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6&quot;/><path d=&quot;M10 11v6&quot;/><path d=&quot;M14 11v6&quot;/><path d=&quot;M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2&quot;/></svg> Supprimer</button>' +
+                                    '<button class="btn-action btn-imposer" onclick="getIdAndCall(this, finaliser)">✅ Valider cet horaire</button>' +
+                                    '<button style="background:none; border:none; color:#ef4444; font-weight:600; cursor:pointer; font-size:0.8rem;" onclick="getIdAndCall(this, refuser)">✖️ Refuser</button>' +
+                                    '<button style="background:none; border:none; color:#94a3b8; font-weight:600; cursor:pointer; font-size:0.75rem; margin-top:4px;" onclick="getIdAndCall(this, supprimerIntention)">🗑️ Supprimer</button>' +
                                 '</div>'
                             :
                                 '<div class="traite-info">' +
                                     '<strong>Confirmé :</strong> ' + (item.reponse_pretre || '—') +
                                     '<div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">' +
-                                        '<button style="font-size:0.7rem; background:none; border:1px solid #cbd5e1; border-radius:6px; padding:5px 10px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;" onclick="getIdAndCall(this, editer)"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> Modifier / Déplacer</button>' +
-                                        (!item.mail_envoye ? '<button class="btn-mail" onclick="getIdAndCall(this, ouvrirModalMailById)"><svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;15&quot; height=&quot;15&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display:inline;vertical-align:middle;&quot;><path d=&quot;M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z&quot;/><polyline points=&quot;22,6 12,13 2,6&quot;/></svg> Vérifier le mail</button>' : '') +
-                                        '<button style="font-size:0.7rem; background:none; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, supprimerIntention)"><svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;15&quot; height=&quot;15&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display:inline;vertical-align:middle;&quot;><polyline points=&quot;3 6 5 6 21 6&quot;/><path d=&quot;M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6&quot;/><path d=&quot;M10 11v6&quot;/><path d=&quot;M14 11v6&quot;/><path d=&quot;M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2&quot;/></svg> Supprimer</button>' +
+                                        '<button style="font-size:0.7rem; background:none; border:1px solid #cbd5e1; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, editer)">✏️ Modifier / Déplacer</button>' +
+                                        (!item.mail_envoye ? '<button class="btn-mail" onclick="getIdAndCall(this, ouvrirModalMailById)">📧 Vérifier le mail</button>' : '') +
+                                        '<button style="font-size:0.7rem; background:none; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, supprimerIntention)"> Supprimer</button>' +
                                     '</div>' +
                                 '</div>'
                             ) + '</td>';
@@ -337,15 +337,15 @@
                     const refHeader = document.createElement('tr');
                     refHeader.style.cssText = 'background:#94a3b8; border-radius:12px; padding:14px 18px; cursor:pointer; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; margin-top:16px;';
                     refHeader.innerHTML =
-                        '<div style="color:white; font-weight:800; font-size:1rem;"><svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;15&quot; height=&quot;15&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display:inline;vertical-align:middle;&quot;><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;10&quot;/><line x1=&quot;15&quot; y1=&quot;9&quot; x2=&quot;9&quot; y2=&quot;15&quot;/><line x1=&quot;9&quot; y1=&quot;9&quot; x2=&quot;15&quot; y2=&quot;15&quot;/></svg> Demandes refusées' +
+                        '<div style="color:white; font-weight:800; font-size:1rem;"> ✖️ Demandes refusées' +
                         '<span style="margin-left:10px; background:rgba(255,255,255,0.2); border-radius:20px; padding:2px 10px; font-size:0.8rem;">' + intentionsRefusees.length + '</span></div>' +
-                        '<span id="arrow-refuses" class="accord-arrow"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="6 9 12 15 18 9"/></svg></span>';
+                        '<span id="arrow-refuses" class="accord-arrow"></span>';
                     refHeader.onclick = function() {
                         const div = document.getElementById('groupe-refuses');
                         const arrow = document.getElementById('arrow-refuses');
                         const isOpen = div.style.display !== 'none';
                         div.style.display = isOpen ? 'none' : 'block';
-                        arrow.innerHTML = isOpen ? '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="6 9 12 15 18 9"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="18 15 12 9 6 15"/></svg>';
+                        arrow.innerHTML = isOpen ? '' : '';
                     };
                     tbody.appendChild(refHeader);
 
@@ -368,7 +368,7 @@
                                 '<div style="font-size:0.85rem; color:#94a3b8; padding:10px; background:#f8fafc; border-radius:8px;">' +
                                     'Demande refusée' +
                                     '<div style="margin-top:8px;">' +
-                                        '<button style="font-size:0.7rem; background:none; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, supprimerIntention)"><svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;15&quot; height=&quot;15&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display:inline;vertical-align:middle;&quot;><polyline points=&quot;3 6 5 6 21 6&quot;/><path d=&quot;M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6&quot;/><path d=&quot;M10 11v6&quot;/><path d=&quot;M14 11v6&quot;/><path d=&quot;M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2&quot;/></svg> Supprimer</button>' +
+                                        '<button style="font-size:0.7rem; background:none; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, supprimerIntention)"> Supprimer</button>' +
                                     '</div>' +
                                 '</div>' +
                             '</td>';
@@ -489,7 +489,7 @@
                 const estPris = intentionsGlobal.some(i => i.date_messe === inputDate && i.heure_messe === timeDb && i.statut === 'valide' && i.id !== id);
                 
                 if (estPris) {
-                    return `<div class="time-chip taken" title="Déjà réservé"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> ${timeStr}</div>`;
+                    return `<div class="time-chip taken" title="Déjà réservé"> ${timeStr}</div>`;
                 } else {
                     const isActive = (selectedHeure && selectedHeure.replace(':', 'h') === timeStr) ? 'active' : '';
                     return `<div class="time-chip ${isActive}" onclick="selectChip(this, '${id}')">${timeStr}</div>`;
@@ -566,7 +566,7 @@
             const arrow = document.getElementById('arrow-' + moisKey);
             const isOpen = div.style.display !== 'none';
             div.style.display = isOpen ? 'none' : 'block';
-            arrow.innerHTML = isOpen ? '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="6 9 12 15 18 9"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><polyline points="18 15 12 9 6 15"/></svg>';
+            arrow.innerHTML = isOpen ? '' : '';
         }
 
         async function supprimerIntention(id) {
