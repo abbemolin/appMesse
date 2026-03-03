@@ -88,7 +88,7 @@
                 const { data: intentions } = await maConnexion.from('intentions').select('*').neq('statut', 'refuse');
                 const now = new Date();
                 const limite15Jours = new Date(); limite15Jours.setDate(now.getDate() + 15);
-                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=500`;
+                const url = (() => { const tMax = new Date(now); tMax.setFullYear(tMax.getFullYear() + 1); return `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now.toISOString()}&timeMax=${tMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=500`; })();
                 
                 const response = await fetch(url);
                 const data = await response.json();
@@ -119,28 +119,31 @@
                             const estLibre = !intention;
                             let contenuAction = "";
                             if (estLibre) {
-                                contenuAction = `<button class="btn-action" onclick="ouvrirModal('${dateISO}', '${dateFr}', '${event.id}', '${heureFr}')">✍️</button>`;
+                                contenuAction = '<button class="btn-action" data-iso="' + dateISO + '" data-datefr="' + dateFr + '" data-googleid="' + event.id + '" data-heure="' + heureFr + '" onclick="ouvrirModalFromBtn(this)">✍️</button>';
                             } else {
                                 const icone = intention.type_intention === 'Défunt' ? '✝️' : (intention.type_intention === 'Vivant' ? '🙏' : '✨');
-                                const nomEscaped = intention.nom_intention.replace(/'/g, "\\'");
-                                
-                                contenuAction = `
-                                    <div style="display: flex; align-items: center;">
-                                        <div style="text-align: right;">
-                                            <span class="nom-intention-display">${intention.nom_intention}</span>
-                                            <span class="type-intention-badge">${icone} ${intention.type_intention}</span>
-                                            ${intention.commentaire ? `<span style="font-size:0.7rem; color:#f97316; display:block; font-style:italic;">📝 ${intention.commentaire}</span>` : ''}
-                                        </div>
-                                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                                            <button class="btn-copy" title="Copier le message" onclick="copierMessage('${nomEscaped}', '${dateFr}', '${heureFr}')">📋</button>
-                                            <button class="btn-delete" title="Supprimer l'intention" onclick="supprimerIntention('${intention.id}')">🗑️</button>
-                                        </div>
-                                    </div>`;
+                                contenuAction =
+                                    '<div style="display:flex; align-items:center;">' +
+                                        '<div style="text-align:right;">' +
+                                            '<span class="nom-intention-display">' + intention.nom_intention + '</span>' +
+                                            '<span class="type-intention-badge">' + icone + ' ' + intention.type_intention + '</span>' +
+                                            (intention.commentaire ? '<span style="font-size:0.7rem; color:#f97316; display:block; font-style:italic;">📝 ' + intention.commentaire + '</span>' : '') +
+                                        '</div>' +
+                                        '<div style="display:flex; flex-direction:column; gap:4px;">' +
+                                            '<button class="btn-copy" title="Copier le message" ' +
+                                                'data-nom="' + intention.nom_intention.replace(/"/g, '&quot;') + '" ' +
+                                                'data-datefr="' + dateFr + '" data-heure="' + heureFr + '" ' +
+                                                'onclick="copierMessageFromBtn(this)">📋</button>' +
+                                            '<button class="btn-delete" title="Supprimer" ' +
+                                                'data-id="' + intention.id + '" ' +
+                                                'onclick="supprimerFromBtn(this)">🗑️</button>' +
+                                        '</div>' +
+                                    '</div>';
                             }
 
-                            const html = `<div class="messe-item ${estLibre ? 'libre' : 'prise'}" data-iso="${dateISO}">
-                                <div><div class="date-principale">${dateFr}</div><div class="horaire">🕒 ${heureFr} - ${event.summary}</div></div>
-                                <div>${contenuAction}</div></div>`;
+                            const html = '<div class="messe-item ' + (estLibre ? 'libre' : 'prise') + '" data-iso="' + dateISO + '">' +
+                                '<div><div class="date-principale">' + dateFr + '</div><div class="horaire">🕒 ' + heureFr + ' - ' + event.summary + '</div></div>' +
+                                '<div>' + contenuAction + '</div></div>';
 
                             if (dateObj <= limite15Jours) divProche.innerHTML += html;
                             else divGlobale.innerHTML += html;
@@ -150,17 +153,29 @@
             } catch (e) { console.error(e); }
         }
 
-        function copierMessage(nomIntention, dateFr, heureFr) {
-            const texte = `Bonjour, \n\nLa Messe à votre intention (${nomIntention}) sera célébrée le ${dateFr} à ${heureFr}.\n\nJe vous assure de ma prière, \nAbbé Molin`;
-            navigator.clipboard.writeText(texte).then(() => { AppModal.alert('📋', 'Copié !', 'Le message a été copié dans le presse-papiers.'); }).catch(() => { AppModal.alert('❌', 'Erreur', 'Impossible de copier. Vérifiez les permissions du navigateur.'); });
+        // Lit les données depuis data-* attrs — plus d'injection dans onclick
+        function ouvrirModalFromBtn(btn) {
+            ouvrirModal(btn.dataset.iso, btn.dataset.datefr, btn.dataset.googleid, btn.dataset.heure);
         }
 
-        async function supprimerIntention(id) {
-            const ok = await AppModal.confirm("🗑️", "Supprimer l'intention ?", "Cette messe sera libérée. Aucun mail ne sera envoyé.", "Supprimer", "app-modal-btn-danger");
+        function copierMessageFromBtn(btn) {
+            const nom = btn.dataset.nom;
+            const dateFr = btn.dataset.datefr;
+            const heureFr = btn.dataset.heure;
+            const texte = 'Bonjour, \n\nLa Messe à votre intention (' + nom + ') sera célébrée le ' + dateFr + ' à ' + heureFr + '.\n\nJe vous assure de ma prière, \nAbbé Molin';
+            navigator.clipboard.writeText(texte)
+                .then(() => AppModal.alert('📋', 'Copié !', 'Le message a été copié dans le presse-papiers.'))
+                .catch(() => AppModal.alert('❌', 'Erreur', 'Impossible de copier. Vérifiez les permissions du navigateur.'));
+        }
+
+        async function supprimerFromBtn(btn) {
+            const id = btn.dataset.id;
+            const ok = await AppModal.confirm('🗑️', "Supprimer l'intention ?", 'Cette messe sera libérée. Aucun mail ne sera envoyé.', 'Supprimer', 'app-modal-btn-danger');
             if (!ok) return;
             const { error } = await maConnexion.from('intentions').delete().eq('id', id);
-            if (error) AppModal.alert("❌", "Erreur", error.message);
-            else location.reload();
+            if (error) { AppModal.alert('❌', 'Erreur', error.message); return; }
+            // FIX 2 : recharger l'agenda sans location.reload (garde le scroll)
+            chargerAgenda();
         }
 
         function ouvrirModal(iso, dateFr, googleId, heure) {
@@ -199,7 +214,7 @@
             }]);
 
             if (error) { AppModal.alert("❌", "Erreur", error.message); return; }
-            location.reload();
+            chargerAgenda();
         }
 
         function validerRecherche() {
