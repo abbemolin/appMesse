@@ -352,7 +352,8 @@
             
             const matches = googleEventsGlobal.filter(e => {
                 const d = (e.start.dateTime || e.start.date).split('T')[0];
-                return d === inputDate && e.summary.toLowerCase().includes('messe');
+                const estUneMesse = e => ['messe', 'messe chantée', 'messe anticipée'].includes(e.summary.toLowerCase().trim());
+                return d === inputDate && estUneMesse(e);
             });
 
             if (matches.length === 0) {
