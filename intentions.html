@@ -204,6 +204,7 @@
 
     <script src="config.js"></script>
     <script src="menu.js"></script>
+    <script src="modal.js"></script>
     <script>
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
@@ -359,7 +360,7 @@
         // Appelé depuis le bouton — récupère les données stockées en JS
         function ouvrirModalMailById(id) {
             const data = mailsData[id];
-            if (!data) return alert('Données introuvables, rechargez la page.');
+            if (!data) { AppModal.alert('⚠️', 'Données manquantes', 'Rechargez la page et réessayez.'); return; }
             ouvrirModalMail(id, data.texte, data.email);
         }
 
@@ -380,7 +381,7 @@
         async function approuverMail() {
             if (!mailIdEnCours) return;
             const texteModifie = document.getElementById('mail-corps').value.trim();
-            if (!texteModifie) return alert('Le mail ne peut pas être vide.');
+            if (!texteModifie) { AppModal.alert('⚠️', 'Mail vide', 'Le contenu du mail ne peut pas être vide.'); return; }
 
             const { error } = await maConnexion.from('intentions').update({
                 reponse_pretre: texteModifie,
@@ -389,7 +390,7 @@
             }).eq('id', mailIdEnCours);
 
             if (error) {
-                alert('Erreur : ' + error.message);
+                AppModal.alert('❌', 'Erreur', error.message);
             } else {
                 fermerModalMail();
                 chargerDemandes();
@@ -458,13 +459,13 @@
 
             if (estPrivee) {
                 const inputPrivee = document.getElementById(`heure-privee-${id}`);
-                if (!inputPrivee || !inputPrivee.value) return alert("Veuillez indiquer l'horaire de la Messe privée.");
+                if (!inputPrivee || !inputPrivee.value) { AppModal.alert("⚠️", "Horaire manquant", "Veuillez indiquer l'horaire de la Messe privée."); return; }
                 const [hh, mm] = inputPrivee.value.split(':');
                 hLabel = `${hh}h${mm}`;
                 hDb = `${hh}:${mm}`;
             } else {
                 const selectedChip = document.querySelector(`#times-${id} .time-chip.active`);
-                if (!selectedChip) return alert("Veuillez sélectionner un horaire disponible.");
+                if (!selectedChip) { AppModal.alert("⚠️", "Horaire manquant", "Veuillez sélectionner un horaire disponible."); return; }
                 hLabel = selectedChip.innerText;
                 hDb = hLabel.replace('h', ':');
             }
@@ -475,7 +476,7 @@
             const { data: doublon } = await maConnexion.from('intentions')
                 .select('id').eq('date_messe', d).eq('heure_messe', hDb).eq('statut', 'valide').neq('id', id).maybeSingle();
 
-            if (doublon) return alert("Désolé, ce créneau vient d'être pris.");
+            if (doublon) { AppModal.alert("⛔", "Créneau indisponible", "Désolé, ce créneau vient d'être pris par une autre intention."); return; }
 
             const { data: info } = await maConnexion.from('intentions').select('nom_intention').eq('id', id).single();
             const libelle = estPrivee ? 'Messe privée' : 'Messe';
@@ -514,10 +515,11 @@
         }
 
         async function supprimerIntention(id) {
-            if (!confirm('Supprimer définitivement cette intention ?\nAucun mail ne sera envoyé.')) return;
+            const ok = await AppModal.confirm("🗑️", "Supprimer l'intention ?", "Cette action est irréversible. Aucun mail ne sera envoyé.", "Supprimer", "app-modal-btn-danger");
+            if (!ok) return;
             const { error } = await maConnexion.from('intentions').delete().eq('id', id);
-            if (error) alert('Erreur : ' + error.message);
-            else chargerDemandes();
+            if (error) { AppModal.alert("❌", "Erreur", error.message); return; }
+            chargerDemandes();
         }
 
         async function editer(id) {
@@ -526,7 +528,8 @@
         }
 
         async function refuser(id) {
-            if(!confirm("Refuser cette demande ?")) return;
+            const okRefus = await AppModal.confirm("✖️", "Refuser la demande ?", "Un statut 'refusé' sera enregistré.", "Refuser", "app-modal-btn-danger");
+            if(!okRefus) return;
             await maConnexion.from('intentions').update({
                 statut: 'refuse', en_edition: false,
                 reponse_pretre: "Désolé, nous ne pouvons pas honorer cette demande.",
