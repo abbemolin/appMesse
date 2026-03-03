@@ -177,7 +177,7 @@
         
         <div class="stats-banner">
             <div class="stats-count" id="annual-count">...</div>
-            <div style="font-size: 0.8rem; color: #64748b;">MESSES CÉLÉBRÉES EN 2026</div>
+            <div style="font-size: 0.8rem; color: #64748b;" id="label-annee-intentions">MESSES CÉLÉBRÉES EN 2026</div>
         </div>
 
         <div id="loading-status" style="text-align:center;">Chargement des données...</div>
@@ -204,7 +204,6 @@
 
     <script src="config.js"></script>
     <script src="menu.js"></script>
-    <script src="modal.js"></script>
     <script>
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
@@ -231,9 +230,13 @@
                 // === GROUPEMENT PAR MOIS EN ACCORDÉON ===
                 const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
-                // Grouper les intentions par "YYYY-MM"
+                // Séparer refusées des autres
+                const intentionsActives = intentionsGlobal.filter(i => i.statut !== 'refuse');
+                const intentionsRefusees = intentionsGlobal.filter(i => i.statut === 'refuse');
+
+                // Grouper les intentions actives par "YYYY-MM"
                 const groupes = {};
-                intentionsGlobal.forEach(item => {
+                intentionsActives.forEach(item => {
                     const key = item.date_messe.substring(0, 7); // "2026-03"
                     if (!groupes[key]) groupes[key] = [];
                     groupes[key].push(item);
@@ -328,9 +331,59 @@
                     tbody.appendChild(groupDiv);
                 });
 
-                const count2026 = intentionsGlobal.filter(i => i.statut === 'valide' && i.date_messe.startsWith('2026')).length;
+                // Accordéon des intentions refusées
+                if (intentionsRefusees.length > 0) {
+                    const refHeader = document.createElement('tr');
+                    refHeader.style.cssText = 'background:#94a3b8; border-radius:12px; padding:14px 18px; cursor:pointer; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; margin-top:16px;';
+                    refHeader.innerHTML =
+                        '<div style="color:white; font-weight:800; font-size:1rem;">✖️ Demandes refusées' +
+                        '<span style="margin-left:10px; background:rgba(255,255,255,0.2); border-radius:20px; padding:2px 10px; font-size:0.8rem;">' + intentionsRefusees.length + '</span></div>' +
+                        '<span id="arrow-refuses" style="color:white; font-size:1.2rem;">▼</span>';
+                    refHeader.onclick = function() {
+                        const div = document.getElementById('groupe-refuses');
+                        const arrow = document.getElementById('arrow-refuses');
+                        const isOpen = div.style.display !== 'none';
+                        div.style.display = isOpen ? 'none' : 'block';
+                        arrow.textContent = isOpen ? '▼' : '▲';
+                    };
+                    tbody.appendChild(refHeader);
+
+                    const refGroup = document.createElement('div');
+                    refGroup.id = 'groupe-refuses';
+                    refGroup.style.display = 'none';
+
+                    intentionsRefusees.forEach(item => {
+                        const dateObj = new Date(item.date_messe + 'T00:00:00');
+                        const tr = document.createElement('tr');
+                        tr.dataset.intentionId = item.id;
+                        tr.style.opacity = '0.7';
+                        tr.innerHTML =
+                            '<td style="flex:1">' +
+                                '<span style="background:#94a3b8; color:white; border-radius:8px; padding:5px 10px; font-weight:800; font-size:0.85rem;">' + dateObj.toLocaleDateString('fr-FR', {day:'numeric', month:'short'}) + '</span>' +
+                                '<div style="font-weight:700; font-size:1rem; margin-top:10px; color:#64748b;">' + item.nom_intention + '</div>' +
+                                '<div style="color:#94a3b8; font-size:0.8rem;">Demandeur : ' + item.nom_donateur + '</div>' +
+                            '</td>' +
+                            '<td>' +
+                                '<div style="font-size:0.85rem; color:#94a3b8; padding:10px; background:#f8fafc; border-radius:8px;">' +
+                                    'Demande refusée' +
+                                    '<div style="margin-top:8px;">' +
+                                        '<button style="font-size:0.7rem; background:none; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, supprimerIntention)">🗑️ Supprimer</button>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</td>';
+                        refGroup.appendChild(tr);
+                    });
+                    tbody.appendChild(refGroup);
+                }
+
+                const count2026 = intentionsGlobal.filter(i => i.statut === 'valide' && i.date_messe.startsWith(new Date().getFullYear().toString())).length;
                 document.getElementById('annual-count').innerText = count2026;
-            } catch (err) { console.error(err); }
+                document.getElementById('label-annee-intentions').textContent = 'MESSES CÉLÉBRÉES EN ' + new Date().getFullYear();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loading-status').style.display = 'block';
+                document.getElementById('loading-status').innerHTML = '<p style="color:#ef4444; text-align:center; padding:20px;">❌ Erreur de connexion à la base de données.<br><button onclick="chargerDemandes()" style="margin-top:10px; padding:10px 20px; background:#4f46e5; color:white; border:none; border-radius:8px; font-weight:700; cursor:pointer;">Réessayer</button></p>';
+            }
         }
 
         // Génère le texte du mail tel que le .gs l'enverrait
@@ -393,6 +446,7 @@
                 AppModal.alert('❌', 'Erreur', error.message);
             } else {
                 fermerModalMail();
+                await AppModal.alert('✅', 'Mail approuvé', 'Le mail sera envoyé lors du prochain passage du script automatique.', 'OK', 'app-modal-btn-success');
                 chargerDemandes();
             }
         }
@@ -540,5 +594,6 @@
 
         window.onload = chargerDemandes;
     </script>
+    <script src="modal.js"></script>
 </body>
 </html>
