@@ -78,7 +78,6 @@
 
     <script src="config.js"></script>
     <script src="menu.js"></script>
-    <script src="modal.js"></script>
     <script>
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
@@ -111,7 +110,9 @@
 
                             const intention = intentions ? intentions.find(i => {
                                 const memeId = i.google_event_id === event.id;
-                                const memeDateHeure = (i.date_messe === dateISO && i.heure_messe === heureBrute.replace('h', ':') && i.statut === 'valide');
+                                // Considérer valide ET en_edition comme "prise" (messe réservée même si en cours de modif)
+                                const estPrise = i.statut === 'valide' || i.en_edition === true;
+                                const memeDateHeure = (i.date_messe === dateISO && i.heure_messe === heureBrute.replace('h', ':') && estPrise);
                                 return memeId || memeDateHeure;
                             }) : null;
 
@@ -151,7 +152,7 @@
 
         function copierMessage(nomIntention, dateFr, heureFr) {
             const texte = `Bonjour, \n\nLa Messe à votre intention (${nomIntention}) sera célébrée le ${dateFr} à ${heureFr}.\n\nJe vous assure de ma prière, \nAbbé Molin`;
-            navigator.clipboard.writeText(texte).then(() => { AppModal.alert("📋", "Copié !", "Le message a été copié dans le presse-papiers."); });
+            navigator.clipboard.writeText(texte).then(() => { AppModal.alert('📋', 'Copié !', 'Le message a été copié dans le presse-papiers.'); }).catch(() => { AppModal.alert('❌', 'Erreur', 'Impossible de copier. Vérifiez les permissions du navigateur.'); });
         }
 
         async function supprimerIntention(id) {
@@ -230,5 +231,6 @@
 
         window.onload = chargerAgenda;
     </script>
+    <script src="modal.js"></script>
 </body>
 </html>
