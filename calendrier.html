@@ -89,8 +89,8 @@
                 document.getElementById('chargement').style.display = 'none';
 
                 if (data.items) {
-                    data.items.forEach(event => {
-                        if (event.summary.toLowerCase().includes('messe')) {
+                    const estUneMesse = e => ['messe', 'messe chantée', 'messe anticipée'].includes(e.summary.toLowerCase().trim());
+                    data.items.filter(estUneMesse).forEach(event => {
                             const start = event.start.dateTime || event.start.date;
                             const dateObj = new Date(start);
                             const dateISO = dateObj.toISOString().split('T')[0];
@@ -132,7 +132,6 @@
 
                             if (dateObj <= limite15Jours) divProche.innerHTML += html;
                             else divGlobale.innerHTML += html;
-                        }
                     });
                 }
                 document.querySelectorAll('#liste-globale .messe-item').forEach(item => item.classList.add('hidden'));
