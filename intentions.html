@@ -288,26 +288,8 @@
                         const tr = document.createElement('tr');
                         tr.style.marginLeft = '0';
 
-                        const actionEnCours =
-                            '<div class="action-group">' +
-                                '<label style="font-size:0.7rem; font-weight:800; color:#64748b;">DISPONIBILITÉS :</label>' +
-                                '<input type="date" id="d-' + item.id + '" value="' + item.date_messe + '" onchange="refreshTimeChoices(\'' + item.id + '\')">' +
-                                '<div id="times-' + item.id + '" class="time-selector-container"></div>' +
-                                '<button class="btn-action btn-imposer" onclick="finaliser(\' + item.id + \')">✅ Valider cet horaire</button>' +
-                                '<button style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size:0.8rem;" onclick="refuser(\' + item.id + \')">Refuser la demande</button>' +
-                                '<button style="background:none; border:none; color:#94a3b8; font-weight:600; cursor:pointer; font-size:0.75rem; margin-top:4px;" onclick="supprimerIntention(\' + item.id + \')">🗑️ Supprimer</button>' +
-                            '</div>';
-
-                        const actionTraite =
-                            '<div class="traite-info">' +
-                                '<strong>Confirmé :</strong> ' + (item.reponse_pretre || '—') +
-                                '<div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">' +
-                                    '<button style="font-size:0.7rem; background:none; border:1px solid #cbd5e1; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="editer(\' + item.id + \')">✏️ Modifier / Déplacer</button>' +
-                                    (!item.mail_envoye ? '<button class="btn-mail" onclick="ouvrirModalMailById(\' + item.id + \')">📧 Vérifier le mail</button>' : '') +
-                                    '<button style="font-size:0.7rem; background:none; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="supprimerIntention(\' + item.id + \')">🗑️ Supprimer</button>' +
-                                '</div>' +
-                            '</div>';
-
+                        // Utilisation de dataset.intentionId pour éviter tout pb d'échappement
+                        tr.dataset.intentionId = item.id;
                         tr.innerHTML =
                             '<td style="flex:1">' +
                                 '<span class="date-badge">' + dateObj.toLocaleDateString('fr-FR', {day:'numeric', month:'short'}) + '</span>' +
@@ -317,7 +299,25 @@
                                 badgeMail +
                                 (item.commentaire ? '<div style="margin-top:10px; padding:10px; background:#fff7ed; border-left:4px solid #f97316; border-radius:4px; font-size:0.85rem; color:#9a3412;"><strong>Note :</strong> ' + item.commentaire + '</div>' : '') +
                             '</td>' +
-                            '<td>' + (estEnCours ? actionEnCours : actionTraite) + '</td>';
+                            '<td>' + (estEnCours ?
+                                '<div class="action-group">' +
+                                    '<label style="font-size:0.7rem; font-weight:800; color:#64748b;">DISPONIBILITÉS :</label>' +
+                                    '<input type="date" id="d-' + item.id + '" value="' + item.date_messe + '" onchange="refreshTimeChoicesFromInput(this)">' +
+                                    '<div id="times-' + item.id + '" class="time-selector-container"></div>' +
+                                    '<button class="btn-action btn-imposer" onclick="getIdAndCall(this, finaliser)">✅ Valider cet horaire</button>' +
+                                    '<button style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size:0.8rem;" onclick="getIdAndCall(this, refuser)">Refuser la demande</button>' +
+                                    '<button style="background:none; border:none; color:#94a3b8; font-weight:600; cursor:pointer; font-size:0.75rem; margin-top:4px;" onclick="getIdAndCall(this, supprimerIntention)">🗑️ Supprimer</button>' +
+                                '</div>'
+                            :
+                                '<div class="traite-info">' +
+                                    '<strong>Confirmé :</strong> ' + (item.reponse_pretre || '—') +
+                                    '<div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">' +
+                                        '<button style="font-size:0.7rem; background:none; border:1px solid #cbd5e1; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, editer)">✏️ Modifier / Déplacer</button>' +
+                                        (!item.mail_envoye ? '<button class="btn-mail" onclick="getIdAndCall(this, ouvrirModalMailById)">📧 Vérifier le mail</button>' : '') +
+                                        '<button style="font-size:0.7rem; background:none; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, supprimerIntention)">🗑️ Supprimer</button>' +
+                                    '</div>' +
+                                '</div>'
+                            ) + '</td>';
 
                         mailsData[item.id] = { texte: mailPrepare, email: item.email_donateur || '' };
                         groupDiv.appendChild(tr);
@@ -488,6 +488,21 @@
             }).eq('id', id);
 
             chargerDemandes();
+        }
+
+        // Récupère l'id depuis le tr parent (dataset.intentionId) et appelle la fonction
+        function getIdAndCall(btn, fn) {
+            const tr = btn.closest('tr');
+            const id = tr ? tr.dataset.intentionId : null;
+            if (!id) return console.error('ID introuvable');
+            fn(id);
+        }
+
+        // onchange sur l'input date : récupère l'id depuis le tr parent
+        function refreshTimeChoicesFromInput(input) {
+            const tr = input.closest('tr');
+            const id = tr ? tr.dataset.intentionId : null;
+            if (id) refreshTimeChoices(id);
         }
 
         function toggleMois(moisKey) {
