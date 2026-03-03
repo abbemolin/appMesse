@@ -78,6 +78,7 @@
 
     <script src="config.js"></script>
     <script src="menu.js"></script>
+    <script src="modal.js"></script>
     <script>
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
@@ -150,13 +151,14 @@
 
         function copierMessage(nomIntention, dateFr, heureFr) {
             const texte = `Bonjour, \n\nLa Messe à votre intention (${nomIntention}) sera célébrée le ${dateFr} à ${heureFr}.\n\nJe vous assure de ma prière, \nAbbé Molin`;
-            navigator.clipboard.writeText(texte).then(() => { alert("Message copié !"); });
+            navigator.clipboard.writeText(texte).then(() => { AppModal.alert("📋", "Copié !", "Le message a été copié dans le presse-papiers."); });
         }
 
         async function supprimerIntention(id) {
-            if (!confirm("Voulez-vous vraiment libérer cette messe et supprimer l'intention ?")) return;
+            const ok = await AppModal.confirm("🗑️", "Supprimer l'intention ?", "Cette messe sera libérée. Aucun mail ne sera envoyé.", "Supprimer", "app-modal-btn-danger");
+            if (!ok) return;
             const { error } = await maConnexion.from('intentions').delete().eq('id', id);
-            if (error) alert("Erreur : " + error.message);
+            if (error) AppModal.alert("❌", "Erreur", error.message);
             else location.reload();
         }
 
@@ -180,7 +182,7 @@
             const heure_brute = document.getElementById('input-heure').value.replace('h', ':');
             const commentaire = document.getElementById('commentaire').value;
 
-            if (!nom_intention) return alert("Indiquez l'intention.");
+            if (!nom_intention) { AppModal.alert("⚠️", "Champ manquant", "Veuillez indiquer l'intention."); return; }
 
             const { error } = await maConnexion.from('intentions').insert([{
                 date_messe, 
@@ -195,8 +197,8 @@
                 mail_envoye: true
             }]);
 
-            if (error) alert(error.message);
-            else location.reload();
+            if (error) { AppModal.alert("❌", "Erreur", error.message); return; }
+            location.reload();
         }
 
         function validerRecherche() {
