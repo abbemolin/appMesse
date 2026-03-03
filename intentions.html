@@ -205,7 +205,8 @@
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
         let googleEventsGlobal = [];
         let intentionsGlobal = [];
-        let mailIdEnCours = null; // ID de l'intention dont on vérifie le mail
+        let mailIdEnCours = null;
+        const mailsData = {}; // stocke { id: {texte, email} } pour éviter l'injection dans onclick // ID de l'intention dont on vérifie le mail
 
         async function chargerDemandes() {
             if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 500); return; }
@@ -271,7 +272,7 @@
                                     <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
                                         <button style="font-size:0.7rem; background:none; border:1px solid #cbd5e1; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="editer('${item.id}')">✏️ Modifier / Déplacer</button>
                                         ${!item.mail_envoye ? `
-                                            <button class="btn-mail" onclick="ouvrirModalMail('${item.id}', \`${mailPrepare.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, '${(item.email_donateur || '').replace(/'/g, "\\'")}')">
+                                            <button class="btn-mail" onclick="ouvrirModalMailById('${item.id}')">
                                                 📧 Vérifier le mail
                                             </button>
                                         ` : ''}
@@ -280,6 +281,8 @@
                             `}
                         </td>
                     `;
+                    // Stocker les données du mail pour cet item (évite les pb d'échappement dans onclick)
+                    mailsData[item.id] = { texte: mailPrepare, email: item.email_donateur || '' };
                     tbody.appendChild(tr);
                     if(estEnCours) refreshTimeChoices(item.id, item.heure_messe);
                 });
@@ -311,6 +314,13 @@
             }
 
             return `Bonjour ${nomDonateur},\n\n${phraseIntroduction}\n\nLa Messe sera célébrée le ${dateFinaleFr} à ${heureFinale}.\n\nJe vous assure de ma prière,\n\nAbbé MOLIN,\ncuré`;
+        }
+
+        // Appelé depuis le bouton — récupère les données stockées en JS
+        function ouvrirModalMailById(id) {
+            const data = mailsData[id];
+            if (!data) return alert('Données introuvables, rechargez la page.');
+            ouvrirModalMail(id, data.texte, data.email);
         }
 
         // Ouvre le modal avec le mail pré-rempli
