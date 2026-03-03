@@ -357,9 +357,24 @@
             });
 
             if (matches.length === 0) {
-                container.innerHTML = "<p style='color:#ef4444; font-size:0.75rem; font-weight:bold;'>⚠️ Aucune messe ce jour dans l'agenda</p>";
+                // Pas de messe dans l'agenda → proposer une Messe privée avec horaire libre
+                const heureActuelle = selectedHeure ? selectedHeure.replace(':', 'h') : '';
+                container.innerHTML = `
+                    <p style='color:#f97316; font-size:0.75rem; font-weight:bold; margin-bottom:6px;'>
+                        📋 Aucune messe dans l'agenda — Messe privée
+                    </p>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="time" id="heure-privee-${id}" 
+                            value="${heureActuelle ? heureActuelle.replace('h',':') : '09:00'}"
+                            style="padding:8px 10px; border:2px solid #4f46e5; border-radius:8px; font-size:0.9rem; font-weight:600; color:#4f46e5;">
+                        <span style="font-size:0.8rem; color:#64748b;">Messe privée</span>
+                    </div>
+                `;
+                // On marque que c'est une messe privée pour que finaliser() lise le bon champ
+                container.dataset.privee = 'true';
                 return;
             }
+            container.dataset.privee = 'false';
 
             container.innerHTML = matches.map(m => {
                 const timeStr = new Date(m.start.dateTime).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}).replace(':', 'h');
@@ -385,28 +400,42 @@
         }
 
         async function finaliser(id) {
-            const selectedChip = document.querySelector(`#times-${id} .time-chip.active`);
-            if(!selectedChip) return alert("Veuillez sélectionner un horaire disponible.");
+            const container = document.getElementById(`times-${id}`);
+            const estPrivee = container.dataset.privee === 'true';
 
-            const hLabel = selectedChip.innerText;
-            const hDb = hLabel.replace('h', ':');
+            let hLabel, hDb;
+
+            if (estPrivee) {
+                const inputPrivee = document.getElementById(`heure-privee-${id}`);
+                if (!inputPrivee || !inputPrivee.value) return alert("Veuillez indiquer l'horaire de la Messe privée.");
+                const [hh, mm] = inputPrivee.value.split(':');
+                hLabel = `${hh}h${mm}`;
+                hDb = `${hh}:${mm}`;
+            } else {
+                const selectedChip = document.querySelector(`#times-${id} .time-chip.active`);
+                if (!selectedChip) return alert("Veuillez sélectionner un horaire disponible.");
+                hLabel = selectedChip.innerText;
+                hDb = hLabel.replace('h', ':');
+            }
+
             const d = document.getElementById(`d-${id}`).value;
             const dateFr = new Date(d + 'T00:00:00').toLocaleDateString('fr-FR');
-            
+
             const { data: doublon } = await maConnexion.from('intentions')
                 .select('id').eq('date_messe', d).eq('heure_messe', hDb).eq('statut', 'valide').neq('id', id).maybeSingle();
 
             if (doublon) return alert("Désolé, ce créneau vient d'être pris.");
 
             const { data: info } = await maConnexion.from('intentions').select('nom_intention').eq('id', id).single();
-            const txt = `La Messe à votre intention (${info.nom_intention}) sera célébrée le ${dateFr} à ${hLabel}.`;
+            const libelle = estPrivee ? 'Messe privée' : 'Messe';
+            const txt = `La ${libelle} à votre intention (${info.nom_intention}) sera célébrée le ${dateFr} à ${hLabel}.`;
 
-            await maConnexion.from('intentions').update({ 
+            await maConnexion.from('intentions').update({
                 date_messe: d, heure_messe: hDb, statut: 'valide',
                 reponse_pretre: txt, en_edition: false,
                 mail_envoye: false, mail_approuve: false
             }).eq('id', id);
-            
+
             chargerDemandes();
         }
 
