@@ -46,9 +46,123 @@
         
         .traite-info { font-size: 0.9rem; background: #f1f5f9; padding: 15px; border-radius: 10px; border-left: 4px solid #cbd5e1; }
 
+        /* Badge mail en attente */
+        .mail-badge {
+            display: inline-block;
+            background: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #fed7aa;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-top: 6px;
+        }
+        .mail-badge-sent {
+            background: #f0fdf4;
+            color: #16a34a;
+            border-color: #bbf7d0;
+        }
+
+        /* Bouton vérifier mail */
+        .btn-mail {
+            background: #f97316;
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            width: 100%;
+            margin-top: 8px;
+        }
+        .btn-mail:hover { background: #ea6c0a; }
+
+        /* Modal mail */
+        #modal-mail {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.55);
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .modal-mail-content {
+            background: white;
+            padding: 25px;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 560px;
+            box-sizing: border-box;
+            animation: slideUp 0.3s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .modal-mail-content label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        #mail-destinataire {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            margin-bottom: 14px;
+            color: #64748b;
+        }
+        #mail-corps {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+            font-size: 0.9rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            resize: vertical;
+            min-height: 220px;
+            line-height: 1.6;
+        }
+        .btn-approuver {
+            background: #16a34a;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 800;
+            width: 100%;
+            font-size: 1rem;
+            margin-top: 16px;
+        }
+        .btn-fermer-mail {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
         @media (min-width: 768px) {
             tr { flex-direction: row; justify-content: space-between; align-items: center; }
             .action-group { width: 320px; }
+            #modal-mail { align-items: center; }
+            .modal-mail-content { border-radius: 20px; }
         }
     </style>
 </head>
@@ -68,6 +182,22 @@
         </table>
     </main>
 
+    <!-- ===== MODAL VÉRIFICATION MAIL ===== -->
+    <div id="modal-mail">
+        <div class="modal-mail-content">
+            <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 1.1rem;">📧 Vérifier le mail avant envoi</h3>
+
+            <label>Destinataire</label>
+            <div id="mail-destinataire"></div>
+
+            <label>Contenu du mail (modifiable)</label>
+            <textarea id="mail-corps"></textarea>
+
+            <button class="btn-approuver" onclick="approuverMail()">✅ Approuver et autoriser l'envoi</button>
+            <button class="btn-fermer-mail" onclick="fermerModalMail()">Fermer sans envoyer</button>
+        </div>
+    </div>
+
     <script src="config.js"></script>
     <script src="menu.js"></script>
     <script>
@@ -75,6 +205,7 @@
         const CALENDAR_ID = 'saintlouisenville67@gmail.com';
         let googleEventsGlobal = [];
         let intentionsGlobal = [];
+        let mailIdEnCours = null; // ID de l'intention dont on vérifie le mail
 
         async function chargerDemandes() {
             if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 500); return; }
@@ -91,17 +222,34 @@
                 const tbody = document.getElementById('table-body');
                 tbody.innerHTML = "";
 
-intentionsGlobal.forEach(item => {
+                intentionsGlobal.forEach(item => {
                     const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
-                    const dateObj = new Date(item.date_messe);
+                    // Correction bug date : on force l'interprétation locale
+                    const dateObj = new Date(item.date_messe + 'T00:00:00');
+
+                    // Génération du texte mail préparé
+                    const mailPrepare = genererTexteMail(item);
+
+                    // Statut mail
+                    let badgeMail = '';
+                    if (!estEnCours) {
+                        if (item.mail_envoye) {
+                            badgeMail = `<span class="mail-badge mail-badge-sent">✉️ Mail envoyé</span>`;
+                        } else if (item.mail_approuve) {
+                            badgeMail = `<span class="mail-badge" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">⏳ Mail approuvé, en attente d'envoi</span>`;
+                        } else {
+                            badgeMail = `<span class="mail-badge">⚠️ Mail non approuvé</span>`;
+                        }
+                    }
                     
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td style="flex:1">
                             <span class="date-badge">${dateObj.toLocaleDateString('fr-FR', {day:'numeric', month:'short'})}</span>
                             <div style="font-weight:800; font-size:1.1rem; margin-top:10px;">${item.nom_intention}</div>
-                            <div style="color:#64748b; font-size:0.8rem;">Demandeur: ${item.nom_donateur} (${item.type_intention})</div>
-                            
+                            <div style="color:#64748b; font-size:0.8rem;">Demandeur : ${item.nom_donateur} (${item.type_intention})</div>
+                            <div style="color:#94a3b8; font-size:0.75rem;">${item.email_donateur || ''}</div>
+                            ${badgeMail}
                             ${item.commentaire ? `
                                 <div style="margin-top:10px; padding:10px; background:#fff7ed; border-left:4px solid #f97316; border-radius:4px; font-size:0.85rem; color:#9a3412;">
                                     <strong>Note :</strong> ${item.commentaire}
@@ -119,8 +267,15 @@ intentionsGlobal.forEach(item => {
                                 </div>
                             ` : `
                                 <div class="traite-info">
-                                    <strong>Confirmé :</strong> ${item.reponse_pretre}
-                                    <button style="display:block; margin-top:10px; font-size:0.7rem;" onclick="editer('${item.id}')">Modifier ou Déplacer</button>
+                                    <strong>Confirmé :</strong> ${item.reponse_pretre || '—'}
+                                    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+                                        <button style="font-size:0.7rem; background:none; border:1px solid #cbd5e1; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="editer('${item.id}')">✏️ Modifier / Déplacer</button>
+                                        ${!item.mail_envoye ? `
+                                            <button class="btn-mail" onclick="ouvrirModalMail('${item.id}', \`${mailPrepare.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, '${(item.email_donateur || '').replace(/'/g, "\\'")}')">
+                                                📧 Vérifier le mail
+                                            </button>
+                                        ` : ''}
+                                    </div>
                                 </div>
                             `}
                         </td>
@@ -132,6 +287,63 @@ intentionsGlobal.forEach(item => {
                 const count2026 = intentionsGlobal.filter(i => i.statut === 'valide' && i.date_messe.startsWith('2026')).length;
                 document.getElementById('annual-count').innerText = count2026;
             } catch (err) { console.error(err); }
+        }
+
+        // Génère le texte du mail tel que le .gs l'enverrait
+        function genererTexteMail(item) {
+            const nomDonateur = (item.nom_donateur || '').trim();
+            const texteIntention = (item.nom_intention || 'votre intention').trim();
+            const d = item.date_messe.split('-');
+            const dateFinaleFr = `${d[2]}/${d[1]}/${d[0]}`;
+            const heureFinale = (item.heure_messe || 'à confirmer').replace(':', 'h');
+            const dateDemandee = item.date_originale_mail || '';
+
+            let phraseIntroduction = '';
+            if (dateDemandee !== '' && dateDemandee !== 'Non précisée' && dateDemandee !== dateFinaleFr) {
+                phraseIntroduction = `Le créneau du ${dateDemandee} étant déjà réservé, nous avons dû décaler votre demande pour "${texteIntention}".`;
+            } else {
+                phraseIntroduction = `La Messe pour "${texteIntention}" a bien été enregistrée.`;
+            }
+
+            let messagePretre = (item.reponse_pretre || '').trim();
+            if (messagePretre !== '' && !messagePretre.startsWith('La Messe à votre intention')) {
+                phraseIntroduction = `Concernant votre demande pour "${texteIntention}", ${messagePretre}.`;
+            }
+
+            return `Bonjour ${nomDonateur},\n\n${phraseIntroduction}\n\nLa Messe sera célébrée le ${dateFinaleFr} à ${heureFinale}.\n\nJe vous assure de ma prière,\n\nAbbé MOLIN,\ncuré`;
+        }
+
+        // Ouvre le modal avec le mail pré-rempli
+        function ouvrirModalMail(id, texte, email) {
+            mailIdEnCours = id;
+            document.getElementById('mail-destinataire').innerText = email || '(email non renseigné)';
+            document.getElementById('mail-corps').value = texte;
+            document.getElementById('modal-mail').style.display = 'flex';
+        }
+
+        function fermerModalMail() {
+            document.getElementById('modal-mail').style.display = 'none';
+            mailIdEnCours = null;
+        }
+
+        // Sauvegarde le texte modifié + approuve le mail pour envoi par le .gs
+        async function approuverMail() {
+            if (!mailIdEnCours) return;
+            const texteModifie = document.getElementById('mail-corps').value.trim();
+            if (!texteModifie) return alert('Le mail ne peut pas être vide.');
+
+            const { error } = await maConnexion.from('intentions').update({
+                reponse_pretre: texteModifie,
+                mail_approuve: true,
+                mail_envoye: false
+            }).eq('id', mailIdEnCours);
+
+            if (error) {
+                alert('Erreur : ' + error.message);
+            } else {
+                fermerModalMail();
+                chargerDemandes();
+            }
         }
 
         function refreshTimeChoices(id, selectedHeure = "") {
@@ -151,8 +363,6 @@ intentionsGlobal.forEach(item => {
             container.innerHTML = matches.map(m => {
                 const timeStr = new Date(m.start.dateTime).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}).replace(':', 'h');
                 const timeDb = timeStr.replace('h', ':');
-                
-                // Vérifier si cet horaire est déjà pris par une AUTRE intention validée
                 const estPris = intentionsGlobal.some(i => i.date_messe === inputDate && i.heure_messe === timeDb && i.statut === 'valide' && i.id !== id);
                 
                 if (estPris) {
@@ -163,7 +373,6 @@ intentionsGlobal.forEach(item => {
                 }
             }).join('');
             
-            // Auto-sélection si un seul choix dispo
             const available = container.querySelectorAll('.time-chip:not(.taken)');
             if(available.length === 1 && !selectedHeure) selectChip(available[0], id);
         }
@@ -176,14 +385,13 @@ intentionsGlobal.forEach(item => {
 
         async function finaliser(id) {
             const selectedChip = document.querySelector(`#times-${id} .time-chip.active`);
-            if(!selectedChip) return alert("Veuillez sélectionner un horaire disponible (en gris).");
+            if(!selectedChip) return alert("Veuillez sélectionner un horaire disponible.");
 
             const hLabel = selectedChip.innerText;
             const hDb = hLabel.replace('h', ':');
             const d = document.getElementById(`d-${id}`).value;
-            const dateFr = new Date(d).toLocaleDateString('fr-FR');
+            const dateFr = new Date(d + 'T00:00:00').toLocaleDateString('fr-FR');
             
-            // Double sécurité : on re-vérifie en base avant d'écraser
             const { data: doublon } = await maConnexion.from('intentions')
                 .select('id').eq('date_messe', d).eq('heure_messe', hDb).eq('statut', 'valide').neq('id', id).maybeSingle();
 
@@ -193,20 +401,26 @@ intentionsGlobal.forEach(item => {
             const txt = `La Messe à votre intention (${info.nom_intention}) sera célébrée le ${dateFr} à ${hLabel}.`;
 
             await maConnexion.from('intentions').update({ 
-                date_messe: d, heure_messe: hDb, statut: 'valide', reponse_pretre: txt, en_edition: false, mail_envoye: false 
+                date_messe: d, heure_messe: hDb, statut: 'valide',
+                reponse_pretre: txt, en_edition: false,
+                mail_envoye: false, mail_approuve: false
             }).eq('id', id);
             
             chargerDemandes();
         }
 
         async function editer(id) {
-            await maConnexion.from('intentions').update({ en_edition: true }).eq('id', id);
+            await maConnexion.from('intentions').update({ en_edition: true, mail_approuve: false }).eq('id', id);
             chargerDemandes();
         }
 
         async function refuser(id) {
             if(!confirm("Refuser cette demande ?")) return;
-            await maConnexion.from('intentions').update({ statut: 'refuse', en_edition: false, reponse_pretre: "Désolé, nous ne pouvons pas honorer cette demande." }).eq('id', id);
+            await maConnexion.from('intentions').update({
+                statut: 'refuse', en_edition: false,
+                reponse_pretre: "Désolé, nous ne pouvons pas honorer cette demande.",
+                mail_approuve: false
+            }).eq('id', id);
             chargerDemandes();
         }
 
@@ -214,4 +428,3 @@ intentionsGlobal.forEach(item => {
     </script>
 </body>
 </html>
-
