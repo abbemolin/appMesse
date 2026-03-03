@@ -72,7 +72,7 @@
                 <a href="intentions.html" class="btn-link">Traiter &rarr;</a>
             </div>
             <div class="card">
-                <div class="card-label">Messes 2026</div>
+                <div class="card-label" id="label-annee">Messes</div>
                 <div id="count-2026" class="card-number">&mdash;</div>
                 <a href="calendrier.html" class="btn-link">Calendrier &rarr;</a>
             </div>
@@ -144,7 +144,8 @@
     async function count2026() {
         const { count } = await maConnexion.from("intentions")
             .select("*", { count: "exact", head: true })
-            .eq("statut", "valide").like("date_messe", "2026%");
+            .eq("statut", "valide").like("date_messe", new Date().getFullYear() + "%");
+        document.getElementById("label-annee").textContent = "Messes " + new Date().getFullYear();
         document.getElementById("count-2026").textContent = count || 0;
     }
 
@@ -185,5 +186,6 @@
 
     window.onload = initDashboard;
     </script>
+    <script src="modal.js"></script>
 </body>
 </html>
