@@ -358,19 +358,20 @@
 
             if (matches.length === 0) {
                 // Pas de messe dans l'agenda → proposer une Messe privée avec horaire libre
-                const heureActuelle = selectedHeure ? selectedHeure.replace(':', 'h') : '';
-                container.innerHTML = `
-                    <p style='color:#f97316; font-size:0.75rem; font-weight:bold; margin-bottom:6px;'>
-                        📋 Aucune messe dans l'agenda — Messe privée
-                    </p>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <input type="time" id="heure-privee-${id}" 
-                            value="${heureActuelle ? heureActuelle.replace('h',':') : '09:00'}"
-                            style="padding:8px 10px; border:2px solid #4f46e5; border-radius:8px; font-size:0.9rem; font-weight:600; color:#4f46e5;">
-                        <span style="font-size:0.8rem; color:#64748b;">Messe privée</span>
-                    </div>
-                `;
-                // On marque que c'est une messe privée pour que finaliser() lise le bon champ
+                // On nettoie l'heure : si "à confirmer" ou invalide, on met 09:00 par défaut
+                let heureDefaut = '09:00';
+                if (selectedHeure && selectedHeure !== 'à confirmer' && /^\d{2}:\d{2}$/.test(selectedHeure)) {
+                    heureDefaut = selectedHeure;
+                }
+                container.innerHTML =
+                    '<p style="color:#f97316; font-size:0.75rem; font-weight:bold; margin-bottom:6px;">' +
+                        '📋 Aucune messe dans l\'agenda — Messe privée' +
+                    '</p>' +
+                    '<div style="display:flex; align-items:center; gap:8px;">' +
+                        '<input type="time" id="heure-privee-' + id + '" value="' + heureDefaut + '" ' +
+                            'style="padding:8px 10px; border:2px solid #4f46e5; border-radius:8px; font-size:0.9rem; font-weight:600; color:#4f46e5;">' +
+                        '<span style="font-size:0.8rem; color:#64748b;">Messe privée</span>' +
+                    '</div>';
                 container.dataset.privee = 'true';
                 return;
             }
