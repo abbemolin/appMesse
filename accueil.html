@@ -217,7 +217,8 @@
             const data = await response.json();
             
             if (data.items && data.items.length > 0) {
-                const messes = data.items.filter(e => e.summary.toLowerCase().includes('messe'));
+                const estUneMesse = e => ['messe', 'messe chantée', 'messe anticipée'].includes(e.summary.toLowerCase().trim());
+                const messes = data.items.filter(estUneMesse);
                 
                 listDiv.innerHTML = messes.map(e => {
                     const start = e.start.dateTime || e.start.date;
