@@ -126,7 +126,7 @@
             if (error) throw error;
             document.getElementById("status-dot").style.background = "#10b981";
             document.getElementById("status-text").textContent = "Base de donn\u00e9es pr\u00eate";
-            countPendingIntentions();
+            countPendingIntentionsAvecNotif();
             count2026();
             getTodayMasses();
         } catch (err) {
@@ -184,7 +184,53 @@
         }
     }
 
-    window.onload = initDashboard;
+    // ==========================================
+    // NOTIFICATIONS — suivi du compteur en_attente
+    // ==========================================
+    let lastKnownCount = -1;
+
+    async function demanderPermissionNotification() {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+        if (Notification.permission === 'default') {
+            // On demande après 2s pour ne pas surprendre l'utilisateur
+            setTimeout(async () => {
+                const perm = await Notification.requestPermission();
+                if (perm === 'granted') {
+                    AppModal.alert('🔔', 'Notifications activées', 'Vous serez averti dès qu\'une nouvelle intention arrive.');
+                }
+            }, 2000);
+        }
+    }
+
+    async function verifierNouvellesIntentions(count) {
+        if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
+        const sw = await navigator.serviceWorker.ready;
+        sw.active.postMessage({
+            type: 'CHECK_INTENTIONS',
+            count: count,
+            lastCount: lastKnownCount
+        });
+        lastKnownCount = count;
+    }
+
+    async function countPendingIntentionsAvecNotif() {
+        const { count } = await maConnexion.from('intentions')
+            .select('*', { count: 'exact', head: true }).eq('statut', 'en_attente');
+        const n = count || 0;
+        document.getElementById('pending-intentions').textContent = n;
+        verifierNouvellesIntentions(n);
+    }
+
+    window.onload = function() {
+        initDashboard();
+        demanderPermissionNotification();
+        // Rafraîchissement automatique toutes les 5 minutes
+        setInterval(function() {
+            countPendingIntentionsAvecNotif();
+            count2026();
+            getTodayMasses();
+        }, 5 * 60 * 1000);
+    };
     </script>
     <script src="modal.js"></script>
 </body>
