@@ -158,6 +158,10 @@
             font-size: 0.9rem;
         }
 
+        /* Accordéon mois */
+        #table-body > div { margin-bottom: 6px; }
+        #table-body > tr[style*='background:#4f46e5'] { margin-bottom: 4px; }
+
         @media (min-width: 768px) {
             tr { flex-direction: row; justify-content: space-between; align-items: center; }
             .action-group { width: 320px; }
@@ -223,70 +227,106 @@
                 const tbody = document.getElementById('table-body');
                 tbody.innerHTML = "";
 
+                // === GROUPEMENT PAR MOIS EN ACCORDÉON ===
+                const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+                // Grouper les intentions par "YYYY-MM"
+                const groupes = {};
                 intentionsGlobal.forEach(item => {
-                    const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
-                    // Correction bug date : on force l'interprétation locale
-                    const dateObj = new Date(item.date_messe + 'T00:00:00');
-
-                    // Génération du texte mail préparé
-                    const mailPrepare = genererTexteMail(item);
-
-                    // Statut mail
-                    let badgeMail = '';
-                    if (!estEnCours) {
-                        if (item.mail_envoye) {
-                            badgeMail = `<span class="mail-badge mail-badge-sent">✉️ Mail envoyé</span>`;
-                        } else if (item.mail_approuve) {
-                            badgeMail = `<span class="mail-badge" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">⏳ Mail approuvé, en attente d'envoi</span>`;
-                        } else {
-                            badgeMail = `<span class="mail-badge">⚠️ Mail non approuvé</span>`;
-                        }
-                    }
-                    
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td style="flex:1">
-                            <span class="date-badge">${dateObj.toLocaleDateString('fr-FR', {day:'numeric', month:'short'})}</span>
-                            <div style="font-weight:800; font-size:1.1rem; margin-top:10px;">${item.nom_intention}</div>
-                            <div style="color:#64748b; font-size:0.8rem;">Demandeur : ${item.nom_donateur} (${item.type_intention})</div>
-                            <div style="color:#94a3b8; font-size:0.75rem;">${item.email_donateur || ''}</div>
-                            ${badgeMail}
-                            ${item.commentaire ? `
-                                <div style="margin-top:10px; padding:10px; background:#fff7ed; border-left:4px solid #f97316; border-radius:4px; font-size:0.85rem; color:#9a3412;">
-                                    <strong>Note :</strong> ${item.commentaire}
-                                </div>
-                            ` : ''}
-                        </td>
-                        <td>
-                            ${estEnCours ? `
-                                <div class="action-group">
-                                    <label style="font-size:0.7rem; font-weight:800; color:#64748b;">DISPONIBILITÉS :</label>
-                                    <input type="date" id="d-${item.id}" value="${item.date_messe}" onchange="refreshTimeChoices('${item.id}')">
-                                    <div id="times-${item.id}" class="time-selector-container"></div>
-                                    <button class="btn-action btn-imposer" onclick="finaliser('${item.id}')">✅ Valider cet horaire</button>
-                                    <button style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size:0.8rem;" onclick="refuser('${item.id}')">Refuser la demande</button>
-                                </div>
-                            ` : `
-                                <div class="traite-info">
-                                    <strong>Confirmé :</strong> ${item.reponse_pretre || '—'}
-                                    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
-                                        <button style="font-size:0.7rem; background:none; border:1px solid #cbd5e1; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="editer('${item.id}')">✏️ Modifier / Déplacer</button>
-                                        ${!item.mail_envoye ? `
-                                            <button class="btn-mail" onclick="ouvrirModalMailById('${item.id}')">
-                                                📧 Vérifier le mail
-                                            </button>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                            `}
-                        </td>
-                    `;
-                    // Stocker les données du mail pour cet item (évite les pb d'échappement dans onclick)
-                    mailsData[item.id] = { texte: mailPrepare, email: item.email_donateur || '' };
-                    tbody.appendChild(tr);
-                    if(estEnCours) refreshTimeChoices(item.id, item.heure_messe);
+                    const key = item.date_messe.substring(0, 7); // "2026-03"
+                    if (!groupes[key]) groupes[key] = [];
+                    groupes[key].push(item);
                 });
-                
+
+                // Trier les mois chronologiquement
+                const moisTries = Object.keys(groupes).sort();
+
+                moisTries.forEach((moisKey, moisIndex) => {
+                    const [annee, moisNum] = moisKey.split('-');
+                    const labelMois = MOIS_FR[parseInt(moisNum) - 1] + ' ' + annee;
+                    const itemsDuMois = groupes[moisKey];
+                    const nbEnAttente = itemsDuMois.filter(i => i.statut === 'en_attente' || i.en_edition).length;
+
+                    // En-tête accordéon
+                    const accordeonId = 'mois-' + moisKey;
+                    const headerTr = document.createElement('tr');
+                    headerTr.style.cssText = 'background:#4f46e5; border-radius:12px; padding:14px 18px; cursor:pointer; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;';
+                    headerTr.innerHTML =
+                        '<div style="color:white; font-weight:800; font-size:1rem;">' +
+                            '📅 ' + labelMois +
+                            '<span style="margin-left:10px; background:rgba(255,255,255,0.2); border-radius:20px; padding:2px 10px; font-size:0.8rem;">' +
+                                itemsDuMois.length + ' intention' + (itemsDuMois.length > 1 ? 's' : '') +
+                            '</span>' +
+                            (nbEnAttente > 0 ? '<span style="margin-left:6px; background:#fbbf24; color:#1e293b; border-radius:20px; padding:2px 10px; font-size:0.75rem; font-weight:700;">⚠️ ' + nbEnAttente + ' en attente</span>' : '') +
+                        '</div>' +
+                        '<span id="arrow-' + moisKey + '" style="color:white; font-size:1.2rem; transition:transform 0.2s;">' + (moisIndex === 0 ? '▲' : '▼') + '</span>';
+                    headerTr.onclick = function() { toggleMois(moisKey); };
+                    tbody.appendChild(headerTr);
+
+                    // Conteneur du groupe (ouvert pour le 1er mois)
+                    const groupDiv = document.createElement('div');
+                    groupDiv.id = accordeonId;
+                    groupDiv.style.display = moisIndex === 0 ? 'block' : 'none';
+
+                    // Remplir le groupe
+                    itemsDuMois.forEach(item => {
+                        const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
+                        const dateObj = new Date(item.date_messe + 'T00:00:00');
+                        const mailPrepare = genererTexteMail(item);
+
+                        let badgeMail = '';
+                        if (!estEnCours) {
+                            if (item.mail_envoye) {
+                                badgeMail = '<span class="mail-badge mail-badge-sent">✉️ Mail envoyé</span>';
+                            } else if (item.mail_approuve) {
+                                badgeMail = '<span class="mail-badge" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">⏳ Mail approuvé, en attente</span>';
+                            } else {
+                                badgeMail = '<span class="mail-badge">⚠️ Mail non approuvé</span>';
+                            }
+                        }
+
+                        const tr = document.createElement('tr');
+                        tr.style.marginLeft = '0';
+
+                        const actionEnCours =
+                            '<div class="action-group">' +
+                                '<label style="font-size:0.7rem; font-weight:800; color:#64748b;">DISPONIBILITÉS :</label>' +
+                                '<input type="date" id="d-' + item.id + '" value="' + item.date_messe + '" onchange="refreshTimeChoices(\'' + item.id + '\')">' +
+                                '<div id="times-' + item.id + '" class="time-selector-container"></div>' +
+                                '<button class="btn-action btn-imposer" onclick="finaliser(\' + item.id + \')">✅ Valider cet horaire</button>' +
+                                '<button style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size:0.8rem;" onclick="refuser(\' + item.id + \')">Refuser la demande</button>' +
+                                '<button style="background:none; border:none; color:#94a3b8; font-weight:600; cursor:pointer; font-size:0.75rem; margin-top:4px;" onclick="supprimerIntention(\' + item.id + \')">🗑️ Supprimer</button>' +
+                            '</div>';
+
+                        const actionTraite =
+                            '<div class="traite-info">' +
+                                '<strong>Confirmé :</strong> ' + (item.reponse_pretre || '—') +
+                                '<div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">' +
+                                    '<button style="font-size:0.7rem; background:none; border:1px solid #cbd5e1; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="editer(\' + item.id + \')">✏️ Modifier / Déplacer</button>' +
+                                    (!item.mail_envoye ? '<button class="btn-mail" onclick="ouvrirModalMailById(\' + item.id + \')">📧 Vérifier le mail</button>' : '') +
+                                    '<button style="font-size:0.7rem; background:none; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="supprimerIntention(\' + item.id + \')">🗑️ Supprimer</button>' +
+                                '</div>' +
+                            '</div>';
+
+                        tr.innerHTML =
+                            '<td style="flex:1">' +
+                                '<span class="date-badge">' + dateObj.toLocaleDateString('fr-FR', {day:'numeric', month:'short'}) + '</span>' +
+                                '<div style="font-weight:800; font-size:1.1rem; margin-top:10px;">' + item.nom_intention + '</div>' +
+                                '<div style="color:#64748b; font-size:0.8rem;">Demandeur : ' + item.nom_donateur + ' (' + item.type_intention + ')</div>' +
+                                '<div style="color:#94a3b8; font-size:0.75rem;">' + (item.email_donateur || '') + '</div>' +
+                                badgeMail +
+                                (item.commentaire ? '<div style="margin-top:10px; padding:10px; background:#fff7ed; border-left:4px solid #f97316; border-radius:4px; font-size:0.85rem; color:#9a3412;"><strong>Note :</strong> ' + item.commentaire + '</div>' : '') +
+                            '</td>' +
+                            '<td>' + (estEnCours ? actionEnCours : actionTraite) + '</td>';
+
+                        mailsData[item.id] = { texte: mailPrepare, email: item.email_donateur || '' };
+                        groupDiv.appendChild(tr);
+                        if (estEnCours) setTimeout(() => refreshTimeChoices(item.id, item.heure_messe), 0);
+                    });
+
+                    tbody.appendChild(groupDiv);
+                });
+
                 const count2026 = intentionsGlobal.filter(i => i.statut === 'valide' && i.date_messe.startsWith('2026')).length;
                 document.getElementById('annual-count').innerText = count2026;
             } catch (err) { console.error(err); }
@@ -448,6 +488,21 @@
             }).eq('id', id);
 
             chargerDemandes();
+        }
+
+        function toggleMois(moisKey) {
+            const div = document.getElementById('mois-' + moisKey);
+            const arrow = document.getElementById('arrow-' + moisKey);
+            const isOpen = div.style.display !== 'none';
+            div.style.display = isOpen ? 'none' : 'block';
+            arrow.textContent = isOpen ? '▼' : '▲';
+        }
+
+        async function supprimerIntention(id) {
+            if (!confirm('Supprimer définitivement cette intention ?\nAucun mail ne sera envoyé.')) return;
+            const { error } = await maConnexion.from('intentions').delete().eq('id', id);
+            if (error) alert('Erreur : ' + error.message);
+            else chargerDemandes();
         }
 
         async function editer(id) {
