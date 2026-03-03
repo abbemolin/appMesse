@@ -37,7 +37,7 @@
             padding: 8px 0;
         }
         .nav-item.active { color: var(--nav-active); }
-        .nav-icon { font-size: 1.3rem; margin-bottom: 3px; }
+        .nav-icon { font-size: 1.3rem; margin-bottom: 3px; display:flex; align-items:center; justify-content:center; }
         .nav-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
         body { padding-bottom: calc(65px + env(safe-area-inset-bottom)); }
         @media (min-width: 1024px) {
@@ -46,15 +46,15 @@
     </style>
     <nav class="mobile-nav">
         <a href="accueil.html" class="nav-item ${isAccueil ? 'active' : ''}">
-            <span class="nav-icon">🏠</span>
+            <span class="nav-icon"><svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;22&quot; height=&quot;22&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display:inline;vertical-align:middle;&quot;><path d=&quot;m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z&quot;/><polyline points=&quot;9 22 9 12 15 12 15 22&quot;/></svg></span>
             <span class="nav-label">Accueil</span>
         </a>
         <a href="calendrier.html" class="nav-item ${isCalendrier ? 'active' : ''}">
-            <span class="nav-icon">📅</span>
+            <span class="nav-icon"><svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;22&quot; height=&quot;22&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; style=&quot;display:inline;vertical-align:middle;&quot;><rect x=&quot;3&quot; y=&quot;4&quot; width=&quot;18&quot; height=&quot;18&quot; rx=&quot;2&quot;/><line x1=&quot;16&quot; y1=&quot;2&quot; x2=&quot;16&quot; y2=&quot;6&quot;/><line x1=&quot;8&quot; y1=&quot;2&quot; x2=&quot;8&quot; y2=&quot;6&quot;/><line x1=&quot;3&quot; y1=&quot;10&quot; x2=&quot;21&quot; y2=&quot;10&quot;/></svg></span>
             <span class="nav-label">Calendrier</span>
         </a>
         <a href="intentions.html" class="nav-item ${isIntentions ? 'active' : ''}">
-            <span class="nav-icon">✍️</span>
+            <span class="nav-icon"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z\"/></svg></span>
             <span class="nav-label">Gérer</span>
         </a>
     </nav>`;
