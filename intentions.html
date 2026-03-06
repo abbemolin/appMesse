@@ -240,10 +240,13 @@
             tbody.appendChild(refGroup);
         }
 
-        // Stats
+        // Stats — requête directe Supabase (indépendante du cache local)
         const year = new Date().getFullYear();
-        const count = intentionsGlobal.filter(i => i.statut === 'valide' && i.date_messe.startsWith(year.toString())).length;
-        document.getElementById('annual-count').textContent = count;
+        const { count } = await maConnexion.from('intentions')
+            .select('*', { count: 'exact', head: true })
+            .eq('statut', 'valide')
+            .like('date_messe', year + '%');
+        document.getElementById('annual-count').textContent = count ?? 0;
         document.getElementById('label-annee-intentions').textContent = 'MESSES CÉLÉBRÉES EN ' + year;
     }
 
