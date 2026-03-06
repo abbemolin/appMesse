@@ -3,165 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Planification - Intentions</title>
+    <title>Planification — Messes</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: 'Inter', -apple-system, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding-bottom: 50px; }
-        main { max-width: 600px; margin: 0 auto; padding: 15px; }
-        h1 { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 20px; text-align: center; }
-        .section-title { margin-top: 25px; font-size: 1rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
-        .messe-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 12px; border-radius: 12px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-        .libre { border-left: 5px solid #22c55e; }
-        .prise { border-left: 5px solid #ef4444; background: #fffcfc; }
-        .date-principale { font-weight: 700; font-size: 1rem; color: #0f172a; }
-        .horaire { color: #4f46e5; font-weight: 600; font-size: 0.85rem; margin-top: 4px; }
-        .nom-intention-display { font-size: 0.9rem; font-weight: 700; color: #ef4444; display: block; text-align: right; }
-        .type-intention-badge { font-size: 0.75rem; color: #64748b; font-style: italic; display: block; text-align: right; }
-        .btn-action { background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
-        .btn-delete { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: 5px; margin-left: 10px; font-size: 1.1rem; transition: color 0.2s; }
-        .btn-delete:hover { color: #ef4444; }
-        .btn-copy { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: 5px; margin-left: 10px; font-size: 1.1rem; transition: color 0.2s; }
-        .btn-copy:hover { color: #4f46e5; }
-        .search-container { background: white; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #e2e8f0; }
-        #date-picker { padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 1rem; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
-        #modal-saisie { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: flex-end; justify-content: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px 20px 0 0; width: 100%; max-width: 500px; box-sizing: border-box; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal-content label { display: block; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-top: 15px; text-transform: uppercase; }
-        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 1rem; }
-        .btn-save { background: #16a34a; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; }
-        .hidden { display: none; }
-        #chargement { color: #64748b; font-size: 0.9rem; text-align: center; padding: 40px; }
-    </style>
 </head>
 <body>
     <div id="menu-container"></div>
     <main>
-        <h1>Planification</h1>
-        <h2 class="section-title"> Prochains 15 jours</h2>
+        <div class="page-header">
+            <span class="rubric-tag">Planification</span>
+            <h1>Calendrier</h1>
+            <div class="ornament">✦ ✦ ✦</div>
+        </div>
+
+        <h2 class="section-title">📅 Prochains 15 jours</h2>
         <div id="liste-proche"></div>
+
         <div class="search-container">
-            <h2 style="margin-top:0; font-size: 1rem;"> Trouver une autre date</h2>
-            <input type="date" id="date-picker">
-            <button style="background:#0f172a; color:white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold;" onclick="validerRecherche()">Rechercher</button>
-            <div id="no-result" class="hidden" style="margin-top:12px; padding:12px; background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; text-align:center;">
-                <p style="color:#c2410c; font-weight:700; margin:0 0 10px 0;">Aucune messe dans l'agenda à cette date.</p>
-                <p style="color:#64748b; font-size:0.8rem; margin:0 0 12px 0;">Vous pouvez tout de même créer une Messe privée :</p>
-                <div style="display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap;">
+            <h2 style="text-align:left;margin-bottom:10px;">🔍 Trouver une autre date</h2>
+            <input type="date" id="date-picker" style="margin-bottom:10px;">
+            <button class="btn-primary" onclick="validerRecherche()">Rechercher</button>
+            <div id="no-result" class="no-result-zone">
+                <p style="color:var(--rubric);font-weight:600;margin:0 0 8px 0;font-family:'Cinzel',serif;font-size:.82rem;">Aucune messe à cette date</p>
+                <p style="color:var(--ink-muted);font-size:.82rem;margin:0 0 12px 0;font-style:italic;">Vous pouvez créer une Messe privée :</p>
+                <div style="display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;">
                     <input type="time" id="heure-privee-recherche" value="09:00"
-                        style="padding:8px 12px; border:2px solid #4f46e5; border-radius:8px; font-size:0.95rem; font-weight:600; color:#4f46e5;">
-                    <button onclick="ouvrirModalPrivee()" style="background:#4f46e5; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer;"> Créer une Messe privée
-                    </button>
+                        style="padding:8px 12px;width:auto;border:2px solid var(--gold);font-family:'Cinzel',serif;font-size:.9rem;color:var(--ink);">
+                    <button class="btn-primary" style="width:auto;padding:10px 18px;" onclick="ouvrirModalPrivee()">Messe privée</button>
                 </div>
             </div>
         </div>
+
         <div id="liste-globale"></div>
-        <div id="chargement"> Chargement du calendrier…</div>
+        <div id="chargement" style="color:var(--ink-muted);font-size:.9rem;text-align:center;padding:40px;font-style:italic;">
+            Chargement du calendrier&hellip;
+        </div>
     </main>
 
+    <div id="toast" class="toast"></div>
+
+    <!-- Modal saisie -->
     <div id="modal-saisie">
         <div class="modal-content">
-            <h3 id="modal-title" style="margin-top:0; color:#0f172a;">Nouvelle Intention</h3>
-            <input type="hidden" id="input-date-iso"><input type="hidden" id="input-google-id"><input type="hidden" id="input-heure">
-            <label>Intention pour :</label><input type="text" id="nom_intention" placeholder="ex: Défunts Famille Dupont">
-            <div style="display: flex; gap: 10px;">
-                <div style="flex:1;"><label>Type :</label><select id="type_intention"><option value="Défunt">Défunt</option><option value="Vivant">🙏 Vivant</option><option value="Action de grâce">Action de grâce</option></select></div>
-                <div style="flex:1;"><label>Demandeur :</label><input type="text" id="nom_donateur" placeholder="Mme Dupont"></div>
+            <h3 id="modal-title" style="margin:0 0 4px;color:var(--ink);font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.06em;text-align:center;"></h3>
+            <input type="hidden" id="input-date-iso">
+            <input type="hidden" id="input-google-id">
+            <input type="hidden" id="input-heure">
+            <label>Intention pour</label>
+            <input type="text" id="nom_intention" placeholder="ex : Défunts Famille Dupont">
+            <div style="display:flex;gap:10px;">
+                <div style="flex:1;">
+                    <label>Type</label>
+                    <select id="type_intention">
+                        <option value="Défunt">✝️ Défunt</option>
+                        <option value="Vivant">🙏 Vivant</option>
+                        <option value="Action de grâce">✨ Action de grâce</option>
+                    </select>
+                </div>
+                <div style="flex:1;">
+                    <label>Demandeur</label>
+                    <input type="text" id="nom_donateur" placeholder="Mme Dupont">
+                </div>
             </div>
-            <label>Note privée :</label><textarea id="commentaire" rows="2"></textarea>
-            <button class="btn-save" style="margin-top:20px;" onclick="enregistrerIntention()">Confirmer l'intention</button>
-            <button onclick="fermerModal()" style="background:none; border:none; color:#94a3b8; cursor:pointer; width:100%; margin-top:15px; font-weight:600;">Fermer</button>
+            <label>Note privée</label>
+            <textarea id="commentaire" rows="2"></textarea>
+            <button class="btn-save" onclick="enregistrerIntention()">✅ Confirmer l'intention</button>
+            <button onclick="fermerModal()" style="background:none;border:none;color:var(--ink-muted);cursor:pointer;width:100%;margin-top:14px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;min-height:36px;">Fermer</button>
         </div>
     </div>
 
     <script src="config.js"></script>
     <script src="menu.js"></script>
+    <script src="modal.js"></script>
     <script>
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
-        const CALENDAR_ID = 'saintlouisenville67@gmail.com';
+        const CALENDAR_ID    = 'saintlouisenville67@gmail.com';
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
 
         async function chargerAgenda() {
             if (typeof maConnexion === 'undefined') { setTimeout(chargerAgenda, 500); return; }
             try {
                 const { data: intentions } = await maConnexion.from('intentions').select('*').neq('statut', 'refuse');
                 const now = new Date();
-                const limite15Jours = new Date(); limite15Jours.setDate(now.getDate() + 15);
-                const url = (() => { const tMax = new Date(now); tMax.setFullYear(tMax.getFullYear() + 1); return `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now.toISOString()}&timeMax=${tMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=500`; })();
-                
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                const divProche = document.getElementById('liste-proche');
+                const limite15 = new Date(); limite15.setDate(now.getDate() + 15);
+                const tMax = new Date(now); tMax.setFullYear(tMax.getFullYear() + 1);
+                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now.toISOString()}&timeMax=${tMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=500`;
+
+                const data = await (await fetch(url)).json();
+                const divProche  = document.getElementById('liste-proche');
                 const divGlobale = document.getElementById('liste-globale');
-                divProche.innerHTML = ""; divGlobale.innerHTML = "";
+                divProche.innerHTML = ''; divGlobale.innerHTML = '';
                 document.getElementById('chargement').style.display = 'none';
 
-                if (data.items) {
-                    const estUneMesse = e => ['messe', 'messe chantée', 'messe anticipée'].includes(e.summary.toLowerCase().trim());
-                    data.items.filter(estUneMesse).forEach(event => {
-                            const start = event.start.dateTime || event.start.date;
-                            const dateObj = new Date(start);
-                            const dateISO = dateObj.toISOString().split('T')[0];
-                            const dateFr = dateObj.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-                            const heureBrute = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                            const heureFr = heureBrute.replace(':', 'h');
+                if (!data.items) return;
+                const estUneMesse = e => ['messe','messe chantée','messe anticipée'].includes(e.summary.toLowerCase().trim());
 
-                            const intention = intentions ? intentions.find(i => {
-                                const memeId = i.google_event_id === event.id;
-                                // Considérer valide ET en_edition comme "prise" (messe réservée même si en cours de modif)
-                                const estPrise = i.statut === 'valide' || i.en_edition === true;
-                                const memeDateHeure = (i.date_messe === dateISO && i.heure_messe === heureBrute.replace('h', ':') && estPrise);
-                                return memeId || memeDateHeure;
-                            }) : null;
+                data.items.filter(estUneMesse).forEach(event => {
+                    const start   = event.start.dateTime || event.start.date;
+                    const dateObj = new Date(start);
+                    const dateISO = dateObj.toISOString().split('T')[0];
+                    const dateFr  = dateObj.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
+                    const heureBrute = dateObj.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+                    const heureFr = heureBrute.replace(':','h');
 
-                            const estLibre = !intention;
-                            let contenuAction = "";
-                            if (estLibre) {
-                                contenuAction = '<button class="btn-action" data-iso="' + dateISO + '" data-datefr="' + dateFr + '" data-googleid="' + event.id + '" data-heure="' + heureFr + '" onclick="ouvrirModalFromBtn(this)" title="Créer une intention"></button>';
-                            } else {
-                                const icone = intention.type_intention === 'Défunt' ? '' : (intention.type_intention === 'Vivant' ? '' : '');
-                                contenuAction =
-                                    '<div style="display:flex; align-items:center;">' +
-                                        '<div style="text-align:right;">' +
-                                            '<span class="nom-intention-display">' + intention.nom_intention + '</span>' +
-                                            '<span class="type-intention-badge">' + icone + ' ' + intention.type_intention + '</span>' +
-                                            (intention.commentaire ? '<span style="font-size:0.7rem; color:#f97316; display:block; font-style:italic;"> ' + intention.commentaire + '</span>' : '') +
-                                        '</div>' +
-                                        '<div style="display:flex; flex-direction:column; gap:4px;">' +
-                                            '<button class="btn-copy" title="Copier le message" ' +
-                                                'data-nom="' + intention.nom_intention.replace(/"/g, '&quot;') + '" ' +
-                                                'data-datefr="' + dateFr + '" data-heure="' + heureFr + '" ' +
-                                                'onclick="copierMessageFromBtn(this)"></button>' +
-                                            '<button class="btn-delete" title="Supprimer" ' +
-                                                'data-id="' + intention.id + '" ' +
-                                                'onclick="supprimerFromBtn(this)"></button>' +
-                                        '</div>' +
-                                    '</div>';
-                            }
+                    const intention = intentions ? intentions.find(i => {
+                        const memeId = i.google_event_id === event.id;
+                        const estPrise = i.statut === 'valide' || i.en_edition === true;
+                        const memeDateHeure = i.date_messe === dateISO && i.heure_messe === heureBrute && estPrise;
+                        return memeId || memeDateHeure;
+                    }) : null;
 
-                            const html = '<div class="messe-item ' + (estLibre ? 'libre' : 'prise') + '" data-iso="' + dateISO + '">' +
-                                '<div><div class="date-principale">' + dateFr + '</div><div class="horaire"> ' + heureFr + ' - ' + event.summary + '</div></div>' +
-                                '<div>' + contenuAction + '</div></div>';
+                    const estLibre = !intention;
+                    let contenuAction = '';
+                    if (estLibre) {
+                        contenuAction = '<button class="btn-action"'
+                            + ' data-iso="' + dateISO + '"'
+                            + ' data-datefr="' + dateFr + '"'
+                            + ' data-googleid="' + event.id + '"'
+                            + ' data-heure="' + heureFr + '"'
+                            + ' onclick="ouvrirModalFromBtn(this)">✍️ Attribuer</button>';
+                    } else {
+                        const icone = intention.type_intention === 'Défunt' ? '✝️' : intention.type_intention === 'Vivant' ? '🙏' : '✨';
+                        contenuAction =
+                            '<div style="display:flex;align-items:center;">'
+                            + '<div style="text-align:right;margin-right:8px;">'
+                            + '<span class="nom-intention-display">' + intention.nom_intention + '</span>'
+                            + '<span class="type-intention-badge">' + icone + ' ' + intention.type_intention + '</span>'
+                            + (intention.commentaire ? '<span style="font-size:.68rem;color:var(--gold);display:block;font-style:italic;">🗒 ' + intention.commentaire + '</span>' : '')
+                            + '</div>'
+                            + '<div style="display:flex;flex-direction:column;gap:3px;">'
+                            + '<button class="btn-copy" title="Copier le message"'
+                            + ' data-nom="' + intention.nom_intention.replace(/"/g,'&quot;') + '"'
+                            + ' data-datefr="' + dateFr + '" data-heure="' + heureFr + '"'
+                            + ' onclick="copierMessageFromBtn(this)">📋</button>'
+                            + '<button class="btn-delete" title="Supprimer"'
+                            + ' data-id="' + intention.id + '"'
+                            + ' onclick="supprimerFromBtn(this)">🗑️</button>'
+                            + '</div></div>';
+                    }
 
-                            if (dateObj <= limite15Jours) divProche.innerHTML += html;
-                            else divGlobale.innerHTML += html;
-                    });
-                }
-                document.querySelectorAll('#liste-globale .messe-item').forEach(item => item.classList.add('hidden'));
+                    const html = '<div class="messe-item ' + (estLibre ? 'libre' : 'prise') + '" data-iso="' + dateISO + '">'
+                        + '<div><div class="date-principale">' + dateFr + '</div>'
+                        + '<div class="horaire">🕒 ' + heureFr + ' — ' + event.summary + '</div></div>'
+                        + '<div>' + contenuAction + '</div></div>';
+
+                    if (dateObj <= limite15) divProche.innerHTML += html;
+                    else divGlobale.innerHTML += html;
+                });
+
+                document.querySelectorAll('#liste-globale .messe-item').forEach(item => item.style.display = 'none');
             } catch (e) { console.error(e); }
         }
 
-        // Lit les données depuis data-* attrs — plus d'injection dans onclick
         function ouvrirModalFromBtn(btn) {
             ouvrirModal(btn.dataset.iso, btn.dataset.datefr, btn.dataset.googleid, btn.dataset.heure);
         }
 
         function copierMessageFromBtn(btn) {
-            const nom = btn.dataset.nom;
-            const dateFr = btn.dataset.datefr;
-            const heureFr = btn.dataset.heure;
-            const texte = 'Bonjour, \n\nLa Messe à votre intention (' + nom + ') sera célébrée le ' + dateFr + ' à ' + heureFr + '.\n\nJe vous assure de ma prière, \nAbbé Molin';
+            const texte = 'Bonjour,\n\nLa Messe à votre intention (' + btn.dataset.nom + ') sera célébrée le ' + btn.dataset.datefr + ' à ' + btn.dataset.heure + '.\n\nJe vous assure de ma prière,\nAbbé Molin';
             navigator.clipboard.writeText(texte)
                 .then(() => AppModal.alert('📋', 'Copié !', 'Le message a été copié dans le presse-papiers.'))
                 .catch(() => AppModal.alert('❌', 'Erreur', 'Impossible de copier. Vérifiez les permissions du navigateur.'));
@@ -173,46 +178,46 @@
             if (!ok) return;
             const { error } = await maConnexion.from('intentions').delete().eq('id', id);
             if (error) { AppModal.alert('❌', 'Erreur', error.message); return; }
-            // FIX 2 : recharger l'agenda sans location.reload (garde le scroll)
             chargerAgenda();
         }
 
         function ouvrirModal(iso, dateFr, googleId, heure) {
-            document.getElementById('nom_intention').value = ""; 
-            document.getElementById('nom_donateur').value = "";
-            document.getElementById('commentaire').value = "";
-            document.getElementById('input-date-iso').value = iso; 
+            document.getElementById('nom_intention').value = '';
+            document.getElementById('nom_donateur').value = '';
+            document.getElementById('commentaire').value = '';
+            document.getElementById('input-date-iso').value = iso;
             document.getElementById('input-google-id').value = googleId;
-            document.getElementById('input-heure').value = heure; 
-            document.getElementById('modal-title').innerText = dateFr + " à " + heure;
+            document.getElementById('input-heure').value = heure;
+            document.getElementById('modal-title').innerText = dateFr + ' à ' + heure;
             document.getElementById('modal-saisie').style.display = 'flex';
         }
 
         function fermerModal() { document.getElementById('modal-saisie').style.display = 'none'; }
 
         async function enregistrerIntention() {
-            const date_messe = document.getElementById('input-date-iso').value;
+            const date_messe      = document.getElementById('input-date-iso').value;
             const google_event_id = document.getElementById('input-google-id').value;
-            const nom_intention = document.getElementById('nom_intention').value;
-            const heure_brute = document.getElementById('input-heure').value.replace('h', ':');
-            const commentaire = document.getElementById('commentaire').value;
+            const nom_intention   = document.getElementById('nom_intention').value.trim();
+            const heure_brute     = document.getElementById('input-heure').value.replace('h', ':');
+            const commentaire     = document.getElementById('commentaire').value.trim();
 
-            if (!nom_intention) { AppModal.alert("⚠️", "Champ manquant", "Veuillez indiquer l'intention."); return; }
+            if (!nom_intention) { AppModal.alert('⚠️', 'Champ manquant', "Veuillez indiquer l'intention."); return; }
 
             const { error } = await maConnexion.from('intentions').insert([{
-                date_messe, 
-                google_event_id, 
+                date_messe, google_event_id,
                 heure_messe: heure_brute,
-                nom_intention, 
+                nom_intention,
                 type_intention: document.getElementById('type_intention').value,
-                nom_donateur: document.getElementById('nom_donateur').value || "Paroisse",
-                commentaire: commentaire,
-                statut: 'valide', 
-                email_donateur: 'non@renseigne.fr', 
+                nom_donateur: document.getElementById('nom_donateur').value.trim() || 'Paroisse',
+                commentaire,
+                statut: 'valide',
+                email_donateur: 'non@renseigne.fr',
                 mail_envoye: true
             }]);
 
-            if (error) { AppModal.alert("❌", "Erreur", error.message); return; }
+            if (error) { AppModal.alert('❌', 'Erreur', error.message); return; }
+            fermerModal();
+            showToast('✅ Intention enregistrée');
             chargerAgenda();
         }
 
@@ -221,30 +226,30 @@
             if (!val) return;
             let trouve = false;
             document.querySelectorAll('#liste-globale .messe-item').forEach(item => {
-                if (item.getAttribute('data-iso') === val) { item.classList.remove('hidden'); trouve = true; }
-                else item.classList.add('hidden');
+                const match = item.getAttribute('data-iso') === val;
+                item.style.display = match ? '' : 'none';
+                if (match) trouve = true;
             });
             const noResult = document.getElementById('no-result');
-            noResult.classList.toggle('hidden', trouve);
-            // Stocker la date sélectionnée pour la messe privée
-            noResult.dataset.dateIso = val;
-            const dateObj = new Date(val + 'T00:00:00');
-            const dateFr = dateObj.toLocaleDateString('fr-FR', {weekday:'short', day:'numeric', month:'short'});
-            noResult.dataset.dateFr = dateFr;
+            if (trouve) { noResult.classList.remove('visible'); }
+            else {
+                noResult.classList.add('visible');
+                const dateObj = new Date(val + 'T00:00:00');
+                noResult.dataset.dateIso = val;
+                noResult.dataset.dateFr  = dateObj.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
+            }
         }
 
         function ouvrirModalPrivee() {
-            const noResult = document.getElementById('no-result');
-            const iso = noResult.dataset.dateIso;
-            const dateFr = noResult.dataset.dateFr;
+            const noResult  = document.getElementById('no-result');
+            const iso       = noResult.dataset.dateIso;
+            const dateFr    = noResult.dataset.dateFr;
             const heureInput = document.getElementById('heure-privee-recherche').value || '09:00';
-            const [hh, mm] = heureInput.split(':');
-            const heureFr = `${hh}h${mm}`;
-            ouvrirModal(iso, dateFr + ' (Messe privée)', 'prive_' + iso, heureFr);
+            const [hh, mm]  = heureInput.split(':');
+            ouvrirModal(iso, dateFr + ' (Messe privée)', 'prive_' + iso, `${hh}h${mm}`);
         }
 
         window.onload = chargerAgenda;
     </script>
-    <script src="modal.js"></script>
 </body>
 </html>
