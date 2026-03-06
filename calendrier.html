@@ -7,6 +7,50 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+    /* ── Badge ordo dans les items du calendrier ──────────── */
+    .ordo-badge {
+        display:inline-flex; align-items:center; gap:5px;
+        font-family:'Cinzel',serif; font-size:.52rem; letter-spacing:.1em;
+        padding:2px 7px 2px 5px; border-radius:2px; margin-top:4px;
+        border:1px solid transparent; white-space:nowrap;
+    }
+    .ordo-pip-sm {
+        width:7px; height:7px; border-radius:50%; flex-shrink:0;
+        display:inline-block;
+    }
+    /* Couleurs de fond des badges */
+    .ordo-badge.Blanc  { background:rgba(240,230,184,.35); border-color:rgba(201,168,64,.4); color:var(--ink-soft); }
+    .ordo-badge.Blanc .ordo-pip-sm  { background:#d4af37; box-shadow:0 0 0 1px rgba(184,150,42,.5); }
+    .ordo-badge.Rouge  { background:rgba(155,32,32,.08);  border-color:rgba(139,26,26,.25);  color:var(--rubric); }
+    .ordo-badge.Rouge .ordo-pip-sm  { background:#9b2020; }
+    .ordo-badge.Vert   { background:rgba(58,102,68,.08);  border-color:rgba(58,102,68,.25);  color:var(--green); }
+    .ordo-badge.Vert .ordo-pip-sm   { background:#3a6644; }
+    .ordo-badge.Violet { background:rgba(92,45,122,.08);  border-color:rgba(92,45,122,.25);  color:#5c2d7a; }
+    .ordo-badge.Violet .ordo-pip-sm { background:#5c2d7a; }
+    .ordo-badge.Rose   { background:rgba(212,104,138,.09);border-color:rgba(212,104,138,.3); color:#a04060; }
+    .ordo-badge.Rose .ordo-pip-sm   { background:#d4688a; }
+    .ordo-badge.Noir   { background:rgba(26,17,8,.06);    border-color:rgba(26,17,8,.2);     color:var(--ink-soft); }
+    .ordo-badge.Noir .ordo-pip-sm   { background:#1a1108; }
+
+    /* Légende couleurs liturgiques */
+    .legende-couleurs {
+        display:flex; flex-wrap:wrap; gap:7px; padding:12px 16px 14px;
+        background:var(--vellum-light); border:1px solid var(--border-soft);
+        border-radius:2px; margin-bottom:18px;
+    }
+    .legende-titre {
+        font-family:'Cinzel',serif; font-size:.55rem; letter-spacing:.2em;
+        color:var(--rubric); text-transform:uppercase; width:100%; margin-bottom:4px;
+    }
+    .legende-item {
+        display:inline-flex; align-items:center; gap:5px;
+        font-family:'EB Garamond',serif; font-size:.8rem; font-style:italic; color:var(--ink-muted);
+    }
+    .legende-pip {
+        width:8px; height:8px; border-radius:50%; flex-shrink:0;
+    }
+    </style>
 </head>
 <body>
     <div id="menu-container"></div>
@@ -15,6 +59,17 @@
             <span class="rubric-tag">Planification</span>
             <h1>Calendrier</h1>
             <div class="ornament">✦ ✦ ✦</div>
+        </div>
+
+        <!-- Légende couleurs liturgiques -->
+        <div class="legende-couleurs">
+            <span class="legende-titre">Couleurs liturgiques</span>
+            <span class="legende-item"><span class="legende-pip" style="background:#d4af37;box-shadow:0 0 0 1px rgba(184,150,42,.5)"></span>Blanc</span>
+            <span class="legende-item"><span class="legende-pip" style="background:#9b2020"></span>Rouge</span>
+            <span class="legende-item"><span class="legende-pip" style="background:#3a6644"></span>Vert</span>
+            <span class="legende-item"><span class="legende-pip" style="background:#5c2d7a"></span>Violet</span>
+            <span class="legende-item"><span class="legende-pip" style="background:#d4688a"></span>Rose</span>
+            <span class="legende-item"><span class="legende-pip" style="background:#1a1108"></span>Noir</span>
         </div>
 
         <h2 class="section-title">📅 Prochains 15 jours</h2>
@@ -80,41 +135,89 @@
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID    = 'saintlouisenville67@gmail.com';
 
+        // Cache ordo : { 'YYYY-MM-DD': { fete, classe, couleur }, ... }
+        let ordoCache = {};
+
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.textContent = msg; t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
+        // ── Charge les données ordo pour une plage de dates ──
+        async function chargerOrdo(dateMin, dateMax) {
+            try {
+                const { data } = await maConnexion.from('ordo_liturgique')
+                    .select('date,fete,classe,couleur')
+                    .gte('date', dateMin)
+                    .lte('date', dateMax);
+                if (data) data.forEach(row => { ordoCache[row.date] = row; });
+            } catch(e) { /* ordo optionnel — on continue sans */ }
+        }
+
+        // ── Génère le badge ordo pour une date ISO ──────────
+        function badgeOrdo(dateISO) {
+            const o = ordoCache[dateISO];
+            if (!o) return '';
+            const couleurs = ['Blanc','Rouge','Vert','Violet','Rose','Noir'];
+            const c = couleurs.includes(o.couleur) ? o.couleur : null;
+            if (!c) return '';
+            const feteLabel = o.fete.length > 36 ? o.fete.substring(0,34) + '…' : o.fete;
+            return `<div class="ordo-badge ${c}">` +
+                `<span class="ordo-pip-sm" style="background:${pipColor(c)}"></span>` +
+                `<span>${feteLabel}</span>` +
+                `</div>`;
+        }
+
+        function pipColor(c) {
+            return {Blanc:'#d4af37',Rouge:'#9b2020',Vert:'#3a6644',Violet:'#5c2d7a',Rose:'#d4688a',Noir:'#1a1108'}[c] || '#999';
+        }
+
         async function chargerAgenda() {
             if (typeof maConnexion === 'undefined') { setTimeout(chargerAgenda, 500); return; }
             try {
-                const { data: intentions } = await maConnexion.from('intentions').select('*').neq('statut', 'refuse');
-                const now = new Date();
-                const limite15 = new Date(); limite15.setDate(now.getDate() + 15);
-                const tMax = new Date(now); tMax.setFullYear(tMax.getFullYear() + 1);
-                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&timeMin=${now.toISOString()}&timeMax=${tMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=500`;
+                const [{ data: intentions }, gcalResp] = await Promise.all([
+                    maConnexion.from('intentions').select('*').neq('statut','refuse'),
+                    fetch(`https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events`
+                        + `?key=${GOOGLE_API_KEY}`
+                        + `&timeMin=${new Date().toISOString()}`
+                        + `&timeMax=${(() => { const d = new Date(); d.setFullYear(d.getFullYear()+1); return d.toISOString(); })()}`
+                        + `&singleEvents=true&orderBy=startTime&maxResults=500`)
+                ]);
 
-                const data = await (await fetch(url)).json();
+                const now      = new Date();
+                const limite15 = new Date(); limite15.setDate(now.getDate() + 15);
+                const data     = await gcalResp.json();
+
+                document.getElementById('chargement').style.display = 'none';
+                if (!data.items) return;
+
+                const estUneMesse = e => ['messe','messe chantée','messe anticipée']
+                    .includes(e.summary.toLowerCase().trim());
+                const messes = data.items.filter(estUneMesse);
+                if (!messes.length) return;
+
+                // Charger l'ordo pour toute la plage
+                const dates   = messes.map(e => (e.start.dateTime || e.start.date).split('T')[0]);
+                const dateMin = dates[0];
+                const dateMax = dates[dates.length-1];
+                await chargerOrdo(dateMin, dateMax);
+
                 const divProche  = document.getElementById('liste-proche');
                 const divGlobale = document.getElementById('liste-globale');
                 divProche.innerHTML = ''; divGlobale.innerHTML = '';
-                document.getElementById('chargement').style.display = 'none';
 
-                if (!data.items) return;
-                const estUneMesse = e => ['messe','messe chantée','messe anticipée'].includes(e.summary.toLowerCase().trim());
-
-                data.items.filter(estUneMesse).forEach(event => {
-                    const start   = event.start.dateTime || event.start.date;
-                    const dateObj = new Date(start);
-                    const dateISO = dateObj.toISOString().split('T')[0];
-                    const dateFr  = dateObj.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
+                messes.forEach(event => {
+                    const start      = event.start.dateTime || event.start.date;
+                    const dateObj    = new Date(start);
+                    const dateISO    = dateObj.toISOString().split('T')[0];
+                    const dateFr     = dateObj.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
                     const heureBrute = dateObj.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-                    const heureFr = heureBrute.replace(':','h');
+                    const heureFr    = heureBrute.replace(':','h');
 
                     const intention = intentions ? intentions.find(i => {
-                        const memeId = i.google_event_id === event.id;
-                        const estPrise = i.statut === 'valide' || i.en_edition === true;
+                        const memeId       = i.google_event_id === event.id;
+                        const estPrise     = i.statut === 'valide' || i.en_edition === true;
                         const memeDateHeure = i.date_messe === dateISO && i.heure_messe === heureBrute && estPrise;
                         return memeId || memeDateHeure;
                     }) : null;
@@ -123,13 +226,14 @@
                     let contenuAction = '';
                     if (estLibre) {
                         contenuAction = '<button class="btn-action"'
-                            + ' data-iso="' + dateISO + '"'
-                            + ' data-datefr="' + dateFr + '"'
-                            + ' data-googleid="' + event.id + '"'
-                            + ' data-heure="' + heureFr + '"'
+                            + ' data-iso="'     + dateISO + '"'
+                            + ' data-datefr="'  + dateFr  + '"'
+                            + ' data-googleid="'+ event.id + '"'
+                            + ' data-heure="'   + heureFr + '"'
                             + ' onclick="ouvrirModalFromBtn(this)">✍️ Attribuer</button>';
                     } else {
-                        const icone = intention.type_intention === 'Défunt' ? '✝️' : intention.type_intention === 'Vivant' ? '🙏' : '✨';
+                        const icone = intention.type_intention === 'Défunt' ? '✝️'
+                                    : intention.type_intention === 'Vivant' ? '🙏' : '✨';
                         contenuAction =
                             '<div style="display:flex;align-items:center;">'
                             + '<div style="text-align:right;margin-right:8px;">'
@@ -138,7 +242,7 @@
                             + (intention.commentaire ? '<span style="font-size:.68rem;color:var(--gold);display:block;font-style:italic;">🗒 ' + intention.commentaire + '</span>' : '')
                             + '</div>'
                             + '<div style="display:flex;flex-direction:column;gap:3px;">'
-                            + '<button class="btn-copy" title="Copier le message"'
+                            + '<button class="btn-copy" title="Copier"'
                             + ' data-nom="' + intention.nom_intention.replace(/"/g,'&quot;') + '"'
                             + ' data-datefr="' + dateFr + '" data-heure="' + heureFr + '"'
                             + ' onclick="copierMessageFromBtn(this)">📋</button>'
@@ -148,9 +252,15 @@
                             + '</div></div>';
                     }
 
+                    // Badge ordo inséré sous la date
+                    const ordo = badgeOrdo(dateISO);
+
                     const html = '<div class="messe-item ' + (estLibre ? 'libre' : 'prise') + '" data-iso="' + dateISO + '">'
-                        + '<div><div class="date-principale">' + dateFr + '</div>'
-                        + '<div class="horaire">🕒 ' + heureFr + ' — ' + event.summary + '</div></div>'
+                        + '<div>'
+                        + '<div class="date-principale">' + dateFr + '</div>'
+                        + '<div class="horaire">🕒 ' + heureFr + ' — ' + event.summary + '</div>'
+                        + ordo
+                        + '</div>'
                         + '<div>' + contenuAction + '</div></div>';
 
                     if (dateObj <= limite15) divProche.innerHTML += html;
@@ -168,26 +278,26 @@
         function copierMessageFromBtn(btn) {
             const texte = 'Bonjour,\n\nLa Messe à votre intention (' + btn.dataset.nom + ') sera célébrée le ' + btn.dataset.datefr + ' à ' + btn.dataset.heure + '.\n\nJe vous assure de ma prière,\nAbbé Molin';
             navigator.clipboard.writeText(texte)
-                .then(() => AppModal.alert('📋', 'Copié !', 'Le message a été copié dans le presse-papiers.'))
-                .catch(() => AppModal.alert('❌', 'Erreur', 'Impossible de copier. Vérifiez les permissions du navigateur.'));
+                .then(() => AppModal.alert('📋','Copié !','Le message a été copié dans le presse-papiers.'))
+                .catch(() => AppModal.alert('❌','Erreur','Impossible de copier. Vérifiez les permissions du navigateur.'));
         }
 
         async function supprimerFromBtn(btn) {
             const id = btn.dataset.id;
-            const ok = await AppModal.confirm('🗑️', "Supprimer l'intention ?", 'Cette messe sera libérée. Aucun mail ne sera envoyé.', 'Supprimer', 'app-modal-btn-danger');
+            const ok = await AppModal.confirm('🗑️',"Supprimer l'intention ?",'Cette messe sera libérée.','Supprimer','app-modal-btn-danger');
             if (!ok) return;
             const { error } = await maConnexion.from('intentions').delete().eq('id', id);
-            if (error) { AppModal.alert('❌', 'Erreur', error.message); return; }
+            if (error) { AppModal.alert('❌','Erreur',error.message); return; }
             chargerAgenda();
         }
 
         function ouvrirModal(iso, dateFr, googleId, heure) {
-            document.getElementById('nom_intention').value = '';
-            document.getElementById('nom_donateur').value = '';
-            document.getElementById('commentaire').value = '';
+            document.getElementById('nom_intention').value  = '';
+            document.getElementById('nom_donateur').value   = '';
+            document.getElementById('commentaire').value    = '';
             document.getElementById('input-date-iso').value = iso;
-            document.getElementById('input-google-id').value = googleId;
-            document.getElementById('input-heure').value = heure;
+            document.getElementById('input-google-id').value= googleId;
+            document.getElementById('input-heure').value    = heure;
             document.getElementById('modal-title').innerText = dateFr + ' à ' + heure;
             document.getElementById('modal-saisie').style.display = 'flex';
         }
@@ -198,24 +308,21 @@
             const date_messe      = document.getElementById('input-date-iso').value;
             const google_event_id = document.getElementById('input-google-id').value;
             const nom_intention   = document.getElementById('nom_intention').value.trim();
-            const heure_brute     = document.getElementById('input-heure').value.replace('h', ':');
+            const heure_brute     = document.getElementById('input-heure').value.replace('h',':');
             const commentaire     = document.getElementById('commentaire').value.trim();
-
-            if (!nom_intention) { AppModal.alert('⚠️', 'Champ manquant', "Veuillez indiquer l'intention."); return; }
-
+            if (!nom_intention) { AppModal.alert('⚠️','Champ manquant',"Veuillez indiquer l'intention."); return; }
             const { error } = await maConnexion.from('intentions').insert([{
                 date_messe, google_event_id,
-                heure_messe: heure_brute,
+                heure_messe:    heure_brute,
                 nom_intention,
                 type_intention: document.getElementById('type_intention').value,
-                nom_donateur: document.getElementById('nom_donateur').value.trim() || 'Paroisse',
+                nom_donateur:   document.getElementById('nom_donateur').value.trim() || 'Paroisse',
                 commentaire,
-                statut: 'valide',
+                statut:         'valide',
                 email_donateur: 'non@renseigne.fr',
-                mail_envoye: true
+                mail_envoye:    true
             }]);
-
-            if (error) { AppModal.alert('❌', 'Erreur', error.message); return; }
+            if (error) { AppModal.alert('❌','Erreur',error.message); return; }
             fermerModal();
             showToast('✅ Intention enregistrée');
             chargerAgenda();
@@ -241,11 +348,11 @@
         }
 
         function ouvrirModalPrivee() {
-            const noResult  = document.getElementById('no-result');
-            const iso       = noResult.dataset.dateIso;
-            const dateFr    = noResult.dataset.dateFr;
+            const noResult   = document.getElementById('no-result');
+            const iso        = noResult.dataset.dateIso;
+            const dateFr     = noResult.dataset.dateFr;
             const heureInput = document.getElementById('heure-privee-recherche').value || '09:00';
-            const [hh, mm]  = heureInput.split(':');
+            const [hh, mm]   = heureInput.split(':');
             ouvrirModal(iso, dateFr + ' (Messe privée)', 'prive_' + iso, `${hh}h${mm}`);
         }
 
