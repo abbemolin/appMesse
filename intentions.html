@@ -4,597 +4,472 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gestion des Intentions</title>
-    
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 10px; }
-        main { max-width: 1000px; margin: 0 auto; }
-        h1 { color: #0f172a; font-weight: 800; text-align: center; font-size: 1.4rem; margin: 15px 0 20px 0; }
-        
-        .stats-banner { text-align: center; margin-bottom: 20px; background: white; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0; }
-        .stats-count { font-weight: 800; color: #4f46e5; font-size: 1.2rem; }
-
-        tr { background: white; border-radius: 12px; display: flex; flex-direction: column; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
-        .date-badge { background: #4f46e5; color: white; border-radius: 8px; padding: 5px 10px; font-weight: 800; }
-        
-        .action-group { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; padding-top: 15px; border-top: 1px dashed #e2e8f0; }
-        .btn-action { cursor: pointer; border: none; padding: 12px; border-radius: 8px; color: white; font-weight: 700; width: 100%; }
-        .btn-imposer { background: #0f172a; }
-        
-        .time-selector-container { margin-top: 10px; }
-        .time-chip { 
-            display: inline-block; 
-            padding: 8px 12px; 
-            margin: 4px; 
-            border-radius: 20px; 
-            background: #f1f5f9; 
-            border: 2px solid #e2e8f0;
-            cursor: pointer; 
-            font-weight: 600; 
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-        .time-chip.active { background: #4f46e5; color: white; border-color: #4f46e5; }
-        .time-chip.taken { 
-            background: #fee2e2; 
-            color: #b91c1c; 
-            border-color: #fecaca; 
-            cursor: not-allowed; 
-            opacity: 0.8;
-        }
-        
-        .traite-info { font-size: 0.9rem; background: #f1f5f9; padding: 15px; border-radius: 10px; border-left: 4px solid #cbd5e1; }
-
-        /* Badge mail en attente */
-        .mail-badge {
-            display: inline-block;
-            background: #fff7ed;
-            color: #c2410c;
-            border: 1px solid #fed7aa;
-            border-radius: 6px;
-            padding: 3px 8px;
-            font-size: 0.72rem;
-            font-weight: 700;
-            margin-top: 6px;
-        }
-        .mail-badge-sent {
-            background: #f0fdf4;
-            color: #16a34a;
-            border-color: #bbf7d0;
-        }
-
-        /* Bouton vérifier mail */
-        .btn-mail {
-            background: #f97316;
-            color: white;
-            border: none;
-            padding: 10px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.85rem;
-            width: 100%;
-            margin-top: 8px;
-        }
-        .btn-mail:hover { background: #ea6c0a; }
-
-        /* Modal mail */
-        #modal-mail {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0; top: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.55);
-            align-items: flex-end;
-            justify-content: center;
-        }
-        .modal-mail-content {
-            background: white;
-            padding: 25px;
-            border-radius: 20px 20px 0 0;
-            width: 100%;
-            max-width: 560px;
-            box-sizing: border-box;
-            animation: slideUp 0.3s ease-out;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        .modal-mail-content label {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-        #mail-destinataire {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            background: #f8fafc;
-            font-size: 0.9rem;
-            box-sizing: border-box;
-            margin-bottom: 14px;
-            color: #64748b;
-        }
-        #mail-corps {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            background: #f8fafc;
-            font-size: 0.9rem;
-            font-family: inherit;
-            box-sizing: border-box;
-            resize: vertical;
-            min-height: 220px;
-            line-height: 1.6;
-        }
-        .btn-approuver {
-            background: #16a34a;
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 800;
-            width: 100%;
-            font-size: 1rem;
-            margin-top: 16px;
-        }
-        .btn-fermer-mail {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        /* Accordéon mois */
-        #table-body > div { margin-bottom: 6px; }
-        .accord-arrow svg { display:inline; vertical-align:middle; }
-        #table-body > tr[style*='background:#4f46e5'] { margin-bottom: 4px; }
-
-        @media (min-width: 768px) {
-            tr { flex-direction: row; justify-content: space-between; align-items: center; }
-            .action-group { width: 320px; }
-            #modal-mail { align-items: center; }
-            .modal-mail-content { border-radius: 20px; }
-        }
-    </style>
 </head>
 <body>
     <div id="menu-container"></div>
     <main>
-        <h1>Gestion des Intentions</h1>
-        
-        <div class="stats-banner">
-            <div class="stats-count" id="annual-count">...</div>
-            <div style="font-size: 0.8rem; color: #64748b;" id="label-annee-intentions">MESSES CÉLÉBRÉES EN 2026</div>
+        <div class="page-header">
+            <span class="rubric-tag">Administration</span>
+            <h1>Intentions</h1>
+            <div class="ornament">✦ ✦ ✦</div>
         </div>
 
-        <div id="loading-status" style="text-align:center;">Chargement des données…</div>
-        <table style="width:100%">
-            <tbody id="table-body"></tbody>
-        </table>
+        <div class="stats-banner">
+            <div class="stats-count" id="annual-count">…</div>
+            <div class="stats-label" id="label-annee-intentions">MESSES CÉLÉBRÉES EN 2026</div>
+        </div>
+
+        <!-- Recherche par nom -->
+        <div class="search-bar">
+            <input type="text" id="recherche-nom" placeholder="Rechercher par nom…" oninput="filtrerRecherche(this.value)">
+        </div>
+
+        <div id="loading-status" style="text-align:center;color:var(--ink-muted);font-style:italic;">Chargement des intentions&hellip;</div>
+        <div id="table-body"></div>
     </main>
 
-    <!-- ===== MODAL VÉRIFICATION MAIL ===== -->
+    <!-- Modal mail -->
     <div id="modal-mail">
         <div class="modal-mail-content">
-            <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 1.1rem;">📧 Vérifier le mail avant envoi</h3>
-
+            <h3 style="margin:0 0 14px;color:var(--ink);font-family:'Cinzel',serif;font-size:.95rem;letter-spacing:.07em;text-align:center;">📧 Vérification du courrier</h3>
             <label>Destinataire</label>
             <div id="mail-destinataire"></div>
-
-            <label>Contenu du mail (modifiable)</label>
+            <label>Contenu (modifiable)</label>
             <textarea id="mail-corps"></textarea>
-
-            <button class="btn-approuver" onclick="approuverMail()"> Approuver et autoriser l'envoi</button>
+            <button class="btn-approuver" onclick="approuverMail()">✅ Approuver et autoriser l'envoi</button>
             <button class="btn-fermer-mail" onclick="fermerModalMail()">Fermer sans envoyer</button>
         </div>
     </div>
 
+    <div id="toast" class="toast"></div>
+
     <script src="config.js"></script>
     <script src="menu.js"></script>
+    <script src="modal.js"></script>
     <script>
-        const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
-        const CALENDAR_ID = 'saintlouisenville67@gmail.com';
-        let googleEventsGlobal = [];
-        let intentionsGlobal = [];
-        let mailIdEnCours = null;
-        const mailsData = {}; // stocke { id: {texte, email} } pour éviter l'injection dans onclick // ID de l'intention dont on vérifie le mail
+    const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
+    const CALENDAR_ID    = 'saintlouisenville67@gmail.com';
 
-        async function chargerDemandes() {
-            if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 500); return; }
-            try {
-                const url = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&timeMin=${new Date().toISOString()}`;
-                const resp = await fetch(url);
-                const googleData = await resp.json();
-                googleEventsGlobal = googleData.items || [];
+    let googleEventsGlobal = [];
+    let intentionsGlobal   = [];
+    let mailIdEnCours      = null;
+    const mailsData        = {};
 
-                const { data: intentions } = await maConnexion.from('intentions').select('*').order('date_messe', { ascending: true });
-                intentionsGlobal = intentions || [];
-                
-                document.getElementById('loading-status').style.display = 'none';
-                const tbody = document.getElementById('table-body');
-                tbody.innerHTML = "";
+    const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
-                // === GROUPEMENT PAR MOIS EN ACCORDÉON ===
-                const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3200);
+    }
 
-                // Séparer refusées des autres
-                const intentionsActives = intentionsGlobal.filter(i => i.statut !== 'refuse');
-                const intentionsRefusees = intentionsGlobal.filter(i => i.statut === 'refuse');
+    // ── FIX 5 : ne charger que l'année en cours + en_attente ────────
+    async function chargerDemandes() {
+        if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 500); return; }
+        try {
+            // FIX 6 : timeMax sur Google Calendar (+3 mois suffit pour intentions)
+            const tMin = new Date(); tMin.setMonth(tMin.getMonth() - 1);
+            const tMax = new Date(); tMax.setFullYear(tMax.getFullYear() + 1);
+            const urlGcal = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&timeMin=${tMin.toISOString()}&timeMax=${tMax.toISOString()}&maxResults=500`;
+            const resp = await fetch(urlGcal);
+            const googleData = await resp.json();
+            googleEventsGlobal = googleData.items || [];
 
-                // Grouper les intentions actives par "YYYY-MM"
-                const groupes = {};
-                intentionsActives.forEach(item => {
-                    const key = item.date_messe.substring(0, 7); // "2026-03"
-                    if (!groupes[key]) groupes[key] = [];
-                    groupes[key].push(item);
-                });
+            const year = new Date().getFullYear();
+            // FIX 5 : charger uniquement l'année courante + toutes les en_attente
+            const [{ data: intentionsAnnee }, { data: intentionsEnAttente }] = await Promise.all([
+                maConnexion.from('intentions').select('*')
+                    .like('date_messe', year + '%')
+                    .order('date_messe', { ascending: true }),
+                maConnexion.from('intentions').select('*')
+                    .eq('statut', 'en_attente')
+                    .order('date_messe', { ascending: true })
+            ]);
 
-                // Trier les mois chronologiquement
-                const moisTries = Object.keys(groupes).sort();
+            // Fusionner sans doublons
+            const seen = new Set();
+            intentionsGlobal = [];
+            for (const i of [...(intentionsEnAttente || []), ...(intentionsAnnee || [])]) {
+                if (!seen.has(i.id)) { seen.add(i.id); intentionsGlobal.push(i); }
+            }
+            intentionsGlobal.sort((a,b) => a.date_messe.localeCompare(b.date_messe));
 
-                moisTries.forEach((moisKey, moisIndex) => {
-                    const [annee, moisNum] = moisKey.split('-');
-                    const labelMois = MOIS_FR[parseInt(moisNum) - 1] + ' ' + annee;
-                    const itemsDuMois = groupes[moisKey];
-                    const nbEnAttente = itemsDuMois.filter(i => i.statut === 'en_attente' || i.en_edition).length;
+            document.getElementById('loading-status').style.display = 'none';
+            renderIntentions();
+        } catch (err) {
+            console.error(err);
+            document.getElementById('loading-status').innerHTML =
+                '<p style="color:var(--rubric);text-align:center;padding:20px;font-style:italic;">' +
+                'Erreur de connexion à la base.<br>' +
+                '<button onclick="chargerDemandes()" class="btn-primary" style="margin-top:12px;width:auto;padding:10px 22px;">Réessayer</button></p>';
+        }
+    }
 
-                    // En-tête accordéon
-                    const accordeonId = 'mois-' + moisKey;
-                    const headerTr = document.createElement('tr');
-                    headerTr.style.cssText = 'background:#4f46e5; border-radius:12px; padding:14px 18px; cursor:pointer; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;';
-                    headerTr.innerHTML =
-                        '<div style="color:white; font-weight:800; font-size:1rem;">' +
-                            '📅 ' + labelMois +
-                            '<span style="margin-left:10px; background:rgba(255,255,255,0.2); border-radius:20px; padding:2px 10px; font-size:0.8rem;">' +
-                                itemsDuMois.length + ' intention' + (itemsDuMois.length > 1 ? 's' : '') +
-                            '</span>' +
-                            (nbEnAttente > 0 ? '<span style="margin-left:6px; background:#fbbf24; color:#1e293b; border-radius:20px; padding:2px 10px; font-size:0.75rem; font-weight:700;"> ' + nbEnAttente + ' en attente</span>' : '') +
-                        '</div>' +
-                        '<span id="arrow-' + moisKey + '" class="accord-arrow">' + (moisIndex === 0 ? '' : '') + '</span>';
-                    headerTr.onclick = function() { toggleMois(moisKey); };
-                    tbody.appendChild(headerTr);
+    function renderIntentions(filtre = '') {
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = '';
 
-                    // Conteneur du groupe (ouvert pour le 1er mois)
-                    const groupDiv = document.createElement('div');
-                    groupDiv.id = accordeonId;
-                    groupDiv.style.display = moisIndex === 0 ? 'block' : 'none';
+        const intentionsActives  = intentionsGlobal.filter(i => i.statut !== 'refuse');
+        const intentionsRefusees = intentionsGlobal.filter(i => i.statut === 'refuse');
 
-                    // Remplir le groupe
-                    itemsDuMois.forEach(item => {
-                        const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
-                        const dateObj = new Date(item.date_messe + 'T00:00:00');
-                        const mailPrepare = genererTexteMail(item);
+        // Filtrage par nom si recherche active
+        const filtreLC = filtre.toLowerCase().trim();
+        const filtrer = list => filtreLC
+            ? list.filter(i => (i.nom_intention || '').toLowerCase().includes(filtreLC) || (i.nom_donateur || '').toLowerCase().includes(filtreLC))
+            : list;
 
-                        let badgeMail = '';
-                        if (!estEnCours) {
-                            if (item.mail_envoye) {
-                                badgeMail = '<span class="mail-badge mail-badge-sent"> Mail envoyé</span>';
-                            } else if (item.mail_approuve) {
-                                badgeMail = '<span class="mail-badge" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">⏳ En attente d’envoi</span>';
-                            } else {
-                                badgeMail = '<span class="mail-badge">⚠️ Non approuvé</span>';
-                            }
-                        }
+        const actifsFiltres  = filtrer(intentionsActives);
+        const refusesFiltres = filtrer(intentionsRefusees);
 
-                        const tr = document.createElement('tr');
-                        tr.style.marginLeft = '0';
+        // Groupement par mois
+        const groupes = {};
+        actifsFiltres.forEach(item => {
+            const key = item.date_messe.substring(0, 7);
+            if (!groupes[key]) groupes[key] = [];
+            groupes[key].push(item);
+        });
 
-                        // Utilisation de dataset.intentionId pour éviter tout pb d'échappement
-                        tr.dataset.intentionId = item.id;
-                        tr.innerHTML =
-                            '<td style="flex:1">' +
-                                '<span class="date-badge">' + dateObj.toLocaleDateString('fr-FR', {day:'numeric', month:'short'}) + '</span>' +
-                                '<div style="font-weight:800; font-size:1.1rem; margin-top:10px;">' + item.nom_intention + '</div>' +
-                                '<div style="color:#64748b; font-size:0.8rem;">Demandeur : ' + item.nom_donateur + ' (' + item.type_intention + ')</div>' +
-                                '<div style="color:#94a3b8; font-size:0.75rem;">' + (item.email_donateur || '') + '</div>' +
-                                badgeMail +
-                                (item.commentaire ? '<div style="margin-top:10px; padding:10px; background:#fff7ed; border-left:4px solid #f97316; border-radius:4px; font-size:0.85rem; color:#9a3412;"> <strong>Note :</strong> ' + item.commentaire + '</div>' : '') +
-                            '</td>' +
-                            '<td>' + (estEnCours ?
-                                '<div class="action-group">' +
-                                    '<label style="font-size:0.7rem; font-weight:800; color:#64748b;">DISPONIBILITÉS :</label>' +
-                                    '<input type="date" id="d-' + item.id + '" value="' + item.date_messe + '" onchange="refreshTimeChoicesFromInput(this)">' +
-                                    '<div id="times-' + item.id + '" class="time-selector-container"></div>' +
-                                    '<button class="btn-action btn-imposer" onclick="getIdAndCall(this, finaliser)">✅ Valider cet horaire</button>' +
-                                    '<button style="background:none; border:none; color:#ef4444; font-weight:600; cursor:pointer; font-size:0.8rem;" onclick="getIdAndCall(this, refuser)">✖️ Refuser</button>' +
-                                    '<button style="background:none; border:none; color:#94a3b8; font-weight:600; cursor:pointer; font-size:0.75rem; margin-top:4px;" onclick="getIdAndCall(this, supprimerIntention)">🗑️ Supprimer</button>' +
-                                '</div>'
-                            :
-                                '<div class="traite-info">' +
-                                    '<strong>Confirmé :</strong> ' + (item.reponse_pretre || '—') +
-                                    '<div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">' +
-                                        '<button style="font-size:0.7rem; background:none; border:1px solid #cbd5e1; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, editer)">✏️ Modifier / Déplacer</button>' +
-                                        (!item.mail_envoye ? '<button class="btn-mail" onclick="getIdAndCall(this, ouvrirModalMailById)">📧 Vérifier le mail</button>' : '') +
-                                        '<button style="font-size:0.7rem; background:none; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, supprimerIntention)"> Supprimer</button>' +
-                                    '</div>' +
-                                '</div>'
-                            ) + '</td>';
+        const moisTries = Object.keys(groupes).sort();
+        // FIX accordéon : mois en cours ouvert par défaut
+        const moisCourant = new Date().toISOString().substring(0, 7);
 
-                        mailsData[item.id] = { texte: mailPrepare, email: item.email_donateur || '' };
-                        groupDiv.appendChild(tr);
-                        if (estEnCours) setTimeout(() => refreshTimeChoices(item.id, item.heure_messe), 0);
-                    });
+        moisTries.forEach(moisKey => {
+            const [annee, moisNum] = moisKey.split('-');
+            const labelMois = MOIS_FR[parseInt(moisNum) - 1] + ' ' + annee;
+            const items = groupes[moisKey];
+            const nbEnAttente = items.filter(i => i.statut === 'en_attente' || i.en_edition).length;
+            const estOuvert = moisKey === moisCourant || filtre !== '';
 
-                    tbody.appendChild(groupDiv);
-                });
+            const accordeonId = 'mois-' + moisKey;
+            const header = document.createElement('div');
+            header.className = 'accord-header';
+            header.innerHTML =
+                '<div class="accord-title">'
+                + '📅 ' + labelMois
+                + '<span class="accord-badge">' + items.length + ' intention' + (items.length > 1 ? 's' : '') + '</span>'
+                + (nbEnAttente > 0 ? '<span class="accord-badge-warn">⏳ ' + nbEnAttente + ' en attente</span>' : '')
+                + '</div>'
+                + '<span id="arrow-' + moisKey + '" class="accord-arrow' + (estOuvert ? ' open' : '') + '">▼</span>';
+            header.onclick = () => toggleMois(moisKey);
+            tbody.appendChild(header);
 
-                // Accordéon des intentions refusées
-                if (intentionsRefusees.length > 0) {
-                    const refHeader = document.createElement('tr');
-                    refHeader.style.cssText = 'background:#94a3b8; border-radius:12px; padding:14px 18px; cursor:pointer; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; margin-top:16px;';
-                    refHeader.innerHTML =
-                        '<div style="color:white; font-weight:800; font-size:1rem;"> ✖️ Demandes refusées' +
-                        '<span style="margin-left:10px; background:rgba(255,255,255,0.2); border-radius:20px; padding:2px 10px; font-size:0.8rem;">' + intentionsRefusees.length + '</span></div>' +
-                        '<span id="arrow-refuses" class="accord-arrow"></span>';
-                    refHeader.onclick = function() {
-                        const div = document.getElementById('groupe-refuses');
-                        const arrow = document.getElementById('arrow-refuses');
-                        const isOpen = div.style.display !== 'none';
-                        div.style.display = isOpen ? 'none' : 'block';
-                        arrow.innerHTML = isOpen ? '' : '';
-                    };
-                    tbody.appendChild(refHeader);
+            const groupDiv = document.createElement('div');
+            groupDiv.id = accordeonId;
+            groupDiv.style.display = estOuvert ? 'block' : 'none';
 
-                    const refGroup = document.createElement('div');
-                    refGroup.id = 'groupe-refuses';
-                    refGroup.style.display = 'none';
+            items.forEach(item => {
+                const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
+                const dateObj = new Date(item.date_messe + 'T00:00:00');
+                const mailPrepare = genererTexteMail(item);
 
-                    intentionsRefusees.forEach(item => {
-                        const dateObj = new Date(item.date_messe + 'T00:00:00');
-                        const tr = document.createElement('tr');
-                        tr.dataset.intentionId = item.id;
-                        tr.style.opacity = '0.7';
-                        tr.innerHTML =
-                            '<td style="flex:1">' +
-                                '<span style="background:#94a3b8; color:white; border-radius:8px; padding:5px 10px; font-weight:800; font-size:0.85rem;">' + dateObj.toLocaleDateString('fr-FR', {day:'numeric', month:'short'}) + '</span>' +
-                                '<div style="font-weight:700; font-size:1rem; margin-top:10px; color:#64748b;">' + item.nom_intention + '</div>' +
-                                '<div style="color:#94a3b8; font-size:0.8rem;">Demandeur : ' + item.nom_donateur + '</div>' +
-                            '</td>' +
-                            '<td>' +
-                                '<div style="font-size:0.85rem; color:#94a3b8; padding:10px; background:#f8fafc; border-radius:8px;">' +
-                                    'Demande refusée' +
-                                    '<div style="margin-top:8px;">' +
-                                        '<button style="font-size:0.7rem; background:none; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:5px 10px; cursor:pointer;" onclick="getIdAndCall(this, supprimerIntention)"> Supprimer</button>' +
-                                    '</div>' +
-                                '</div>' +
-                            '</td>';
-                        refGroup.appendChild(tr);
-                    });
-                    tbody.appendChild(refGroup);
+                let badgeMail = '';
+                if (!estEnCours) {
+                    if (item.mail_envoye) {
+                        badgeMail = '<span class="mail-badge mail-badge-sent">✅ Mail envoyé</span>';
+                    } else if (item.mail_approuve) {
+                        badgeMail = '<span class="mail-badge">⏳ En attente d\u2019envoi</span>';
+                    } else {
+                        badgeMail = '<span class="mail-badge">⚠️ Non approuvé</span>';
+                    }
                 }
 
-                const count2026 = intentionsGlobal.filter(i => i.statut === 'valide' && i.date_messe.startsWith(new Date().getFullYear().toString())).length;
-                document.getElementById('annual-count').innerText = count2026;
-                document.getElementById('label-annee-intentions').textContent = 'MESSES CÉLÉBRÉES EN ' + new Date().getFullYear();
-            } catch (err) {
-                console.error(err);
-                document.getElementById('loading-status').style.display = 'block';
-                document.getElementById('loading-status').innerHTML = '<p style="color:#ef4444; text-align:center; padding:20px;">Erreur de connexion à la base de données.<br><button onclick="chargerDemandes()" style="margin-top:10px; padding:10px 20px; background:#4f46e5; color:white; border:none; border-radius:8px; font-weight:700; cursor:pointer;">Réessayer</button></p>';
-            }
-        }
+                const card = document.createElement('div');
+                card.className = 'intention-card ' + (estEnCours ? 'en-attente' : (item.statut === 'valide' ? 'valide' : 'refuse'));
+                card.dataset.intentionId = item.id;
 
-        // Génère le texte du mail tel que le .gs l'enverrait
-        function genererTexteMail(item) {
-            const nomDonateur = (item.nom_donateur || '').trim();
-            const texteIntention = (item.nom_intention || 'votre intention').trim();
-            const d = item.date_messe.split('-');
-            const dateFinaleFr = `${d[2]}/${d[1]}/${d[0]}`;
-            const heureFinale = (item.heure_messe || 'à confirmer').replace(':', 'h');
-            const dateDemandee = item.date_originale_mail || '';
+                card.innerHTML =
+                    '<div>'
+                    + '<span class="date-badge">' + dateObj.toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) + '</span>'
+                    + '<div class="intention-nom">' + item.nom_intention + '</div>'
+                    + '<div class="intention-meta">Demandeur : ' + item.nom_donateur + ' &middot; ' + item.type_intention + '</div>'
+                    + '<div style="color:var(--ink-muted);font-size:.72rem;font-style:italic;">' + (item.email_donateur || '') + '</div>'
+                    + badgeMail
+                    + (item.commentaire ? '<div style="margin-top:8px;padding:8px 12px;background:var(--gold-pale);border-left:3px solid var(--gold);border-radius:2px;font-size:.82rem;color:var(--ink-soft);font-style:italic;">🗒 ' + item.commentaire + '</div>' : '')
+                    + '</div>'
+                    + (estEnCours ? renderActionGroup(item) : renderTraiteInfo(item));
 
-            let phraseIntroduction = '';
-            if (dateDemandee !== '' && dateDemandee !== 'Non précisée' && dateDemandee !== dateFinaleFr) {
-                phraseIntroduction = `Le créneau du ${dateDemandee} étant déjà réservé, nous avons dû décaler votre demande pour "${texteIntention}".`;
-            } else {
-                phraseIntroduction = `La Messe pour "${texteIntention}" a bien été enregistrée.`;
-            }
-
-            let messagePretre = (item.reponse_pretre || '').trim();
-            if (messagePretre !== '' && !messagePretre.startsWith('La Messe à votre intention')) {
-                phraseIntroduction = `Concernant votre demande pour "${texteIntention}", ${messagePretre}.`;
-            }
-
-            return `Bonjour ${nomDonateur},\n\n${phraseIntroduction}\n\nLa Messe sera célébrée le ${dateFinaleFr} à ${heureFinale}.\n\nJe vous assure de ma prière,\n\nAbbé MOLIN,\ncuré`;
-        }
-
-        // Appelé depuis le bouton — récupère les données stockées en JS
-        function ouvrirModalMailById(id) {
-            const data = mailsData[id];
-            if (!data) { AppModal.alert('⚠️', 'Données manquantes', 'Rechargez la page et réessayez.'); return; }
-            ouvrirModalMail(id, data.texte, data.email);
-        }
-
-        // Ouvre le modal avec le mail pré-rempli
-        function ouvrirModalMail(id, texte, email) {
-            mailIdEnCours = id;
-            document.getElementById('mail-destinataire').innerText = email || '(email non renseigné)';
-            document.getElementById('mail-corps').value = texte;
-            document.getElementById('modal-mail').style.display = 'flex';
-        }
-
-        function fermerModalMail() {
-            document.getElementById('modal-mail').style.display = 'none';
-            mailIdEnCours = null;
-        }
-
-        // Sauvegarde le texte modifié + approuve le mail pour envoi par le .gs
-        async function approuverMail() {
-            if (!mailIdEnCours) return;
-            const texteModifie = document.getElementById('mail-corps').value.trim();
-            if (!texteModifie) { AppModal.alert('⚠️', 'Mail vide', 'Le contenu du mail ne peut pas être vide.'); return; }
-
-            const { error } = await maConnexion.from('intentions').update({
-                reponse_pretre: texteModifie,
-                mail_approuve: true,
-                mail_envoye: false
-            }).eq('id', mailIdEnCours);
-
-            if (error) {
-                AppModal.alert('❌', 'Erreur', error.message);
-            } else {
-                fermerModalMail();
-                await AppModal.alert('✅', 'Mail approuvé', 'Le mail sera envoyé lors du prochain passage du script automatique.', 'OK', 'app-modal-btn-success');
-                chargerDemandes();
-            }
-        }
-
-        function refreshTimeChoices(id, selectedHeure = "") {
-            const inputDate = document.getElementById(`d-${id}`).value;
-            const container = document.getElementById(`times-${id}`);
-            
-            const matches = googleEventsGlobal.filter(e => {
-                const d = (e.start.dateTime || e.start.date).split('T')[0];
-                const estUneMesse = e => ['messe', 'messe chantée', 'messe anticipée'].includes(e.summary.toLowerCase().trim());
-                return d === inputDate && estUneMesse(e);
+                mailsData[item.id] = { texte: mailPrepare, email: item.email_donateur || '' };
+                groupDiv.appendChild(card);
+                if (estEnCours) setTimeout(() => refreshTimeChoices(item.id, item.heure_messe), 0);
             });
 
-            if (matches.length === 0) {
-                // Pas de messe dans l'agenda → proposer une Messe privée avec horaire libre
-                // On nettoie l'heure : si "à confirmer" ou invalide, on met 09:00 par défaut
-                let heureDefaut = '09:00';
-                if (selectedHeure && selectedHeure !== 'à confirmer' && /^\d{2}:\d{2}$/.test(selectedHeure)) {
-                    heureDefaut = selectedHeure;
-                }
-                container.innerHTML =
-                    '<p style="color:#f97316; font-size:0.75rem; font-weight:bold; margin-bottom:6px;">' +
-                        'Aucune messe dans l\'agenda — Messe privée' +
-                    '</p>' +
-                    '<div style="display:flex; align-items:center; gap:8px;">' +
-                        '<input type="time" id="heure-privee-' + id + '" value="' + heureDefaut + '" ' +
-                            'style="padding:8px 10px; border:2px solid #4f46e5; border-radius:8px; font-size:0.9rem; font-weight:600; color:#4f46e5;">' +
-                        '<span style="font-size:0.8rem; color:#64748b;">Messe privée</span>' +
-                    '</div>';
-                container.dataset.privee = 'true';
-                return;
-            }
-            container.dataset.privee = 'false';
+            tbody.appendChild(groupDiv);
+        });
 
-            container.innerHTML = matches.map(m => {
-                const timeStr = new Date(m.start.dateTime).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}).replace(':', 'h');
-                const timeDb = timeStr.replace('h', ':');
-                const estPris = intentionsGlobal.some(i => i.date_messe === inputDate && i.heure_messe === timeDb && i.statut === 'valide' && i.id !== id);
-                
-                if (estPris) {
-                    return `<div class="time-chip taken" title="Déjà réservé"> ${timeStr}</div>`;
-                } else {
-                    const isActive = (selectedHeure && selectedHeure.replace(':', 'h') === timeStr) ? 'active' : '';
-                    return `<div class="time-chip ${isActive}" onclick="selectChip(this, '${id}')">${timeStr}</div>`;
-                }
-            }).join('');
-            
-            const available = container.querySelectorAll('.time-chip:not(.taken)');
-            if(available.length === 1 && !selectedHeure) selectChip(available[0], id);
+        // Section refusées
+        if (refusesFiltres.length > 0) {
+            const refHeader = document.createElement('div');
+            refHeader.className = 'accord-header refused';
+            refHeader.innerHTML =
+                '<div class="accord-title">✖️ Demandes refusées <span class="accord-badge">' + refusesFiltres.length + '</span></div>'
+                + '<span id="arrow-refuses" class="accord-arrow">▼</span>';
+            refHeader.onclick = () => {
+                const div = document.getElementById('groupe-refuses');
+                const arrow = document.getElementById('arrow-refuses');
+                const isOpen = div.style.display !== 'none';
+                div.style.display = isOpen ? 'none' : 'block';
+                arrow.classList.toggle('open', !isOpen);
+            };
+            tbody.appendChild(refHeader);
+
+            const refGroup = document.createElement('div');
+            refGroup.id = 'groupe-refuses';
+            refGroup.style.display = 'none';
+
+            refusesFiltres.forEach(item => {
+                const dateObj = new Date(item.date_messe + 'T00:00:00');
+                const card = document.createElement('div');
+                card.className = 'intention-card refuse';
+                card.dataset.intentionId = item.id;
+                card.style.opacity = '.75';
+                card.innerHTML =
+                    '<div>'
+                    + '<span class="date-badge" style="background:var(--ink-muted);">' + dateObj.toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) + '</span>'
+                    + '<div class="intention-nom" style="color:var(--ink-muted);">' + item.nom_intention + '</div>'
+                    + '<div class="intention-meta">Demandeur : ' + item.nom_donateur + '</div>'
+                    + '</div>'
+                    + '<div class="traite-info">Demande refusée'
+                    + '<div style="margin-top:8px;">'
+                    + '<button class="btn-danger-ghost" onclick="getIdAndCall(this, supprimerIntention)">🗑️ Supprimer</button>'
+                    + '</div></div>';
+                refGroup.appendChild(card);
+            });
+            tbody.appendChild(refGroup);
         }
 
-        function selectChip(el, id) {
-            const container = document.getElementById(`times-${id}`);
-            container.querySelectorAll('.time-chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
+        // Stats
+        const year = new Date().getFullYear();
+        const count = intentionsGlobal.filter(i => i.statut === 'valide' && i.date_messe.startsWith(year.toString())).length;
+        document.getElementById('annual-count').textContent = count;
+        document.getElementById('label-annee-intentions').textContent = 'MESSES CÉLÉBRÉES EN ' + year;
+    }
+
+    function renderActionGroup(item) {
+        return '<div class="action-group">'
+            + '<div class="action-label">Disponibilités</div>'
+            + '<input type="date" id="d-' + item.id + '" value="' + item.date_messe + '" onchange="refreshTimeChoicesFromInput(this)">'
+            + '<div id="times-' + item.id + '" class="time-selector-container"></div>'
+            + '<button class="btn-valider" onclick="getIdAndCall(this, finaliser)">✅ Valider cet horaire</button>'
+            + '<div class="inline-actions">'
+            + '<button class="btn-danger-ghost" onclick="getIdAndCall(this, refuser)">✖️ Refuser</button>'
+            + '<button class="btn-ghost" onclick="getIdAndCall(this, supprimerIntention)" style="color:var(--ink-muted);">🗑️ Supprimer</button>'
+            + '</div></div>';
+    }
+
+    function renderTraiteInfo(item) {
+        return '<div class="traite-info">'
+            + '<strong style="font-style:normal;">Confirmé :</strong> ' + (item.reponse_pretre || '—')
+            + '<div class="inline-actions" style="margin-top:10px;">'
+            + '<button class="btn-ghost" onclick="getIdAndCall(this, editer)">✏️ Modifier</button>'
+            + (!item.mail_envoye ? '<button class="btn-mail" onclick="getIdAndCall(this, ouvrirModalMailById)">📧 Vérifier le mail</button>' : '')
+            + '<button class="btn-danger-ghost" onclick="getIdAndCall(this, supprimerIntention)">🗑️ Supprimer</button>'
+            + '</div></div>';
+    }
+
+    function filtrerRecherche(valeur) {
+        renderIntentions(valeur);
+    }
+
+    function genererTexteMail(item) {
+        const nomDonateur   = (item.nom_donateur || '').trim();
+        const texteIntention = (item.nom_intention || 'votre intention').trim();
+        const d = item.date_messe.split('-');
+        const dateFinaleFr = `${d[2]}/${d[1]}/${d[0]}`;
+        const heureFinale  = (item.heure_messe || 'à confirmer').replace(':', 'h');
+        const dateDemandee = item.date_originale_mail || '';
+
+        let phraseIntroduction = '';
+        if (dateDemandee && dateDemandee !== 'Non précisée' && dateDemandee !== dateFinaleFr) {
+            phraseIntroduction = `Le créneau du ${dateDemandee} étant déjà réservé, nous avons dû décaler votre demande pour "${texteIntention}".`;
+        } else {
+            phraseIntroduction = `La Messe pour "${texteIntention}" a bien été enregistrée.`;
         }
+        let messagePretre = (item.reponse_pretre || '').trim();
+        if (messagePretre && !messagePretre.startsWith('La Messe à votre intention')) {
+            phraseIntroduction = `Concernant votre demande pour "${texteIntention}", ${messagePretre}.`;
+        }
+        return `Bonjour ${nomDonateur},\n\n${phraseIntroduction}\n\nLa Messe sera célébrée le ${dateFinaleFr} à ${heureFinale}.\n\nJe vous assure de ma prière,\n\nAbbé MOLIN,\ncuré`;
+    }
 
-        async function finaliser(id) {
-            const container = document.getElementById(`times-${id}`);
-            const estPrivee = container.dataset.privee === 'true';
+    function ouvrirModalMailById(id) {
+        const data = mailsData[id];
+        if (!data) { AppModal.alert('⚠️', 'Données manquantes', 'Rechargez la page et réessayez.'); return; }
+        mailIdEnCours = id;
+        document.getElementById('mail-destinataire').innerText = data.email || '(email non renseigné)';
+        document.getElementById('mail-corps').value = data.texte;
+        document.getElementById('modal-mail').style.display = 'flex';
+    }
 
-            let hLabel, hDb;
+    function fermerModalMail() {
+        document.getElementById('modal-mail').style.display = 'none';
+        mailIdEnCours = null;
+    }
 
-            if (estPrivee) {
-                const inputPrivee = document.getElementById(`heure-privee-${id}`);
-                if (!inputPrivee || !inputPrivee.value) { AppModal.alert("⚠️", "Horaire manquant", "Veuillez indiquer l'horaire de la Messe privée."); return; }
-                const [hh, mm] = inputPrivee.value.split(':');
-                hLabel = `${hh}h${mm}`;
-                hDb = `${hh}:${mm}`;
-            } else {
-                const selectedChip = document.querySelector(`#times-${id} .time-chip.active`);
-                if (!selectedChip) { AppModal.alert("⚠️", "Horaire manquant", "Veuillez sélectionner un horaire disponible."); return; }
-                hLabel = selectedChip.innerText;
-                hDb = hLabel.replace('h', ':');
-            }
+    async function approuverMail() {
+        if (!mailIdEnCours) return;
+        const texteModifie = document.getElementById('mail-corps').value.trim();
+        if (!texteModifie) { AppModal.alert('⚠️', 'Mail vide', 'Le contenu du mail ne peut pas être vide.'); return; }
+        const { error } = await maConnexion.from('intentions').update({
+            reponse_pretre: texteModifie, mail_approuve: true, mail_envoye: false
+        }).eq('id', mailIdEnCours);
+        if (error) { AppModal.alert('❌', 'Erreur', error.message); return; }
+        fermerModalMail();
+        await AppModal.alert('✅', 'Mail approuvé', 'Le mail sera envoyé lors du prochain passage du script automatique.', 'OK', 'app-modal-btn-success');
+        chargerDemandes();
+    }
 
-            const d = document.getElementById(`d-${id}`).value;
-            const dateFr = new Date(d + 'T00:00:00').toLocaleDateString('fr-FR');
+    function refreshTimeChoices(id, selectedHeure = '') {
+        const inputDate = document.getElementById(`d-${id}`).value;
+        const container = document.getElementById(`times-${id}`);
+        const estUneMesse = e => ['messe','messe chantée','messe anticipée'].includes(e.summary.toLowerCase().trim());
+        const matches = googleEventsGlobal.filter(e => {
+            const d = (e.start.dateTime || e.start.date).split('T')[0];
+            return d === inputDate && estUneMesse(e);
+        });
 
-            const { data: doublon } = await maConnexion.from('intentions')
-                .select('id').eq('date_messe', d).eq('heure_messe', hDb).eq('statut', 'valide').neq('id', id).maybeSingle();
+        if (matches.length === 0) {
+            let heureDefaut = '09:00';
+            if (selectedHeure && selectedHeure !== 'à confirmer' && /^\d{2}:\d{2}$/.test(selectedHeure)) heureDefaut = selectedHeure;
+            container.innerHTML =
+                '<p style="color:var(--gold);font-size:.75rem;font-weight:bold;margin-bottom:6px;font-family:\'Cinzel\',serif;">Messe privée — aucun créneau agenda</p>'
+                + '<input type="time" id="heure-privee-' + id + '" value="' + heureDefaut + '"'
+                + ' style="width:auto;padding:8px 10px;border:2px solid var(--gold);font-family:\'Cinzel\',serif;font-size:.9rem;">';
+            container.dataset.privee = 'true';
+            return;
+        }
+        container.dataset.privee = 'false';
+        container.innerHTML = matches.map(m => {
+            const timeStr = new Date(m.start.dateTime).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }).replace(':','h');
+            const timeDb  = timeStr.replace('h',':');
+            const estPris = intentionsGlobal.some(i => i.date_messe === inputDate && i.heure_messe === timeDb && i.statut === 'valide' && i.id !== id);
+            if (estPris) return `<div class="time-chip taken" title="Déjà réservé">🔒 ${timeStr}</div>`;
+            const isActive = selectedHeure && selectedHeure.replace(':','h') === timeStr ? 'active' : '';
+            return `<div class="time-chip ${isActive}" onclick="selectChip(this,'${id}')">${timeStr}</div>`;
+        }).join('');
+        const available = container.querySelectorAll('.time-chip:not(.taken)');
+        if (available.length === 1 && !selectedHeure) selectChip(available[0], id);
+    }
 
-            if (doublon) { AppModal.alert("⛔", "Créneau indisponible", "Désolé, ce créneau vient d'être pris par une autre intention."); return; }
+    function selectChip(el, id) {
+        document.getElementById(`times-${id}`).querySelectorAll('.time-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+    }
 
-            const { data: info } = await maConnexion.from('intentions').select('nom_intention').eq('id', id).single();
-            const libelle = estPrivee ? 'Messe privée' : 'Messe';
-            const txt = `La ${libelle} à votre intention (${info.nom_intention}) sera célébrée le ${dateFr} à ${hLabel}.`;
+    async function finaliser(id) {
+        const container = document.getElementById(`times-${id}`);
+        const estPrivee = container.dataset.privee === 'true';
+        let hLabel, hDb;
+        if (estPrivee) {
+            const inp = document.getElementById(`heure-privee-${id}`);
+            if (!inp || !inp.value) { AppModal.alert('⚠️', 'Horaire manquant', 'Veuillez indiquer l\'horaire de la Messe privée.'); return; }
+            const [hh, mm] = inp.value.split(':');
+            hLabel = `${hh}h${mm}`; hDb = `${hh}:${mm}`;
+        } else {
+            const chip = document.querySelector(`#times-${id} .time-chip.active`);
+            if (!chip) { AppModal.alert('⚠️', 'Horaire manquant', 'Veuillez sélectionner un horaire disponible.'); return; }
+            hLabel = chip.innerText; hDb = hLabel.replace('h',':');
+        }
+        const d = document.getElementById(`d-${id}`).value;
+        const dateFr = new Date(d + 'T00:00:00').toLocaleDateString('fr-FR');
 
-            await maConnexion.from('intentions').update({
+        const { data: doublon } = await maConnexion.from('intentions')
+            .select('id').eq('date_messe', d).eq('heure_messe', hDb).eq('statut', 'valide').neq('id', id).maybeSingle();
+        if (doublon) { AppModal.alert('⛔', 'Créneau indisponible', 'Ce créneau vient d\'être pris par une autre intention.'); return; }
+
+        const { data: info } = await maConnexion.from('intentions').select('nom_intention').eq('id', id).single();
+        const libelle = estPrivee ? 'Messe privée' : 'Messe';
+        const txt = `La ${libelle} à votre intention (${info.nom_intention}) sera célébrée le ${dateFr} à ${hLabel}.`;
+
+        // FIX 3 : try/catch sur l'update final
+        try {
+            const { error } = await maConnexion.from('intentions').update({
                 date_messe: d, heure_messe: hDb, statut: 'valide',
                 reponse_pretre: txt, en_edition: false,
                 mail_envoye: false, mail_approuve: false
             }).eq('id', id);
-
+            if (error) throw error;
+            showToast('✅ Intention validée');
             chargerDemandes();
+        } catch (e) {
+            AppModal.alert('❌', 'Erreur lors de la validation', e.message || 'Veuillez réessayer.');
         }
+    }
 
-        // Récupère l'id depuis le tr parent (dataset.intentionId) et appelle la fonction
-        function getIdAndCall(btn, fn) {
-            const tr = btn.closest('tr');
-            const id = tr ? tr.dataset.intentionId : null;
-            if (!id) return console.error('ID introuvable');
-            fn(id);
-        }
+    function getIdAndCall(btn, fn) {
+        const card = btn.closest('[data-intention-id]');
+        const id = card ? card.dataset.intentionId : null;
+        if (!id) return console.error('ID introuvable');
+        fn(id);
+    }
 
-        // onchange sur l'input date : récupère l'id depuis le tr parent
-        function refreshTimeChoicesFromInput(input) {
-            const tr = input.closest('tr');
-            const id = tr ? tr.dataset.intentionId : null;
-            if (id) refreshTimeChoices(id);
-        }
+    function refreshTimeChoicesFromInput(input) {
+        const card = input.closest('[data-intention-id]');
+        const id = card ? card.dataset.intentionId : null;
+        if (id) refreshTimeChoices(id);
+    }
 
-        function toggleMois(moisKey) {
-            const div = document.getElementById('mois-' + moisKey);
-            const arrow = document.getElementById('arrow-' + moisKey);
-            const isOpen = div.style.display !== 'none';
-            div.style.display = isOpen ? 'none' : 'block';
-            arrow.innerHTML = isOpen ? '' : '';
-        }
+    function toggleMois(moisKey) {
+        const div   = document.getElementById('mois-' + moisKey);
+        const arrow = document.getElementById('arrow-' + moisKey);
+        const isOpen = div.style.display !== 'none';
+        div.style.display = isOpen ? 'none' : 'block';
+        arrow.classList.toggle('open', !isOpen);
+    }
 
-        async function supprimerIntention(id) {
-            const ok = await AppModal.confirm("🗑️", "Supprimer l'intention ?", "Cette action est irréversible. Aucun mail ne sera envoyé.", "Supprimer", "app-modal-btn-danger");
-            if (!ok) return;
+    async function supprimerIntention(id) {
+        const ok = await AppModal.confirm('🗑️', "Supprimer l'intention ?", 'Cette action est irréversible. Aucun mail ne sera envoyé.', 'Supprimer', 'app-modal-btn-danger');
+        if (!ok) return;
+        try {
             const { error } = await maConnexion.from('intentions').delete().eq('id', id);
-            if (error) { AppModal.alert("❌", "Erreur", error.message); return; }
+            if (error) throw error;
+            showToast('🗑️ Intention supprimée');
             chargerDemandes();
+        } catch (e) {
+            AppModal.alert('❌', 'Erreur', e.message || 'Impossible de supprimer.');
         }
+    }
 
-        async function editer(id) {
-            await maConnexion.from('intentions').update({ en_edition: true, mail_approuve: false }).eq('id', id);
+    // FIX 3 : try/catch sur editer
+    async function editer(id) {
+        try {
+            const { error } = await maConnexion.from('intentions').update({ en_edition: true, mail_approuve: false }).eq('id', id);
+            if (error) throw error;
             chargerDemandes();
+        } catch (e) {
+            AppModal.alert('❌', 'Erreur', e.message || 'Impossible de passer en édition.');
         }
+    }
 
-        async function refuser(id) {
-            const okRefus = await AppModal.confirm("✖️", "Refuser la demande ?", "Un statut 'refusé' sera enregistré.", "Refuser", "app-modal-btn-danger");
-            if(!okRefus) return;
-            await maConnexion.from('intentions').update({
-                statut: 'refuse', en_edition: false,
-                reponse_pretre: "Désolé, nous ne pouvons pas honorer cette demande.",
-                mail_approuve: false
+    // FIX 3 + FIX 4 : refuser avec mail de notification au donateur
+    async function refuser(id) {
+        const okRefus = await AppModal.confirm('✖️', 'Refuser la demande ?',
+            'Un mail de refus sera envoyé au donateur. La demande sera archivée.',
+            'Refuser', 'app-modal-btn-danger');
+        if (!okRefus) return;
+        try {
+            // FIX 4 : mail_approuve = true + statut = 'refuse'
+            // → Code.gs doit filtrer aussi statut=refuse pour envoyer le mail de refus
+            // On passe par un statut intermédiaire : on envoie d'abord le mail (approuve=true),
+            // puis le GS marquera mail_envoye=true. On met statut='refuse' directement.
+            const { error } = await maConnexion.from('intentions').update({
+                statut: 'refuse',
+                en_edition: false,
+                reponse_pretre: 'Désolé, nous ne pouvons pas honorer cette demande pour la date demandée. N\'hésitez pas à nous recontacter pour une autre date.',
+                mail_approuve: true,   // ← FIX 4 : le GS pourra envoyer le mail
+                mail_envoye: false
             }).eq('id', id);
+            if (error) throw error;
+            showToast('✖️ Demande refusée — mail en attente d\'envoi');
             chargerDemandes();
+        } catch (e) {
+            AppModal.alert('❌', 'Erreur', e.message || 'Impossible de refuser la demande.');
         }
+    }
 
-        window.onload = chargerDemandes;
+    window.onload = chargerDemandes;
     </script>
-    <script src="modal.js"></script>
 </body>
 </html>
