@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tableau de bord - Messes</title>
+    <title>Tableau de bord — Messes</title>
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#1a1108">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="https://img.icons8.com/ios-filled/192/4f46e5/cross.png">
     <link rel="stylesheet" href="style.css">
     <script>
@@ -18,135 +18,79 @@
             });
         }
     </script>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f1f5f9; margin: 0; padding-bottom: 90px; color: #1e293b; }
-        main { max-width: 600px; margin: 0 auto; padding: 16px; }
-        .page-header { padding: 12px 0 20px; }
-        .page-header h1 { margin: 0; font-size: 1.7rem; font-weight: 900; color: #0f172a; }
-        .status-row { display: flex; align-items: center; gap: 7px; margin-top: 6px; }
-        .status-dot { width: 9px; height: 9px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; transition: background 0.3s; }
-        .status-text { font-size: 0.8rem; color: #64748b; font-weight: 500; }
-        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        @media (max-width: 380px) { .cards-grid { grid-template-columns: 1fr; } }
-        .card { background: white; border-radius: 16px; padding: 18px; border: 1px solid #e2e8f0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .card-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3b8; margin-bottom: 8px; }
-        .card-number { font-size: 3rem; font-weight: 900; color: #4f46e5; line-height: 1; }
-        .card-full { grid-column: 1 / -1; }
-        .btn-link { display: block; margin-top: 14px; padding: 11px 14px; background: #f1f5f9; border-radius: 10px; text-decoration: none; color: #4f46e5; font-weight: 700; font-size: 0.85rem; text-align: center; }
-        .messe-item { padding: 11px 0; border-bottom: 1px solid #f1f5f9; }
-        .messe-item:last-child { border-bottom: none; }
-        .messe-heure { color: #4f46e5; font-weight: 800; font-size: 0.95rem; }
-        .messe-titre { font-weight: 600; font-size: 0.95rem; }
-        .intention-chip { display: inline-block; margin-top: 5px; padding: 5px 9px; border-radius: 7px; font-size: 0.8rem; font-weight: 700; background: #fff1f2; color: #e11d48; border-left: 3px solid #e11d48; }
-        .intention-chip.vide { background: #f8fafc; color: #94a3b8; border-left-color: #cbd5e1; font-weight: 400; }
-        /* Modal custom */
-        .modal-overlay { display: none; position: fixed; inset: 0; z-index: 9000; background: rgba(15,23,42,0.5); align-items: flex-end; justify-content: center; }
-        .modal-overlay.visible { display: flex; }
-        .modal-box { background: white; border-radius: 20px 20px 0 0; padding: 24px 20px 32px; width: 100%; max-width: 500px; animation: slideUp 0.25s ease-out; }
-        .modal-icon { font-size: 2rem; margin-bottom: 8px; }
-        .modal-title { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
-        .modal-msg { font-size: 0.9rem; color: #64748b; line-height: 1.5; margin-bottom: 20px; }
-        .modal-btn { display: block; width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 8px; }
-        .modal-btn-primary { background: #4f46e5; color: white; }
-        .modal-btn-danger { background: #ef4444; color: white; }
-        .modal-btn-ghost { background: none; color: #94a3b8; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        @media (min-width: 600px) { .modal-overlay { align-items: center; } .modal-box { border-radius: 20px; } }
-    </style>
 </head>
 <body>
     <div id="menu-container"></div>
     <main>
         <div class="page-header">
+            <span class="rubric-tag">Paroisse La Croix Glorieuse</span>
             <h1>Tableau de bord</h1>
+            <div class="ornament">✦ ✦ ✦</div>
             <div class="status-row">
                 <span id="status-dot" class="status-dot"></span>
                 <span id="status-text" class="status-text">Connexion&hellip;</span>
             </div>
         </div>
+
         <div class="cards-grid">
             <div class="card">
-                <div class="card-label">En attente</div>
+                <span class="card-label">En attente</span>
                 <div id="pending-intentions" class="card-number">&mdash;</div>
-                <a href="intentions.html" class="btn-link">Traiter &rarr;</a>
+                <a href="intentions.html" class="btn-link">Traiter</a>
             </div>
             <div class="card">
-                <div class="card-label" id="label-annee">Messes</div>
-                <div id="count-2026" class="card-number">&mdash;</div>
-                <a href="calendrier.html" class="btn-link">Calendrier &rarr;</a>
+                <span class="card-label" id="label-annee">Messes</span>
+                <div id="count-annee" class="card-number">&mdash;</div>
+                <a href="calendrier.html" class="btn-link">Calendrier</a>
             </div>
             <div class="card card-full">
-                <div class="card-label">Messes du jour</div>
+                <span class="card-label">Offices du jour</span>
                 <div id="today-masses-list">
-                    <p style="color:#94a3b8; font-size:0.85rem; margin:0;">Chargement&hellip;</p>
+                    <p style="color:var(--ink-muted);font-size:.88rem;margin:0;font-style:italic;">Chargement&hellip;</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Modal custom (remplace alert/confirm) -->
-    <div id="modal-overlay" class="modal-overlay">
-        <div class="modal-box">
-            <div id="modal-icon" class="modal-icon"></div>
-            <div id="modal-title" class="modal-title"></div>
-            <div id="modal-msg" class="modal-msg"></div>
-            <button id="modal-btn1" class="modal-btn modal-btn-primary" onclick="closeModal()">OK</button>
-            <button id="modal-btn2" class="modal-btn modal-btn-ghost" style="display:none" onclick="closeModal()">Fermer</button>
-        </div>
-    </div>
+    <div id="toast" class="toast"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
     <script src="menu.js"></script>
+    <script src="modal.js"></script>
     <script>
     const GOOGLE_API_KEY = "AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ";
-    const CALENDAR_ID = "saintlouisenville67@gmail.com";
+    const CALENDAR_ID    = "saintlouisenville67@gmail.com";
 
-    function showModal(icon, title, msg) {
-        document.getElementById("modal-icon").textContent = icon;
-        document.getElementById("modal-title").textContent = title;
-        document.getElementById("modal-msg").textContent = msg;
-        document.getElementById("modal-btn1").className = "modal-btn modal-btn-primary";
-        document.getElementById("modal-btn1").textContent = "OK";
-        document.getElementById("modal-btn2").style.display = "none";
-        document.getElementById("modal-overlay").classList.add("visible");
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
     }
-    function closeModal() {
-        document.getElementById("modal-overlay").classList.remove("visible");
-    }
-    document.getElementById("modal-overlay").addEventListener("click", function(e) {
-        if (e.target === this) closeModal();
-    });
 
     async function initDashboard() {
         if (typeof maConnexion === "undefined") { setTimeout(initDashboard, 500); return; }
         try {
             const { error } = await maConnexion.from("intentions").select("id").limit(1);
             if (error) throw error;
-            document.getElementById("status-dot").style.background = "#10b981";
-            document.getElementById("status-text").textContent = "Base de donn\u00e9es pr\u00eate";
+            document.getElementById("status-dot").style.background = "#4a7c59";
+            document.getElementById("status-text").textContent = "Base de données prête";
             countPendingIntentionsAvecNotif();
-            count2026();
+            countAnnee();
             getTodayMasses();
         } catch (err) {
-            document.getElementById("status-dot").style.background = "#ef4444";
+            document.getElementById("status-dot").style.background = "var(--rubric)";
             document.getElementById("status-text").textContent = "Erreur de connexion";
         }
     }
 
-    async function countPendingIntentions() {
-        const { count } = await maConnexion.from("intentions")
-            .select("*", { count: "exact", head: true }).eq("statut", "en_attente");
-        document.getElementById("pending-intentions").textContent = count || 0;
-    }
-
-    async function count2026() {
+    async function countAnnee() {
+        const year = new Date().getFullYear();
         const { count } = await maConnexion.from("intentions")
             .select("*", { count: "exact", head: true })
-            .eq("statut", "valide").like("date_messe", new Date().getFullYear() + "%");
-        document.getElementById("label-annee").textContent = "Messes " + new Date().getFullYear();
-        document.getElementById("count-2026").textContent = count || 0;
+            .eq("statut", "valide").like("date_messe", year + "%");
+        document.getElementById("label-annee").textContent = "Messes " + year;
+        document.getElementById("count-annee").textContent = count || 0;
     }
 
     async function getTodayMasses() {
@@ -156,16 +100,18 @@
             const tzOffset = today.getTimezoneOffset() * 60000;
             const localISODate = (new Date(today - tzOffset)).toISOString().split("T")[0];
             today.setHours(0,0,0,0);
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
             const { data: intentions } = await maConnexion.from("intentions")
                 .select("*").eq("date_messe", localISODate).eq("statut", "valide");
-            const url = "https://www.googleapis.com/calendar/v3/calendars/" + CALENDAR_ID + "/events?key=" + GOOGLE_API_KEY + "&timeMin=" + today.toISOString() + "&timeMax=" + tomorrow.toISOString() + "&singleEvents=true&orderBy=startTime";
+            const url = "https://www.googleapis.com/calendar/v3/calendars/" + CALENDAR_ID +
+                "/events?key=" + GOOGLE_API_KEY +
+                "&timeMin=" + today.toISOString() + "&timeMax=" + tomorrow.toISOString() +
+                "&singleEvents=true&orderBy=startTime";
             const data = await (await fetch(url)).json();
-            const estUneMesse = e => ["messe", "messe chant\u00e9e", "messe anticip\u00e9e"].includes(e.summary.toLowerCase().trim());
+            const estUneMesse = e => ["messe","messe chantée","messe anticipée"].includes(e.summary.toLowerCase().trim());
             const messes = (data.items || []).filter(estUneMesse);
             if (messes.length === 0) {
-                listDiv.innerHTML = "<p style='color:#94a3b8; font-size:0.85rem; margin:0;'>Aucune messe aujourd\u2019hui.</p>";
+                listDiv.innerHTML = "<p style='color:var(--ink-muted);font-size:.88rem;margin:0;font-style:italic;'>Aucune messe aujourd\u2019hui.</p>";
                 return;
             }
             listDiv.innerHTML = messes.map(e => {
@@ -173,31 +119,28 @@
                 const heureGo = dateObj.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
                 let intention = (intentions || []).find(i => i.google_event_id === e.id);
                 if (!intention) intention = (intentions || []).find(i => (i.heure_messe || "").substring(0,5) === heureGo.substring(0,5));
-                const emoji = !intention ? "" : (intention.type_intention === "D\u00e9funt" ? "\u271d\ufe0f" : intention.type_intention === "Vivant" ? "\ud83d\ude4f" : "\u2728");
+                const emoji = !intention ? "" : (intention.type_intention === "Défunt" ? "✝️" : intention.type_intention === "Vivant" ? "🙏" : "✨");
                 const chip = intention
                     ? "<span class='intention-chip'>" + emoji + " " + intention.nom_intention + "</span>"
-                    : "<span class='intention-chip vide'>\ud83d\udd6f\ufe0f Pas d\u2019intention</span>";
-                return "<div class='messe-item'><div><span class='messe-heure'>" + heureGo.replace(":", "h") + "</span> <span class='messe-titre'>" + e.summary + "</span></div>" + chip + "</div>";
+                    : "<span class='intention-chip vide'>🕯️ Pas d\u2019intention</span>";
+                return "<div class='messe-item-home'>" +
+                    "<div><span class='messe-heure'>" + heureGo.replace(":", "h") + "</span>" +
+                    " <span class='messe-titre'>" + e.summary + "</span></div>" +
+                    chip + "</div>";
             }).join("");
         } catch (err) {
-            listDiv.innerHTML = "<p style='color:#ef4444; font-size:0.85rem; margin:0;'>Erreur de chargement.</p>";
+            listDiv.innerHTML = "<p style='color:var(--rubric);font-size:.85rem;margin:0;font-style:italic;'>Erreur de chargement.</p>";
         }
     }
 
-    // ==========================================
-    // NOTIFICATIONS — suivi du compteur en_attente
-    // ==========================================
     let lastKnownCount = -1;
 
     async function demanderPermissionNotification() {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
         if (Notification.permission === 'default') {
-            // On demande après 2s pour ne pas surprendre l'utilisateur
             setTimeout(async () => {
                 const perm = await Notification.requestPermission();
-                if (perm === 'granted') {
-                    AppModal.alert('🔔', 'Notifications activées', 'Vous serez averti dès qu\'une nouvelle intention arrive.');
-                }
+                if (perm === 'granted') AppModal.alert('🔔', 'Notifications activées', 'Vous serez averti dès qu\'une nouvelle intention arrive.');
             }, 2000);
         }
     }
@@ -205,11 +148,7 @@
     async function verifierNouvellesIntentions(count) {
         if (!('serviceWorker' in navigator) || Notification.permission !== 'granted') return;
         const sw = await navigator.serviceWorker.ready;
-        sw.active.postMessage({
-            type: 'CHECK_INTENTIONS',
-            count: count,
-            lastCount: lastKnownCount
-        });
+        sw.active.postMessage({ type: 'CHECK_INTENTIONS', count, lastCount: lastKnownCount });
         lastKnownCount = count;
     }
 
@@ -224,14 +163,12 @@
     window.onload = function() {
         initDashboard();
         demanderPermissionNotification();
-        // Rafraîchissement automatique toutes les 5 minutes
         setInterval(function() {
             countPendingIntentionsAvecNotif();
-            count2026();
+            countAnnee();
             getTodayMasses();
         }, 5 * 60 * 1000);
     };
     </script>
-    <script src="modal.js"></script>
 </body>
 </html>
