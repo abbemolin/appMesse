@@ -251,6 +251,7 @@
 
     <div id="toast" class="toast"></div>
 
+    <script src="ordo1962.js"></script>
     <script src="config.js"></script>
     <script src="menu.js"></script>
     <script src="modal.js"></script>
@@ -352,15 +353,13 @@
             const dimISO = isoLocal(dim);
             dim.setHours(23, 59, 59);
 
-            // Requêtes parallèles : Google Agenda + Ordo + Intentions validées
-            const [gcalResp, { data: ordo }, { data: intentions }] = await Promise.all([
+            // Requêtes parallèles : Google Agenda + Intentions validées
+            // L'ordo liturgique est calculé localement par Ordo1962 (missel de 1962)
+            const [gcalResp, { data: intentions }] = await Promise.all([
                 fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
                     + `?key=${GOOGLE_API_KEY}`
                     + `&timeMin=${lundi.toISOString()}&timeMax=${dim.toISOString()}`
                     + `&singleEvents=true&orderBy=startTime&maxResults=200`),
-                maConnexion.from('ordo_liturgique')
-                    .select('date,fete,couleur,classe')
-                    .gte('date', lundiCourant).lte('date', dimISO),
                 maConnexion.from('intentions')
                     .select('date_messe,heure_messe,nom_intention,type_intention,google_event_id')
                     .eq('statut','valide')
@@ -370,9 +369,13 @@
             const gcal = await gcalResp.json();
             const events = gcal.items || [];
 
-            // Maps
+            // Ordo calculé dynamiquement (moteur Ordo1962 — missel de 1962)
             const ordoMap = {};
-            (ordo || []).forEach(o => ordoMap[o.date] = o);
+            for (let i = 0; i < 7; i++) {
+                const dd = new Date(lundi); dd.setDate(lundi.getDate() + i);
+                const iso = isoLocal(dd);
+                ordoMap[iso] = Ordo1962.getDay(dd.getFullYear(), dd.getMonth()+1, dd.getDate());
+            }
             const intentionsMap = {};
             (intentions || []).forEach(i => {
                 const key = i.date_messe + '_' + (i.heure_messe || '').substring(0,5);
@@ -388,6 +391,7 @@
                 const iso    = isoLocal(d);
                 const dateFr = `${JOURS_FR[dow]} ${d.getDate()} ${MOIS_FR[d.getMonth()]}`;
                 const ordoJour = ordoMap[iso] || null;
+                // ordoJour : { fete, rang, classe, couleur, saison, commemoration }
 
                 // 100% Google Agenda — tous les événements du jour, triés par heure
                 const evtsJour = events
