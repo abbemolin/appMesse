@@ -135,6 +135,14 @@
         const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
         const CALENDAR_ID    = 'saintlouisenville67@gmail.com';
 
+        // Extrait "YYYY-MM-DD" en heure locale (évite le décalage UTC)
+        function isoLocal(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const j = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${j}`;
+        }
+
         // Cache ordo : { 'YYYY-MM-DD': { fete, classe, couleur }, ... }
         let ordoCache = {};
 
@@ -210,7 +218,7 @@
                 messes.forEach(event => {
                     const start      = event.start.dateTime || event.start.date;
                     const dateObj    = new Date(start);
-                    const dateISO    = dateObj.toISOString().split('T')[0];
+                    const dateISO    = isoLocal(dateObj);
                     const dateFr     = dateObj.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
                     const heureBrute = dateObj.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
                     const heureFr    = heureBrute.replace(':','h');
