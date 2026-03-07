@@ -235,11 +235,17 @@
 
         <!-- Bouton générer -->
         <div class="generate-zone">
-            <button class="btn-generate" id="btn-generate" onclick="genererDocument()" disabled>
-                <span class="icon">📄</span>
-                Générer le document Word
-            </button>
-            <p class="generate-hint">Le fichier .docx sera téléchargé automatiquement</p>
+            <div style="display:flex;gap:10px;margin-bottom:10px;">
+                <button class="btn-generate" id="btn-generate" onclick="genererDocument()" disabled style="flex:1">
+                    <span class="icon">📄</span>
+                    Générer le .docx
+                </button>
+                <button class="btn-generate" id="btn-jpeg" onclick="genererJpeg()" disabled style="flex:1;background:var(--ink);">
+                    <span class="icon">🖼️</span>
+                    Générer le .jpg
+                </button>
+            </div>
+            <p class="generate-hint">Les fichiers seront téléchargés automatiquement</p>
         </div>
     </main>
 
@@ -250,7 +256,8 @@
     <script src="modal.js"></script>
 
     <!-- Bibliothèque docx.js (génération Word côté client) -->
-    <script src="https://cdn.jsdelivr.net/npm/docx@9.5.3/build/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@9.5.3/dist/index.iife.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
     <script>
     const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
@@ -337,6 +344,7 @@
         container.innerHTML = '';
         loading.classList.add('visible');
         document.getElementById('btn-generate').disabled = true;
+        document.getElementById('btn-jpeg').disabled = true;
 
         try {
             const lundi  = new Date(lundiCourant + 'T12:00:00');
@@ -415,6 +423,7 @@
             renderPreview();
             loading.classList.remove('visible');
             document.getElementById('btn-generate').disabled = false;
+            document.getElementById('btn-jpeg').disabled = false;
 
         } catch(err) {
             loading.classList.remove('visible');
@@ -463,166 +472,268 @@
         });
     }
 
-    // ── Génération du document Word ───────────────────────────────────────
+    // ── Construit l'objet Document docx à partir de semaineData ─────────────
+    function buildDocxDoc() {
+        const {
+            Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+            AlignmentType, WidthType, BorderStyle, VerticalAlign
+        } = window.docx;
+
+        const PAGE_W = 11906, PAGE_H = 16838, MARGIN_TB = 142, MARGIN_LR = 720;
+        const CONTENT_W = PAGE_W - 2*MARGIN_LR;
+        const COL_WIDTHS = [322,1143,2174,1903,2882,71,36];
+        const scale = CONTENT_W / COL_WIDTHS.reduce((a,b)=>a+b,0);
+        const COLS = COL_WIDTHS.map(c => Math.round(c*scale));
+        COLS[COLS.length-1] += CONTENT_W - COLS.reduce((a,b)=>a+b,0);
+
+        const noBorder  = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+        const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+        const cellMar   = { top: 15, bottom: 15, left: 115, right: 115 };
+
+        const cell = (children, span=1) => new TableCell({
+            width: { size: COLS.slice(0,span).reduce((a,b)=>a+b,0), type: WidthType.DXA },
+            columnSpan: span, borders: noBorders, margins: cellMar,
+            verticalAlign: VerticalAlign.CENTER, children
+        });
+        const para = runs => new Paragraph({ alignment: AlignmentType.LEFT, spacing: { after: 0, line: 240 }, children: runs });
+        const r = (text, opts={}) => new TextRun({ text, font: 'Calibri', size: 24, color: '000000', ...opts });
+
+        const tableRows = [];
+        semaineData.forEach(jour => {
+            const headRuns = [r(jour.dateFr + ' ', { bold: true })];
+            if (jour.sousTitre) {
+                headRuns.push(r('– ', { italics: true }));
+                headRuns.push(r(jour.sousTitre, { italics: true }));
+            }
+            tableRows.push(new TableRow({ height: { value: 20, rule: 'auto' }, children: [
+                cell([para(headRuns)], 5), cell([para([])], 1), cell([para([])], 1)
+            ]}));
+
+            jour.notes.forEach(note => {
+                tableRows.push(new TableRow({ height: { value: 20, rule: 'auto' }, children: [
+                    cell([para([r(note, { italics: true })])], 5), cell([para([])], 1), cell([para([])], 1)
+                ]}));
+            });
+
+            jour.horaires.forEach(evt => {
+                const heureRuns = [r(evt.heure, { bold: evt.bold })];
+                let labelRuns;
+                if (evt.bold) {
+                    const m = evt.label.match(/^([^(]+?)(\s*\(.+\))?$/);
+                    labelRuns = (m && m[2])
+                        ? [r(m[1].trim(), { bold: true }), r(' ' + m[2].trim())]
+                        : [r(evt.label, { bold: true })];
+                } else {
+                    labelRuns = [r(evt.label)];
+                }
+                tableRows.push(new TableRow({ height: { value: 20, rule: 'auto' }, children: [
+                    cell([para([])], 1),
+                    cell([para(heureRuns)], 1),
+                    cell([para(labelRuns)], 4),
+                    cell([para([])], 1),
+                ]}));
+            });
+        });
+
+        const table = new Table({
+            width: { size: CONTENT_W, type: WidthType.DXA },
+            columnWidths: COLS, rows: tableRows,
+            borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideH: noBorder, insideV: noBorder }
+        });
+
+        return new Document({
+            styles: { default: { document: { run: { font: 'Calibri', size: 24, color: '000000' } } } },
+            sections: [{ properties: {
+                    page: { size: { width: PAGE_W, height: PAGE_H }, margin: { top: MARGIN_TB, right: MARGIN_LR, bottom: MARGIN_TB, left: MARGIN_LR } }
+                },
+                children: [
+                    new Paragraph({
+                        alignment: AlignmentType.CENTER, spacing: { after: 80, line: 240 },
+                        children: [new TextRun({ text: 'CALENDRIER DE LA SEMAINE', bold: true, font: 'Calibri', size: 32, color: '000000' })]
+                    }),
+                    table
+                ]
+            }]
+        });
+    }
+
+    function nomFichier(ext) {
+        const lundi = new Date(lundiCourant + 'T12:00:00');
+        const dim   = new Date(lundi); dim.setDate(lundi.getDate() + 6);
+        return `CALENDRIER_${lundi.getDate()}_${dim.getDate()}_${MOIS_FR[dim.getMonth()]}.${ext}`;
+    }
+
+    function telecharger(blob, nom) {
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href = url; a.download = nom;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // ── Génération DOCX ───────────────────────────────────────────────────
     async function genererDocument() {
-        if (!semaineData || !window.docx) {
-            AppModal.alert('⚠️','Bibliothèque non chargée','Attendez quelques secondes et réessayez.');
-            return;
-        }
+        if (!semaineData) { showToast('⚠️ Chargez d\'abord une semaine'); return; }
+        if (typeof window.docx === 'undefined') { showToast('⚠️ Bibliothèque non encore chargée, réessayez'); return; }
 
         const btn = document.getElementById('btn-generate');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spin">✦</span> Génération en cours…';
+        btn.innerHTML = '<span class="spin">✦</span> Génération…';
 
         try {
-            const {
-                Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-                AlignmentType, WidthType, BorderStyle, VerticalAlign
-            } = window.docx;
-
-            const PAGE_W = 11906, PAGE_H = 16838, MARGIN_TB = 142, MARGIN_LR = 720;
-            const CONTENT_W = PAGE_W - 2*MARGIN_LR;
-            const COL_WIDTHS = [322,1143,2174,1903,2882,71,36];
-            const scale = CONTENT_W / COL_WIDTHS.reduce((a,b)=>a+b,0);
-            const COLS = COL_WIDTHS.map(c => Math.round(c*scale));
-            const diff = CONTENT_W - COLS.reduce((a,b)=>a+b,0);
-            COLS[COLS.length-1] += diff;
-
-            const noBorder  = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
-            const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
-            const cellMar   = { top: 15, bottom: 15, left: 115, right: 115 };
-
-            function cell(children, span=1) {
-                return new TableCell({
-                    width: { size: COLS.slice(0,span).reduce((a,b)=>a+b,0), type: WidthType.DXA },
-                    columnSpan: span, borders: noBorders, margins: cellMar,
-                    verticalAlign: VerticalAlign.CENTER, children
-                });
-            }
-            function para(runs) {
-                return new Paragraph({ alignment: AlignmentType.LEFT, spacing: { after: 0, line: 240 }, children: runs });
-            }
-            function r(text, opts={}) {
-                return new TextRun({ text, font: 'Calibri', size: 24, color: '000000', ...opts });
-            }
-
-            const tableRows = [];
-
-            semaineData.forEach(jour => {
-                // En-tête jour
-                const headRuns = [r(jour.dateFr + ' ', { bold: true })];
-                if (jour.sousTitre) {
-                    headRuns.push(r('– ', { italics: true }));
-                    headRuns.push(r(jour.sousTitre, { italics: true }));
-                }
-                tableRows.push(new TableRow({
-                    children: [
-                        cell([para(headRuns)], 5),
-                        cell([para([])], 1),
-                        cell([para([])], 1),
-                    ],
-                    height: { value: 20, rule: 'auto' }
-                }));
-
-                // Notes
-                jour.notes.forEach(note => {
-                    tableRows.push(new TableRow({
-                        children: [
-                            cell([para([r(note, { italics: true })])], 5),
-                            cell([para([])], 1), cell([para([])], 1)
-                        ],
-                        height: { value: 20, rule: 'auto' }
-                    }));
-                });
-
-                // Horaires
-                jour.horaires.forEach(evt => {
-                    const heureRuns  = [r(evt.heure, { bold: evt.bold })];
-                    const labelRuns  = [];
-                    if (evt.bold) {
-                        const m = evt.label.match(/^([^(]+?)(\s*\(.+\))?$/);
-                        if (m && m[2]) {
-                            labelRuns.push(r(m[1].trim(), { bold: true }));
-                            labelRuns.push(r(' ' + m[2].trim()));
-                        } else {
-                            labelRuns.push(r(evt.label, { bold: true }));
-                        }
-                    } else if (evt.underline) {
-                        labelRuns.push(r(evt.label, { underline: { type: 'single' } }));
-                    } else {
-                        labelRuns.push(r(evt.label));
-                    }
-
-                    if (evt.extra1 || evt.extra2) {
-                        tableRows.push(new TableRow({
-                            children: [
-                                cell([para([])], 1),
-                                cell([para(heureRuns)], 1),
-                                cell([para(labelRuns)], 1),
-                                cell([para([r(evt.extra1)])], 1),
-                                cell([para([r(evt.extra2)])], 2),
-                                cell([para([])], 1),
-                            ],
-                            height: { value: 20, rule: 'auto' }
-                        }));
-                    } else {
-                        tableRows.push(new TableRow({
-                            children: [
-                                cell([para([])], 1),
-                                cell([para(heureRuns)], 1),
-                                cell([para(labelRuns)], 4),
-                                cell([para([])], 1),
-                            ],
-                            height: { value: 20, rule: 'auto' }
-                        }));
-                    }
-                });
-            });
-
-            const table = new Table({
-                width: { size: CONTENT_W, type: WidthType.DXA },
-                columnWidths: COLS, rows: tableRows,
-                borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideH: noBorder, insideV: noBorder }
-            });
-
-            const doc = new Document({
-                styles: { default: { document: { run: { font: 'Calibri', size: 24, color: '000000' } } } },
-                sections: [{
-                    properties: {
-                        page: { size: { width: PAGE_W, height: PAGE_H }, margin: { top: MARGIN_TB, right: MARGIN_LR, bottom: MARGIN_TB, left: MARGIN_LR } }
-                    },
-                    children: [
-                        new Paragraph({
-                            alignment: AlignmentType.CENTER,
-                            spacing: { after: 80, line: 240 },
-                            children: [new TextRun({ text: 'CALENDRIER DE LA SEMAINE', bold: true, font: 'Calibri', size: 32, color: '000000' })]
-                        }),
-                        table
-                    ]
-                }]
-            });
-
-            const blob = await Packer.toBlob(doc);
-            const url  = URL.createObjectURL(blob);
-            const a    = document.createElement('a');
-            a.href     = url;
-            const lundi = new Date(lundiCourant + 'T12:00:00');
-            const dim   = new Date(lundi); dim.setDate(lundi.getDate() + 6);
-            a.download = `CALENDRIER_${lundi.getDate()}_${dim.getDate()}_${MOIS_FR[dim.getMonth()]}.docx`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            showToast('✅ Document téléchargé !');
-
+            const doc  = buildDocxDoc();
+            const blob = await window.docx.Packer.toBlob(doc);
+            telecharger(blob, nomFichier('docx'));
+            showToast('✅ Document Word téléchargé !');
         } catch(err) {
-            AppModal.alert('❌','Erreur de génération', err.message);
+            showToast('❌ ' + err.message);
             console.error(err);
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<span class="icon">📄</span> Générer le document Word';
+            btn.innerHTML = '<span class="icon">📄</span> Générer le .docx';
         }
+    }
+
+    // ── Génération JPEG ───────────────────────────────────────────────────
+    // Construit un rendu A4 pixel-perfect à 200dpi, puis capture en JPEG
+    async function genererJpeg() {
+        if (!semaineData) { showToast('⚠️ Chargez d'abord une semaine'); return; }
+
+        const btn = document.getElementById('btn-jpeg');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin">✦</span> Rendu en cours…';
+
+        try {
+            // A4 à 200dpi : 1654 × 2339 px
+            // On crée un div à 827px de large (200dpi / 2 = 100dpi base, scale=2 dans html2canvas)
+            // soit 21cm à 100dpi = 827px → ×2 = 1654px
+            const DPI_BASE = 100; // html2canvas scale=2 → ×2 = 200dpi final
+            const MM_TO_PX = DPI_BASE / 25.4;
+            const PAGE_W_PX  = Math.round(210 * MM_TO_PX); // 827px
+            const MARGIN_LR  = Math.round(12.7 * MM_TO_PX); // ~50px (0.5")
+            const MARGIN_TB  = Math.round(3.5  * MM_TO_PX); // ~14px (marges réduites)
+            const INNER_W    = PAGE_W_PX - 2 * MARGIN_LR;
+
+            // Iframe hors-écran pour isolation totale des styles
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'position:absolute;left:-9999px;top:0;width:' + PAGE_W_PX + 'px;height:1px;border:none;visibility:hidden';
+            document.body.appendChild(iframe);
+            const idoc = iframe.contentDocument;
+
+            // Construire le HTML du document dans l'iframe
+            const rows = semaineData.flatMap(jour => {
+                const lines = [];
+                // En-tête jour
+                const sousTitreHtml = jour.sousTitre
+                    ? ' <span style="font-style:italic">– ' + escHtml(jour.sousTitre) + '</span>'
+                    : '';
+                lines.push('<tr class="row-head"><td colspan="2"><strong>' + escHtml(jour.dateFr) + '</strong>' + sousTitreHtml + '</td></tr>');
+                // Horaires
+                jour.horaires.forEach(evt => {
+                    const heure = escHtml(evt.heure);
+                    let labelHtml;
+                    if (evt.bold) {
+                        const m = evt.label.match(/^([^(]+?)(\s*\(.+\))?$/);
+                        labelHtml = m && m[2]
+                            ? '<strong>' + escHtml(m[1].trim()) + '</strong> ' + escHtml(m[2].trim())
+                            : '<strong>' + escHtml(evt.label) + '</strong>';
+                    } else {
+                        labelHtml = escHtml(evt.label);
+                    }
+                    const hClass = evt.bold ? ' class="bold"' : '';
+                    lines.push('<tr><td' + hClass + '>' + heure + '</td><td>' + labelHtml + '</td></tr>');
+                });
+                // Séparateur
+                lines.push('<tr class="row-sep"><td colspan="2"></td></tr>');
+                return lines;
+            }).join('');
+
+            idoc.open();
+            idoc.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width: ${PAGE_W_PX}px;
+    background: #ffffff;
+    font-family: Calibri, 'Trebuchet MS', Arial, sans-serif;
+    font-size: 12px;
+    color: #000000;
+    padding: ${MARGIN_TB}px ${MARGIN_LR}px;
+    line-height: 1.35;
+  }
+  h1 {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: Calibri, Arial, sans-serif;
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: Calibri, Arial, sans-serif;
+  }
+  td { vertical-align: top; padding: 1px 3px; }
+  td:first-child {
+    width: 48px;
+    white-space: nowrap;
+    padding-right: 8px;
+  }
+  td.bold { font-weight: bold; }
+  tr.row-head td {
+    padding-top: 5px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #999999;
+    font-size: 12.5px;
+  }
+  tr.row-sep td { height: 5px; }
+</style>
+</head><body>
+<h1>CALENDRIER DE LA SEMAINE</h1>
+<table>${rows}</table>
+</body></html>`);
+            idoc.close();
+
+            // Attendre que le contenu soit rendu
+            await new Promise(r => setTimeout(r, 150));
+
+            // Ajuster la hauteur de l'iframe au contenu réel
+            const bodyH = idoc.body.scrollHeight;
+            iframe.style.height = bodyH + 'px';
+            await new Promise(r => setTimeout(r, 50));
+
+            // Capturer avec html2canvas à scale=2 → 200dpi final
+            const canvas = await html2canvas(idoc.body, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                width:  PAGE_W_PX,
+                height: bodyH,
+                windowWidth:  PAGE_W_PX,
+                windowHeight: bodyH,
+            });
+            document.body.removeChild(iframe);
+
+            canvas.toBlob(blob => {
+                telecharger(blob, nomFichier('jpg'));
+                showToast('✅ Image JPEG téléchargée !');
+            }, 'image/jpeg', 0.93);
+
+        } catch(err) {
+            showToast('❌ ' + err.message);
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="icon">🖼️</span> Générer le .jpg';
+        }
+    }
+
+    function escHtml(s) {
+        return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     function showToast(msg) {
