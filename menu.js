@@ -1,8 +1,9 @@
 (function() {
     const href = window.location.href;
     const isAccueil    = href.includes('accueil') || href.endsWith('/') || href.endsWith('index.html');
-    const isCalendrier = href.includes('calendrier');
+    const isCalendrier = href.includes('calendrier.html');
     const isIntentions = href.includes('intentions');
+    const isSemaine    = href.includes('calendrier_semaine');
 
     const menuHTML = `
     <style>
@@ -41,6 +42,10 @@
         <a href="intentions.html" class="nav-item ${isIntentions ? 'active' : ''}">
             <span class="nav-icon">✍️</span>
             <span class="nav-label">Gérer</span>
+        </a>
+        <a href="calendrier_semaine.html" class="nav-item ${isSemaine ? 'active' : ''}">
+            <span class="nav-icon">📄</span>
+            <span class="nav-label">Semaine</span>
         </a>
     </nav>`;
 
