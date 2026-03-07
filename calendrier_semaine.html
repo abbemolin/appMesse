@@ -574,7 +574,7 @@
 
     // ── Génération DOCX ───────────────────────────────────────────────────
     async function genererDocument() {
-        if (!semaineData) { showToast('⚠️ Chargez d\'abord une semaine'); return; }
+        if (!semaineData) { showToast('⚠️ Chargez une semaine d\'abord'); return; }
         if (typeof window.docx === 'undefined') { showToast('⚠️ Bibliothèque non encore chargée, réessayez'); return; }
 
         const btn = document.getElementById('btn-generate');
@@ -598,7 +598,7 @@
     // ── Génération JPEG ───────────────────────────────────────────────────
     // Construit un rendu A4 pixel-perfect à 200dpi, puis capture en JPEG
     async function genererJpeg() {
-        if (!semaineData) { showToast('⚠️ Chargez d'abord une semaine'); return; }
+        if (!semaineData) { showToast('⚠️ Chargez une semaine d\'abord'); return; }
 
         const btn = document.getElementById('btn-jpeg');
         btn.disabled = true;
