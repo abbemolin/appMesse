@@ -37,7 +37,15 @@ function fetchJSON(url, headers = {}) {
   });
 }
 
-// ── Formatage ────────────────────────────────────────────────────────────────
+// ── Formatage timezone-safe ──────────────────────────────────────────────────
+// Extrait "YYYY-MM-DD" en heure locale (jamais UTC)
+function isoLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${j}`;
+}
+
 function fmtHeure(dateTime) {
   const d = new Date(dateTime);
   const h = d.getHours(), m = d.getMinutes();
@@ -50,9 +58,10 @@ function estMesse(summary) {
 
 // ── Construire les données de la semaine ─────────────────────────────────────
 async function buildSemaineData(lundiISO) {
-  const lundi    = new Date(lundiISO + 'T00:00:00');
-  const dimanche = new Date(lundi); dimanche.setDate(lundi.getDate() + 6); dimanche.setHours(23,59,59);
-  const dimISO   = dimanche.toISOString().split('T')[0];
+  const lundi    = new Date(lundiISO + 'T12:00:00');
+  const dimanche = new Date(lundi); dimanche.setDate(lundi.getDate() + 6);
+  const dimISO   = isoLocal(dimanche);
+  dimanche.setHours(23, 59, 59);
 
   console.log(`📅 Semaine : ${lundiISO} → ${dimISO}`);
 
@@ -78,7 +87,7 @@ async function buildSemaineData(lundiISO) {
   for (let i = 0; i < 7; i++) {
     const d   = new Date(lundi); d.setDate(lundi.getDate() + i);
     const dow = d.getDay();
-    const iso = d.toISOString().split('T')[0];
+    const iso = isoLocal(d);
 
     // Tous les événements du jour depuis Google Agenda, triés par heure
     const evtsJour = events
@@ -191,14 +200,14 @@ async function main() {
     const now = new Date();
     const dow = now.getDay();
     now.setDate(now.getDate() + (dow === 0 ? -6 : 1 - dow));
-    lundiArg = now.toISOString().split('T')[0];
+    lundiArg = isoLocal(now);
     console.log(`Semaine courante : ${lundiArg}`);
   }
   // Ajuster au lundi si besoin
   const d = new Date(lundiArg + 'T00:00:00');
   if (d.getDay() !== 1) {
     d.setDate(d.getDate() + (d.getDay() === 0 ? -6 : 1 - d.getDay()));
-    lundiArg = d.toISOString().split('T')[0];
+    lundiArg = isoLocal(d);
   }
 
   try {
