@@ -266,12 +266,17 @@
 
                     // Badge ordo inséré sous la date
                     const ordo = badgeOrdo(dateISO);
+                    const _dfEsc = dateFr.replace(/'/g,"&#39;");
+                    const btnPropre = '<button onclick="ouvrirPropre(\'' + dateISO + '\',\'' + _dfEsc + '\')" '
+                        + 'style="margin-top:6px;font-family:\'Cinzel\',serif;font-size:.6rem;letter-spacing:.1em;padding:4px 10px;background:transparent;border:1px solid #b8962a44;color:#b8962a;border-radius:4px;cursor:pointer;width:100%;">'
+                        + '✦ Propre de la Messe</button>';
 
                     const html = '<div class="messe-item ' + (estLibre ? 'libre' : 'prise') + '" data-iso="' + dateISO + '">'
                         + '<div>'
                         + '<div class="date-principale">' + dateFr + '</div>'
                         + '<div class="horaire">🕒 ' + heureFr + ' — ' + event.summary + '</div>'
                         + ordo
+                        + btnPropre
                         + '</div>'
                         + '<div>' + contenuAction + '</div></div>';
 
@@ -370,5 +375,235 @@
 
         window.onload = chargerAgenda;
     </script>
+
+
+    <!-- ══════════════════════════════════════════════════
+         MODAL PROPRE DE LA MESSE
+    ══════════════════════════════════════════════════ -->
+    <div id="modal-propre" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;">
+      <div style="background:#fffdf7;border-radius:10px;max-width:680px;width:100%;margin:auto;box-shadow:0 8px 40px rgba(0,0,0,.25);">
+        <div style="background:#1a1108;border-radius:10px 10px 0 0;padding:16px 20px;display:flex;align-items:center;gap:10px;">
+          <div style="flex:1;">
+            <div id="propre-date-label" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;color:#b8962a;text-transform:uppercase;margin-bottom:4px;"></div>
+            <input id="propre-fete-input" type="text" style="font-family:'Cinzel',serif;font-size:.95rem;color:#f5f0e4;background:transparent;border:none;border-bottom:1px solid #b8962a55;width:100%;outline:none;padding:2px 0;letter-spacing:.04em;" placeholder="Nom de la fete..."/>
+          </div>
+          <button onclick="fermerModalPropre()" style="background:none;border:none;color:#b8962a;font-size:1.4rem;cursor:pointer;line-height:1;padding:4px 8px;flex-shrink:0;">&#10005;</button>
+        </div>
+        <div style="background:#f5f0e4;border-bottom:1px solid #d4c9a8;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;border:1px solid #b8962a;border-radius:6px;overflow:hidden;">
+            <button id="btn-lang-la" onclick="setPropreLang('la')" style="padding:6px 16px;background:#b8962a;color:#fff;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;">LATIN</button>
+            <button id="btn-lang-fr" onclick="setPropreLang('fr')" style="padding:6px 16px;background:transparent;color:#b8962a;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;">FRAN&#199;AIS</button>
+          </div>
+          <div style="flex:1;"></div>
+          <button onclick="exportPropreDocx()" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.1em;padding:7px 14px;background:#1a1108;color:#b8962a;border:none;border-radius:6px;cursor:pointer;">&#128196; .docx</button>
+          <button onclick="exportPropreJpeg()" style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.1em;padding:7px 14px;background:#1a1108;color:#f5f0e4;border:none;border-radius:6px;cursor:pointer;">&#128247; .jpg</button>
+        </div>
+        <div id="propre-pieces" style="padding:20px;display:flex;flex-direction:column;gap:18px;max-height:65vh;overflow-y:auto;font-family:Georgia,serif;"></div>
+        <div style="padding:12px 20px;border-top:1px solid #d4c9a8;text-align:center;">
+          <button onclick="fermerModalPropre()" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:none;border:none;color:#8b7355;cursor:pointer;">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/docx@9.5.3/dist/index.iife.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+    // ── Moteur Propres de la Messe ───────────────────────────────────
+    var _propersDB = null, _propersLoading = null;
+
+    function loadPropersDB() {
+        if (_propersDB) return Promise.resolve(_propersDB);
+        if (_propersLoading) return _propersLoading;
+        _propersLoading = fetch('propers_db.json')
+            .then(function(r){ return r.json(); })
+            .then(function(d){ _propersDB = d; return d; });
+        return _propersLoading;
+    }
+
+    var SAISON_TO_PROPER = {
+        "Temps de l\u2019Avent":          "temporal-temps-de-l-avent-missel-fr",
+        "Temps de No\u00ebl":             "temporal-temps-de-noel-missel-fr",
+        "Temps de l\u2019\u00c9piphanie": "temporal-temps-de-l-epiphanie-missel-fr",
+        "Temps apr\u00e8s l\u2019\u00c9piphanie": "temporal-temps-apres-l-epiphanie-missel-fr",
+        "Temps de la Septuag\u00e9sime":  "temporal-temps-de-la-septuagesime-missel-fr",
+        "Temps du Car\u00eame":           "temporal-temps-du-careme-missel-fr",
+        "Temps de la Passion":            "temporal-temps-de-la-passion-missel-fr",
+        "Semaine Sainte":                 "temporal-temps-de-la-passion-missel-fr",
+        "Temps Pascal":                   "temporal-temps-pascal-missel-fr",
+        "Temps de l\u2019Ascension":      "temporal-temps-de-l-ascension-missel-fr",
+        "Temps de la Pent\u00eacote":     "temporal-temps-apres-la-pentecote-missel-fr",
+        "Temps apr\u00e8s la Pent\u00eacote": "temporal-temps-apres-la-pentecote-missel-fr"
+    };
+
+    function getProperID(ordo) {
+        if (!ordo) return null;
+        if (ordo.source === 'sanctoral' && ordo.date) {
+            var parts = ordo.date.split('-');
+            return 'sanctoral-' + parts[1] + '-' + parts[2] + '-missel-fr';
+        }
+        return SAISON_TO_PROPER[ordo.saison] || null;
+    }
+
+    var _propresLang = 'la';
+    var _propresData = null;
+    var _propresDateISO = null;
+
+    var PIECE_COLORS = {
+        introit:'#1a1108', collecte:'#5a3e1b', epitre:'#1a4a2a',
+        graduel:'#3a1a4a', trait:'#3a1a4a', alleluia:'#3a1a4a',
+        evangile:'#8b1a1a', offertoire:'#1a3a5a', secrete:'#5a3e1b',
+        preface:'#4a2a1a', communion:'#1a1108', postcommunion:'#5a3e1b'
+    };
+
+    function escH(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function ouvrirPropre(dateISO, dateFr) {
+        var parts = dateISO.split('-').map(Number);
+        var ordo = Ordo1962.getDay(parts[0], parts[1], parts[2]);
+        var pid  = getProperID(ordo);
+
+        document.getElementById('propre-date-label').textContent = dateFr;
+        document.getElementById('propre-fete-input').value = (ordo && ordo.fete) ? ordo.fete : '';
+        _propresDateISO = dateISO;
+
+        document.getElementById('propre-pieces').innerHTML =
+            '<div style="text-align:center;padding:40px;color:#8b7355;font-size:.85rem;letter-spacing:.1em;">Chargement\u2026</div>';
+        document.getElementById('modal-propre').style.display = 'flex';
+
+        loadPropersDB().then(function(db) {
+            _propresData = (pid && db[pid]) ? db[pid] : null;
+            renderProprePieces();
+        }).catch(function() {
+            document.getElementById('propre-pieces').innerHTML =
+                '<div style="color:#8b1a1a;padding:20px;">Impossible de charger les propres.</div>';
+        });
+    }
+
+    function setPropreLang(lang) {
+        _propresLang = lang;
+        var btnLa = document.getElementById('btn-lang-la');
+        var btnFr = document.getElementById('btn-lang-fr');
+        btnLa.style.background = lang === 'la' ? '#b8962a' : 'transparent';
+        btnLa.style.color      = lang === 'la' ? '#fff' : '#b8962a';
+        btnFr.style.background = lang === 'fr' ? '#b8962a' : 'transparent';
+        btnFr.style.color      = lang === 'fr' ? '#fff' : '#b8962a';
+        renderProprePieces();
+    }
+
+    function renderProprePieces() {
+        var c = document.getElementById('propre-pieces');
+        if (!_propresData) {
+            c.innerHTML = '<div style="text-align:center;padding:30px;color:#8b7355;font-style:italic;font-size:1rem;">Propre non disponible pour ce jour.</div>';
+            return;
+        }
+        var lang = _propresLang;
+        c.innerHTML = _propresData.map(function(p) {
+            var txt = (lang === 'la' ? p.la : p.fr) || (lang === 'la' ? p.fr : p.la) || '';
+            var col = PIECE_COLORS[p.part] || '#1a1108';
+            var ref = p.ref ? '<span style="font-size:.85em;color:#8b7355;font-style:italic;margin-left:8px;">' + escH(p.ref) + '</span>' : '';
+            return '<div>'
+                + '<div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:' + col + ';border-bottom:1px solid ' + col + '22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;">'
+                + '<span>' + escH(p.label) + '</span>' + ref
+                + '</div>'
+                + '<div style="font-size:1.05rem;line-height:1.75;color:#1a1108;white-space:pre-wrap;">' + escH(txt) + '</div>'
+                + '</div>';
+        }).join('');
+    }
+
+    function fermerModalPropre() {
+        document.getElementById('modal-propre').style.display = 'none';
+        _propresData = null;
+    }
+
+    // ── Export .docx ────────────────────────────────────────────────
+    function exportPropreDocx() {
+        if (!_propresData || typeof docx === 'undefined') return;
+        var D = docx;
+        var fete   = document.getElementById('propre-fete-input').value || 'Propre de la Messe';
+        var dateFr = document.getElementById('propre-date-label').textContent;
+        var lang   = _propresLang;
+        var children = [
+            new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing:{after:80},
+                children:[new D.TextRun({text:fete.toUpperCase(), bold:true, size:28, font:'Calibri'})] }),
+            new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing:{after:300},
+                children:[new D.TextRun({text:dateFr, italics:true, size:22, font:'Calibri', color:'5a3e1b'})] })
+        ];
+        _propresData.forEach(function(p) {
+            var txt   = (lang === 'la' ? p.la : p.fr) || (lang === 'la' ? p.fr : p.la) || '';
+            var titre = p.ref ? (p.label.toUpperCase() + '  \u2014  ' + p.ref) : p.label.toUpperCase();
+            children.push(new D.Paragraph({ spacing:{before:240,after:80},
+                children:[new D.TextRun({text:titre, bold:true, size:20, font:'Calibri', color:'8b1a1a'})] }));
+            children.push(new D.Paragraph({ spacing:{after:160},
+                children:[new D.TextRun({text:txt, size:22, font:'Calibri'})] }));
+        });
+        D.Packer.toBlob(new D.Document({sections:[{properties:{},children:children}]}))
+            .then(function(blob) {
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'PROPRE_' + _propresDateISO + '.docx';
+                a.click();
+            });
+    }
+
+    // ── Export JPEG ─────────────────────────────────────────────────
+    function exportPropreJpeg() {
+        if (!_propresData) return;
+        var fete   = document.getElementById('propre-fete-input').value || 'Propre de la Messe';
+        var dateFr = document.getElementById('propre-date-label').textContent;
+        var lang   = _propresLang;
+        var PAGE_W = 827;
+
+        var rows = _propresData.map(function(p) {
+            var txt = (lang === 'la' ? p.la : p.fr) || (lang === 'la' ? p.fr : p.la) || '';
+            var col = PIECE_COLORS[p.part] || '#1a1108';
+            var ref = p.ref ? (' \u2014 ' + p.ref) : '';
+            return '<div style="margin-bottom:14px;">'
+                + '<div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:' + col + ';border-bottom:0.5px solid ' + col + '33;padding-bottom:3px;margin-bottom:6px;">'
+                + escH(p.label) + escH(ref) + '</div>'
+                + '<div style="font-family:Georgia,serif;font-size:12px;line-height:1.65;white-space:pre-wrap;">' + escH(txt) + '</div>'
+                + '</div>';
+        }).join('');
+
+        var iframe = document.createElement('iframe');
+        iframe.style.cssText = 'position:absolute;left:-9999px;top:0;width:' + PAGE_W + 'px;height:1px;border:none;visibility:hidden';
+        document.body.appendChild(iframe);
+        var idoc = iframe.contentDocument;
+        idoc.open();
+        idoc.write('<!DOCTYPE html><html><head><meta charset="utf-8">'
+            + '<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">'
+            + '<style>*{margin:0;padding:0;box-sizing:border-box;}body{width:' + PAGE_W + 'px;background:#fff;color:#1a1108;padding:38px 52px;font-family:Georgia,serif;}</style>'
+            + '</head><body>'
+            + '<div style="font-family:Cinzel,serif;font-size:17px;font-weight:700;text-align:center;letter-spacing:.18em;margin-bottom:4px;">' + escH(fete) + '</div>'
+            + '<div style="font-style:italic;text-align:center;color:#8b7355;font-size:13px;margin-bottom:12px;">' + escH(dateFr) + '</div>'
+            + '<div style="text-align:center;color:#b8962a;letter-spacing:.5em;margin-bottom:14px;font-size:10px;">&#10022; &nbsp; &#10022; &nbsp; &#10022;</div>'
+            + '<div style="border-top:1.5px solid #b8962a;margin-bottom:18px;"></div>'
+            + rows + '</body></html>');
+        idoc.close();
+
+        setTimeout(function() {
+            var bodyH = idoc.body.scrollHeight;
+            iframe.style.height = bodyH + 'px';
+            setTimeout(function() {
+                html2canvas(idoc.body, {
+                    scale:2, useCORS:true, allowTaint:true,
+                    backgroundColor:'#ffffff', logging:false,
+                    width:PAGE_W, height:bodyH,
+                    windowWidth:PAGE_W, windowHeight:bodyH
+                }).then(function(canvas) {
+                    document.body.removeChild(iframe);
+                    canvas.toBlob(function(blob) {
+                        var a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = 'PROPRE_' + _propresDateISO + '.jpg';
+                        a.click();
+                    }, 'image/jpeg', 0.93);
+                });
+            }, 50);
+        }, 900);
+    }
+    </script>
+
 </body>
 </html>
