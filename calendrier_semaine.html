@@ -264,24 +264,31 @@
     let semaineData  = null;
 
     // ── Initialisation ────────────────────────────────────────────────────
+    // ── Utilitaire timezone-safe ─────────────────────────────────────────
+    // Extrait "YYYY-MM-DD" en heure LOCALE (pas UTC) pour éviter les décalages
+    function isoLocal(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const j = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${j}`;
+    }
+
     function getLundiDeSemaine(d) {
         const date = new Date(d);
+        date.setHours(12, 0, 0, 0); // midi pour éviter tout glissement DST
         const dow = date.getDay();
         const diff = dow === 0 ? -6 : 1 - dow;
         date.setDate(date.getDate() + diff);
-        return date.toISOString().split('T')[0];
+        return isoLocal(date);
     }
 
     function setSemaine(offset) {
-        const base = lundiCourant
-            ? new Date(lundiCourant + 'T00:00:00')
-            : new Date();
         if (offset === 0) {
             lundiCourant = getLundiDeSemaine(new Date());
         } else {
-            const d = new Date(lundiCourant || getLundiDeSemaine(new Date()));
+            const d = new Date((lundiCourant || getLundiDeSemaine(new Date())) + 'T12:00:00');
             d.setDate(d.getDate() + offset * 7);
-            lundiCourant = d.toISOString().split('T')[0];
+            lundiCourant = isoLocal(d);
         }
         document.getElementById('date-debut').value = lundiCourant;
         updateWeekDisplay();
@@ -298,9 +305,9 @@
 
     function updateWeekDisplay() {
         if (!lundiCourant) return;
-        const lundi   = new Date(lundiCourant + 'T00:00:00');
-        const dim     = new Date(lundi); dim.setDate(lundi.getDate() + 6);
-        const fmt     = d => d.getDate() + ' ' + MOIS_FR[d.getMonth()];
+        const lundi = new Date(lundiCourant + 'T12:00:00');
+        const dim   = new Date(lundi); dim.setDate(lundi.getDate() + 6);
+        const fmt   = d => d.getDate() + ' ' + MOIS_FR[d.getMonth()];
         document.getElementById('week-display').textContent =
             `Lundi ${fmt(lundi)} → Dimanche ${fmt(dim)} ${dim.getFullYear()}`;
     }
@@ -332,9 +339,10 @@
         document.getElementById('btn-generate').disabled = true;
 
         try {
-            const lundi   = new Date(lundiCourant + 'T00:00:00');
-            const dim     = new Date(lundi); dim.setDate(lundi.getDate() + 6); dim.setHours(23,59,59);
-            const dimISO  = dim.toISOString().split('T')[0];
+            const lundi  = new Date(lundiCourant + 'T12:00:00');
+            const dim    = new Date(lundi); dim.setDate(lundi.getDate() + 6);
+            const dimISO = isoLocal(dim);
+            dim.setHours(23, 59, 59);
 
             // Requêtes parallèles : Google Agenda + Ordo + Intentions validées
             const [gcalResp, { data: ordo }, { data: intentions }] = await Promise.all([
@@ -368,8 +376,8 @@
             semaineData = [];
             for (let i = 0; i < 7; i++) {
                 const d = new Date(lundi); d.setDate(lundi.getDate() + i);
-                const dow = d.getDay();
-                const iso = d.toISOString().split('T')[0];
+                const dow    = d.getDay();
+                const iso    = isoLocal(d);
                 const dateFr = `${JOURS_FR[dow]} ${d.getDate()} ${MOIS_FR[d.getMonth()]}`;
                 const ordoJour = ordoMap[iso] || null;
 
@@ -598,7 +606,7 @@
             const url  = URL.createObjectURL(blob);
             const a    = document.createElement('a');
             a.href     = url;
-            const lundi = new Date(lundiCourant + 'T00:00:00');
+            const lundi = new Date(lundiCourant + 'T12:00:00');
             const dim   = new Date(lundi); dim.setDate(lundi.getDate() + 6);
             a.download = `CALENDRIER_${lundi.getDate()}_${dim.getDate()}_${MOIS_FR[dim.getMonth()]}.docx`;
             document.body.appendChild(a);
@@ -626,14 +634,7 @@
     // ── Initialisation ────────────────────────────────────────────────────
     window.onload = function() {
         // Initialiser sur la semaine courante
-        lundiCourant = (() => {
-            const now = new Date();
-            const dow = now.getDay();
-            const diff = dow === 0 ? -6 : 1 - dow;
-            const lundi = new Date(now);
-            lundi.setDate(now.getDate() + diff);
-            return lundi.toISOString().split('T')[0];
-        })();
+        lundiCourant = getLundiDeSemaine(new Date());
         document.getElementById('date-debut').value = lundiCourant;
         updateWeekDisplay();
 
