@@ -615,123 +615,227 @@
         btn.innerHTML = '<span class="spin">✦</span> Rendu en cours…';
 
         try {
-            // A4 à 200dpi : 1654 × 2339 px
-            // On crée un div à 827px de large (200dpi / 2 = 100dpi base, scale=2 dans html2canvas)
-            // soit 21cm à 100dpi = 827px → ×2 = 1654px
-            const DPI_BASE = 100; // html2canvas scale=2 → ×2 = 200dpi final
-            const MM_TO_PX = DPI_BASE / 25.4;
-            const PAGE_W_PX  = Math.round(210 * MM_TO_PX); // 827px
-            const MARGIN_LR  = Math.round(12.7 * MM_TO_PX); // ~50px (0.5")
-            const MARGIN_TB  = Math.round(3.5  * MM_TO_PX); // ~14px (marges réduites)
-            const INNER_W    = PAGE_W_PX - 2 * MARGIN_LR;
+            // ── Dimensions A4 portrait à 100dpi (scale×2 = 200dpi final) ──────────
+            const PAGE_W  = 827;  // 210mm × 100dpi / 25.4
+            const PAGE_H  = 1169; // 297mm × 100dpi / 25.4
+            const ML      = 54;   // marges latérales
+            const MT      = 38;   // marges haut/bas
 
-            // Iframe hors-écran pour isolation totale des styles
-            const iframe = document.createElement('iframe');
-            iframe.style.cssText = 'position:absolute;left:-9999px;top:0;width:' + PAGE_W_PX + 'px;height:1px;border:none;visibility:hidden';
-            document.body.appendChild(iframe);
-            const idoc = iframe.contentDocument;
+            // ── Compter le nombre de lignes pour calculer le font-size auto ────────
+            const totalLignes = semaineData.reduce((acc, j) =>
+                acc + 1 + j.horaires.length + 1, 0); // 1 header + events + 1 sep
+            // Espace disponible en pixels (approx)
+            const hauteurTitre = 72; // titre + ornements + règles
+            const espaceTable  = PAGE_H - MT * 2 - hauteurTitre;
+            // Hauteur par ligne souhaitée
+            const hLigne = espaceTable / totalLignes;
+            // Font-size entre 8px et 13px
+            const fs = Math.min(13, Math.max(8, Math.round(hLigne / 1.55)));
+            const fsHead = fs + 1;
 
-            // Construire le HTML du document dans l'iframe
+            // ── Construire les lignes HTML ─────────────────────────────────────────
             const rows = semaineData.flatMap(jour => {
                 const lines = [];
-                // En-tête jour
                 const sousTitreHtml = jour.sousTitre
-                    ? ' <span style="font-style:italic">– ' + escHtml(jour.sousTitre) + '</span>'
-                    : '';
-                lines.push('<tr class="row-head"><td colspan="2"><strong>' + escHtml(jour.dateFr) + '</strong>' + sousTitreHtml + '</td></tr>');
-                // Horaires
+                    ? ' <em>– ' + escHtml(jour.sousTitre) + '</em>' : '';
+                lines.push(
+                    '<tr class="row-head"><td colspan="2">'
+                    + '<strong>' + escHtml(jour.dateFr) + '</strong>'
+                    + sousTitreHtml + '</td></tr>'
+                );
                 jour.horaires.forEach(evt => {
                     const heure = escHtml(evt.heure);
                     let labelHtml;
                     if (evt.bold) {
                         const m = evt.label.match(/^([^(]+?)(\s*\(.+\))?$/);
                         labelHtml = m && m[2]
-                            ? '<strong>' + escHtml(m[1].trim()) + '</strong> ' + escHtml(m[2].trim())
+                            ? '<strong>' + escHtml(m[1].trim()) + '</strong>'
+                              + ' <span class="intention">' + escHtml(m[2].trim()) + '</span>'
                             : '<strong>' + escHtml(evt.label) + '</strong>';
                     } else {
                         labelHtml = escHtml(evt.label);
                     }
-                    const hClass = evt.bold ? ' class="bold"' : '';
-                    lines.push('<tr><td' + hClass + '>' + heure + '</td><td>' + labelHtml + '</td></tr>');
+                    lines.push(
+                        '<tr class="' + (evt.bold ? 'row-messe' : 'row-evt') + '">'
+                        + '<td class="col-h">' + heure + '</td>'
+                        + '<td>' + labelHtml + '</td></tr>'
+                    );
                 });
-                // Séparateur
                 lines.push('<tr class="row-sep"><td colspan="2"></td></tr>');
                 return lines;
             }).join('');
 
+            // ── Iframe isolée ──────────────────────────────────────────────────────
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'position:absolute;left:-9999px;top:0;width:'
+                + PAGE_W + 'px;height:' + PAGE_H + 'px;border:none;visibility:hidden';
+            document.body.appendChild(iframe);
+            const idoc = iframe.contentDocument;
+
             idoc.open();
             idoc.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
+
   body {
-    width: ${PAGE_W_PX}px;
+    width: ${PAGE_W}px;
+    height: ${PAGE_H}px;
+    overflow: hidden;
     background: #ffffff;
-    font-family: Calibri, 'Trebuchet MS', Arial, sans-serif;
-    font-size: 12px;
-    color: #000000;
-    padding: ${MARGIN_TB}px ${MARGIN_LR}px;
-    line-height: 1.35;
+    color: #1a1108;
+    padding: ${MT}px ${ML}px;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: ${fs}px;
+    line-height: 1.45;
   }
-  h1 {
+
+  /* ── En-tête ─────────────────────────────── */
+  .doc-header {
     text-align: center;
-    font-size: 16px;
-    font-weight: bold;
-    font-family: Calibri, Arial, sans-serif;
-    margin-bottom: 6px;
-    letter-spacing: 0.03em;
+    margin-bottom: 10px;
+    border-bottom: 1.5px solid #b8962a;
+    padding-bottom: 8px;
   }
+  .doc-titre {
+    font-family: 'Cinzel', serif;
+    font-size: ${fs + 5}px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: #1a1108;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .doc-dates {
+    font-family: 'EB Garamond', serif;
+    font-size: ${fs + 1}px;
+    font-style: italic;
+    color: #8b1a1a;
+    letter-spacing: 0.04em;
+  }
+  .ornement {
+    font-size: ${fs - 1}px;
+    color: #b8962a;
+    letter-spacing: 0.5em;
+    margin: 2px 0;
+  }
+
+  /* ── Tableau ─────────────────────────────── */
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px;
-    font-family: Calibri, Arial, sans-serif;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: ${fs}px;
   }
-  td { vertical-align: top; padding: 1px 3px; }
-  td:first-child {
-    width: 48px;
-    white-space: nowrap;
-    padding-right: 8px;
-  }
-  td.bold { font-weight: bold; }
+
+  /* En-tête de jour */
   tr.row-head td {
-    padding-top: 5px;
-    padding-bottom: 3px;
-    border-bottom: 1px solid #999999;
-    font-size: 12.5px;
+    font-family: 'Cinzel', serif;
+    font-size: ${fsHead}px;
+    font-weight: 600;
+    color: #1a1108;
+    padding: ${Math.round(fs * 0.45)}px 4px ${Math.round(fs * 0.2)}px 0;
+    border-bottom: 0.75px solid #b8962a;
   }
-  tr.row-sep td { height: 5px; }
+  tr.row-head em {
+    font-family: 'EB Garamond', serif;
+    font-weight: 400;
+    font-size: ${fs}px;
+    color: #8b1a1a;
+    font-style: italic;
+  }
+
+  /* Ligne événement */
+  tr.row-evt td, tr.row-messe td {
+    padding: ${Math.round(fs * 0.1)}px 3px;
+    vertical-align: top;
+  }
+  .col-h {
+    width: 58px;
+    white-space: nowrap;
+    color: #5a4a2a;
+    font-family: 'EB Garamond', serif;
+    font-size: ${fs - 0.5}px;
+    padding-right: 6px !important;
+  }
+
+  /* Messe — rubrique rouge, gras */
+  tr.row-messe .col-h {
+    color: #8b1a1a;
+    font-weight: 600;
+  }
+  tr.row-messe strong {
+    color: #8b1a1a;
+    font-weight: 600;
+  }
+  .intention {
+    color: #4a3a1a;
+    font-style: italic;
+    font-size: ${fs - 0.5}px;
+  }
+
+  /* Séparateur entre jours */
+  tr.row-sep td { height: ${Math.round(fs * 0.55)}px; }
+
+  /* ── Pied de page ────────────────────────── */
+  .doc-footer {
+    position: absolute;
+    bottom: ${MT - 10}px;
+    left: ${ML}px;
+    right: ${ML}px;
+    border-top: 0.75px solid #b8962a;
+    padding-top: 4px;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: ${fs - 3}px;
+    letter-spacing: 0.15em;
+    color: #b8962a;
+  }
 </style>
 </head><body>
-<h1>CALENDRIER DE LA SEMAINE</h1>
+
+<div class="doc-header">
+  <div class="doc-titre">CALENDRIER DE LA SEMAINE</div>
+  <!-- titre exact identique au document Word -->
+  <div class="ornement">✦ &nbsp; ✦ &nbsp; ✦</div>
+  <div class="doc-dates">${(()=>{
+    const l = new Date(lundiCourant + 'T12:00:00');
+    const d = new Date(l); d.setDate(l.getDate()+6);
+    const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+    return l.getDate() + (l.getMonth()!==d.getMonth()?' '+mois[l.getMonth()]:'') + ' – ' + d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear();
+  })()}</div>
+</div>
+
 <table>${rows}</table>
+
+<div class="doc-footer">Paroisse Saint-Louis &nbsp;✦&nbsp; Strasbourg-Neudorf</div>
+
 </body></html>`);
             idoc.close();
 
-            // Attendre que le contenu soit rendu
-            await new Promise(r => setTimeout(r, 150));
+            // Attendre le chargement des polices Google
+            await new Promise(r => setTimeout(r, 900));
 
-            // Ajuster la hauteur de l'iframe au contenu réel
-            const bodyH = idoc.body.scrollHeight;
-            iframe.style.height = bodyH + 'px';
-            await new Promise(r => setTimeout(r, 50));
-
-            // Capturer avec html2canvas à scale=2 → 200dpi final
+            // Capturer à scale=2 → 200dpi final
             const canvas = await html2canvas(idoc.body, {
                 scale: 2,
                 useCORS: true,
+                allowTaint: true,
                 backgroundColor: '#ffffff',
                 logging: false,
-                width:  PAGE_W_PX,
-                height: bodyH,
-                windowWidth:  PAGE_W_PX,
-                windowHeight: bodyH,
+                width:  PAGE_W,
+                height: PAGE_H,
+                windowWidth:  PAGE_W,
+                windowHeight: PAGE_H,
             });
             document.body.removeChild(iframe);
 
             canvas.toBlob(blob => {
                 telecharger(blob, nomFichier('jpg'));
                 showToast('✅ Image JPEG téléchargée !');
-            }, 'image/jpeg', 0.93);
+            }, 'image/jpeg', 0.94);
 
         } catch(err) {
             showToast('❌ ' + err.message);
