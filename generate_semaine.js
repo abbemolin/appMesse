@@ -94,13 +94,20 @@ async function buildSemaineData(lundiISO) {
       .filter(e => (e.start.dateTime || e.start.date).startsWith(iso))
       .sort((a,b) => (a.start.dateTime||a.start.date).localeCompare(b.start.dateTime||b.start.date));
 
-    const horaires = evtsJour.map(e => ({
-      heure:     e.start.dateTime ? fmtHeure(e.start.dateTime) : '',
-      label:     e.summary.trim(),
-      bold:      estMesse(e.summary),
-      underline: false,
-      extra1: '', extra2: ''
-    }));
+    const AVEC_FIN = /adoration|confession/i;
+    const horaires = evtsJour.map(e => {
+      const hDebut  = e.start.dateTime ? fmtHeure(e.start.dateTime) : '';
+      const hFin    = e.end && e.end.dateTime ? fmtHeure(e.end.dateTime) : '';
+      const avecFin = AVEC_FIN.test(e.summary) && hFin && hFin !== hDebut;
+      const heure   = avecFin ? hDebut + '\u2013' + hFin : hDebut;
+      return {
+        heure,
+        label:     e.summary.trim(),
+        bold:      estMesse(e.summary),
+        underline: false,
+        extra1: '', extra2: ''
+      };
+    });
 
     jours.push({
       dateFr:    `${JOURS_FR[dow]} ${d.getDate()} ${MOIS_FR[d.getMonth()]}`,
