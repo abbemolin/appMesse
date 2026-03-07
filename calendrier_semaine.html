@@ -412,7 +412,10 @@
                             : '';
                         const key1      = iso + '_' + hdb;
                         const intention = intentionsMap['id_'+e.id] || intentionsMap[key1] || null;
-                        if (intention) label += ' (' + intention.nom_intention + ')';
+                        if (intention) {
+                            const croix = intention.type_intention === 'Défunt' ? ' ✝' : '';
+                            label += ' (' + intention.nom_intention + croix + ')';
+                        }
                     }
                     return { heure, label, bold: isMesse, underline: false, extra1: '', extra2: '' };
                 });
