@@ -420,28 +420,12 @@
         return _propersLoading;
     }
 
-    var SAISON_TO_PROPER = {
-        "Temps de l\u2019Avent":          "temporal-temps-de-l-avent-missel-fr",
-        "Temps de No\u00ebl":             "temporal-temps-de-noel-missel-fr",
-        "Temps de l\u2019\u00c9piphanie": "temporal-temps-de-l-epiphanie-missel-fr",
-        "Temps apr\u00e8s l\u2019\u00c9piphanie": "temporal-temps-apres-l-epiphanie-missel-fr",
-        "Temps de la Septuag\u00e9sime":  "temporal-temps-de-la-septuagesime-missel-fr",
-        "Temps du Car\u00eame":           "temporal-temps-du-careme-missel-fr",
-        "Temps de la Passion":            "temporal-temps-de-la-passion-missel-fr",
-        "Semaine Sainte":                 "temporal-temps-de-la-passion-missel-fr",
-        "Temps Pascal":                   "temporal-temps-pascal-missel-fr",
-        "Temps de l\u2019Ascension":      "temporal-temps-de-l-ascension-missel-fr",
-        "Temps de la Pent\u00eacote":     "temporal-temps-apres-la-pentecote-missel-fr",
-        "Temps apr\u00e8s la Pent\u00eacote": "temporal-temps-apres-la-pentecote-missel-fr"
-    };
-
+    // getProperKey est injecté par ordo1962.js
     function getProperID(ordo) {
-        if (!ordo) return null;
-        if (ordo.source === 'sanctoral' && ordo.date) {
-            var parts = ordo.date.split('-');
-            return 'sanctoral-' + parts[1] + '-' + parts[2] + '-missel-fr';
+        if (typeof Ordo1962 !== 'undefined' && Ordo1962.getProperKey) {
+            return Ordo1962.getProperKey(ordo);
         }
-        return SAISON_TO_PROPER[ordo.saison] || null;
+        return null;
     }
 
     var _propresLang = 'la';
