@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Feuille de semaine — Messes</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+    /* ── Sélecteur de semaine ────────────────────────────────── */
+    .week-picker-wrap {
+        background: var(--vellum-light);
+        border: 1px solid var(--border);
+        border-top: 3px solid var(--gold);
+        border-radius: 2px;
+        padding: 20px 20px 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px var(--shadow);
+    }
+    .week-label {
+        font-family: 'Cinzel', serif;
+        font-size: .58rem;
+        letter-spacing: .24em;
+        color: var(--rubric);
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 10px;
+    }
+    .week-nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    .week-nav input[type=date] {
+        flex: 1;
+        font-family: 'EB Garamond', serif;
+        font-size: 1rem;
+    }
+    .week-display {
+        font-family: 'EB Garamond', serif;
+        font-size: .95rem;
+        font-style: italic;
+        color: var(--ink-soft);
+        text-align: center;
+        min-height: 1.4em;
+        margin-bottom: 14px;
+    }
+    .week-nav-btns {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+    .btn-week-nav {
+        flex: 1;
+        font-family: 'Cinzel', serif;
+        font-size: .62rem;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        padding: 9px 0;
+        border: 1px solid var(--border-soft);
+        background: var(--vellum);
+        color: var(--ink-muted);
+        border-radius: 2px;
+        cursor: pointer;
+        transition: all .2s;
+    }
+    .btn-week-nav:hover { border-color: var(--border); color: var(--ink); background: var(--gold-pale); }
+    .btn-week-nav.active { border-color: var(--gold); color: var(--gold); }
+
+    /* ── Aperçu semaine ──────────────────────────────────────── */
+    .preview-section { margin-bottom: 20px; }
+    .preview-day {
+        background: var(--vellum-light);
+        border: 1px solid var(--border-soft);
+        border-left: 3px solid var(--border-soft);
+        border-radius: 2px;
+        margin-bottom: 8px;
+        overflow: hidden;
+        animation: fadeInUp .3s ease both;
+    }
+    .preview-day.has-messe { border-left-color: var(--rubric); }
+    .preview-day-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 14px 9px 12px;
+        border-bottom: 1px solid var(--border-soft);
+        background: rgba(26,17,8,.025);
+    }
+    .preview-day-nom {
+        font-family: 'Cinzel', serif;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        color: var(--ink);
+    }
+    .preview-day-fete {
+        font-family: 'EB Garamond', serif;
+        font-size: .78rem;
+        font-style: italic;
+        color: var(--ink-muted);
+        text-align: right;
+        max-width: 55%;
+        line-height: 1.2;
+    }
+    .preview-events { padding: 6px 12px 8px 12px; }
+    .preview-evt {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        padding: 2px 0;
+        font-family: 'EB Garamond', serif;
+        font-size: .88rem;
+        color: var(--ink-soft);
+    }
+    .preview-evt.is-messe {
+        color: var(--rubric);
+        font-weight: 600;
+    }
+    .preview-evt-heure {
+        font-family: 'Cinzel', serif;
+        font-size: .68rem;
+        min-width: 48px;
+        color: var(--ink-muted);
+    }
+    .preview-evt.is-messe .preview-evt-heure { color: var(--rubric); }
+    .preview-note {
+        font-family: 'EB Garamond', serif;
+        font-size: .8rem;
+        font-style: italic;
+        color: var(--rubric);
+        padding: 3px 12px 4px;
+        border-bottom: 1px solid var(--border-soft);
+        background: rgba(139,26,26,.035);
+    }
+    .preview-empty {
+        font-family: 'EB Garamond', serif;
+        font-size: .82rem;
+        font-style: italic;
+        color: var(--ink-muted);
+        opacity: .7;
+        padding: 4px 0;
+    }
+
+    /* ── Bouton générer ──────────────────────────────────────── */
+    .generate-zone {
+        background: var(--vellum-light);
+        border: 1px solid var(--border-soft);
+        border-top: 3px solid var(--rubric);
+        border-radius: 2px;
+        padding: 20px;
+        text-align: center;
+    }
+    .btn-generate {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Cinzel', serif;
+        font-size: .72rem;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        padding: 14px 28px;
+        background: var(--rubric);
+        color: #f5f0e4;
+        border: none;
+        border-radius: 2px;
+        cursor: pointer;
+        transition: all .2s;
+        width: 100%;
+        justify-content: center;
+    }
+    .btn-generate:hover { background: #6b1414; }
+    .btn-generate:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-generate .icon { font-size: 1.1rem; }
+    .generate-hint {
+        font-family: 'EB Garamond', serif;
+        font-size: .8rem;
+        font-style: italic;
+        color: var(--ink-muted);
+        margin-top: 10px;
+    }
+
+    /* ── État chargement / erreur ────────────────────────────── */
+    .loading-overlay {
+        display: none;
+        text-align: center;
+        padding: 32px 0;
+        color: var(--ink-muted);
+        font-style: italic;
+        font-size: .9rem;
+    }
+    .loading-overlay.visible { display: block; }
+    .spin { display: inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    </style>
+</head>
+<body>
+    <div id="menu-container"></div>
+    <main>
+        <div class="page-header">
+            <span class="rubric-tag">Génération</span>
+            <h1>Feuille de semaine</h1>
+            <div class="ornament">✦ ✦ ✦</div>
+        </div>
+
+        <!-- Sélecteur de semaine -->
+        <div class="week-picker-wrap">
+            <span class="week-label">Choisir la semaine</span>
+            <div class="week-nav-btns">
+                <button class="btn-week-nav" onclick="setSemaine(-1)">← Semaine précédente</button>
+                <button class="btn-week-nav" id="btn-current" onclick="setSemaine(0)">Semaine en cours</button>
+                <button class="btn-week-nav" onclick="setSemaine(1)">Semaine suivante →</button>
+            </div>
+            <div class="week-nav">
+                <input type="date" id="date-debut" onchange="onDateChange(this.value)">
+            </div>
+            <div class="week-display" id="week-display">—</div>
+        </div>
+
+        <!-- Aperçu de la semaine -->
+        <div class="preview-section">
+            <div class="offices-header">
+                <hr class="offices-rule offices-rule-left">
+                <span class="offices-title">✝ Aperçu de la semaine</span>
+                <hr class="offices-rule">
+            </div>
+            <div class="loading-overlay visible" id="loading-preview">
+                <span class="spin">✦</span> Chargement…
+            </div>
+            <div id="preview-container"></div>
+        </div>
+
+        <!-- Bouton générer -->
+        <div class="generate-zone">
+            <button class="btn-generate" id="btn-generate" onclick="genererDocument()" disabled>
+                <span class="icon">📄</span>
+                Générer le document Word
+            </button>
+            <p class="generate-hint">Le fichier .docx sera téléchargé automatiquement</p>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="config.js"></script>
+    <script src="menu.js"></script>
+    <script src="modal.js"></script>
+
+    <!-- Bibliothèque docx.js (génération Word côté client) -->
+    <script src="https://cdn.jsdelivr.net/npm/docx@9.5.3/build/index.js"></script>
+
+    <script>
+    const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
+    const CALENDAR_ID    = 'saintlouisenville67@gmail.com';
+
+    // ── Événements récurrents fixes (inchangés chaque semaine) ──────────────
+    const RECURRENTS = {
+      1: [], // Lundi — aucun fixe
+      2: [ // Mardi
+        { heure: '6h40',  label: 'Laudes',  extra1: '7h-8h', extra2: 'Adoration' },
+        { heure: '18h',   label: 'Vêpres' },
+        { heure: '19h30', label: 'Enseignement Groupe Saint Louis (Étudiants & Jeunes professionnels)' },
+        { heure: '20h',   label: 'Adoration et confessions (Fraternités Cor Unum, ouvert à tous)' },
+      ],
+      3: [ // Mercredi
+        { heure: '6h40',      label: 'Laudes',  extra1: '7h-8h', extra2: 'Adoration' },
+        { heure: '10h30',     label: 'Catéchisme maternelles et primaires' },
+        { heure: '11h30-17h', label: 'Patronage Saint Louis' },
+        { heure: '17h',       label: 'Catéchisme 6e-5e' },
+        { heure: '18h',       label: 'Vêpres' },
+        { heure: '20h',       label: 'Ouvroir' },
+      ],
+      4: [ // Jeudi
+        { heure: '6h40', label: 'Laudes', extra1: '7h-8h', extra2: 'Adoration' },
+        { heure: '18h',  label: 'Vêpres' },
+      ],
+      5: [ // Vendredi
+        { note: 'Jeûne et abstinence de viande' },
+        { heure: '7h40',      label: 'Laudes' },
+        { heure: '9h',        label: 'Groupe Sainte Attale (chapelet à 8h40)' },
+        { heure: '15h-17h30', label: 'Adoration' },
+        { heure: '17h45',     label: 'Chemin de Croix', underline: true },
+        { heure: '19h30',     label: 'Maraude / Aumônerie des lycéens' },
+      ],
+      6: [ // Samedi
+        { heure: '7h40',  label: 'Laudes', extra1: '8h-9h', extra2: 'Adoration' },
+        { heure: '10h',   label: 'Aumônerie des collégiens / Catéchisme pour les catéchumènes' },
+        { heure: '14h30', label: 'Catéchisme Complémentaire pour les adultes' },
+      ],
+      0: [ // Dimanche
+        { heure: '7h40', label: 'Laudes', extra1: '8h-9h', extra2: 'Adoration' },
+        { heure: '15h',  label: 'Chapelet de la Miséricorde et Rosaire' },
+        { heure: '18h',  label: 'Vêpres et Salut du Saint-Sacrement' },
+      ],
+    };
+
+    const JOURS_FR = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    const MOIS_FR  = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+    let lundiCourant = null;
+    let semaineData  = null;
+
+    // ── Initialisation ────────────────────────────────────────────────────
+    function getLundiDeSemaine(d) {
+        const date = new Date(d);
+        const dow = date.getDay();
+        const diff = dow === 0 ? -6 : 1 - dow;
+        date.setDate(date.getDate() + diff);
+        return date.toISOString().split('T')[0];
+    }
+
+    function setSemaine(offset) {
+        const base = lundiCourant
+            ? new Date(lundiCourant + 'T00:00:00')
+            : new Date();
+        if (offset === 0) {
+            lundiCourant = getLundiDeSemaine(new Date());
+        } else {
+            const d = new Date(lundiCourant || getLundiDeSemaine(new Date()));
+            d.setDate(d.getDate() + offset * 7);
+            lundiCourant = d.toISOString().split('T')[0];
+        }
+        document.getElementById('date-debut').value = lundiCourant;
+        updateWeekDisplay();
+        chargerSemaine();
+    }
+
+    function onDateChange(val) {
+        if (!val) return;
+        lundiCourant = getLundiDeSemaine(val);
+        document.getElementById('date-debut').value = lundiCourant;
+        updateWeekDisplay();
+        chargerSemaine();
+    }
+
+    function updateWeekDisplay() {
+        if (!lundiCourant) return;
+        const lundi   = new Date(lundiCourant + 'T00:00:00');
+        const dim     = new Date(lundi); dim.setDate(lundi.getDate() + 6);
+        const fmt     = d => d.getDate() + ' ' + MOIS_FR[d.getMonth()];
+        document.getElementById('week-display').textContent =
+            `Lundi ${fmt(lundi)} → Dimanche ${fmt(dim)} ${dim.getFullYear()}`;
+    }
+
+    function fmtHeure(dateTime) {
+        const d = new Date(dateTime);
+        const h = d.getHours(), m = d.getMinutes();
+        return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2,'0')}`;
+    }
+
+    function parseHeure(h) {
+        if (!h) return 999;
+        const m = h.match(/(\d+)h(\d*)/);
+        if (!m) return 999;
+        return parseInt(m[1]) * 60 + (m[2] ? parseInt(m[2]) : 0);
+    }
+
+    function estMesse(label) {
+        return /^(messe|grand'?messe)/i.test(label.trim());
+    }
+
+    // ── Charger et construire les données ─────────────────────────────────
+    async function chargerSemaine() {
+        if (!lundiCourant || typeof maConnexion === 'undefined') return;
+        const container = document.getElementById('preview-container');
+        const loading   = document.getElementById('loading-preview');
+        container.innerHTML = '';
+        loading.classList.add('visible');
+        document.getElementById('btn-generate').disabled = true;
+
+        try {
+            const lundi   = new Date(lundiCourant + 'T00:00:00');
+            const dim     = new Date(lundi); dim.setDate(lundi.getDate() + 6); dim.setHours(23,59,59);
+            const dimISO  = dim.toISOString().split('T')[0];
+
+            // Requêtes parallèles : Google Agenda + Ordo + Intentions validées
+            const [gcalResp, { data: ordo }, { data: intentions }] = await Promise.all([
+                fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
+                    + `?key=${GOOGLE_API_KEY}`
+                    + `&timeMin=${lundi.toISOString()}&timeMax=${dim.toISOString()}`
+                    + `&singleEvents=true&orderBy=startTime&maxResults=200`),
+                maConnexion.from('ordo_liturgique')
+                    .select('date,fete,couleur,classe')
+                    .gte('date', lundiCourant).lte('date', dimISO),
+                maConnexion.from('intentions')
+                    .select('date_messe,heure_messe,nom_intention,type_intention,google_event_id')
+                    .eq('statut','valide')
+                    .gte('date_messe', lundiCourant).lte('date_messe', dimISO),
+            ]);
+
+            const gcal = await gcalResp.json();
+            const events = gcal.items || [];
+
+            // Maps
+            const ordoMap = {};
+            (ordo || []).forEach(o => ordoMap[o.date] = o);
+            const intentionsMap = {};
+            (intentions || []).forEach(i => {
+                const key = i.date_messe + '_' + (i.heure_messe || '').substring(0,5);
+                intentionsMap[key] = i;
+                if (i.google_event_id) intentionsMap['id_' + i.google_event_id] = i;
+            });
+
+            // Construire jour par jour
+            semaineData = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(lundi); d.setDate(lundi.getDate() + i);
+                const dow = d.getDay();
+                const iso = d.toISOString().split('T')[0];
+                const dateFr = `${JOURS_FR[dow]} ${d.getDate()} ${MOIS_FR[d.getMonth()]}`;
+                const ordoJour = ordoMap[iso] || null;
+                const fixes = RECURRENTS[dow] || [];
+
+                // Événements Google de ce jour
+                const evtsJour = events
+                    .filter(e => (e.start.dateTime || e.start.date).startsWith(iso))
+                    .sort((a,b) => (a.start.dateTime||a.start.date).localeCompare(b.start.dateTime||b.start.date));
+
+                const gcalMesses  = evtsJour.filter(e => estMesse(e.summary));
+                const gcalAutres  = evtsJour.filter(e => !estMesse(e.summary));
+
+                // Horaires fusionnés
+                const horaires = [];
+                fixes.filter(f => !f.note).forEach(f => {
+                    horaires.push({ heure: f.heure||'', label: f.label, bold: false, underline: f.underline||false, extra1: f.extra1||'', extra2: f.extra2||'', source: 'fixe' });
+                });
+                gcalMesses.forEach(e => {
+                    const h  = e.start.dateTime ? fmtHeure(e.start.dateTime) : '';
+                    const hdb = h.replace('h',':').padEnd(5,'0');
+                    const key1 = iso + '_' + hdb.substring(0,5);
+                    const intention = intentionsMap['id_'+e.id] || intentionsMap[key1] || null;
+                    let label = e.summary.trim();
+                    if (intention) label += ` (${intention.nom_intention})`;
+                    horaires.push({ heure: h, label, bold: true, underline: false, extra1: '', extra2: '', source: 'gcal_messe', intention });
+                });
+                gcalAutres.forEach(e => {
+                    const h = e.start.dateTime ? fmtHeure(e.start.dateTime) : '';
+                    const isDup = horaires.some(x => x.heure === h && x.label.substring(0,8).toLowerCase() === e.summary.substring(0,8).toLowerCase());
+                    if (!isDup) horaires.push({ heure: h, label: e.summary.trim(), bold: false, underline: false, extra1: '', extra2: '', source: 'gcal_autre' });
+                });
+
+                horaires.sort((a,b) => parseHeure(a.heure) - parseHeure(b.heure));
+
+                semaineData.push({
+                    dateFr, iso, dow,
+                    sousTitre: ordoJour ? ordoJour.fete : null,
+                    couleur:   ordoJour ? ordoJour.couleur : null,
+                    notes:     fixes.filter(f => f.note).map(f => f.note),
+                    horaires
+                });
+            }
+
+            // Afficher l'aperçu
+            renderPreview();
+            loading.classList.remove('visible');
+            document.getElementById('btn-generate').disabled = false;
+
+        } catch(err) {
+            loading.classList.remove('visible');
+            container.innerHTML = `<div style="color:var(--rubric);font-style:italic;text-align:center;padding:20px;">Erreur de chargement : ${err.message}</div>`;
+            console.error(err);
+        }
+    }
+
+    // ── Rendu de l'aperçu ─────────────────────────────────────────────────
+    const COULEUR_DOT = { Blanc:'#d4af37', Rouge:'#9b2020', Vert:'#3a6644', Violet:'#5c2d7a', Rose:'#d4688a', Noir:'#1a1108' };
+
+    function renderPreview() {
+        const container = document.getElementById('preview-container');
+        container.innerHTML = '';
+        if (!semaineData) return;
+
+        semaineData.forEach((jour, idx) => {
+            const hasMesse = jour.horaires.some(e => e.bold);
+            const dot = COULEUR_DOT[jour.couleur];
+            const dotHtml = dot ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dot};margin-right:6px;flex-shrink:0"></span>` : '';
+
+            let html = `<div class="preview-day${hasMesse ? ' has-messe' : ''}" style="animation-delay:${idx*.05}s">`;
+            html += `<div class="preview-day-header">
+                <div class="preview-day-nom">${jour.dateFr}</div>
+                <div class="preview-day-fete">${dotHtml}${jour.sousTitre || '<span style="opacity:.4">—</span>'}</div>
+            </div>`;
+
+            jour.notes.forEach(n => {
+                html += `<div class="preview-note">✦ ${n}</div>`;
+            });
+
+            html += `<div class="preview-events">`;
+            if (!jour.horaires.length) {
+                html += `<div class="preview-empty">Aucun événement</div>`;
+            } else {
+                jour.horaires.forEach(evt => {
+                    const isMesse = evt.bold;
+                    html += `<div class="preview-evt${isMesse ? ' is-messe' : ''}">
+                        <span class="preview-evt-heure">${evt.heure || ''}</span>
+                        <span>${isMesse ? '<strong>' : ''}${evt.label}${isMesse ? '</strong>' : ''}</span>
+                    </div>`;
+                });
+            }
+            html += `</div></div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    // ── Génération du document Word ───────────────────────────────────────
+    async function genererDocument() {
+        if (!semaineData || !window.docx) {
+            AppModal.alert('⚠️','Bibliothèque non chargée','Attendez quelques secondes et réessayez.');
+            return;
+        }
+
+        const btn = document.getElementById('btn-generate');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spin">✦</span> Génération en cours…';
+
+        try {
+            const {
+                Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+                AlignmentType, WidthType, BorderStyle, VerticalAlign
+            } = window.docx;
+
+            const PAGE_W = 11906, PAGE_H = 16838, MARGIN_TB = 142, MARGIN_LR = 720;
+            const CONTENT_W = PAGE_W - 2*MARGIN_LR;
+            const COL_WIDTHS = [322,1143,2174,1903,2882,71,36];
+            const scale = CONTENT_W / COL_WIDTHS.reduce((a,b)=>a+b,0);
+            const COLS = COL_WIDTHS.map(c => Math.round(c*scale));
+            const diff = CONTENT_W - COLS.reduce((a,b)=>a+b,0);
+            COLS[COLS.length-1] += diff;
+
+            const noBorder  = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+            const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+            const cellMar   = { top: 15, bottom: 15, left: 115, right: 115 };
+
+            function cell(children, span=1) {
+                return new TableCell({
+                    width: { size: COLS.slice(0,span).reduce((a,b)=>a+b,0), type: WidthType.DXA },
+                    columnSpan: span, borders: noBorders, margins: cellMar,
+                    verticalAlign: VerticalAlign.CENTER, children
+                });
+            }
+            function para(runs) {
+                return new Paragraph({ alignment: AlignmentType.LEFT, spacing: { after: 0, line: 240 }, children: runs });
+            }
+            function r(text, opts={}) {
+                return new TextRun({ text, font: 'Calibri', size: 24, color: '000000', ...opts });
+            }
+
+            const tableRows = [];
+
+            semaineData.forEach(jour => {
+                // En-tête jour
+                const headRuns = [r(jour.dateFr + ' ', { bold: true })];
+                if (jour.sousTitre) {
+                    headRuns.push(r('– ', { italics: true }));
+                    headRuns.push(r(jour.sousTitre, { italics: true }));
+                }
+                tableRows.push(new TableRow({
+                    children: [
+                        cell([para(headRuns)], 5),
+                        cell([para([])], 1),
+                        cell([para([])], 1),
+                    ],
+                    height: { value: 20, rule: 'auto' }
+                }));
+
+                // Notes
+                jour.notes.forEach(note => {
+                    tableRows.push(new TableRow({
+                        children: [
+                            cell([para([r(note, { italics: true })])], 5),
+                            cell([para([])], 1), cell([para([])], 1)
+                        ],
+                        height: { value: 20, rule: 'auto' }
+                    }));
+                });
+
+                // Horaires
+                jour.horaires.forEach(evt => {
+                    const heureRuns  = [r(evt.heure, { bold: evt.bold })];
+                    const labelRuns  = [];
+                    if (evt.bold) {
+                        const m = evt.label.match(/^([^(]+?)(\s*\(.+\))?$/);
+                        if (m && m[2]) {
+                            labelRuns.push(r(m[1].trim(), { bold: true }));
+                            labelRuns.push(r(' ' + m[2].trim()));
+                        } else {
+                            labelRuns.push(r(evt.label, { bold: true }));
+                        }
+                    } else if (evt.underline) {
+                        labelRuns.push(r(evt.label, { underline: { type: 'single' } }));
+                    } else {
+                        labelRuns.push(r(evt.label));
+                    }
+
+                    if (evt.extra1 || evt.extra2) {
+                        tableRows.push(new TableRow({
+                            children: [
+                                cell([para([])], 1),
+                                cell([para(heureRuns)], 1),
+                                cell([para(labelRuns)], 1),
+                                cell([para([r(evt.extra1)])], 1),
+                                cell([para([r(evt.extra2)])], 2),
+                                cell([para([])], 1),
+                            ],
+                            height: { value: 20, rule: 'auto' }
+                        }));
+                    } else {
+                        tableRows.push(new TableRow({
+                            children: [
+                                cell([para([])], 1),
+                                cell([para(heureRuns)], 1),
+                                cell([para(labelRuns)], 4),
+                                cell([para([])], 1),
+                            ],
+                            height: { value: 20, rule: 'auto' }
+                        }));
+                    }
+                });
+            });
+
+            const table = new Table({
+                width: { size: CONTENT_W, type: WidthType.DXA },
+                columnWidths: COLS, rows: tableRows,
+                borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder, insideH: noBorder, insideV: noBorder }
+            });
+
+            const doc = new Document({
+                styles: { default: { document: { run: { font: 'Calibri', size: 24, color: '000000' } } } },
+                sections: [{
+                    properties: {
+                        page: { size: { width: PAGE_W, height: PAGE_H }, margin: { top: MARGIN_TB, right: MARGIN_LR, bottom: MARGIN_TB, left: MARGIN_LR } }
+                    },
+                    children: [
+                        new Paragraph({
+                            alignment: AlignmentType.CENTER,
+                            spacing: { after: 80, line: 240 },
+                            children: [new TextRun({ text: 'CALENDRIER DE LA SEMAINE', bold: true, font: 'Calibri', size: 32, color: '000000' })]
+                        }),
+                        table
+                    ]
+                }]
+            });
+
+            const blob = await Packer.toBlob(doc);
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            const lundi = new Date(lundiCourant + 'T00:00:00');
+            const dim   = new Date(lundi); dim.setDate(lundi.getDate() + 6);
+            a.download = `CALENDRIER_${lundi.getDate()}_${dim.getDate()}_${MOIS_FR[dim.getMonth()]}.docx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('✅ Document téléchargé !');
+
+        } catch(err) {
+            AppModal.alert('❌','Erreur de génération', err.message);
+            console.error(err);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span class="icon">📄</span> Générer le document Word';
+        }
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ── Initialisation ────────────────────────────────────────────────────
+    window.onload = function() {
+        // Initialiser sur la semaine courante
+        lundiCourant = (() => {
+            const now = new Date();
+            const dow = now.getDay();
+            const diff = dow === 0 ? -6 : 1 - dow;
+            const lundi = new Date(now);
+            lundi.setDate(now.getDate() + diff);
+            return lundi.toISOString().split('T')[0];
+        })();
+        document.getElementById('date-debut').value = lundiCourant;
+        updateWeekDisplay();
+
+        // Attendre Supabase
+        const wait = setInterval(() => {
+            if (typeof maConnexion !== 'undefined') {
+                clearInterval(wait);
+                chargerSemaine();
+            }
+        }, 200);
+    };
+    </script>
+</body>
+</html>
