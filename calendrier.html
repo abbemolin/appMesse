@@ -128,6 +128,7 @@
         </div>
     </div>
 
+    <script src="ordo1962.js"></script>
     <script src="config.js"></script>
     <script src="menu.js"></script>
     <script src="modal.js"></script>
@@ -152,15 +153,18 @@
             setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        // ── Charge les données ordo pour une plage de dates ──
-        async function chargerOrdo(dateMin, dateMax) {
-            try {
-                const { data } = await maConnexion.from('ordo_liturgique')
-                    .select('date,fete,classe,couleur')
-                    .gte('date', dateMin)
-                    .lte('date', dateMax);
-                if (data) data.forEach(row => { ordoCache[row.date] = row; });
-            } catch(e) { /* ordo optionnel — on continue sans */ }
+        // ── Charge les données ordo via le moteur Ordo1962 (missel 1962) ──
+        function chargerOrdo(dateMin, dateMax) {
+            // Calcul local — pas de requête réseau
+            const d = new Date(dateMin + 'T12:00:00');
+            const end = new Date(dateMax + 'T12:00:00');
+            while (d <= end) {
+                const iso = isoLocal(d);
+                const o = Ordo1962.getDay(d.getFullYear(), d.getMonth()+1, d.getDate());
+                if (o && o.fete) ordoCache[iso] = o;
+                d.setDate(d.getDate() + 1);
+            }
+            return Promise.resolve();
         }
 
         // ── Génère le badge ordo pour une date ISO ──────────
