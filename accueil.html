@@ -220,6 +220,14 @@
     const GOOGLE_API_KEY = "AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ";
     const CALENDAR_ID    = "saintlouisenville67@gmail.com";
 
+    // Extrait "YYYY-MM-DD" en heure locale (évite le décalage UTC)
+    function isoLocal(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const j = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${j}`;
+    }
+
     // ── Date en français ────────────────────────────────────
     (function() {
         const now   = new Date();
@@ -283,9 +291,8 @@
     async function getTodayMasses() {
         const listDiv = document.getElementById("today-masses-list");
         try {
-            const today    = new Date();
-            const tzOffset = today.getTimezoneOffset() * 60000;
-            const isoDate  = (new Date(today - tzOffset)).toISOString().split("T")[0];
+            const today   = new Date();
+            const isoDate = isoLocal(today);
             today.setHours(0,0,0,0);
             const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
 
