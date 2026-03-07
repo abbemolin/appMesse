@@ -781,3 +781,971 @@ const Ordo1962 = (() => {
 
 // Export pour Node.js (tests) et navigateur
 if (typeof module !== 'undefined') module.exports = Ordo1962;
+
+// ══════════════════════════════════════════════════════════
+// RÉSOLUTION DES PROPRES — getProperKey(ordoResult)
+// Retourne la clé "mass/S/N" pour charger le propre dans propers_db.json
+// ══════════════════════════════════════════════════════════
+(function() {
+  var FETES_TEMPORALES = {
+  "1er dimanche de l'avent": "mass/0/0",
+  "2e dimanche de l'avent": "mass/0/0",
+  "3e dimanche de l'avent": "mass/0/0",
+  "4e dimanche de l'avent": "mass/0/5",
+  "mercredi des quatre-temps de l'avent": "mass/0/3",
+  "vendredi des quatre-temps de l'avent": "mass/0/4",
+  "samedi des quatre-temps de l'avent": "mass/0/5",
+  "vigile de la nativité": "mass/0/5",
+  "nativité de notre-seigneur": "mass/1/0",
+  "noël": "mass/1/0",
+  "dimanche dans l'octave de la nativité": "mass/1/1",
+  "octave de la nativité": "mass/1/8",
+  "fête du saint nom de jésus": "mass/1/9",
+  "épiphanie de notre-seigneur": "mass/2/0",
+  "épiphanie": "mass/2/0",
+  "fête de la sainte famille": "mass/2/1",
+  "1er dimanche après l'épiphanie": "mass/2/2",
+  "2e dimanche après l'épiphanie": "mass/3/0",
+  "3e dimanche après l'épiphanie": "mass/3/0",
+  "4e dimanche après l'épiphanie": "mass/3/3",
+  "5e dimanche après l'épiphanie": "mass/3/3",
+  "6e dimanche après l'épiphanie": "mass/3/4",
+  "dimanche de la septuagésime": "mass/4/0",
+  "dimanche de la sexagésime": "mass/4/0",
+  "dimanche de la quinquagésime": "mass/4/2",
+  "mercredi des cendres": "mass/5/0",
+  "jeudi après les cendres": "mass/5/1",
+  "vendredi après les cendres": "mass/5/2",
+  "samedi après les cendres": "mass/5/3",
+  "1er dimanche du carême": "mass/5/4",
+  "lundi de la 1re semaine du carême": "mass/5/5",
+  "mardi de la 1re semaine du carême": "mass/5/5",
+  "mercredi des quatre-temps du carême": "mass/5/7",
+  "jeudi de la 1re semaine du carême": "mass/5/7",
+  "vendredi des quatre-temps du carême": "mass/5/9",
+  "samedi des quatre-temps du carême": "mass/5/10",
+  "2e dimanche du carême": "mass/5/11",
+  "lundi de la 2e semaine du carême": "mass/5/12",
+  "mardi de la 2e semaine du carême": "mass/5/13",
+  "mercredi de la 2e semaine du carême": "mass/5/14",
+  "jeudi de la 2e semaine du carême": "mass/5/12",
+  "vendredi de la 2e semaine du carême": "mass/5/16",
+  "samedi de la 2e semaine du carême": "mass/5/17",
+  "3e dimanche du carême": "mass/5/19",
+  "lundi de la 3e semaine du carême": "mass/5/19",
+  "mardi de la 3e semaine du carême": "mass/5/20",
+  "mercredi de la 3e semaine du carême": "mass/5/20",
+  "jeudi de la 3e semaine du carême": "mass/5/20",
+  "vendredi de la 3e semaine du carême": "mass/5/16",
+  "samedi de la 3e semaine du carême": "mass/5/17",
+  "4e dimanche du carême": "mass/5/25",
+  "lundi de la 4e semaine du carême": "mass/5/26",
+  "mardi de la 4e semaine du carême": "mass/5/27",
+  "mercredi de la 4e semaine du carême": "mass/5/28",
+  "jeudi de la 4e semaine du carême": "mass/5/29",
+  "vendredi de la 4e semaine du carême": "mass/5/30",
+  "samedi de la 4e semaine du carême": "mass/5/31",
+  "dimanche de la passion": "mass/6/0",
+  "lundi de la passion": "mass/6/1",
+  "mardi de la passion": "mass/6/1",
+  "mercredi de la passion": "mass/6/3",
+  "jeudi de la passion": "mass/6/4",
+  "vendredi de la passion": "mass/6/5",
+  "samedi de la passion": "mass/6/6",
+  "dimanche des rameaux": "mass/6/6",
+  "lundi saint": "mass/6/9",
+  "mardi saint": "mass/6/9",
+  "mercredi saint": "mass/6/10",
+  "jeudi saint": "mass/6/11",
+  "vendredi saint": "mass/6/12",
+  "vigile pascale": "mass/6/13",
+  "la vigile pascale": "mass/6/13",
+  "samedi saint": "mass/6/13",
+  "dimanche de pâques": "mass/7/0",
+  "pâques": "mass/7/0",
+  "lundi de pâques": "mass/7/1",
+  "mardi de pâques": "mass/7/2",
+  "mercredi de pâques": "mass/7/3",
+  "jeudi de pâques": "mass/7/3",
+  "vendredi de pâques": "mass/7/5",
+  "samedi de pâques in albis": "mass/7/5",
+  "samedi de pâques": "mass/7/5",
+  "dimanche in albis": "mass/7/7",
+  "2e dimanche après pâques": "mass/7/8",
+  "3e dimanche après pâques": "mass/7/10",
+  "4e dimanche après pâques": "mass/7/10",
+  "5e dimanche après pâques": "mass/7/11",
+  "vigile de l'ascension": "mass/7/11",
+  "ascension de notre-seigneur": "mass/8/0",
+  "ascension": "mass/8/0",
+  "dimanche après l'ascension": "mass/8/1",
+  "vigile de la pentecôte": "mass/8/2",
+  "dimanche de la pentecôte": "mass/8/4",
+  "pentecôte": "mass/8/4",
+  "lundi de pentecôte": "mass/8/4",
+  "mardi de pentecôte": "mass/8/5",
+  "mercredi des quatre-temps de pentecôte": "mass/8/6",
+  "jeudi de pentecôte": "mass/8/7",
+  "vendredi des quatre-temps de pentecôte": "mass/8/8",
+  "samedi des quatre-temps de pentecôte": "mass/8/9",
+  "fête de la très sainte trinité": "mass/9/0",
+  "trinité": "mass/9/0",
+  "1er dimanche après la pentecôte": "mass/9/1",
+  "fête-dieu": "mass/9/2",
+  "corpus christi": "mass/9/2",
+  "2e dimanche après la pentecôte": "mass/9/3",
+  "fête du sacré-cœur de jésus": "mass/9/4",
+  "sacré-cœur": "mass/9/4",
+  "3e dimanche après la pentecôte": "mass/9/6",
+  "4e dimanche après la pentecôte": "mass/9/6",
+  "5e dimanche après la pentecôte": "mass/9/7",
+  "6e dimanche après la pentecôte": "mass/9/7",
+  "7e dimanche après la pentecôte": "mass/9/9",
+  "8e dimanche après la pentecôte": "mass/9/10",
+  "9e dimanche après la pentecôte": "mass/9/10",
+  "10e dimanche après la pentecôte": "mass/9/12",
+  "11e dimanche après la pentecôte": "mass/9/13",
+  "12e dimanche après la pentecôte": "mass/9/14",
+  "13e dimanche après la pentecôte": "mass/9/15",
+  "14e dimanche après la pentecôte": "mass/9/16",
+  "15e dimanche après la pentecôte": "mass/9/17",
+  "16e dimanche après la pentecôte": "mass/9/18",
+  "17e dimanche après la pentecôte": "mass/9/19",
+  "mercredi des quatre-temps d'automne": "mass/9/20",
+  "vendredi des quatre-temps d'automne": "mass/9/21",
+  "samedi des quatre-temps d'automne": "mass/9/22",
+  "18e dimanche après la pentecôte": "mass/9/23",
+  "19e dimanche après la pentecôte": "mass/9/24",
+  "20e dimanche après la pentecôte": "mass/9/24",
+  "21e dimanche après la pentecôte": "mass/9/26",
+  "22e dimanche après la pentecôte": "mass/9/27",
+  "23e dimanche après la pentecôte": "mass/9/28",
+  "24e dimanche après la pentecôte": "mass/9/29",
+  "dernier dimanche après la pentecôte": "mass/9/30"
+};
+
+  // Sanctoral : "MM-DD" → ["mass/M/N", ...]  (premier = principal)
+  var SANCTORAL_DATE = {
+  "01-03": [
+    "mass/1/0"
+  ],
+  "02-01": [
+    "mass/2/1"
+  ],
+  "05-04": [
+    "mass/5/4"
+  ],
+  "05-07": [
+    "mass/5/7"
+  ],
+  "05-10": [
+    "mass/5/10"
+  ],
+  "05-28": [
+    "mass/5/28"
+  ],
+  "06-01": [
+    "mass/6/1"
+  ],
+  "06-10": [
+    "mass/6/10"
+  ],
+  "06-12": [
+    "mass/6/12"
+  ],
+  "06-13": [
+    "mass/6/13"
+  ],
+  "07-01": [
+    "mass/7/1"
+  ],
+  "08-01": [
+    "mass/8/1"
+  ],
+  "08-06": [
+    "mass/8/6"
+  ],
+  "08-09": [
+    "mass/8/9"
+  ],
+  "09-20": [
+    "mass/9/20"
+  ],
+  "09-21": [
+    "mass/9/21"
+  ],
+  "09-22": [
+    "mass/9/22"
+  ],
+  "01-05": [
+    "mass/1/1"
+  ],
+  "01-11": [
+    "mass/1/2"
+  ],
+  "01-14": [
+    "mass/1/4"
+  ],
+  "01-15": [
+    "mass/1/6"
+  ],
+  "01-16": [
+    "mass/1/8"
+  ],
+  "01-17": [
+    "mass/1/10"
+  ],
+  "01-18": [
+    "mass/1/12"
+  ],
+  "01-19": [
+    "mass/1/13",
+    "mass/1/14"
+  ],
+  "01-20": [
+    "mass/1/15"
+  ],
+  "01-21": [
+    "mass/1/16"
+  ],
+  "01-22": [
+    "mass/1/17"
+  ],
+  "01-23": [
+    "mass/1/18"
+  ],
+  "01-24": [
+    "mass/1/20"
+  ],
+  "01-25": [
+    "mass/1/21"
+  ],
+  "01-26": [
+    "mass/1/22"
+  ],
+  "01-27": [
+    "mass/1/23"
+  ],
+  "01-28": [
+    "mass/1/24"
+  ],
+  "01-29": [
+    "mass/1/25"
+  ],
+  "01-30": [
+    "mass/1/26"
+  ],
+  "01-31": [
+    "mass/1/27"
+  ],
+  "02-02": [
+    "mass/2/2"
+  ],
+  "02-03": [
+    "mass/2/3"
+  ],
+  "02-04": [
+    "mass/2/4"
+  ],
+  "02-05": [
+    "mass/2/5"
+  ],
+  "02-06": [
+    "mass/2/6"
+  ],
+  "02-07": [
+    "mass/2/7"
+  ],
+  "02-08": [
+    "mass/2/8"
+  ],
+  "02-09": [
+    "mass/2/9"
+  ],
+  "02-10": [
+    "mass/2/10"
+  ],
+  "02-11": [
+    "mass/2/11"
+  ],
+  "02-12": [
+    "mass/2/12"
+  ],
+  "02-14": [
+    "mass/2/14"
+  ],
+  "02-15": [
+    "mass/2/15"
+  ],
+  "02-18": [
+    "mass/2/17",
+    "mass/2/18"
+  ],
+  "02-22": [
+    "mass/2/22"
+  ],
+  "02-23": [
+    "mass/2/23"
+  ],
+  "02-24": [
+    "mass/2/24"
+  ],
+  "02-27": [
+    "mass/2/27"
+  ],
+  "03-04": [
+    "mass/3/3",
+    "mass/3/4"
+  ],
+  "03-06": [
+    "mass/3/6"
+  ],
+  "03-07": [
+    "mass/3/7"
+  ],
+  "03-08": [
+    "mass/3/8"
+  ],
+  "03-09": [
+    "mass/3/9"
+  ],
+  "03-10": [
+    "mass/3/10"
+  ],
+  "03-12": [
+    "mass/3/12"
+  ],
+  "03-17": [
+    "mass/3/17"
+  ],
+  "03-18": [
+    "mass/3/18"
+  ],
+  "03-19": [
+    "mass/3/19"
+  ],
+  "03-21": [
+    "mass/3/21"
+  ],
+  "03-24": [
+    "mass/3/24"
+  ],
+  "03-25": [
+    "mass/3/25"
+  ],
+  "03-27": [
+    "mass/3/27"
+  ],
+  "03-28": [
+    "mass/3/28"
+  ],
+  "04-02": [
+    "mass/4/2"
+  ],
+  "04-04": [
+    "mass/4/4"
+  ],
+  "04-05": [
+    "mass/4/5"
+  ],
+  "04-11": [
+    "mass/4/11"
+  ],
+  "04-13": [
+    "mass/4/13"
+  ],
+  "04-17": [
+    "mass/4/17"
+  ],
+  "04-21": [
+    "mass/4/21"
+  ],
+  "04-22": [
+    "mass/4/22"
+  ],
+  "04-23": [
+    "mass/4/23"
+  ],
+  "04-24": [
+    "mass/4/24"
+  ],
+  "04-25": [
+    "mass/4/25"
+  ],
+  "04-26": [
+    "mass/4/26"
+  ],
+  "04-27": [
+    "mass/4/27"
+  ],
+  "04-28": [
+    "mass/4/28"
+  ],
+  "04-29": [
+    "mass/4/29"
+  ],
+  "04-30": [
+    "mass/4/30"
+  ],
+  "05-01": [
+    "mass/5/1"
+  ],
+  "05-02": [
+    "mass/5/2"
+  ],
+  "05-03": [
+    "mass/5/3"
+  ],
+  "05-05": [
+    "mass/5/5"
+  ],
+  "05-09": [
+    "mass/5/9"
+  ],
+  "05-11": [
+    "mass/5/11"
+  ],
+  "05-12": [
+    "mass/5/12"
+  ],
+  "05-13": [
+    "mass/5/13"
+  ],
+  "05-14": [
+    "mass/5/14"
+  ],
+  "05-16": [
+    "mass/5/16"
+  ],
+  "05-17": [
+    "mass/5/17"
+  ],
+  "05-19": [
+    "mass/5/19"
+  ],
+  "05-20": [
+    "mass/5/20"
+  ],
+  "05-25": [
+    "mass/5/25"
+  ],
+  "05-26": [
+    "mass/5/26"
+  ],
+  "05-27": [
+    "mass/5/27"
+  ],
+  "05-29": [
+    "mass/5/29"
+  ],
+  "05-30": [
+    "mass/5/30"
+  ],
+  "05-31": [
+    "mass/5/31"
+  ],
+  "06-03": [
+    "mass/6/3"
+  ],
+  "06-04": [
+    "mass/6/4"
+  ],
+  "06-05": [
+    "mass/6/5"
+  ],
+  "06-06": [
+    "mass/6/6"
+  ],
+  "06-09": [
+    "mass/6/9"
+  ],
+  "06-11": [
+    "mass/6/11"
+  ],
+  "06-14": [
+    "mass/6/14"
+  ],
+  "06-15": [
+    "mass/6/15"
+  ],
+  "06-17": [
+    "mass/6/17"
+  ],
+  "06-18": [
+    "mass/6/18"
+  ],
+  "06-19": [
+    "mass/6/19"
+  ],
+  "06-20": [
+    "mass/6/20"
+  ],
+  "06-21": [
+    "mass/6/21"
+  ],
+  "06-22": [
+    "mass/6/22"
+  ],
+  "06-23": [
+    "mass/6/23"
+  ],
+  "06-24": [
+    "mass/6/24"
+  ],
+  "06-25": [
+    "mass/6/25"
+  ],
+  "06-26": [
+    "mass/6/26"
+  ],
+  "06-28": [
+    "mass/6/28"
+  ],
+  "06-29": [
+    "mass/6/29"
+  ],
+  "06-30": [
+    "mass/6/30"
+  ],
+  "07-02": [
+    "mass/7/2"
+  ],
+  "07-03": [
+    "mass/7/3"
+  ],
+  "07-05": [
+    "mass/7/5"
+  ],
+  "07-07": [
+    "mass/7/7"
+  ],
+  "07-08": [
+    "mass/7/8"
+  ],
+  "07-10": [
+    "mass/7/10"
+  ],
+  "07-11": [
+    "mass/7/11"
+  ],
+  "07-12": [
+    "mass/7/12"
+  ],
+  "07-14": [
+    "mass/7/14"
+  ],
+  "07-15": [
+    "mass/7/15"
+  ],
+  "07-16": [
+    "mass/7/16"
+  ],
+  "07-17": [
+    "mass/7/17"
+  ],
+  "07-18": [
+    "mass/7/18"
+  ],
+  "07-19": [
+    "mass/7/19"
+  ],
+  "07-20": [
+    "mass/7/20"
+  ],
+  "07-21": [
+    "mass/7/21"
+  ],
+  "07-22": [
+    "mass/7/22"
+  ],
+  "07-23": [
+    "mass/7/23"
+  ],
+  "07-24": [
+    "mass/7/24"
+  ],
+  "07-25": [
+    "mass/7/25"
+  ],
+  "07-26": [
+    "mass/7/26"
+  ],
+  "07-27": [
+    "mass/7/27"
+  ],
+  "07-28": [
+    "mass/7/28"
+  ],
+  "07-29": [
+    "mass/7/29"
+  ],
+  "07-30": [
+    "mass/7/30"
+  ],
+  "07-31": [
+    "mass/7/31"
+  ],
+  "08-02": [
+    "mass/8/2"
+  ],
+  "08-04": [
+    "mass/8/4"
+  ],
+  "08-05": [
+    "mass/8/5"
+  ],
+  "08-07": [
+    "mass/8/7"
+  ],
+  "08-08": [
+    "mass/8/8"
+  ],
+  "08-10": [
+    "mass/8/10"
+  ],
+  "08-11": [
+    "mass/8/11"
+  ],
+  "08-12": [
+    "mass/8/12"
+  ],
+  "08-13": [
+    "mass/8/13"
+  ],
+  "08-14": [
+    "mass/8/14"
+  ],
+  "08-15": [
+    "mass/8/15"
+  ],
+  "08-16": [
+    "mass/8/16"
+  ],
+  "08-17": [
+    "mass/8/17"
+  ],
+  "08-18": [
+    "mass/8/18"
+  ],
+  "08-19": [
+    "mass/8/19"
+  ],
+  "08-20": [
+    "mass/8/20"
+  ],
+  "08-21": [
+    "mass/8/21"
+  ],
+  "08-22": [
+    "mass/8/22"
+  ],
+  "08-23": [
+    "mass/8/23"
+  ],
+  "08-24": [
+    "mass/8/24"
+  ],
+  "08-25": [
+    "mass/8/25"
+  ],
+  "08-26": [
+    "mass/8/26"
+  ],
+  "08-27": [
+    "mass/8/27"
+  ],
+  "08-28": [
+    "mass/8/28"
+  ],
+  "08-29": [
+    "mass/8/29"
+  ],
+  "08-30": [
+    "mass/8/30"
+  ],
+  "08-31": [
+    "mass/8/31"
+  ],
+  "09-01": [
+    "mass/9/1",
+    "mass/9/2"
+  ],
+  "09-02": [
+    "mass/9/3"
+  ],
+  "09-03": [
+    "mass/9/4"
+  ],
+  "09-05": [
+    "mass/9/6"
+  ],
+  "09-08": [
+    "mass/9/7"
+  ],
+  "09-09": [
+    "mass/9/9"
+  ],
+  "09-10": [
+    "mass/9/10"
+  ],
+  "09-11": [
+    "mass/9/12"
+  ],
+  "09-12": [
+    "mass/9/13"
+  ],
+  "09-14": [
+    "mass/9/14"
+  ],
+  "09-15": [
+    "mass/9/15"
+  ],
+  "09-16": [
+    "mass/9/16"
+  ],
+  "09-17": [
+    "mass/9/17"
+  ],
+  "09-18": [
+    "mass/9/18"
+  ],
+  "09-19": [
+    "mass/9/19"
+  ],
+  "09-23": [
+    "mass/9/23"
+  ],
+  "09-24": [
+    "mass/9/24"
+  ],
+  "09-26": [
+    "mass/9/26"
+  ],
+  "09-27": [
+    "mass/9/27"
+  ],
+  "09-28": [
+    "mass/9/28"
+  ],
+  "09-29": [
+    "mass/9/29"
+  ],
+  "09-30": [
+    "mass/9/30"
+  ],
+  "10-01": [
+    "mass/10/1"
+  ],
+  "10-02": [
+    "mass/10/2"
+  ],
+  "10-03": [
+    "mass/10/3"
+  ],
+  "10-04": [
+    "mass/10/4"
+  ],
+  "10-05": [
+    "mass/10/5"
+  ],
+  "10-06": [
+    "mass/10/6"
+  ],
+  "10-07": [
+    "mass/10/7"
+  ],
+  "10-08": [
+    "mass/10/8"
+  ],
+  "10-09": [
+    "mass/10/9"
+  ],
+  "10-10": [
+    "mass/10/10"
+  ],
+  "10-11": [
+    "mass/10/11"
+  ],
+  "10-13": [
+    "mass/10/13"
+  ],
+  "10-14": [
+    "mass/10/14"
+  ],
+  "10-15": [
+    "mass/10/15"
+  ],
+  "10-16": [
+    "mass/10/16"
+  ],
+  "10-17": [
+    "mass/10/17"
+  ],
+  "10-18": [
+    "mass/10/18"
+  ],
+  "10-19": [
+    "mass/10/19"
+  ],
+  "10-20": [
+    "mass/10/20"
+  ],
+  "10-21": [
+    "mass/10/21"
+  ],
+  "10-23": [
+    "mass/10/23"
+  ],
+  "10-24": [
+    "mass/10/24"
+  ],
+  "10-25": [
+    "mass/10/25"
+  ],
+  "10-26": [
+    "mass/10/26"
+  ],
+  "10-28": [
+    "mass/10/28"
+  ],
+  "11-01": [
+    "mass/11/1"
+  ],
+  "11-02": [
+    "mass/11/2"
+  ],
+  "11-04": [
+    "mass/11/4"
+  ],
+  "11-08": [
+    "mass/11/8"
+  ],
+  "11-09": [
+    "mass/11/9"
+  ],
+  "11-10": [
+    "mass/11/10"
+  ],
+  "11-11": [
+    "mass/11/11"
+  ],
+  "11-12": [
+    "mass/11/12"
+  ],
+  "11-13": [
+    "mass/11/13"
+  ],
+  "11-14": [
+    "mass/11/14"
+  ],
+  "11-15": [
+    "mass/11/15"
+  ],
+  "11-16": [
+    "mass/11/16"
+  ],
+  "11-17": [
+    "mass/11/17"
+  ],
+  "11-18": [
+    "mass/11/18"
+  ],
+  "11-19": [
+    "mass/11/19"
+  ],
+  "11-20": [
+    "mass/11/20"
+  ],
+  "11-21": [
+    "mass/11/21"
+  ],
+  "11-22": [
+    "mass/11/22"
+  ],
+  "11-23": [
+    "mass/11/23"
+  ],
+  "11-24": [
+    "mass/11/24"
+  ],
+  "11-25": [
+    "mass/11/25"
+  ],
+  "11-26": [
+    "mass/11/26"
+  ],
+  "11-29": [
+    "mass/11/29"
+  ],
+  "11-30": [
+    "mass/11/30"
+  ],
+  "12-02": [
+    "mass/12/2"
+  ],
+  "12-03": [
+    "mass/12/3"
+  ],
+  "12-04": [
+    "mass/12/4"
+  ],
+  "12-05": [
+    "mass/12/5"
+  ],
+  "12-06": [
+    "mass/12/6"
+  ],
+  "12-07": [
+    "mass/12/7"
+  ],
+  "12-08": [
+    "mass/12/8"
+  ],
+  "12-10": [
+    "mass/12/10"
+  ],
+  "12-11": [
+    "mass/12/11"
+  ],
+  "12-13": [
+    "mass/12/13"
+  ],
+  "12-16": [
+    "mass/12/16"
+  ],
+  "12-21": [
+    "mass/12/21"
+  ]
+};
+
+  function getProperKey(ordo) {
+    if (!ordo || !ordo.fete) return null;
+    var fete = ordo.fete.toLowerCase().trim();
+
+    // 1. Sanctoral par date (plus fiable que le nom)
+    if (ordo.source === 'sanctoral' && ordo.date) {
+      var parts = ordo.date.split('-');
+      var dateKey = parts[1] + '-' + parts[2];
+      var keys = SANCTORAL_DATE[dateKey];
+      if (keys && keys.length > 0) return keys[0];
+    }
+
+    // 2. Temporal par nom normalisé
+    if (FETES_TEMPORALES[fete]) return FETES_TEMPORALES[fete];
+
+    // 3. Recherche partielle (pour les féries avec texte légèrement différent)
+    for (var k in FETES_TEMPORALES) {
+      if (fete.indexOf(k) !== -1 || k.indexOf(fete) !== -1) return FETES_TEMPORALES[k];
+    }
+
+    return null;
+  }
+
+  // Exposer sur Ordo1962
+  if (typeof Ordo1962 !== 'undefined') {
+    Ordo1962.getProperKey = getProperKey;
+  }
+  if (typeof module !== 'undefined') {
+    module.exports.getProperKey = getProperKey;
+  }
+})();
