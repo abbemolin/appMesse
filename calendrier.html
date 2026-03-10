@@ -34,22 +34,6 @@
     .ordo-badge.Noir .ordo-pip-sm   { background:#1a1108; }
 
     /* Légende couleurs liturgiques */
-    .legende-couleurs {
-        display:flex; flex-wrap:wrap; gap:7px; padding:12px 16px 14px;
-        background:var(--vellum-light); border:1px solid var(--border-soft);
-        border-radius:2px; margin-bottom:18px;
-    }
-    .legende-titre {
-        font-family:'Cinzel',serif; font-size:.55rem; letter-spacing:.2em;
-        color:var(--rubric); text-transform:uppercase; width:100%; margin-bottom:4px;
-    }
-    .legende-item {
-        display:inline-flex; align-items:center; gap:5px;
-        font-family:'EB Garamond',serif; font-size:.8rem; font-style:italic; color:var(--ink-muted);
-    }
-    .legende-pip {
-        width:8px; height:8px; border-radius:50%; flex-shrink:0;
-    }
     </style>
 </head>
 <body>
@@ -60,18 +44,6 @@
             <h1>Calendrier</h1>
             <div class="ornament">✦ ✦ ✦</div>
         </div>
-
-        <!-- Légende couleurs liturgiques -->
-        <div class="legende-couleurs">
-            <span class="legende-titre">Couleurs liturgiques</span>
-            <span class="legende-item"><span class="legende-pip" style="background:#d4af37;box-shadow:0 0 0 1px rgba(184,150,42,.5)"></span>Blanc</span>
-            <span class="legende-item"><span class="legende-pip" style="background:#9b2020"></span>Rouge</span>
-            <span class="legende-item"><span class="legende-pip" style="background:#3a6644"></span>Vert</span>
-            <span class="legende-item"><span class="legende-pip" style="background:#5c2d7a"></span>Violet</span>
-            <span class="legende-item"><span class="legende-pip" style="background:#d4688a"></span>Rose</span>
-            <span class="legende-item"><span class="legende-pip" style="background:#1a1108"></span>Noir</span>
-        </div>
-
         <h2 class="section-title">📅 Prochains 15 jours</h2>
         <div id="liste-proche"></div>
 
@@ -478,36 +450,17 @@
             return;
         }
         var lang = _propresLang;
-        c.innerHTML = _propresData.map(function(p, i) {
+        c.innerHTML = _propresData.map(function(p) {
             var txt = (lang === 'la' ? p.text_la : p.text_fr) || (lang === 'la' ? p.text_fr : p.text_la) || '';
             var col = PIECE_COLORS[p.part_code] || '#1a1108';
-            var refTxt = p.reference || '';
-            return '<div data-piece-index="' + i + '">'
-                + '<div style="font-family:Cinzel,serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:' + col + ';border-bottom:1px solid ' + col + '22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">'
-                + '<span contenteditable="true" data-field="label" style="outline:none;cursor:text;border-bottom:1px dashed ' + col + '66;" title="Modifier">' + escH(p.part_label) + '</span>'
-                + (refTxt ? '<span contenteditable="true" data-field="ref" style="font-size:.85em;color:#8b7355;font-style:italic;outline:none;cursor:text;border-bottom:1px dashed #8b735566;" title="Modifier">' + escH(refTxt) + '</span>' : '')
+            var ref = p.reference ? '<span style="font-size:.85em;color:#8b7355;font-style:italic;margin-left:8px;">' + escH(p.reference) + '</span>' : '';
+            return '<div>'
+                + '<div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:' + col + ';border-bottom:1px solid ' + col + '22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;">'
+                + '<span>' + escH(p.part_label) + '</span>' + ref
                 + '</div>'
-                + '<div contenteditable="true" data-field="text" style="font-size:1.05rem;line-height:1.75;color:#1a1108;white-space:pre-wrap;outline:none;cursor:text;padding:4px 6px;border-radius:3px;transition:background .15s;" title="Cliquez pour modifier">' + escH(txt) + '</div>'
+                + '<div style="font-size:1.05rem;line-height:1.75;color:#1a1108;white-space:pre-wrap;">' + escH(txt) + '</div>'
                 + '</div>';
         }).join('');
-        // Surligner fond au focus
-        c.querySelectorAll('[contenteditable]').forEach(function(el) {
-            el.addEventListener('focus', function() { el.style.background = '#fffbe8'; });
-            el.addEventListener('blur',  function() { el.style.background = ''; });
-        });
-    }
-
-    // Lire le contenu édité pour les exports
-    function getPropreEdited() {
-        var result = [];
-        document.getElementById('propre-pieces').querySelectorAll('[data-piece-index]').forEach(function(div) {
-            result.push({
-                label: (div.querySelector('[data-field="label"]') || {}).innerText || '',
-                ref:   (div.querySelector('[data-field="ref"]')   || {}).innerText || '',
-                text:  (div.querySelector('[data-field="text"]')  || {}).innerText || '',
-            });
-        });
-        return result;
     }
 
     function fermerModalPropre() {
@@ -553,12 +506,14 @@
         var lang   = _propresLang;
         var PAGE_W = 827;
 
-        var rows = getPropreEdited().map(function(p) {
-            var ref = p.ref ? (' — ' + p.ref) : '';
+        var rows = _propresData.map(function(p) {
+            var txt = (lang === 'la' ? p.text_la : p.text_fr) || (lang === 'la' ? p.text_fr : p.text_la) || '';
+            var col = PIECE_COLORS[p.part_code] || '#1a1108';
+            var ref = p.reference ? (' \u2014 ' + p.reference) : '';
             return '<div style="margin-bottom:14px;">'
-                + '<div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#8b1a1a;border-bottom:0.5px solid #8b1a1a33;padding-bottom:3px;margin-bottom:6px;">'
-                + escH(p.label) + escH(ref) + '</div>'
-                + '<div style="font-family:Georgia,serif;font-size:12px;line-height:1.65;white-space:pre-wrap;">' + escH(p.text) + '</div>'
+                + '<div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:' + col + ';border-bottom:0.5px solid ' + col + '33;padding-bottom:3px;margin-bottom:6px;">'
+                + escH(p.part_label) + escH(ref) + '</div>'
+                + '<div style="font-family:Georgia,serif;font-size:12px;line-height:1.65;white-space:pre-wrap;">' + escH(txt) + '</div>'
                 + '</div>';
         }).join('');
 
