@@ -1,14 +1,16 @@
-const CACHE_NAME = 'messes-v5';
+const CACHE_NAME = 'messes-v6';
 
 const ASSETS_TO_CACHE = [
     './',
     './accueil.html',
     './calendrier.html',
+    './calendrier_semaine.html',
     './intentions.html',
     './style.css',
     './config.js',
     './menu.js',
     './modal.js',
+    './ordo1962.js',
     './manifest.json'
 ];
 
@@ -35,21 +37,47 @@ self.addEventListener('activate', (event) => {
 });
 
 // ==========================================
-// FETCH — réseau en priorité pour APIs, cache pour assets
+// FETCH — réseau en priorité pour les fichiers de l'app
+//         cache en priorité pour les CDN externes
 // ==========================================
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
-    const isApi = url.hostname.includes('supabase') ||
-                  url.hostname.includes('googleapis') ||
-                  url.hostname.includes('cdn.jsdelivr');
 
+    // APIs distantes : réseau pur, pas de cache
+    const isApi = url.hostname.includes('supabase') ||
+                  url.hostname.includes('googleapis');
     if (isApi) {
-        event.respondWith(fetch(event.request).catch(() => new Response('', { status: 503 })));
-    } else {
         event.respondWith(
-            caches.match(event.request).then((cached) => cached || fetch(event.request))
+            fetch(event.request).catch(() => new Response('', { status: 503 }))
         );
+        return;
     }
+
+    // CDN externes (docx, html2canvas, supabase-js…) : cache en priorité
+    const isCdn = url.hostname.includes('cdn.jsdelivr') ||
+                  url.hostname.includes('fonts.googleapis') ||
+                  url.hostname.includes('fonts.gstatic');
+    if (isCdn) {
+        event.respondWith(
+            caches.match(event.request).then(cached => cached || fetch(event.request))
+        );
+        return;
+    }
+
+    // Fichiers de l'app : réseau en priorité, cache en fallback
+    // → chaque déploiement GitHub est pris immédiatement
+    event.respondWith(
+        fetch(event.request)
+            .then(response => {
+                // Mettre à jour le cache avec la version fraîche
+                if (response.ok) {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                }
+                return response;
+            })
+            .catch(() => caches.match(event.request))
+    );
 });
 
 // ==========================================
@@ -57,9 +85,7 @@ self.addEventListener('fetch', (event) => {
 // ==========================================
 self.addEventListener('message', async (event) => {
     if (event.data && event.data.type === 'CHECK_INTENTIONS') {
-        const { count, lastCount, supabaseUrl, supabaseKey } = event.data;
-
-        // Si le nombre d'intentions en attente a augmenté, on notifie
+        const { count, lastCount } = event.data;
         if (count > lastCount && lastCount >= 0) {
             const diff = count - lastCount;
             const label = diff === 1 ? 'nouvelle intention' : 'nouvelles intentions';
@@ -67,7 +93,7 @@ self.addEventListener('message', async (event) => {
                 body: diff + ' ' + label + ' en attente de traitement',
                 icon: 'https://img.icons8.com/ios-filled/192/4f46e5/cross.png',
                 badge: 'https://img.icons8.com/ios-filled/96/4f46e5/cross.png',
-                tag: 'intentions-notif',   // Remplace la notif précédente
+                tag: 'intentions-notif',
                 renotify: true,
                 vibrate: [200, 100, 200],
                 data: { url: './intentions.html' }
@@ -81,13 +107,9 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-            // Si l'app est déjà ouverte, focus
             for (const client of clients) {
-                if (client.url.includes('intentions.html')) {
-                    return client.focus();
-                }
+                if (client.url.includes('intentions.html')) return client.focus();
             }
-            // Sinon ouvrir un nouvel onglet
             return self.clients.openWindow('./intentions.html');
         })
     );
