@@ -478,17 +478,36 @@
             return;
         }
         var lang = _propresLang;
-        c.innerHTML = _propresData.map(function(p) {
+        c.innerHTML = _propresData.map(function(p, i) {
             var txt = (lang === 'la' ? p.text_la : p.text_fr) || (lang === 'la' ? p.text_fr : p.text_la) || '';
             var col = PIECE_COLORS[p.part_code] || '#1a1108';
-            var ref = p.reference ? '<span style="font-size:.85em;color:#8b7355;font-style:italic;margin-left:8px;">' + escH(p.reference) + '</span>' : '';
-            return '<div>'
-                + '<div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:' + col + ';border-bottom:1px solid ' + col + '22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;">'
-                + '<span>' + escH(p.part_label) + '</span>' + ref
+            var refTxt = p.reference || '';
+            return '<div data-piece-index="' + i + '">'
+                + '<div style="font-family:Cinzel,serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:' + col + ';border-bottom:1px solid ' + col + '22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">'
+                + '<span contenteditable="true" data-field="label" style="outline:none;cursor:text;border-bottom:1px dashed ' + col + '66;" title="Modifier">' + escH(p.part_label) + '</span>'
+                + (refTxt ? '<span contenteditable="true" data-field="ref" style="font-size:.85em;color:#8b7355;font-style:italic;outline:none;cursor:text;border-bottom:1px dashed #8b735566;" title="Modifier">' + escH(refTxt) + '</span>' : '')
                 + '</div>'
-                + '<div style="font-size:1.05rem;line-height:1.75;color:#1a1108;white-space:pre-wrap;">' + escH(txt) + '</div>'
+                + '<div contenteditable="true" data-field="text" style="font-size:1.05rem;line-height:1.75;color:#1a1108;white-space:pre-wrap;outline:none;cursor:text;padding:4px 6px;border-radius:3px;transition:background .15s;" title="Cliquez pour modifier">' + escH(txt) + '</div>'
                 + '</div>';
         }).join('');
+        // Surligner fond au focus
+        c.querySelectorAll('[contenteditable]').forEach(function(el) {
+            el.addEventListener('focus', function() { el.style.background = '#fffbe8'; });
+            el.addEventListener('blur',  function() { el.style.background = ''; });
+        });
+    }
+
+    // Lire le contenu édité pour les exports
+    function getPropreEdited() {
+        var result = [];
+        document.getElementById('propre-pieces').querySelectorAll('[data-piece-index]').forEach(function(div) {
+            result.push({
+                label: (div.querySelector('[data-field="label"]') || {}).innerText || '',
+                ref:   (div.querySelector('[data-field="ref"]')   || {}).innerText || '',
+                text:  (div.querySelector('[data-field="text"]')  || {}).innerText || '',
+            });
+        });
+        return result;
     }
 
     function fermerModalPropre() {
@@ -534,14 +553,12 @@
         var lang   = _propresLang;
         var PAGE_W = 827;
 
-        var rows = _propresData.map(function(p) {
-            var txt = (lang === 'la' ? p.text_la : p.text_fr) || (lang === 'la' ? p.text_fr : p.text_la) || '';
-            var col = PIECE_COLORS[p.part_code] || '#1a1108';
-            var ref = p.reference ? (' \u2014 ' + p.reference) : '';
+        var rows = getPropreEdited().map(function(p) {
+            var ref = p.ref ? (' — ' + p.ref) : '';
             return '<div style="margin-bottom:14px;">'
-                + '<div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:' + col + ';border-bottom:0.5px solid ' + col + '33;padding-bottom:3px;margin-bottom:6px;">'
-                + escH(p.part_label) + escH(ref) + '</div>'
-                + '<div style="font-family:Georgia,serif;font-size:12px;line-height:1.65;white-space:pre-wrap;">' + escH(txt) + '</div>'
+                + '<div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#8b1a1a;border-bottom:0.5px solid #8b1a1a33;padding-bottom:3px;margin-bottom:6px;">'
+                + escH(p.label) + escH(ref) + '</div>'
+                + '<div style="font-family:Georgia,serif;font-size:12px;line-height:1.65;white-space:pre-wrap;">' + escH(p.text) + '</div>'
                 + '</div>';
         }).join('');
 
