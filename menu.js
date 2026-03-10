@@ -26,6 +26,16 @@
             font-family:'Cinzel',serif; font-size:.5rem; font-weight:600;
             text-transform:uppercase; letter-spacing:.1em;
         }
+        .nav-refresh {
+            background:none; border:none; cursor:pointer;
+            display:flex; flex-direction:column; align-items:center;
+            justify-content:center; flex:1; padding:8px 0; gap:3px;
+            color:rgba(240,230,184,.45); transition:color .2s;
+        }
+        .nav-refresh:active { color:var(--gold-light, #d4af37); }
+        .nav-refresh .nav-icon { transition:transform .4s ease; }
+        .nav-refresh.spinning .nav-icon { animation:spin-refresh .6s linear infinite; }
+        @keyframes spin-refresh { to { transform:rotate(360deg); } }
         @media(min-width:1024px){
             .mobile-nav{max-width:400px;left:50%;transform:translateX(-50%);border-radius:3px 3px 0 0}
         }
@@ -47,7 +57,48 @@
             <span class="nav-icon">📄</span>
             <span class="nav-label">Semaine</span>
         </a>
+        <button class="nav-refresh" id="btn-nav-refresh" onclick="navRefresh()" title="Actualiser">
+            <span class="nav-icon" id="nav-refresh-icon">↻</span>
+            <span class="nav-label">Actualiser</span>
+        </button>
     </nav>`;
 
     document.getElementById('menu-container').innerHTML = menuHTML;
 })();
+
+// ── Actualisation — appelle la fonction propre à chaque page ─────
+function navRefresh() {
+    const btn  = document.getElementById('btn-nav-refresh');
+    const icon = document.getElementById('nav-refresh-icon');
+    if (!btn) return;
+
+    btn.classList.add('spinning');
+    btn.disabled = true;
+
+    // Détecter la page et appeler la bonne fonction
+    const href = window.location.href;
+    let fn = null;
+    if      (href.includes('intentions'))        fn = window.chargerDemandes;
+    else if (href.includes('calendrier_semaine')) fn = window.chargerSemaine;
+    else if (href.includes('calendrier.html'))    fn = window.chargerAgenda;
+    else if (href.includes('accueil') || href.endsWith('/') || href.endsWith('index.html'))
+                                                  fn = window.initDashboard;
+
+    const stop = () => {
+        btn.classList.remove('spinning');
+        btn.disabled = false;
+    };
+
+    if (fn) {
+        const result = fn();
+        // Si la fonction retourne une Promise, attendre qu'elle se termine
+        if (result && typeof result.finally === 'function') {
+            result.finally(stop);
+        } else {
+            setTimeout(stop, 800);
+        }
+    } else {
+        // Fallback : recharger la page
+        window.location.reload();
+    }
+}
