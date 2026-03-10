@@ -66,11 +66,10 @@
         setTimeout(() => t.classList.remove('show'), 3200);
     }
 
-    // ── FIX 5 : ne charger que l'année en cours + en_attente ────────
     async function chargerDemandes() {
         if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 500); return; }
         try {
-            // FIX 6 : timeMax sur Google Calendar (+3 mois suffit pour intentions)
+            // Google Calendar : toute l'année en cours ± 1 mois
             const tMin = new Date(); tMin.setMonth(tMin.getMonth() - 1);
             const tMax = new Date(); tMax.setFullYear(tMax.getFullYear() + 1);
             const urlGcal = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&timeMin=${tMin.toISOString()}&timeMax=${tMax.toISOString()}&maxResults=500`;
@@ -78,24 +77,10 @@
             const googleData = await resp.json();
             googleEventsGlobal = googleData.items || [];
 
-            const year = new Date().getFullYear();
-            // FIX 5 : charger uniquement l'année courante + toutes les en_attente
-            const [{ data: intentionsAnnee }, { data: intentionsEnAttente }] = await Promise.all([
-                maConnexion.from('intentions').select('*')
-                    .like('date_messe', year + '%')
-                    .order('date_messe', { ascending: true }),
-                maConnexion.from('intentions').select('*')
-                    .eq('statut', 'en_attente')
-                    .order('date_messe', { ascending: true })
-            ]);
-
-            // Fusionner sans doublons
-            const seen = new Set();
-            intentionsGlobal = [];
-            for (const i of [...(intentionsEnAttente || []), ...(intentionsAnnee || [])]) {
-                if (!seen.has(i.id)) { seen.add(i.id); intentionsGlobal.push(i); }
-            }
-            intentionsGlobal.sort((a,b) => a.date_messe.localeCompare(b.date_messe));
+            // Charger TOUTES les intentions
+            const { data } = await maConnexion.from('intentions').select('*')
+                .order('date_messe', { ascending: true });
+            intentionsGlobal = data || [];
 
             document.getElementById('loading-status').style.display = 'none';
             await renderIntentions();
