@@ -454,35 +454,63 @@
         container.innerHTML = '';
         if (!semaineData) return;
 
-        semaineData.forEach((jour, idx) => {
+        semaineData.forEach((jour, jourIdx) => {
             const hasMesse = jour.horaires.some(e => e.bold);
             const dot = COULEUR_DOT[jour.couleur];
             const dotHtml = dot ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dot};margin-right:6px;flex-shrink:0"></span>` : '';
 
-            let html = `<div class="preview-day${hasMesse ? ' has-messe' : ''}" style="animation-delay:${idx*.05}s">`;
-            html += `<div class="preview-day-header">
-                <div class="preview-day-nom">${jour.dateFr}</div>
-                <div class="preview-day-fete">${dotHtml}${jour.sousTitre || '<span style="opacity:.4">—</span>'}</div>
+            const editStyle = 'outline:none;cursor:text;border-bottom:1px dashed transparent;transition:border-color .15s,background .15s;padding:1px 3px;border-radius:2px;';
+
+            let h = `<div class="preview-day${hasMesse ? ' has-messe' : ''}" data-jour="${jourIdx}" style="animation-delay:${jourIdx*.05}s">`;
+            h += `<div class="preview-day-header">
+                <div class="preview-day-nom">
+                    <span contenteditable="true" data-jour="${jourIdx}" data-field="dateFr"
+                        style="${editStyle}" title="Modifier">${escHtml(jour.dateFr)}</span>
+                </div>
+                <div class="preview-day-fete">${dotHtml}<span contenteditable="true" data-jour="${jourIdx}" data-field="sousTitre"
+                        style="${editStyle}${!jour.sousTitre ? 'opacity:.4' : ''}" title="Modifier">${escHtml(jour.sousTitre || '—')}</span>
+                </div>
             </div>`;
 
-            jour.notes.forEach(n => {
-                html += `<div class="preview-note">✦ ${n}</div>`;
+            jour.notes.forEach((n, ni) => {
+                h += `<div class="preview-note">✦ <span contenteditable="true" data-jour="${jourIdx}" data-field="note" data-note="${ni}"
+                    style="${editStyle}" title="Modifier">${escHtml(n)}</span></div>`;
             });
 
-            html += `<div class="preview-events">`;
+            h += `<div class="preview-events">`;
             if (!jour.horaires.length) {
-                html += `<div class="preview-empty">Aucun événement</div>`;
+                h += `<div class="preview-empty">Aucun événement</div>`;
             } else {
-                jour.horaires.forEach(evt => {
+                jour.horaires.forEach((evt, evtIdx) => {
                     const isMesse = evt.bold;
-                    html += `<div class="preview-evt${isMesse ? ' is-messe' : ''}">
-                        <span class="preview-evt-heure">${evt.heure || ''}</span>
-                        <span>${isMesse ? '<strong>' : ''}${evt.label}${isMesse ? '</strong>' : ''}</span>
+                    h += `<div class="preview-evt${isMesse ? ' is-messe' : ''}">
+                        <span contenteditable="true" class="preview-evt-heure" data-jour="${jourIdx}" data-evt="${evtIdx}" data-field="heure"
+                            style="${editStyle}" title="Modifier">${escHtml(evt.heure || '')}</span>
+                        <span>${isMesse ? '<strong>' : ''}<span contenteditable="true" data-jour="${jourIdx}" data-evt="${evtIdx}" data-field="label"
+                            style="${editStyle}" title="Modifier">${escHtml(evt.label)}</span>${isMesse ? '</strong>' : ''}</span>
                     </div>`;
                 });
             }
-            html += `</div></div>`;
-            container.innerHTML += html;
+            h += `</div></div>`;
+            container.innerHTML += h;
+        });
+
+        // Surligner au focus, sync vers semaineData au blur
+        container.querySelectorAll('[contenteditable]').forEach(el => {
+            el.addEventListener('focus', () => { el.style.background = '#fffbe8'; el.style.borderBottomColor = '#b8962a'; });
+            el.addEventListener('blur', () => {
+                el.style.background = '';
+                el.style.borderBottomColor = 'transparent';
+                // Sync vers semaineData
+                const j = parseInt(el.dataset.jour);
+                const field = el.dataset.field;
+                const val = el.innerText.trim();
+                if (field === 'dateFr')    semaineData[j].dateFr = val;
+                if (field === 'sousTitre') semaineData[j].sousTitre = val === '—' ? '' : val;
+                if (field === 'note')      semaineData[j].notes[parseInt(el.dataset.note)] = val;
+                if (field === 'heure')     semaineData[j].horaires[parseInt(el.dataset.evt)].heure = val;
+                if (field === 'label')     semaineData[j].horaires[parseInt(el.dataset.evt)].label = val;
+            });
         });
     }
 
