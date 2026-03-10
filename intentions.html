@@ -225,24 +225,12 @@
             tbody.appendChild(refGroup);
         }
 
-        // Stats — requête directe Supabase (indépendante du cache local)
+        // Stats — calculé depuis intentionsGlobal déjà chargé
         const year = new Date().getFullYear();
-        try {
-            const { count, error } = await maConnexion.from('intentions')
-                .select('*', { count: 'exact', head: true })
-                .eq('statut', 'valide')
-                .like('date_messe', year + '%');
-            if (error) throw error;
-            document.getElementById('annual-count').textContent = count ?? 0;
-        } catch(e) {
-            // Fallback : compter depuis le cache local
-            const year = new Date().getFullYear();
-            const n = intentionsGlobal.filter(i =>
-                i.statut === 'valide' && (i.date_messe || '').startsWith(year)
-            ).length;
-            document.getElementById('annual-count').textContent = n;
-            console.warn('Comptage stats fallback:', e.message);
-        }
+        const n = intentionsGlobal.filter(i =>
+            i.statut === 'valide' && (i.date_messe || '').startsWith(year)
+        ).length;
+        document.getElementById('annual-count').textContent = n;
         document.getElementById('label-annee-intentions').textContent = 'MESSES CÉLÉBRÉES EN ' + year;
     }
 
