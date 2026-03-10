@@ -98,7 +98,7 @@
             intentionsGlobal.sort((a,b) => a.date_messe.localeCompare(b.date_messe));
 
             document.getElementById('loading-status').style.display = 'none';
-            renderIntentions();
+            await renderIntentions();
         } catch (err) {
             console.error(err);
             document.getElementById('loading-status').innerHTML =
@@ -108,7 +108,7 @@
         }
     }
 
-    function renderIntentions(filtre = '') {
+    async function renderIntentions(filtre = '') {
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = '';
 
@@ -272,8 +272,8 @@
             + '</div></div>';
     }
 
-    function filtrerRecherche(valeur) {
-        renderIntentions(valeur);
+    async function filtrerRecherche(valeur) {
+        await renderIntentions(valeur);
     }
 
     function genererTexteMail(item) {
