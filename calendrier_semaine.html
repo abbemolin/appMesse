@@ -555,14 +555,26 @@
             el.addEventListener('blur', () => {
                 el.style.background = '';
                 el.style.borderBottomColor = 'transparent';
-                const j   = parseInt(el.dataset.jour);
+                // Ignorer si l'élément a été supprimé du DOM entre-temps
+                if (!document.contains(el)) return;
+                const j     = parseInt(el.dataset.jour);
                 const field = el.dataset.field;
-                const val = el.innerText.trim();
-                if (field === 'dateFr')    semaineData[j].dateFr = val;
-                if (field === 'sousTitre') semaineData[j].sousTitre = val === '—' ? '' : val;
-                if (field === 'note')      semaineData[j].notes[parseInt(el.dataset.note)] = val;
-                if (field === 'heure')     semaineData[j].horaires[parseInt(el.dataset.evt)].heure = val;
-                if (field === 'label')     semaineData[j].horaires[parseInt(el.dataset.evt)].label = val;
+                const val   = el.innerText.trim();
+                const jour  = semaineData[j];
+                if (!jour) return;
+                if (field === 'dateFr')    jour.dateFr = val;
+                if (field === 'sousTitre') jour.sousTitre = val === '—' ? '' : val;
+                if (field === 'note') {
+                    const ni = parseInt(el.dataset.note);
+                    if (jour.notes[ni] !== undefined) jour.notes[ni] = val;
+                }
+                if (field === 'heure' || field === 'label') {
+                    const ei = parseInt(el.dataset.evt);
+                    if (jour.horaires[ei]) {
+                        if (field === 'heure') jour.horaires[ei].heure = val;
+                        if (field === 'label') jour.horaires[ei].label = val;
+                    }
+                }
             });
         });
     }
