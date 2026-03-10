@@ -408,28 +408,9 @@
     <script src="https://cdn.jsdelivr.net/npm/docx@9.5.3/dist/index.iife.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script>
-    // ── Moteur Propres de la Messe ───────────────────────────────────
-    var _propersDB = null, _propersLoading = null;
-
-    function loadPropersDB() {
-        if (_propersDB) return Promise.resolve(_propersDB);
-        if (_propersLoading) return _propersLoading;
-        _propersLoading = fetch('propers_db.json')
-            .then(function(r){ return r.json(); })
-            .then(function(d){ _propersDB = d; return d; });
-        return _propersLoading;
-    }
-
-    // getProperKey est injecté par ordo1962.js
-    function getProperID(ordo) {
-        if (typeof Ordo1962 !== 'undefined' && Ordo1962.getProperKey) {
-            return Ordo1962.getProperKey(ordo);
-        }
-        return null;
-    }
-
-    var _propresLang = 'la';
-    var _propresData = null;
+    // ── Propres de la Messe — Supabase ─────────────────────────────────
+    var _propresLang    = 'la';
+    var _propresData    = null;
     var _propresDateISO = null;
 
     var PIECE_COLORS = {
@@ -443,12 +424,12 @@
         return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    function ouvrirPropre(dateISO, dateFr) {
+    async function ouvrirPropre(dateISO, dateFr) {
         var parts = dateISO.split('-').map(Number);
-        var ordo = Ordo1962.getDay(parts[0], parts[1], parts[2]);
-        var pid  = getProperID(ordo);
+        var ordo  = Ordo1962.getDay(parts[0], parts[1], parts[2]);
+        var massKey = (typeof Ordo1962.getProperKey === 'function') ? Ordo1962.getProperKey(ordo) : null;
 
-        document.getElementById('propre-date-label').textContent = dateFr;
+        document.getElementById('propre-date-label').textContent  = dateFr;
         document.getElementById('propre-fete-input').value = (ordo && ordo.fete) ? ordo.fete : '';
         _propresDateISO = dateISO;
 
@@ -456,13 +437,27 @@
             '<div style="text-align:center;padding:40px;color:#8b7355;font-size:.85rem;letter-spacing:.1em;">Chargement\u2026</div>';
         document.getElementById('modal-propre').style.display = 'flex';
 
-        loadPropersDB().then(function(db) {
-            _propresData = (pid && db[pid]) ? db[pid] : null;
-            renderProprePieces();
-        }).catch(function() {
+        if (!massKey) {
             document.getElementById('propre-pieces').innerHTML =
-                '<div style="color:#8b1a1a;padding:20px;">Impossible de charger les propres.</div>';
-        });
+                '<div style="text-align:center;padding:30px;color:#8b7355;font-style:italic;font-size:1rem;">Propre non disponible pour ce jour.</div>';
+            return;
+        }
+
+        try {
+            var resp = await maConnexion
+                .from('propers')
+                .select('part_code, part_label, reference, text_la, text_fr, display_order')
+                .eq('mass_key', massKey)
+                .order('display_order', { ascending: true });
+
+            if (resp.error) throw resp.error;
+            _propresData = resp.data && resp.data.length ? resp.data : null;
+            renderProprePieces();
+        } catch(e) {
+            console.error('Erreur propre:', e);
+            document.getElementById('propre-pieces').innerHTML =
+                '<div style="color:#8b1a1a;padding:20px;font-size:.9rem;">Erreur de chargement : ' + escH(String(e.message || e)) + '</div>';
+        }
     }
 
     function setPropreLang(lang) {
@@ -470,9 +465,9 @@
         var btnLa = document.getElementById('btn-lang-la');
         var btnFr = document.getElementById('btn-lang-fr');
         btnLa.style.background = lang === 'la' ? '#b8962a' : 'transparent';
-        btnLa.style.color      = lang === 'la' ? '#fff' : '#b8962a';
+        btnLa.style.color      = lang === 'la' ? '#fff'    : '#b8962a';
         btnFr.style.background = lang === 'fr' ? '#b8962a' : 'transparent';
-        btnFr.style.color      = lang === 'fr' ? '#fff' : '#b8962a';
+        btnFr.style.color      = lang === 'fr' ? '#fff'    : '#b8962a';
         renderProprePieces();
     }
 
@@ -484,12 +479,12 @@
         }
         var lang = _propresLang;
         c.innerHTML = _propresData.map(function(p) {
-            var txt = (lang === 'la' ? p.la : p.fr) || (lang === 'la' ? p.fr : p.la) || '';
-            var col = PIECE_COLORS[p.part] || '#1a1108';
-            var ref = p.ref ? '<span style="font-size:.85em;color:#8b7355;font-style:italic;margin-left:8px;">' + escH(p.ref) + '</span>' : '';
+            var txt = (lang === 'la' ? p.text_la : p.text_fr) || (lang === 'la' ? p.text_fr : p.text_la) || '';
+            var col = PIECE_COLORS[p.part_code] || '#1a1108';
+            var ref = p.reference ? '<span style="font-size:.85em;color:#8b7355;font-style:italic;margin-left:8px;">' + escH(p.reference) + '</span>' : '';
             return '<div>'
                 + '<div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:' + col + ';border-bottom:1px solid ' + col + '22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;">'
-                + '<span>' + escH(p.label) + '</span>' + ref
+                + '<span>' + escH(p.part_label) + '</span>' + ref
                 + '</div>'
                 + '<div style="font-size:1.05rem;line-height:1.75;color:#1a1108;white-space:pre-wrap;">' + escH(txt) + '</div>'
                 + '</div>';
@@ -515,8 +510,8 @@
                 children:[new D.TextRun({text:dateFr, italics:true, size:22, font:'Calibri', color:'5a3e1b'})] })
         ];
         _propresData.forEach(function(p) {
-            var txt   = (lang === 'la' ? p.la : p.fr) || (lang === 'la' ? p.fr : p.la) || '';
-            var titre = p.ref ? (p.label.toUpperCase() + '  \u2014  ' + p.ref) : p.label.toUpperCase();
+            var txt   = (lang === 'la' ? p.text_la : p.text_fr) || (lang === 'la' ? p.text_fr : p.text_la) || '';
+            var titre = p.reference ? (p.part_label.toUpperCase() + '  \u2014  ' + p.reference) : p.part_label.toUpperCase();
             children.push(new D.Paragraph({ spacing:{before:240,after:80},
                 children:[new D.TextRun({text:titre, bold:true, size:20, font:'Calibri', color:'8b1a1a'})] }));
             children.push(new D.Paragraph({ spacing:{after:160},
@@ -540,12 +535,12 @@
         var PAGE_W = 827;
 
         var rows = _propresData.map(function(p) {
-            var txt = (lang === 'la' ? p.la : p.fr) || (lang === 'la' ? p.fr : p.la) || '';
-            var col = PIECE_COLORS[p.part] || '#1a1108';
-            var ref = p.ref ? (' \u2014 ' + p.ref) : '';
+            var txt = (lang === 'la' ? p.text_la : p.text_fr) || (lang === 'la' ? p.text_fr : p.text_la) || '';
+            var col = PIECE_COLORS[p.part_code] || '#1a1108';
+            var ref = p.reference ? (' \u2014 ' + p.reference) : '';
             return '<div style="margin-bottom:14px;">'
                 + '<div style="font-family:Cinzel,serif;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:' + col + ';border-bottom:0.5px solid ' + col + '33;padding-bottom:3px;margin-bottom:6px;">'
-                + escH(p.label) + escH(ref) + '</div>'
+                + escH(p.part_label) + escH(ref) + '</div>'
                 + '<div style="font-family:Georgia,serif;font-size:12px;line-height:1.65;white-space:pre-wrap;">' + escH(txt) + '</div>'
                 + '</div>';
         }).join('');
@@ -556,7 +551,7 @@
         var idoc = iframe.contentDocument;
         idoc.open();
         idoc.write('<!DOCTYPE html><html><head><meta charset="utf-8">'
-            + '<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">'
+            + '<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">'
             + '<style>*{margin:0;padding:0;box-sizing:border-box;}body{width:' + PAGE_W + 'px;background:#fff;color:#1a1108;padding:38px 52px;font-family:Georgia,serif;}</style>'
             + '</head><body>'
             + '<div style="font-family:Cinzel,serif;font-size:17px;font-weight:700;text-align:center;letter-spacing:.18em;margin-bottom:4px;">' + escH(fete) + '</div>'
@@ -590,4 +585,3 @@
     </script>
 
 </body>
-</html>
