@@ -7,6 +7,29 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+    .pretre-selector { display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
+    .pretre-btn {
+        padding:8px 18px; border:1px solid #e8e0cc; border-radius:2px;
+        background:#faf7f0; font-family:'Cinzel',serif; font-size:.6rem;
+        letter-spacing:.12em; text-transform:uppercase; color:#8b7355; cursor:pointer; transition:all .2s;
+    }
+    .pretre-btn:hover { border-color:#b8962a; color:#b8962a; }
+    .pretre-btn.actif { background:#f5edcf; border-color:#b8962a; color:#1a1108; }
+    </style>
+    <style>
+    .pretre-selector-card {
+        display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 6px;
+    }
+    .pretre-chip {
+        padding: 5px 12px; border: 1px solid #e8e0cc; border-radius: 2px;
+        background: #faf7f0; font-family: 'Cinzel', serif; font-size: .58rem;
+        letter-spacing: .1em; text-transform: uppercase; color: #8b7355;
+        cursor: pointer; transition: all .2s;
+    }
+    .pretre-chip:hover { border-color: #b8962a; color: #b8962a; }
+    .pretre-chip.actif { background: #f5edcf; border-color: #b8962a; color: #1a1108; font-weight: 600; }
+    </style>
 </head>
 <body>
     <div id="menu-container"></div>
@@ -15,6 +38,13 @@
             <span class="rubric-tag">Administration</span>
             <h1>Intentions</h1>
             <div class="ornament">✦ ✦ ✦</div>
+        </div>
+
+        <div class="pretre-selector">
+            <button class="pretre-btn actif" onclick="filtrerPretre('molin',this)">Abbé Molin</button>
+            <button class="pretre-btn" onclick="filtrerPretre('carbonnieres',this)">Abbé de Carbonnières</button>
+            <button class="pretre-btn" onclick="filtrerPretre('legall',this)">Abbé Le Gall</button>
+            <button class="pretre-btn" onclick="filtrerPretre('',this)">Tous</button>
         </div>
 
         <div class="stats-banner">
@@ -55,6 +85,14 @@
 
     let googleEventsGlobal = [];
     let intentionsGlobal   = [];
+    let pretreActif        = 'molin';
+
+    function filtrerPretre(id, btn) {
+        pretreActif = id;
+        document.querySelectorAll('.pretre-btn').forEach(b => b.classList.remove('actif'));
+        btn.classList.add('actif');
+        renderIntentions();
+    }
     let mailIdEnCours      = null;
     const mailsData        = {};
 
@@ -67,12 +105,12 @@
     }
 
     async function chargerDemandes() {
-        if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 500); return; }
+        if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 300); return; }
         try {
             // Google Calendar : toute l'année en cours ± 1 mois
             const tMin = new Date(); tMin.setMonth(tMin.getMonth() - 1);
             const tMax = new Date(); tMax.setFullYear(tMax.getFullYear() + 1);
-            const urlGcal = `https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&timeMin=${tMin.toISOString()}&timeMax=${tMax.toISOString()}&maxResults=500`;
+            const urlGcal = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&timeMin=${tMin.toISOString()}&timeMax=${tMax.toISOString()}&maxResults=500`;
             const resp = await fetch(urlGcal);
             const googleData = await resp.json();
             googleEventsGlobal = googleData.items || [];
@@ -95,10 +133,12 @@
 
     async function renderIntentions(filtre = '') {
         const tbody = document.getElementById('table-body');
+        let list = intentionsGlobal;
+        if (pretreActif) list = list.filter(i => (i.pretre_id || 'molin') === pretreActif);
         tbody.innerHTML = '';
 
-        const intentionsActives  = intentionsGlobal.filter(i => i.statut !== 'refuse');
-        const intentionsRefusees = intentionsGlobal.filter(i => i.statut === 'refuse');
+        const intentionsActives  = list.filter(i => i.statut !== 'refuse');
+        const intentionsRefusees = list.filter(i => i.statut === 'refuse');
 
         // Filtrage par nom si recherche active
         const filtreLC = filtre.toLowerCase().trim();
@@ -238,6 +278,12 @@
         return '<div class="action-group">'
             + '<div class="action-label">Disponibilités</div>'
             + '<input type="date" id="d-' + item.id + '" value="' + item.date_messe + '" onchange="refreshTimeChoicesFromInput(this)">'
+            + '<div class="pretre-selector-card">'
+            + Object.entries(PRETRES).map(([id, p]) =>
+                `<button class="pretre-chip${(item.pretre_id||'molin')===id?' actif':''}" data-iid="${item.id}" data-pid="${id}"
+                    onclick="setPretre(this,'${item.id}','${id}')">${p.nom}</button>`
+              ).join('')
+            + '</div>'
             + '<div id="times-' + item.id + '" class="time-selector-container"></div>'
             + '<button class="btn-valider" onclick="getIdAndCall(this, finaliser)">✅ Valider cet horaire</button>'
             + '<div class="inline-actions">'
@@ -260,6 +306,16 @@
         await renderIntentions(valeur);
     }
 
+    const PRETRES = {
+        molin:        { nom: 'Abbé Molin',           titre: 'Abbé MOLIN',           role: 'curé'    },
+        carbonnieres: { nom: 'Abbé de Carbonnières',  titre: 'Abbé de CARBONNIÈRES', role: 'vicaire' },
+        legall:       { nom: 'Abbé Le Gall',          titre: 'Abbé LE GALL',         role: 'vicaire' },
+    };
+
+    function getPretreInfo(item) {
+        return PRETRES[item.pretre_id] || PRETRES.molin;
+    }
+
     function genererTexteMail(item) {
         const nomDonateur   = (item.nom_donateur || '').trim();
         const texteIntention = (item.nom_intention || 'votre intention').trim();
@@ -278,7 +334,8 @@
         if (messagePretre && !messagePretre.startsWith('La Messe à votre intention')) {
             phraseIntroduction = `Concernant votre demande pour "${texteIntention}", ${messagePretre}.`;
         }
-        return `Bonjour ${nomDonateur},\n\n${phraseIntroduction}\n\nLa Messe sera célébrée le ${dateFinaleFr} à ${heureFinale}.\n\nJe vous assure de ma prière,\n\nAbbé MOLIN,\ncuré`;
+        const p = getPretreInfo(item);
+        return `Bonjour ${nomDonateur},\n\n${phraseIntroduction}\n\nLa Messe sera célébrée le ${dateFinaleFr} à ${heureFinale}.\n\nJe vous assure de ma prière,\n\n${p.titre},\n${p.role}`;
     }
 
     function ouvrirModalMailById(id) {
@@ -345,6 +402,23 @@
         el.classList.add('active');
     }
 
+    function setPretre(btn, intentionId, pretreId) {
+        // Mettre à jour les chips visuellement
+        const card = btn.closest('[data-intention-id]') || btn.closest('.intention-card');
+        if (card) card.querySelectorAll('.pretre-chip').forEach(c => c.classList.remove('actif'));
+        btn.classList.add('actif');
+        // Stocker sur le bouton pour lecture dans finaliser
+        btn.dataset.iid = intentionId;
+        btn.dataset.pid = pretreId;
+        // Mettre à jour pretre_id dans le cache local
+        const found = intentionsGlobal.find(i => String(i.id) === String(intentionId));
+        if (found) found.pretre_id = pretreId;
+        // Régénérer le mail preview si la modal est ouverte
+        if (mailIdEnCours == intentionId && found) {
+            document.getElementById('mail-corps').value = genererTexteMail(found);
+        }
+    }
+
     async function finaliser(id) {
         const container = document.getElementById(`times-${id}`);
         const estPrivee = container.dataset.privee === 'true';
@@ -372,8 +446,10 @@
 
         // FIX 3 : try/catch sur l'update final
         try {
+            const pretreId = intentionsGlobal.find(i => String(i.id) === String(id))?.pretre_id || 'molin';
             const { error } = await maConnexion.from('intentions').update({
                 date_messe: d, heure_messe: hDb, statut: 'valide',
+                pretre_id: pretreId,
                 reponse_pretre: txt, en_edition: false,
                 mail_envoye: false, mail_approuve: false
             }).eq('id', id);
