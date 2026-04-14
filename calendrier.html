@@ -345,18 +345,63 @@
             chargerAgenda();
         }
 
-        function validerRecherche() {
+        async function validerRecherche() {
             const val = document.getElementById('date-picker').value;
             if (!val) return;
+
+            const noResult = document.getElementById('no-result');
+            noResult.classList.remove('visible');
+
+            // 1. Chercher dans la liste déjà affichée
             let trouve = false;
             document.querySelectorAll('#liste-globale .messe-item').forEach(item => {
                 const match = item.getAttribute('data-iso') === val;
                 item.style.display = match ? '' : 'none';
                 if (match) trouve = true;
             });
-            const noResult = document.getElementById('no-result');
-            if (trouve) { noResult.classList.remove('visible'); }
-            else {
+
+            if (trouve) return;
+
+            // 2. Pas trouvé dans la liste locale → appel direct Google Calendar
+            const btnRecherche = document.querySelector('.search-container .btn-primary');
+            if (btnRecherche) btnRecherche.textContent = 'Recherche…';
+            try {
+                const tMin = new Date(val + 'T00:00:00').toISOString();
+                const tMax = new Date(val + 'T23:59:59').toISOString();
+                const url  = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
+                    + `?key=${GOOGLE_API_KEY}&timeMin=${tMin}&timeMax=${tMax}`
+                    + `&singleEvents=true&orderBy=startTime&maxResults=50`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                const messes = (data.items || []).filter(e => /messe/i.test((e.summary || '')));
+
+                if (messes.length > 0) {
+                    // Injecter les messes trouvées dans la liste pour que renderTimes fonctionne
+                    // Réutiliser le rendu existant via les time-chips
+                    document.querySelectorAll('#liste-globale .messe-item').forEach(i => i.style.display = 'none');
+                    const liste = document.getElementById('liste-globale');
+                    messes.forEach(e => {
+                        const dt    = new Date(e.start.dateTime || e.start.date);
+                        const heure = dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+                        const fakeItem = document.createElement('div');
+                        fakeItem.className = 'messe-item';
+                        fakeItem.setAttribute('data-iso', val);
+                        fakeItem.setAttribute('data-event-id', e.id);
+                        fakeItem.innerHTML = `<span>${new Date(val+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</span><span style="color:var(--rubric);font-family:'Cinzel',serif;">${heure}</span>`;
+                        liste.appendChild(fakeItem);
+                        fakeItem.style.display = '';
+                        trouve = true;
+                    });
+                    // Déclencher le rendu des créneaux comme si on avait cliqué
+                    if (typeof renderTimesForDate === 'function') renderTimesForDate(val);
+                }
+            } catch(e) {
+                console.error('Erreur Google Calendar recherche :', e);
+            } finally {
+                if (btnRecherche) btnRecherche.textContent = 'Rechercher';
+            }
+
+            if (!trouve) {
                 noResult.classList.add('visible');
                 const dateObj = new Date(val + 'T00:00:00');
                 noResult.dataset.dateIso = val;
