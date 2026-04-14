@@ -105,8 +105,7 @@
     <script src="menu.js"></script>
     <script src="modal.js"></script>
     <script>
-        const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
-        const CALENDAR_ID    = 'saintlouisenville67@gmail.com';
+        // pretreConfig.google_api_key et pretreConfig.calendar_id viennent de pretreConfig (config.js)
 
         // Extrait "YYYY-MM-DD" en heure locale (évite le décalage UTC)
         function isoLocal(d) {
@@ -157,13 +156,41 @@
             return {Blanc:'#d4af37',Rouge:'#9b2020',Vert:'#3a6644',Violet:'#5c2d7a',Rose:'#d4688a',Noir:'#1a1108'}[c] || '#999';
         }
 
-        async function chargerAgenda() {
+        async function editerNomCal(id) {
+        const span = document.getElementById('cal-nom-' + id);
+        if (!span) return;
+        const ancienNom = span.textContent.trim();
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = ancienNom;
+        input.style.cssText = 'font-family:inherit;font-size:inherit;border:1px solid var(--gold);border-radius:2px;padding:2px 6px;width:140px;background:var(--vellum-light);color:var(--ink);';
+        span.replaceWith(input);
+        input.focus(); input.select();
+
+        async function valider() {
+            const nouveau = input.value.trim();
+            if (!nouveau || nouveau === ancienNom) { input.replaceWith(span); return; }
+            try {
+                const { error } = await maConnexion.from('intentions').update({ nom_intention: nouveau }).eq('id', id);
+                if (error) throw error;
+                span.textContent = nouveau;
+            } catch(e) { alert('Erreur : ' + e.message); }
+            input.replaceWith(span);
+        }
+        input.addEventListener('blur', valider);
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+            if (e.key === 'Escape') { input.value = ancienNom; input.blur(); }
+        });
+    }
+
+    async function chargerAgenda() {
             if (typeof maConnexion === 'undefined') { setTimeout(chargerAgenda, 500); return; }
             try {
                 const [{ data: intentions }, gcalResp] = await Promise.all([
                     maConnexion.from('intentions').select('*').neq('statut','refuse'),
-                    fetch(`https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events`
-                        + `?key=${GOOGLE_API_KEY}`
+                    fetch(`https://www.googleapis.com/calendar/v3/calendars/${pretreConfig.calendar_id}/events`
+                        + `?key=${pretreConfig.google_api_key}`
                         + `&timeMin=${new Date().toISOString()}`
                         + `&timeMax=${(() => { const d = new Date(); d.setFullYear(d.getFullYear()+1); return d.toISOString(); })()}`
                         + `&singleEvents=true&orderBy=startTime&maxResults=500`)
@@ -176,8 +203,7 @@
                 document.getElementById('chargement').style.display = 'none';
                 if (!data.items) return;
 
-                const estUneMesse = e => ['messe','messe chantée','messe anticipée']
-                    .includes(e.summary.toLowerCase().trim());
+                const estUneMesse = e => /messe/i.test((e.summary || '').trim());
                 const messes = data.items.filter(estUneMesse);
                 if (!messes.length) return;
 
@@ -221,7 +247,8 @@
                         contenuAction =
                             '<div style="display:flex;align-items:center;">'
                             + '<div style="text-align:right;margin-right:8px;">'
-                            + '<span class="nom-intention-display">' + intention.nom_intention + '</span>'
+                            + '<span class="nom-intention-display" id="cal-nom-' + intention.id + '">' + intention.nom_intention + '</span>'
+                            + '<button title="Modifier" style="background:none;border:none;cursor:pointer;color:var(--gold);font-size:.8rem;padding:0 2px;margin-left:4px;" onclick="editerNomCal(' + intention.id + ')">✏️</button>'
                             + '<span class="type-intention-badge">' + icone + ' ' + intention.type_intention + '</span>'
                             + (intention.commentaire ? '<span style="font-size:.68rem;color:var(--gold);display:block;font-style:italic;">🗒 ' + intention.commentaire + '</span>' : '')
                             + '</div>'
