@@ -211,13 +211,15 @@
     async function chargerAgenda() {
             if (typeof maConnexion === 'undefined') { setTimeout(chargerAgenda, 500); return; }
             try {
+                // Chargement initial : seulement les 60 prochains jours pour la vue rapide
+                const tMaxInit = new Date(); tMaxInit.setDate(tMaxInit.getDate() + 60);
                 const [{ data: intentions }, gcalResp] = await Promise.all([
                     maConnexion.from('intentions').select('*').neq('statut','refuse'),
-                    fetch(`https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events`
+                    fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
                         + `?key=${GOOGLE_API_KEY}`
                         + `&timeMin=${new Date().toISOString()}`
-                        + `&timeMax=${(() => { const d = new Date(); d.setFullYear(d.getFullYear()+1); return d.toISOString(); })()}`
-                        + `&singleEvents=true&orderBy=startTime&maxResults=500`)
+                        + `&timeMax=${tMaxInit.toISOString()}`
+                        + `&singleEvents=true&orderBy=startTime&maxResults=100`)
                 ]);
 
                 const now      = new Date();
@@ -287,28 +289,54 @@
                             + '</div></div>';
                     }
 
-                    // Badge ordo inséré sous la date
-                    const ordo = badgeOrdo(dateISO);
-                    const _dfEsc = dateFr.replace(/'/g,"&#39;");
-                    const btnPropre = '<button onclick="ouvrirPropre(\'' + dateISO + '\',\'' + _dfEsc + '\')" '
-                        + 'style="margin-top:6px;font-family:\'Cinzel\',serif;font-size:.6rem;letter-spacing:.1em;padding:4px 10px;background:transparent;border:1px solid #b8962a44;color:#b8962a;border-radius:4px;cursor:pointer;width:100%;">'
-                        + '✦ Propre de la Messe</button>';
-
-                    const html = '<div class="messe-item ' + (estLibre ? 'libre' : 'prise') + '" data-iso="' + dateISO + '">'
-                        + '<div>'
-                        + '<div class="date-principale">' + dateFr + '</div>'
-                        + '<div class="horaire">🕒 ' + heureFr + ' — ' + event.summary + '</div>'
-                        + ordo
-                        + btnPropre
-                        + '</div>'
-                        + '<div>' + contenuAction + '</div></div>';
-
-                    if (dateObj <= limite15) divProche.innerHTML += html;
-                    else divGlobale.innerHTML += html;
+                    const itemHtml = renderMesseItem(dateISO, dateFr, heureFr, event.summary, estLibre, intention, contenuAction);
+                    if (dateObj <= limite15) divProche.innerHTML += itemHtml;
+                    else divGlobale.innerHTML += itemHtml;
                 });
 
                 document.querySelectorAll('#liste-globale .messe-item').forEach(item => item.style.display = 'none');
             } catch (e) { console.error(e); }
+        }
+
+        // ── Fonction réutilisable : génère le HTML d'un messe-item ──
+        function renderMesseItem(dateISO, dateFr, heureFr, summary, estLibre, intention, contenuAction) {
+            const ordo    = badgeOrdo(dateISO);
+            const _dfEsc  = dateFr.replace(/'/g,"&#39;");
+            const btnPropre = '<button onclick="ouvrirPropre(\'' + dateISO + '\',\'' + _dfEsc + '\')" '
+                + 'style="margin-top:6px;font-family:\'Cinzel\',serif;font-size:.6rem;letter-spacing:.1em;padding:4px 10px;background:transparent;border:1px solid #b8962a44;color:#b8962a;border-radius:4px;cursor:pointer;width:100%;">'
+                + '✦ Propre de la Messe</button>';
+            return '<div class="messe-item ' + (estLibre ? 'libre' : 'prise') + '" data-iso="' + dateISO + '" data-recherche="1">'
+                + '<div>'
+                + '<div class="date-principale">' + dateFr + '</div>'
+                + '<div class="horaire">🕒 ' + heureFr + ' — ' + summary + '</div>'
+                + ordo
+                + btnPropre
+                + '</div>'
+                + '<div>' + contenuAction + '</div></div>';
+        }
+
+        // ── Construire le contenuAction pour un créneau ──
+        function buildContenuAction(dateISO, dateFrLong, eventId, heureFr, heureBrute, intention) {
+            if (!intention) {
+                return '<button class="btn-action"'
+                    + ' data-iso="'      + dateISO    + '"'
+                    + ' data-datefr="'   + dateFrLong + '"'
+                    + ' data-googleid="' + eventId    + '"'
+                    + ' data-heure="'    + heureFr    + '"'
+                    + ' onclick="ouvrirModalFromBtn(this)">✍️ Attribuer</button>';
+            }
+            const icone = intention.type_intention === 'Défunt' ? '✝️'
+                        : intention.type_intention === 'Vivant' ? '🙏' : '✨';
+            return '<div style="display:flex;align-items:center;">'
+                + '<div style="text-align:right;margin-right:8px;">'
+                + '<span class="nom-intention-display" id="cal-nom-' + intention.id + '">' + intention.nom_intention + '</span>'
+                + '<button title="Modifier" style="background:none;border:none;cursor:pointer;color:var(--gold);font-size:.8rem;padding:0 2px;margin-left:4px;" onclick="editerNomCal(' + intention.id + ')">✏️</button>'
+                + '<span class="type-intention-badge">' + icone + ' ' + intention.type_intention + '</span>'
+                + (intention.commentaire ? '<span style="font-size:.68rem;color:var(--gold);display:block;font-style:italic;">🗒 ' + intention.commentaire + '</span>' : '')
+                + '</div>'
+                + '<div style="display:flex;flex-direction:column;gap:3px;">'
+                + '<button class="btn-delete" title="Supprimer" data-id="' + intention.id + '" onclick="supprimerFromBtn(this)">🗑️</button>'
+                + '</div></div>';
         }
 
         function ajouterIntentionLibre() {
@@ -412,102 +440,58 @@
             const val = document.getElementById('date-picker').value;
             if (!val) return;
 
-            const noResult = document.getElementById('no-result');
-            noResult.classList.remove('visible');
-
-            // 1. Chercher dans la liste déjà affichée
-            let trouve = false;
-            document.querySelectorAll('#liste-globale .messe-item').forEach(item => {
-                const match = item.getAttribute('data-iso') === val;
-                item.style.display = match ? '' : 'none';
-                if (match) trouve = true;
-            });
-
-            if (trouve) return;
-
-            // 2. Pas trouvé dans la liste locale → appel direct Google Calendar
+            const noResult     = document.getElementById('no-result');
             const btnRecherche = document.querySelector('.search-container .btn-primary');
+            noResult.classList.remove('visible');
+            document.querySelectorAll('#liste-globale .messe-item[data-recherche]').forEach(i => i.remove());
+            document.querySelectorAll('#liste-globale .messe-item').forEach(i => i.style.display = 'none');
             if (btnRecherche) btnRecherche.textContent = 'Recherche…';
+
             try {
+                // Toujours appel direct GCal — fiable pour n'importe quelle date
                 const tMin = new Date(val + 'T00:00:00').toISOString();
                 const tMax = new Date(val + 'T23:59:59').toISOString();
                 const url  = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
                     + `?key=${GOOGLE_API_KEY}&timeMin=${tMin}&timeMax=${tMax}`
                     + `&singleEvents=true&orderBy=startTime&maxResults=50`;
-                const resp = await fetch(url);
-                const data = await resp.json();
-                const messes = (data.items || []).filter(e => /messe/i.test((e.summary || '')));
 
-                // Vider les anciens résultats de recherche
-                document.querySelectorAll('#liste-globale .messe-item[data-recherche]').forEach(i => i.remove());
-                document.querySelectorAll('#liste-globale .messe-item').forEach(i => i.style.display = 'none');
+                const [gcalResp, { data: prises }] = await Promise.all([
+                    fetch(url),
+                    maConnexion.from('intentions')
+                        .select('id,heure_messe,nom_intention,type_intention,commentaire')
+                        .eq('date_messe', val).eq('statut', 'valide')
+                ]);
 
+                const gcalData   = await gcalResp.json();
+                const messes     = (gcalData.items || []).filter(e => /messe/i.test((e.summary || '')));
                 const dateFrLong = new Date(val + 'T00:00:00').toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-                const liste = document.getElementById('liste-globale');
-
-                // Vérifier les intentions déjà prises ce jour
-                const { data: prises } = await maConnexion.from('intentions')
-                    .select('heure_messe,nom_intention,type_intention')
-                    .eq('date_messe', val).eq('statut', 'valide');
-                const heuresPrises = new Set((prises || []).map(i => i.heure_messe));
+                const liste      = document.getElementById('liste-globale');
 
                 if (messes.length > 0) {
+                    await chargerOrdo(val, val);
                     messes.forEach(e => {
-                        const dt       = new Date(e.start.dateTime || e.start.date);
-                        const hh       = String(dt.getHours()).padStart(2,'0');
-                        const mm       = String(dt.getMinutes()).padStart(2,'0');
+                        const dt         = new Date(e.start.dateTime || e.start.date);
+                        const hh         = String(dt.getHours()).padStart(2,'0');
+                        const mm         = String(dt.getMinutes()).padStart(2,'0');
                         const heureBrute = hh + ':' + mm;
-                        const heureFr  = hh + 'h' + (mm === '00' ? '' : mm);
-                        const estLibre = !heuresPrises.has(heureBrute);
-
-                        // Trouver l'intention existante si prise
-                        const intention = (prises || []).find(i => i.heure_messe === heureBrute);
-                        let contenuAction = '';
-                        if (estLibre) {
-                            contenuAction = '<button class="btn-action"'
-                                + ' data-iso="'      + val      + '"'
-                                + ' data-datefr="'   + dateFrLong + '"'
-                                + ' data-googleid="' + e.id     + '"'
-                                + ' data-heure="'    + heureFr  + '"'
-                                + ' onclick="ouvrirModalFromBtn(this)">✍️ Attribuer</button>';
-                        } else {
-                            const icone = intention.type_intention === 'Défunt' ? '✝️'
-                                        : intention.type_intention === 'Vivant' ? '🙏' : '✨';
-                            contenuAction = '<div class="nom-intention-display">'
-                                + icone + ' ' + intention.nom_intention + '</div>';
-                        }
-
-                        const item = document.createElement('div');
-                        item.className = 'messe-item ' + (estLibre ? 'libre' : 'prise');
-                        item.setAttribute('data-iso', val);
-                        item.setAttribute('data-recherche', '1');
-                        item.innerHTML = '<div>'
-                            + '<div class="date-principale">' + dateFrLong + '</div>'
-                            + '<div class="horaire">🕒 ' + heureFr + ' — ' + (e.summary || 'Messe') + '</div>'
-                            + '</div>'
-                            + '<div>' + contenuAction + '</div>';
-                        liste.appendChild(item);
-                        trouve = true;
+                        const heureFr    = hh + 'h' + (mm === '00' ? '' : mm);
+                        const intention  = (prises || []).find(i => i.heure_messe === heureBrute) || null;
+                        const estLibre   = !intention;
+                        const contenu    = buildContenuAction(val, dateFrLong, e.id, heureFr, heureBrute, intention);
+                        const itemHtml   = renderMesseItem(val, dateFrLong, heureFr, e.summary || 'Messe', estLibre, intention, contenu);
+                        liste.insertAdjacentHTML('beforeend', itemHtml);
                     });
                 } else {
-                    // Aucune messe → proposer une messe privée (réutiliser no-result)
-                    noResult.classList.add('visible');
+                    // Aucune messe → messe privée
                     const dateObj = new Date(val + 'T00:00:00');
                     noResult.dataset.dateIso = val;
                     noResult.dataset.dateFr  = dateObj.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
-                    trouve = true; // éviter le double affichage de no-result
+                    noResult.classList.add('visible');
                 }
             } catch(e) {
-                console.error('Erreur Google Calendar recherche :', e);
+                console.error('Erreur recherche :', e);
             } finally {
                 if (btnRecherche) btnRecherche.textContent = 'Rechercher';
-            }
-
-            if (!trouve) {
-                noResult.classList.add('visible');
-                const dateObj = new Date(val + 'T00:00:00');
-                noResult.dataset.dateIso = val;
-                noResult.dataset.dateFr  = dateObj.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
             }
         }
 
