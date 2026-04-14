@@ -105,7 +105,8 @@
     <script src="menu.js"></script>
     <script src="modal.js"></script>
     <script>
-        // pretreConfig.google_api_key et pretreConfig.calendar_id viennent de pretreConfig (config.js)
+        const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
+        const CALENDAR_ID    = 'saintlouisenville67@gmail.com';
 
         // Extrait "YYYY-MM-DD" en heure locale (évite le décalage UTC)
         function isoLocal(d) {
@@ -189,8 +190,8 @@
             try {
                 const [{ data: intentions }, gcalResp] = await Promise.all([
                     maConnexion.from('intentions').select('*').neq('statut','refuse'),
-                    fetch(`https://www.googleapis.com/calendar/v3/calendars/${pretreConfig.calendar_id}/events`
-                        + `?key=${pretreConfig.google_api_key}`
+                    fetch(`https://www.googleapis.com/calendar/v3/calendars/${CALENDAR_ID}/events`
+                        + `?key=${GOOGLE_API_KEY}`
                         + `&timeMin=${new Date().toISOString()}`
                         + `&timeMax=${(() => { const d = new Date(); d.setFullYear(d.getFullYear()+1); return d.toISOString(); })()}`
                         + `&singleEvents=true&orderBy=startTime&maxResults=500`)
