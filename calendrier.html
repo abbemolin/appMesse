@@ -47,10 +47,22 @@
         <h2 class="section-title">📅 Prochains 15 jours</h2>
         <div id="liste-proche"></div>
 
+        <div style="margin-bottom:16px;">
+            <button class="btn-primary" onclick="ouvrirModalLibre()" style="background:var(--rubric);width:100%;">
+                ✦ Ajouter une intention pour n'importe quelle date
+            </button>
+        </div>
+
         <div class="search-container">
             <h2 style="text-align:left;margin-bottom:10px;">🔍 Trouver une autre date</h2>
-            <input type="date" id="date-picker" style="margin-bottom:10px;">
-            <button class="btn-primary" onclick="validerRecherche()">Rechercher</button>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+                <input type="date" id="date-picker" style="flex:1;min-width:140px;margin-bottom:0;">
+                <input type="time" id="heure-libre" value="09:00" style="width:110px;margin-bottom:0;">
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn-primary" onclick="validerRecherche()">Rechercher</button>
+                <button class="btn-primary" style="background:var(--rubric);" onclick="ajouterIntentionLibre()">✦ Ajouter une intention</button>
+            </div>
             <div id="no-result" class="no-result-zone">
                 <p style="color:var(--rubric);font-weight:600;margin:0 0 8px 0;font-family:'Cinzel',serif;font-size:.82rem;">Aucune messe à cette date</p>
                 <p style="color:var(--ink-muted);font-size:.82rem;margin:0 0 12px 0;font-style:italic;">Vous pouvez créer une Messe privée :</p>
@@ -77,6 +89,17 @@
             <input type="hidden" id="input-date-iso">
             <input type="hidden" id="input-google-id">
             <input type="hidden" id="input-heure">
+            <!-- Champs date/heure libres (mode ajout libre) -->
+            <div id="libre-date-heure" style="display:none;gap:10px;margin-bottom:10px;">
+                <div style="flex:1;">
+                    <label>Date</label>
+                    <input type="date" id="libre-date" style="width:100%;">
+                </div>
+                <div style="flex:1;">
+                    <label>Heure</label>
+                    <input type="time" id="libre-heure" value="09:00" style="width:100%;">
+                </div>
+            </div>
             <label>Intention pour</label>
             <input type="text" id="nom_intention" placeholder="ex : Défunts Famille Dupont">
             <div style="display:flex;gap:10px;">
@@ -288,6 +311,20 @@
             } catch (e) { console.error(e); }
         }
 
+        function ajouterIntentionLibre() {
+            const val   = document.getElementById('date-picker').value;
+            const heure = document.getElementById('heure-libre').value || '09:00';
+            if (!val) {
+                AppModal.alert('⚠️', 'Date manquante', 'Veuillez sélectionner une date.');
+                return;
+            }
+            const dateObj = new Date(val + 'T00:00:00');
+            const dateFr  = dateObj.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+            const [hh, mm] = heure.split(':');
+            const hLabel   = `${hh}h${mm === '00' ? '' : mm}`;
+            ouvrirModal(val, dateFr, 'libre_' + val, hLabel);
+        }
+
         function ouvrirModalFromBtn(btn) {
             ouvrirModal(btn.dataset.iso, btn.dataset.datefr, btn.dataset.googleid, btn.dataset.heure);
         }
@@ -308,6 +345,24 @@
             chargerAgenda();
         }
 
+        function ouvrirModalLibre() {
+            // Réinitialiser le modal en mode "libre"
+            document.getElementById('nom_intention').value  = '';
+            document.getElementById('nom_donateur').value   = '';
+            document.getElementById('commentaire').value    = '';
+            document.getElementById('input-date-iso').value = '';
+            document.getElementById('input-google-id').value= 'libre';
+            document.getElementById('input-heure').value    = '';
+            document.getElementById('modal-title').innerText = 'Nouvelle intention';
+            // Afficher les champs date/heure
+            const libreDiv = document.getElementById('libre-date-heure');
+            libreDiv.style.display = 'flex';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('libre-date').value  = today;
+            document.getElementById('libre-heure').value = '09:00';
+            document.getElementById('modal-saisie').style.display = 'flex';
+        }
+
         function ouvrirModal(iso, dateFr, googleId, heure) {
             document.getElementById('nom_intention').value  = '';
             document.getElementById('nom_donateur').value   = '';
@@ -316,16 +371,24 @@
             document.getElementById('input-google-id').value= googleId;
             document.getElementById('input-heure').value    = heure;
             document.getElementById('modal-title').innerText = dateFr + ' à ' + heure;
+            document.getElementById('libre-date-heure').style.display = 'none';
             document.getElementById('modal-saisie').style.display = 'flex';
         }
 
         function fermerModal() { document.getElementById('modal-saisie').style.display = 'none'; }
 
         async function enregistrerIntention() {
-            const date_messe      = document.getElementById('input-date-iso').value;
+            let date_messe      = document.getElementById('input-date-iso').value;
             const google_event_id = document.getElementById('input-google-id').value;
             const nom_intention   = document.getElementById('nom_intention').value.trim();
-            const heure_brute     = document.getElementById('input-heure').value.replace('h',':');
+            let heure_brute     = document.getElementById('input-heure').value.replace('h',':');
+
+            // Mode libre : lire date et heure depuis les champs visibles
+            if (!date_messe || google_event_id === 'libre') {
+                date_messe = document.getElementById('libre-date').value;
+                heure_brute = document.getElementById('libre-heure').value;
+                if (!date_messe) { AppModal.alert('⚠️','Date manquante','Veuillez indiquer une date.'); return; }
+            }
             const commentaire     = document.getElementById('commentaire').value.trim();
             if (!nom_intention) { AppModal.alert('⚠️','Champ manquant',"Veuillez indiquer l'intention."); return; }
             const { error } = await maConnexion.from('intentions').insert([{
@@ -375,25 +438,64 @@
                 const data = await resp.json();
                 const messes = (data.items || []).filter(e => /messe/i.test((e.summary || '')));
 
+                // Vider les anciens résultats de recherche
+                document.querySelectorAll('#liste-globale .messe-item[data-recherche]').forEach(i => i.remove());
+                document.querySelectorAll('#liste-globale .messe-item').forEach(i => i.style.display = 'none');
+
+                const dateFrLong = new Date(val + 'T00:00:00').toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+                const liste = document.getElementById('liste-globale');
+
+                // Vérifier les intentions déjà prises ce jour
+                const { data: prises } = await maConnexion.from('intentions')
+                    .select('heure_messe,nom_intention,type_intention')
+                    .eq('date_messe', val).eq('statut', 'valide');
+                const heuresPrises = new Set((prises || []).map(i => i.heure_messe));
+
                 if (messes.length > 0) {
-                    // Injecter les messes trouvées dans la liste pour que renderTimes fonctionne
-                    // Réutiliser le rendu existant via les time-chips
-                    document.querySelectorAll('#liste-globale .messe-item').forEach(i => i.style.display = 'none');
-                    const liste = document.getElementById('liste-globale');
                     messes.forEach(e => {
-                        const dt    = new Date(e.start.dateTime || e.start.date);
-                        const heure = dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-                        const fakeItem = document.createElement('div');
-                        fakeItem.className = 'messe-item';
-                        fakeItem.setAttribute('data-iso', val);
-                        fakeItem.setAttribute('data-event-id', e.id);
-                        fakeItem.innerHTML = `<span>${new Date(val+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</span><span style="color:var(--rubric);font-family:'Cinzel',serif;">${heure}</span>`;
-                        liste.appendChild(fakeItem);
-                        fakeItem.style.display = '';
+                        const dt       = new Date(e.start.dateTime || e.start.date);
+                        const hh       = String(dt.getHours()).padStart(2,'0');
+                        const mm       = String(dt.getMinutes()).padStart(2,'0');
+                        const heureBrute = hh + ':' + mm;
+                        const heureFr  = hh + 'h' + (mm === '00' ? '' : mm);
+                        const estLibre = !heuresPrises.has(heureBrute);
+
+                        // Trouver l'intention existante si prise
+                        const intention = (prises || []).find(i => i.heure_messe === heureBrute);
+                        let contenuAction = '';
+                        if (estLibre) {
+                            contenuAction = '<button class="btn-action"'
+                                + ' data-iso="'      + val      + '"'
+                                + ' data-datefr="'   + dateFrLong + '"'
+                                + ' data-googleid="' + e.id     + '"'
+                                + ' data-heure="'    + heureFr  + '"'
+                                + ' onclick="ouvrirModalFromBtn(this)">✍️ Attribuer</button>';
+                        } else {
+                            const icone = intention.type_intention === 'Défunt' ? '✝️'
+                                        : intention.type_intention === 'Vivant' ? '🙏' : '✨';
+                            contenuAction = '<div class="nom-intention-display">'
+                                + icone + ' ' + intention.nom_intention + '</div>';
+                        }
+
+                        const item = document.createElement('div');
+                        item.className = 'messe-item ' + (estLibre ? 'libre' : 'prise');
+                        item.setAttribute('data-iso', val);
+                        item.setAttribute('data-recherche', '1');
+                        item.innerHTML = '<div>'
+                            + '<div class="date-principale">' + dateFrLong + '</div>'
+                            + '<div class="horaire">🕒 ' + heureFr + ' — ' + (e.summary || 'Messe') + '</div>'
+                            + '</div>'
+                            + '<div>' + contenuAction + '</div>';
+                        liste.appendChild(item);
                         trouve = true;
                     });
-                    // Déclencher le rendu des créneaux comme si on avait cliqué
-                    if (typeof renderTimesForDate === 'function') renderTimesForDate(val);
+                } else {
+                    // Aucune messe → proposer une messe privée (réutiliser no-result)
+                    noResult.classList.add('visible');
+                    const dateObj = new Date(val + 'T00:00:00');
+                    noResult.dataset.dateIso = val;
+                    noResult.dataset.dateFr  = dateObj.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' });
+                    trouve = true; // éviter le double affichage de no-result
                 }
             } catch(e) {
                 console.error('Erreur Google Calendar recherche :', e);
