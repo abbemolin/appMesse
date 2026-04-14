@@ -208,7 +208,10 @@
                 card.innerHTML =
                     '<div>'
                     + '<span class="date-badge">' + dateObj.toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) + '</span>'
-                    + '<div class="intention-nom">' + item.nom_intention + '</div>'
+                    + '<div class="intention-nom" style="display:flex;align-items:center;gap:6px;">'
+                    + '<span id="nom-display-' + item.id + '" style="flex:1;">' + item.nom_intention + '</span>'
+                    + '<button title="Modifier le nom" style="background:none;border:none;cursor:pointer;color:var(--gold);font-size:.85rem;padding:0 2px;" onclick="editerNomIntention(' + item.id + ',this)">✏️</button>'
+                    + '</div>'
                     + '<div class="intention-meta">Demandeur : ' + item.nom_donateur + ' &middot; ' + item.type_intention + '</div>'
                     + '<div style="color:var(--ink-muted);font-size:.72rem;font-style:italic;">' + (item.email_donateur || '') + '</div>'
                     + badgeMail
@@ -368,7 +371,7 @@
     function refreshTimeChoices(id, selectedHeure = '') {
         const inputDate = document.getElementById(`d-${id}`).value;
         const container = document.getElementById(`times-${id}`);
-        const estUneMesse = e => ['messe','messe chantée','messe anticipée'].includes(e.summary.toLowerCase().trim());
+        const estUneMesse = e => /messe/i.test((e.summary || '').trim());
         const matches = googleEventsGlobal.filter(e => {
             const d = (e.start.dateTime || e.start.date).split('T')[0];
             return d === inputDate && estUneMesse(e);
@@ -400,6 +403,47 @@
     function selectChip(el, id) {
         document.getElementById(`times-${id}`).querySelectorAll('.time-chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
+    }
+
+    async function editerNomIntention(id, btn) {
+        const span = document.getElementById('nom-display-' + id);
+        const ancienNom = span.textContent.trim();
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = ancienNom;
+        input.style.cssText = 'font-family:inherit;font-size:inherit;border:1px solid var(--gold);border-radius:2px;padding:2px 6px;width:100%;background:var(--vellum-light);color:var(--ink);';
+        span.replaceWith(input);
+        btn.style.display = 'none';
+        input.focus();
+        input.select();
+
+        async function validerNom() {
+            const nouveauNom = input.value.trim();
+            if (!nouveauNom || nouveauNom === ancienNom) {
+                input.replaceWith(span);
+                btn.style.display = '';
+                return;
+            }
+            try {
+                const { error } = await maConnexion.from('intentions').update({ nom_intention: nouveauNom }).eq('id', id);
+                if (error) throw error;
+                span.textContent = nouveauNom;
+                // Mettre à jour le cache local
+                const found = intentionsGlobal.find(i => String(i.id) === String(id));
+                if (found) found.nom_intention = nouveauNom;
+                showToast('✅ Nom modifié');
+            } catch(e) {
+                AppModal.alert('❌', 'Erreur', e.message);
+            }
+            input.replaceWith(span);
+            btn.style.display = '';
+        }
+
+        input.addEventListener('blur', validerNom);
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+            if (e.key === 'Escape') { input.value = ancienNom; input.blur(); }
+        });
     }
 
     function setPretre(btn, intentionId, pretreId) {
