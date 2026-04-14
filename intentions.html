@@ -368,14 +368,37 @@
         chargerDemandes();
     }
 
-    function refreshTimeChoices(id, selectedHeure = '') {
+    async function refreshTimeChoices(id, selectedHeure = '') {
         const inputDate = document.getElementById(`d-${id}`).value;
         const container = document.getElementById(`times-${id}`);
         const estUneMesse = e => /messe/i.test((e.summary || '').trim());
-        const matches = googleEventsGlobal.filter(e => {
+
+        // 1. Chercher dans le cache global
+        let matches = googleEventsGlobal.filter(e => {
             const d = (e.start.dateTime || e.start.date).split('T')[0];
             return d === inputDate && estUneMesse(e);
         });
+
+        // 2. Si rien dans le cache, appel direct Google Calendar
+        if (matches.length === 0 && inputDate) {
+            container.innerHTML = '<p style="color:var(--ink-muted);font-size:.75rem;font-style:italic;">Chargement des créneaux…</p>';
+            try {
+                const tMin = new Date(inputDate + 'T00:00:00').toISOString();
+                const tMax = new Date(inputDate + 'T23:59:59').toISOString();
+                const url  = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
+                    + `?key=${GOOGLE_API_KEY}&timeMin=${tMin}&timeMax=${tMax}&singleEvents=true&orderBy=startTime&maxResults=20`;
+                const resp = await fetch(url);
+                const data = await resp.json();
+                matches = (data.items || []).filter(estUneMesse);
+                // Ajouter au cache pour éviter les requêtes répétées
+                googleEventsGlobal = [...googleEventsGlobal.filter(e => {
+                    const d = (e.start.dateTime || e.start.date).split('T')[0];
+                    return d !== inputDate;
+                }), ...data.items || []];
+            } catch(e) {
+                console.error('Erreur GCal refreshTimeChoices:', e);
+            }
+        }
 
         if (matches.length === 0) {
             let heureDefaut = '09:00';
