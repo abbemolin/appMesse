@@ -310,9 +310,9 @@
     }
 
     const PRETRES = {
-        molin:        { nom: 'Abbé Molin',           titre: 'Abbé MOLIN',           role: 'curé'    },
-        carbonnieres: { nom: 'Abbé de Carbonnières',  titre: 'Abbé de CARBONNIÈRES', role: 'vicaire' },
-        legall:       { nom: 'Abbé Le Gall',          titre: 'Abbé LE GALL',         role: 'vicaire' },
+        molin:        { nom: 'l'abbé Molin',           titre: 'Abbé MOLIN',           role: 'curé'    },
+        carbonnieres: { nom: 'l'abbé de Carbonnières',  titre: 'Abbé de CARBONNIÈRES', role: 'vicaire' },
+        legall:       { nom: 'l'abbé Le Gall',          titre: 'Abbé LE GALL',         role: 'vicaire' },
     };
 
     function getPretreInfo(item) {
@@ -344,7 +344,7 @@
             phraseIntroduction = `Concernant votre demande pour "${texteIntention}", ${messagePretre}.`;
         }
         const p = getPretreInfo(item);
-        return `Bonjour ${nomDonateur},\n\n${phraseIntroduction}\n\nLa Messe sera célébrée le ${dateFinaleFr} à ${heureFinale}.\n\nJe vous assure de ma prière,\n\n${p.titre},\n${p.role}`;
+        return `Bonjour ${nomDonateur},\n\n${phraseIntroduction}\n\nLa Messe sera célébrée le ${dateFinaleFr} à ${heureFinale}.\n\nJe vous assure de ma prière,\n\n${p.titre},\n${p.role}\n\n---\n[Ce mail est envoyé automatiquement suite à l'accord de ${p.nom}.]`;
     }
 
     function ouvrirModalMailById(id) {
