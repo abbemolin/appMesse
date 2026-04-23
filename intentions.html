@@ -334,7 +334,13 @@
             phraseIntroduction = `La Messe pour "${texteIntention}" a bien été enregistrée.`;
         }
         let messagePretre = (item.reponse_pretre || '').trim();
-        if (messagePretre && !messagePretre.startsWith('La Messe à votre intention')) {
+        // N'utiliser reponse_pretre que si c'est un court message personnel (< 120 car.)
+        // et qu'il ne ressemble pas à un mail déjà formaté
+        if (messagePretre
+            && messagePretre.length < 120
+            && !messagePretre.startsWith('La Messe')
+            && !messagePretre.startsWith('Bonjour')
+            && !messagePretre.includes('sera célébrée')) {
             phraseIntroduction = `Concernant votre demande pour "${texteIntention}", ${messagePretre}.`;
         }
         const p = getPretreInfo(item);
