@@ -198,6 +198,22 @@
             <a href="intentions.html" class="pending-cta">Traiter les demandes</a>
         </div>
 
+        <!-- Boutons de synchronisation manuelle -->
+        <div style="display:flex;gap:10px;margin-bottom:20px;">
+            <button id="btn-importer" onclick="lancerAction('importer')"
+                style="flex:1;padding:11px 8px;background:var(--vellum-light);border:1px solid var(--border);border-radius:2px;
+                font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;
+                color:var(--ink-muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span id="icon-importer">📥</span> Vérifier les mails
+            </button>
+            <button id="btn-envoyer" onclick="lancerAction('envoyer')"
+                style="flex:1;padding:11px 8px;background:var(--vellum-light);border:1px solid var(--border);border-radius:2px;
+                font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;
+                color:var(--ink-muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span id="icon-envoyer">📤</span> Envoyer les réponses
+            </button>
+        </div>
+
         <div class="offices-section">
             <div class="offices-header">
                 <hr class="offices-rule offices-rule-left">
@@ -220,6 +236,7 @@
     <script>
     const GOOGLE_API_KEY = "AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ";
     const CALENDAR_ID    = "saintlouisenville67@gmail.com";
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/VOTRE_DEPLOYMENT_ID/exec';
 
     // Extrait "YYYY-MM-DD" en heure locale (évite le décalage UTC)
     function isoLocal(d) {
@@ -412,6 +429,29 @@
                 if (perm === 'granted') AppModal.alert('🔔','Notifications activées',"Vous serez averti dès qu'une nouvelle intention arrive.");
             }, 2000);
         }
+    }
+
+    async function lancerAction(action) {
+        const btnId  = 'btn-' + action;
+        const iconId = 'icon-' + action;
+        const btn  = document.getElementById(btnId);
+        const icon = document.getElementById(iconId);
+        btn.disabled = true;
+        icon.textContent = '⏳';
+        try {
+            const resp = await fetch(APPS_SCRIPT_URL + '?action=' + action);
+            const data = await resp.json();
+            icon.textContent = data.ok ? '✅' : '⚠️';
+            showToast(data.ok ? data.message : '⚠️ ' + data.message);
+            if (data.ok && action === 'importer') countPendingIntentionsAvecNotif();
+        } catch(e) {
+            icon.textContent = '❌';
+            showToast("❌ Erreur : vérifiez l'URL du script");
+        }
+        setTimeout(() => {
+            icon.textContent = action === 'importer' ? '📥' : '📤';
+            btn.disabled = false;
+        }, 3000);
     }
 
     window.onload = function() {
