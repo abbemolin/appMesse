@@ -52,6 +52,25 @@
             <div class="stats-label" id="label-annee-intentions">MESSES CÉLÉBRÉES EN 2026</div>
         </div>
 
+        <!-- Boutons synchronisation manuelle -->
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <button id="btn-importer" onclick="lancerAction('importer')"
+                style="flex:1;padding:10px 6px;background:var(--vellum-light);border:1px solid var(--border);border-radius:2px;
+                font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;
+                color:var(--ink-muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;">
+                <span id="icon-importer">📥</span> Vérifier les mails
+            </button>
+            <button id="btn-envoyer" onclick="lancerAction('envoyer')"
+                style="flex:1;padding:10px 6px;background:var(--vellum-light);border:1px solid var(--border);border-radius:2px;
+                font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;
+                color:var(--ink-muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;">
+                <span id="icon-envoyer">📤</span> Envoyer les réponses
+            </button>
+        </div>
+
+        <!-- Section prioritaire : en attente + mails non envoyés -->
+        <div id="section-prioritaire"></div>
+
         <!-- Recherche par nom -->
         <div class="search-bar">
             <input type="text" id="recherche-nom" placeholder="Rechercher par nom…" oninput="filtrerRecherche(this.value)">
@@ -82,6 +101,7 @@
     <script>
     const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
     const CALENDAR_ID    = 'saintlouisenville67@gmail.com';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/VOTRE_DEPLOYMENT_ID/exec';
 
     let googleEventsGlobal = [];
     let intentionsGlobal   = [];
@@ -166,7 +186,7 @@
             const labelMois = MOIS_FR[parseInt(moisNum) - 1] + ' ' + annee;
             const items = groupes[moisKey];
             const nbEnAttente = items.filter(i => i.statut === 'en_attente' || i.en_edition).length;
-            const estOuvert = moisKey === moisCourant || filtre !== '';
+            const estOuvert = false; // tous fermés par défaut
 
             const accordeonId = 'mois-' + moisKey;
             const header = document.createElement('div');
@@ -268,6 +288,9 @@
             tbody.appendChild(refGroup);
         }
 
+        // Section prioritaire
+        renderSectionPrioritaire();
+
         // Stats — calculé depuis intentionsGlobal déjà chargé
         const year = new Date().getFullYear();
         const n = intentionsGlobal.filter(i =>
@@ -310,9 +333,9 @@
     }
 
     const PRETRES = {
-        molin:        { nom: 'l'abbé Molin',           titre: 'Abbé MOLIN',           role: 'curé'    },
-        carbonnieres: { nom: 'l'abbé de Carbonnières',  titre: 'Abbé de CARBONNIÈRES', role: 'vicaire' },
-        legall:       { nom: 'l'abbé Le Gall',          titre: 'Abbé LE GALL',         role: 'vicaire' },
+        molin:        { nom: "l'abbé Molin",           titre: 'Abbé MOLIN',           role: 'curé'    },
+        carbonnieres: { nom: "l'abbé de Carbonnières",  titre: 'Abbé de CARBONNIÈRES', role: 'vicaire' },
+        legall:       { nom: "l'abbé Le Gall",          titre: 'Abbé LE GALL',         role: 'vicaire' },
     };
 
     function getPretreInfo(item) {
@@ -603,6 +626,105 @@
         } catch (e) {
             AppModal.alert('❌', 'Erreur', e.message || 'Impossible de refuser la demande.');
         }
+    }
+
+    function renderSectionPrioritaire() {
+        const section = document.getElementById('section-prioritaire');
+        if (!section) return;
+
+        // Intentions en attente de traitement
+        const enAttente = intentionsGlobal.filter(i => i.statut === 'en_attente' || i.en_edition);
+        // Intentions validées dont le mail n'a pas encore été envoyé
+        const mailsNonEnvoyes = intentionsGlobal.filter(i =>
+            i.statut === 'valide' && !i.mail_envoye && !i.mail_approuve
+        );
+        const mailsEnAttente = intentionsGlobal.filter(i =>
+            i.statut === 'valide' && !i.mail_envoye && i.mail_approuve
+        );
+
+        if (enAttente.length === 0 && mailsNonEnvoyes.length === 0 && mailsEnAttente.length === 0) {
+            section.innerHTML = '';
+            return;
+        }
+
+        let html = '<div style="margin-bottom:20px;">';
+
+        // ── En attente de validation ──
+        if (enAttente.length > 0) {
+            html += `<div style="background:var(--gold-pale);border:1px solid var(--gold);border-left:4px solid var(--rubric);
+                border-radius:2px;padding:12px 16px;margin-bottom:10px;">
+                <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--rubric);
+                    text-transform:uppercase;margin-bottom:8px;">⏳ ${enAttente.length} intention${enAttente.length>1?'s':''} en attente de validation</div>`;
+            enAttente.forEach(i => {
+                const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
+                html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;
+                    border-top:1px solid rgba(184,150,42,.2);font-family:'EB Garamond',serif;font-size:.9rem;">
+                    <span style="font-style:italic;color:var(--ink);">${i.nom_intention}</span>
+                    <span style="color:var(--ink-muted);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — ${i.nom_donateur}</span>
+                </div>`;
+            });
+            html += '</div>';
+        }
+
+        // ── Mails à approuver ──
+        if (mailsNonEnvoyes.length > 0) {
+            html += `<div style="background:#fff8f0;border:1px solid #e8a060;border-left:4px solid #c07030;
+                border-radius:2px;padding:12px 16px;margin-bottom:10px;">
+                <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:#8b4010;
+                    text-transform:uppercase;margin-bottom:8px;">⚠️ ${mailsNonEnvoyes.length} mail${mailsNonEnvoyes.length>1?'s':''} à approuver</div>`;
+            mailsNonEnvoyes.forEach(i => {
+                const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
+                html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;
+                    border-top:1px solid rgba(192,112,48,.2);font-family:'EB Garamond',serif;font-size:.9rem;">
+                    <span style="font-style:italic;color:var(--ink);">${i.nom_intention}</span>
+                    <span style="color:var(--ink-muted);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d}</span>
+                </div>`;
+            });
+            html += '</div>';
+        }
+
+        // ── Mails approuvés en attente d'envoi ──
+        if (mailsEnAttente.length > 0) {
+            html += `<div style="background:#f0f8f0;border:1px solid #60a870;border-left:4px solid #3a7850;
+                border-radius:2px;padding:12px 16px;margin-bottom:10px;">
+                <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:#2a5830;
+                    text-transform:uppercase;margin-bottom:8px;">📤 ${mailsEnAttente.length} mail${mailsEnAttente.length>1?'s':''} approuvé${mailsEnAttente.length>1?'s':''} — en attente d'envoi</div>`;
+            mailsEnAttente.forEach(i => {
+                const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
+                html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;
+                    border-top:1px solid rgba(58,120,80,.2);font-family:'EB Garamond',serif;font-size:.9rem;">
+                    <span style="font-style:italic;color:var(--ink);">${i.nom_intention}</span>
+                    <span style="color:var(--ink-muted);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — ${i.email_donateur || ''}</span>
+                </div>`;
+            });
+            html += '</div>';
+        }
+
+        html += '</div>';
+        section.innerHTML = html;
+    }
+
+    async function lancerAction(action) {
+        const btnId  = 'btn-' + action;
+        const iconId = 'icon-' + action;
+        const btn  = document.getElementById(btnId);
+        const icon = document.getElementById(iconId);
+        btn.disabled = true;
+        icon.textContent = '⏳';
+        try {
+            const resp = await fetch(APPS_SCRIPT_URL + '?action=' + action);
+            const data = await resp.json();
+            icon.textContent = data.ok ? '✅' : '⚠️';
+            showToast(data.ok ? data.message : '⚠️ ' + data.message);
+            if (data.ok) chargerDemandes(); // recharger après action
+        } catch(e) {
+            icon.textContent = '❌';
+            showToast('❌ Erreur de connexion au script');
+        }
+        setTimeout(() => {
+            icon.textContent = action === 'importer' ? '📥' : '📤';
+            btn.disabled = false;
+        }, 3000);
     }
 
     window.onload = chargerDemandes;
