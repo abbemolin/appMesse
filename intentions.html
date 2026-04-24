@@ -101,7 +101,7 @@
     <script>
     const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
     const CALENDAR_ID    = 'saintlouisenville67@gmail.com';
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbxX72B9ouRC89W_O_Y32NI34n-CO3YZCuOWf1uN-fhAK3PLI4AH_3_OYb3FDPYV3ALX/exec/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/VOTRE_DEPLOYMENT_ID/exec';
 
     let googleEventsGlobal = [];
     let intentionsGlobal   = [];
@@ -657,10 +657,15 @@
                     text-transform:uppercase;margin-bottom:8px;">⏳ ${enAttente.length} intention${enAttente.length>1?'s':''} en attente de validation</div>`;
             enAttente.forEach(i => {
                 const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
-                html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;
-                    border-top:1px solid rgba(184,150,42,.2);font-family:'EB Garamond',serif;font-size:.9rem;">
+                const moisKey = i.date_messe.substring(0, 7);
+                html += `<div onclick="allerVersIntention('${i.id}','${moisKey}')"
+                    style="display:flex;align-items:center;justify-content:space-between;padding:8px 6px;
+                    border-top:1px solid rgba(184,150,42,.2);font-family:'EB Garamond',serif;font-size:.9rem;
+                    cursor:pointer;border-radius:2px;transition:background .15s;"
+                    onmouseover="this.style.background='rgba(184,150,42,.08)'"
+                    onmouseout="this.style.background=''"  >
                     <span style="font-style:italic;color:var(--ink);">${i.nom_intention}</span>
-                    <span style="color:var(--ink-muted);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — ${i.nom_donateur}</span>
+                    <span style="color:var(--ink-muted);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — ${i.nom_donateur} →</span>
                 </div>`;
             });
             html += '</div>';
@@ -674,10 +679,15 @@
                     text-transform:uppercase;margin-bottom:8px;">⚠️ ${mailsNonEnvoyes.length} mail${mailsNonEnvoyes.length>1?'s':''} à approuver</div>`;
             mailsNonEnvoyes.forEach(i => {
                 const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
-                html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;
-                    border-top:1px solid rgba(192,112,48,.2);font-family:'EB Garamond',serif;font-size:.9rem;">
+                const moisKey = i.date_messe.substring(0, 7);
+                html += `<div onclick="allerVersIntention('${i.id}','${moisKey}', true)"
+                    style="display:flex;align-items:center;justify-content:space-between;padding:8px 6px;
+                    border-top:1px solid rgba(192,112,48,.2);font-family:'EB Garamond',serif;font-size:.9rem;
+                    cursor:pointer;border-radius:2px;transition:background .15s;"
+                    onmouseover="this.style.background='rgba(192,112,48,.08)'"
+                    onmouseout="this.style.background=''">
                     <span style="font-style:italic;color:var(--ink);">${i.nom_intention}</span>
-                    <span style="color:var(--ink-muted);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d}</span>
+                    <span style="color:#8b4010;font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — 📧 Approuver →</span>
                 </div>`;
             });
             html += '</div>';
@@ -691,10 +701,15 @@
                     text-transform:uppercase;margin-bottom:8px;">📤 ${mailsEnAttente.length} mail${mailsEnAttente.length>1?'s':''} approuvé${mailsEnAttente.length>1?'s':''} — en attente d'envoi</div>`;
             mailsEnAttente.forEach(i => {
                 const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
-                html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;
-                    border-top:1px solid rgba(58,120,80,.2);font-family:'EB Garamond',serif;font-size:.9rem;">
+                const moisKey = i.date_messe.substring(0, 7);
+                html += `<div onclick="allerVersIntention('${i.id}','${moisKey}')"
+                    style="display:flex;align-items:center;justify-content:space-between;padding:8px 6px;
+                    border-top:1px solid rgba(58,120,80,.2);font-family:'EB Garamond',serif;font-size:.9rem;
+                    cursor:pointer;border-radius:2px;transition:background .15s;"
+                    onmouseover="this.style.background='rgba(58,120,80,.08)'"
+                    onmouseout="this.style.background=''">
                     <span style="font-style:italic;color:var(--ink);">${i.nom_intention}</span>
-                    <span style="color:var(--ink-muted);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — ${i.email_donateur || ''}</span>
+                    <span style="color:var(--ink-muted);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — ${i.email_donateur || ''} →</span>
                 </div>`;
             });
             html += '</div>';
@@ -727,6 +742,33 @@
             showToast("❌ Erreur — vérifiez l'URL du script dans le code");
             btn.disabled = false;
         }
+    }
+
+    function allerVersIntention(id, moisKey, ouvrirMail = false) {
+        // 1. Ouvrir l'accordéon du bon mois s'il est fermé
+        const groupDiv = document.getElementById('mois-' + moisKey);
+        const arrow    = document.getElementById('arrow-' + moisKey);
+        if (groupDiv && groupDiv.style.display === 'none') {
+            groupDiv.style.display = 'block';
+            if (arrow) arrow.classList.add('open');
+        }
+
+        // 2. Trouver la carte et scroller vers elle
+        setTimeout(() => {
+            const card = document.querySelector('[data-intention-id="' + id + '"]');
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Flash visuel pour repérer la carte
+                card.style.transition = 'box-shadow .3s';
+                card.style.boxShadow = '0 0 0 3px var(--gold)';
+                setTimeout(() => { card.style.boxShadow = ''; }, 1800);
+
+                // 3. Si demandé, ouvrir la modal mail directement
+                if (ouvrirMail) {
+                    setTimeout(() => ouvrirModalMailById(id), 400);
+                }
+            }
+        }, 150);
     }
 
     window.onload = chargerDemandes;
