@@ -236,7 +236,7 @@
     <script>
     const GOOGLE_API_KEY = "AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ";
     const CALENDAR_ID    = "saintlouisenville67@gmail.com";
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/VOTRE_DEPLOYMENT_ID/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbxX72B9ouRC89W_O_Y32NI34n-CO3YZCuOWf1uN-fhAK3PLI4AH_3_OYb3FDPYV3ALX/exec/exec';
 
     // Extrait "YYYY-MM-DD" en heure locale (évite le décalage UTC)
     function isoLocal(d) {
@@ -438,20 +438,21 @@
         const icon = document.getElementById(iconId);
         btn.disabled = true;
         icon.textContent = '⏳';
+        showToast('⏳ Script lancé — patientez 10-15 secondes…');
         try {
-            const resp = await fetch(APPS_SCRIPT_URL + '?action=' + action);
-            const data = await resp.json();
-            icon.textContent = data.ok ? '✅' : '⚠️';
-            showToast(data.ok ? data.message : '⚠️ ' + data.message);
-            if (data.ok && action === 'importer') countPendingIntentionsAvecNotif();
+            await fetch(APPS_SCRIPT_URL + '?action=' + action, { mode: 'no-cors' });
+            icon.textContent = '✅';
+            showToast('✅ Terminé');
+            setTimeout(() => {
+                if (action === 'importer') countPendingIntentionsAvecNotif();
+                icon.textContent = action === 'importer' ? '📥' : '📤';
+                btn.disabled = false;
+            }, 3000);
         } catch(e) {
             icon.textContent = '❌';
-            showToast("❌ Erreur : vérifiez l'URL du script");
-        }
-        setTimeout(() => {
-            icon.textContent = action === 'importer' ? '📥' : '📤';
+            showToast("❌ Erreur — vérifiez l'URL du script");
             btn.disabled = false;
-        }, 3000);
+        }
     }
 
     window.onload = function() {
