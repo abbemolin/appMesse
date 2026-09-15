@@ -555,15 +555,6 @@
         return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    // ── Constantes pièces du propre ──
-    var PROPRE_ORDER = ['Introitus','Oratio','Lectio','Graduale','Evangelium',
-                        'Offertorium','Secreta','Communio','Postcommunio'];
-    var PROPRE_LABELS = {
-        'Introitus':'Introït','Oratio':'Collecte','Lectio':'Épître',
-        'Graduale':'Graduel','Evangelium':'Évangile','Offertorium':'Offertoire',
-        'Secreta':'Secrète','Communio':'Communion','Postcommunio':'Postcommunion'
-    };
-
     async function ouvrirPropre(dateISO, dateFr) {
         var parts = dateISO.split('-').map(Number);
         var ordo  = Ordo1962.getDay(parts[0], parts[1], parts[2]);
@@ -574,82 +565,55 @@
         _propresData    = null;
 
         var piecesDiv = document.getElementById('propre-pieces');
-        piecesDiv.innerHTML = '<div style="text-align:center;padding:40px;color:#8b7355;font-size:.85rem;letter-spacing:.1em;">Chargement\u2026</div>';
+        piecesDiv.innerHTML = '<div style="text-align:center;padding:40px;color:#8b7355;font-size:.82rem;font-style:italic;">✍️ Génération du propre en cours\u2026</div>';
         document.getElementById('modal-propre').style.display = 'flex';
 
+        var fete = (ordo && ordo.fete) ? ordo.fete : 'fête du ' + dateISO;
+
         try {
-            // 1. Appel Missale Meum pour le latin
-            piecesDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#8b7355;font-size:.82rem;font-style:italic;">📖 Récupération du propre (Missale Meum)\u2026</div>';
-            var mmUrl  = 'https://www.missalemeum.com/api/v4/en/propers/' + dateISO;
-            var mmResp = await fetch(mmUrl);
-            if (!mmResp.ok) throw new Error('Missale Meum indisponible (' + mmResp.status + ')');
-            var mmData = await mmResp.json();
-
-            // Extraire les pièces — mmData peut être un tableau ou un objet
-            var messe    = Array.isArray(mmData) ? mmData[0] : mmData;
-            var sections = messe.proper || messe.propers || messe;
-            var pieces   = [];
-
-            if (Array.isArray(sections)) {
-                sections.forEach(function(s) {
-                    var code = s.id || s.label || s.title || s.type || '';
-                    var texte_la = '';
-                    if (s.body && Array.isArray(s.body)) {
-                        texte_la = s.body.map(function(b) {
-                            return Array.isArray(b) ? b[0] : (typeof b === 'string' ? b : '');
-                        }).join('\n').trim();
-                    } else if (typeof s.body === 'string') {
-                        texte_la = s.body.trim();
-                    }
-                    if (texte_la && code) pieces.push({ code: code, la: texte_la });
-                });
-            } else if (typeof sections === 'object') {
-                Object.keys(sections).forEach(function(k) {
-                    var val = sections[k];
-                    var texte_la = typeof val === 'string' ? val : (val.la || val.latin || val.body || '');
-                    if (texte_la) pieces.push({ code: k, la: String(texte_la).trim() });
-                });
-            }
-
-            if (!pieces.length) throw new Error('Aucune pièce trouvée pour cette date.');
-
-            // 2. Traduction via Claude API
-            piecesDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#8b7355;font-size:.82rem;font-style:italic;">✍️ Traduction en français liturgique\u2026</div>';
-
-            var prompt = 'Tu es un traducteur liturgique expert du rite romain traditionnel de 1962. '
-                + 'Traduis les pièces suivantes du propre de la Messe en français liturgique classique, '
-                + 'dans le style exact du Missel quotidien latin-français (Lefebvre/Barthe). '
-                + 'Respecte le ton solennel, les archaïsmes liturgiques (vous de majesté, vocabulaire tridentin). '
-                + 'Réponds UNIQUEMENT en JSON valide sans aucun texte avant ou après :\n'
-                + '{"pieces":[{"code":"NomPiece","fr":"traduction"}]}\n\n'
-                + pieces.map(function(p) {
-                    return '=== ' + p.code + ' ===\n' + p.la;
-                  }).join('\n\n');
+            var prompt = 'Tu es un expert du missel romain tridentin de 1962 (Missale Romanum 1962). '
+                + 'Fournis le propre complet de la Messe pour le ' + dateISO + ' (' + fete + ') '
+                + 'selon le rite de saint Pie V (missel de 1962). '
+                + 'Pour chaque pièce, donne le texte latin exact du missel de 1962 et sa traduction en français liturgique classique '
+                + 'dans le style du Missel quotidien latin-français de dom Gaspar Lefebvre OSB. '
+                + 'Inclus toutes ces pièces dans l\'ordre : Introitus, Oratio (Collecte), Lectio (Épître), Graduale, Evangelium, '
+                + 'Offertorium, Secreta, Communio, Postcommunio. '
+                + 'Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :\n'
+                + '{"fete":"nom de la fête","classe":"I/II/III/IV","couleur":"Blanc/Rouge/Vert/Violet/Rose/Noir",'
+                + '"pieces":[{"code":"Introitus","label":"Introït","ref":"référence biblique","la":"texte latin","fr":"traduction française"},'
+                + '{"code":"Oratio","label":"Collecte","ref":"","la":"...","fr":"..."},'
+                + '{"code":"Lectio","label":"Épître","ref":"référence","la":"...","fr":"..."},'
+                + '{"code":"Graduale","label":"Graduel","ref":"","la":"...","fr":"..."},'
+                + '{"code":"Evangelium","label":"Évangile","ref":"référence","la":"...","fr":"..."},'
+                + '{"code":"Offertorium","label":"Offertoire","ref":"","la":"...","fr":"..."},'
+                + '{"code":"Secreta","label":"Secrète","ref":"","la":"...","fr":"..."},'
+                + '{"code":"Communio","label":"Communion","ref":"","la":"...","fr":"..."},'
+                + '{"code":"Postcommunio","label":"Postcommunion","ref":"","la":"...","fr":"..."}]}';
 
             var claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-6',
-                    max_tokens: 4000,
+                    max_tokens: 6000,
                     messages: [{ role: 'user', content: prompt }]
                 })
             });
-            if (!claudeResp.ok) throw new Error('Claude API indisponible (' + claudeResp.status + ')');
+            if (!claudeResp.ok) throw new Error('Claude API : ' + claudeResp.status);
             var claudeData = await claudeResp.json();
             var claudeText = claudeData.content[0].text.trim().replace(/```json|```/g, '').trim();
-            var traductions = JSON.parse(claudeText);
-            var trMap = {};
-            (traductions.pieces || []).forEach(function(t) { trMap[t.code] = t.fr; });
+            var propre = JSON.parse(claudeText);
 
-            // 3. Construire _propresData dans le format attendu par renderProprePieces
-            _propresData = pieces.map(function(p, i) {
+            // Mettre à jour la fête si Claude la précise
+            if (propre.fete) document.getElementById('propre-fete-input').value = propre.fete;
+
+            _propresData = (propre.pieces || []).map(function(p, i) {
                 return {
-                    part_code:     p.code.toLowerCase().replace(/[^a-z]/g,''),
-                    part_label:    PROPRE_LABELS[p.code] || p.code,
-                    reference:     '',
-                    text_la:       p.la,
-                    text_fr:       trMap[p.code] || '',
+                    part_code:     (p.code || '').toLowerCase().replace(/[^a-z]/g,''),
+                    part_label:    p.label || p.code,
+                    reference:     p.ref || '',
+                    text_la:       p.la || '',
+                    text_fr:       p.fr || '',
                     display_order: i + 1
                 };
             });
