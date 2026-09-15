@@ -1,4 +1,4 @@
-const CACHE_NAME = 'messes-v6';
+const CACHE_NAME = 'messes-v7';
 
 const ASSETS_TO_CACHE = [
     './',
