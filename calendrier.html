@@ -602,10 +602,142 @@
         renderProprePieces();
     }
 
+    // ── Génération automatique du propre via Missale Meum + Claude API ──
+    async function genererPropre() {
+        var status = document.getElementById('propre-gen-status');
+        var btn = document.querySelector('[onclick="genererPropre()"]');
+        if (btn) btn.disabled = true;
+
+        var massKey = (typeof Ordo1962.getProperKey === 'function')
+            ? Ordo1962.getProperKey(Ordo1962.getDay(
+                parseInt(_propresDateISO.split('-')[0]),
+                parseInt(_propresDateISO.split('-')[1]),
+                parseInt(_propresDateISO.split('-')[2])
+              ))
+            : null;
+
+        if (!massKey) {
+            status.textContent = '❌ Clé liturgique introuvable pour cette date.';
+            if (btn) btn.disabled = false;
+            return;
+        }
+
+        try {
+            // 1. Récupérer le latin depuis Missale Meum
+            status.textContent = '⏳ Récupération du latin (Missale Meum)…';
+            var mmUrl = 'https://www.missalemeum.com/api/v4/en/propers/' + _propresDateISO;
+            var mmResp = await fetch(mmUrl);
+            if (!mmResp.ok) throw new Error('Missale Meum : ' + mmResp.status);
+            var mmData = await mmResp.json();
+
+            // mmData est un tableau de messes (parfois plusieurs le même jour)
+            var messe = Array.isArray(mmData) ? mmData[0] : mmData;
+            var sections = messe.proper || messe.propers || messe;
+
+            // Extraire les pièces latines
+            var ORDER = ['Introitus','Oratio','Lectio','Graduale','Evangelium','Offertorium','Secreta','Communio','Postcommunio'];
+            var LABELS = {
+                'Introitus':'Introït','Oratio':'Collecte','Lectio':'Épître',
+                'Graduale':'Graduel','Evangelium':'Évangile','Offertorium':'Offertoire',
+                'Secreta':'Secrète','Communio':'Communion','Postcommunio':'Postcommunion'
+            };
+
+            var pieces = [];
+            if (Array.isArray(sections)) {
+                sections.forEach(function(s) {
+                    var code = s.id || s.label || s.title || '';
+                    var texte_la = '';
+                    if (s.body && Array.isArray(s.body)) {
+                        texte_la = s.body.map(function(b) { return Array.isArray(b) ? b[0] : b; }).join('\n');
+                    } else if (typeof s.body === 'string') {
+                        texte_la = s.body;
+                    }
+                    if (texte_la) pieces.push({ code: code, texte_la: texte_la.trim() });
+                });
+            } else if (typeof sections === 'object') {
+                Object.keys(sections).forEach(function(k) {
+                    var val = sections[k];
+                    var texte_la = typeof val === 'string' ? val : (val.la || val.latin || '');
+                    if (texte_la) pieces.push({ code: k, texte_la: texte_la.trim() });
+                });
+            }
+
+            if (!pieces.length) throw new Error('Aucune pièce trouvée dans la réponse Missale Meum.');
+
+            // 2. Traduire via Claude API
+            status.textContent = '⏳ Traduction en français liturgique (Claude)…';
+
+            var prompt = 'Tu es un traducteur liturgique spécialisé dans le rite romain traditionnel de 1962. '
+                + 'Traduis les pièces suivantes du propre de la Messe du ' + _propresDateISO + ' en français liturgique, '
+                + 'dans le style du Missel quotidien Lefebvre/Barthe. '
+                + 'Réponds UNIQUEMENT en JSON valide, sans aucun texte avant ou après, avec ce format exact :\n'
+                + '{"pieces":[{"code":"NomPiece","fr":"traduction française"},...] }\n\n'
+                + 'Pièces à traduire :\n'
+                + pieces.map(function(p) {
+                    return '=== ' + p.code + ' ===\n' + p.texte_la;
+                  }).join('\n\n');
+
+            var claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-6',
+                    max_tokens: 4000,
+                    messages: [{ role: 'user', content: prompt }]
+                })
+            });
+            if (!claudeResp.ok) throw new Error('Claude API : ' + claudeResp.status);
+            var claudeData = await claudeResp.json();
+            var claudeText = claudeData.content[0].text.trim();
+            var traductions = JSON.parse(claudeText.replace(/```json|```/g, '').trim());
+
+            // Associer les traductions
+            var trMap = {};
+            (traductions.pieces || []).forEach(function(t) { trMap[t.code] = t.fr; });
+
+            // 3. Construire les lignes pour Supabase
+            status.textContent = '⏳ Enregistrement dans Supabase…';
+            var rows = pieces.map(function(p, i) {
+                var codeNorm = p.code.replace(/[^a-zA-Z]/g, '').toLowerCase();
+                return {
+                    mass_key:      massKey,
+                    part_code:     codeNorm,
+                    part_label:    LABELS[p.code] || p.code,
+                    reference:     '',
+                    text_la:       p.texte_la,
+                    text_fr:       trMap[p.code] || '',
+                    display_order: i + 1
+                };
+            });
+
+            // Supprimer l'ancien contenu si existait
+            await maConnexion.from('propers').delete().eq('mass_key', massKey);
+
+            // Insérer les nouvelles lignes
+            var { error } = await maConnexion.from('propers').insert(rows);
+            if (error) throw error;
+
+            status.textContent = '✅ Propre généré et enregistré !';
+            // Recharger
+            setTimeout(function() { ouvrirPropre(_propresDateISO, document.getElementById('propre-date-label').textContent); }, 800);
+
+        } catch(e) {
+            console.error('Erreur génération propre:', e);
+            status.textContent = '❌ Erreur : ' + e.message;
+            if (btn) btn.disabled = false;
+        }
+    }
+
     function renderProprePieces() {
         var c = document.getElementById('propre-pieces');
         if (!_propresData) {
-            c.innerHTML = '<div style="text-align:center;padding:30px;color:#8b7355;font-style:italic;font-size:1rem;">Propre non disponible pour ce jour.</div>';
+            c.innerHTML = '<div style="text-align:center;padding:30px;">'
+                + '<div style="color:#8b7355;font-style:italic;font-size:1rem;margin-bottom:16px;">Propre non disponible pour ce jour.</div>'
+                + '<button onclick="genererPropre()" style="padding:10px 24px;background:var(--rubric);color:#f5f0e4;border:none;border-radius:2px;'
+                + 'font-family:\'Cinzel\',serif;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;">'
+                + '✦ Générer le propre (latin + français)</button>'
+                + '<div id="propre-gen-status" style="margin-top:12px;font-size:.82rem;font-style:italic;color:#8b7355;"></div>'
+                + '</div>';
             return;
         }
         var lang = _propresLang;
