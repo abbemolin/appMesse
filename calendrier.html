@@ -559,76 +559,36 @@
     async function ouvrirPropre(dateISO, dateFr) {
         var parts = dateISO.split('-').map(Number);
         var ordo  = Ordo1962.getDay(parts[0], parts[1], parts[2]);
+        var massKey = (typeof Ordo1962.getProperKey === 'function') ? Ordo1962.getProperKey(ordo) : null;
 
-        document.getElementById('propre-date-label').textContent = dateFr;
+        document.getElementById('propre-date-label').textContent  = dateFr;
         document.getElementById('propre-fete-input').value = (ordo && ordo.fete) ? ordo.fete : '';
         _propresDateISO = dateISO;
-        _propresData    = null;
 
-        var piecesDiv = document.getElementById('propre-pieces');
-        piecesDiv.innerHTML = '<div style="text-align:center;padding:40px;color:#8b7355;font-size:.82rem;font-style:italic;">\u2714\ufe0f G\u00e9n\u00e9ration du propre en cours\u2026</div>';
+        document.getElementById('propre-pieces').innerHTML =
+            '<div style="text-align:center;padding:40px;color:#8b7355;font-size:.85rem;letter-spacing:.1em;">Chargement…</div>';
         document.getElementById('modal-propre').style.display = 'flex';
 
-        var fete = (ordo && ordo.fete) ? ordo.fete : '';
-        var massKey = 'propre_' + dateISO; // clé temporaire basée sur la date
+        if (!massKey) {
+            document.getElementById('propre-pieces').innerHTML =
+                '<div style="text-align:center;padding:30px;color:#8b7355;font-style:italic;font-size:1rem;">Propre non disponible pour ce jour.</div>';
+            return;
+        }
 
         try {
-            // 1. Vérifier si le propre existe déjà dans Supabase
-            var cached = await maConnexion
+            var resp = await maConnexion
                 .from('propers')
                 .select('part_code, part_label, reference, text_la, text_fr, display_order')
                 .eq('mass_key', massKey)
                 .order('display_order', { ascending: true });
 
-            if (cached.data && cached.data.length > 0) {
-                _propresData = cached.data;
-                renderProprePieces();
-                return;
-            }
-
-            // 2. Pas en cache — déclencher la génération via Apps Script (no-cors)
-            piecesDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#8b7355;font-size:.82rem;font-style:italic;">\u270d\ufe0f G\u00e9n\u00e9ration via Gemini\u2026 (15-30 secondes)</div>';
-
-            var url = APPS_SCRIPT_URL + '?action=propre&date=' + dateISO + (fete ? '&fete=' + encodeURIComponent(fete) : '') + '&massKey=' + encodeURIComponent(massKey);
-            await fetch(url, { mode: 'no-cors' }); // déclenche Apps Script sans lire la réponse
-
-            // 3. Attendre que Apps Script ait stocké dans Supabase (polling)
-            var maxTentatives = 20;
-            var tentative = 0;
-            var trouve = false;
-
-            piecesDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#8b7355;font-size:.82rem;font-style:italic;">\u23f3 En attente du résultat<span id="dots">.</span></div>';
-
-            var dotsEl = document.getElementById('dots');
-            var dotsInterval = setInterval(function() {
-                if (dotsEl) dotsEl.textContent = dotsEl.textContent.length < 3 ? dotsEl.textContent + '.' : '.';
-            }, 500);
-
-            while (tentative < maxTentatives && !trouve) {
-                await new Promise(function(r) { setTimeout(r, 2000); });
-                tentative++;
-
-                var check = await maConnexion
-                    .from('propers')
-                    .select('part_code, part_label, reference, text_la, text_fr, display_order')
-                    .eq('mass_key', massKey)
-                    .order('display_order', { ascending: true });
-
-                if (check.data && check.data.length > 0) {
-                    clearInterval(dotsInterval);
-                    _propresData = check.data;
-                    trouve = true;
-                }
-            }
-
-            clearInterval(dotsInterval);
-
-            if (!trouve) throw new Error('Le propre n\'a pas pu être généré (délai dépassé). Réessayez.');
+            if (resp.error) throw resp.error;
+            _propresData = resp.data && resp.data.length ? resp.data : null;
             renderProprePieces();
-
         } catch(e) {
             console.error('Erreur propre:', e);
-            piecesDiv.innerHTML = '<div style="color:#8b1a1a;padding:20px;font-size:.9rem;">Erreur : ' + escH(String(e.message || e)) + '</div>';
+            document.getElementById('propre-pieces').innerHTML =
+                '<div style="color:#8b1a1a;padding:20px;font-size:.9rem;">Erreur de chargement : ' + escH(String(e.message || e)) + '</div>';
         }
     }
 
