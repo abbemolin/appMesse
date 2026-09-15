@@ -565,46 +565,20 @@
         _propresData    = null;
 
         var piecesDiv = document.getElementById('propre-pieces');
-        piecesDiv.innerHTML = '<div style="text-align:center;padding:40px;color:#8b7355;font-size:.82rem;font-style:italic;">✍️ Génération du propre en cours\u2026</div>';
+        piecesDiv.innerHTML = '<div style="text-align:center;padding:40px;color:#8b7355;font-size:.82rem;font-style:italic;">\u2705 G\u00e9n\u00e9ration du propre en cours\u2026</div>';
         document.getElementById('modal-propre').style.display = 'flex';
 
-        var fete = (ordo && ordo.fete) ? ordo.fete : 'fête du ' + dateISO;
+        var fete = (ordo && ordo.fete) ? ordo.fete : '';
 
         try {
-            var prompt = 'Tu es un expert du missel romain tridentin de 1962 (Missale Romanum 1962). '
-                + 'Fournis le propre complet de la Messe pour le ' + dateISO + ' (' + fete + ') '
-                + 'selon le rite de saint Pie V (missel de 1962). '
-                + 'Pour chaque pièce, donne le texte latin exact du missel de 1962 et sa traduction en français liturgique classique '
-                + 'dans le style du Missel quotidien latin-français de dom Gaspar Lefebvre OSB. '
-                + 'Inclus toutes ces pièces dans l\'ordre : Introitus, Oratio (Collecte), Lectio (Épître), Graduale, Evangelium, '
-                + 'Offertorium, Secreta, Communio, Postcommunio. '
-                + 'Réponds UNIQUEMENT en JSON valide, sans texte avant ou après :\n'
-                + '{"fete":"nom de la fête","classe":"I/II/III/IV","couleur":"Blanc/Rouge/Vert/Violet/Rose/Noir",'
-                + '"pieces":[{"code":"Introitus","label":"Introït","ref":"référence biblique","la":"texte latin","fr":"traduction française"},'
-                + '{"code":"Oratio","label":"Collecte","ref":"","la":"...","fr":"..."},'
-                + '{"code":"Lectio","label":"Épître","ref":"référence","la":"...","fr":"..."},'
-                + '{"code":"Graduale","label":"Graduel","ref":"","la":"...","fr":"..."},'
-                + '{"code":"Evangelium","label":"Évangile","ref":"référence","la":"...","fr":"..."},'
-                + '{"code":"Offertorium","label":"Offertoire","ref":"","la":"...","fr":"..."},'
-                + '{"code":"Secreta","label":"Secrète","ref":"","la":"...","fr":"..."},'
-                + '{"code":"Communio","label":"Communion","ref":"","la":"...","fr":"..."},'
-                + '{"code":"Postcommunio","label":"Postcommunion","ref":"","la":"...","fr":"..."}]}';
+            // Appel via Apps Script proxy (évite CORS)
+            var url = APPS_SCRIPT_URL + '?action=propre&date=' + dateISO + (fete ? '&fete=' + encodeURIComponent(fete) : '');
+            var resp = await fetch(url);
+            if (!resp.ok) throw new Error('Apps Script : ' + resp.status);
+            var data = await resp.json();
+            if (!data.ok) throw new Error(data.message || 'Erreur Apps Script');
+            var propre = data.data;
 
-            var claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: 'claude-sonnet-4-6',
-                    max_tokens: 6000,
-                    messages: [{ role: 'user', content: prompt }]
-                })
-            });
-            if (!claudeResp.ok) throw new Error('Claude API : ' + claudeResp.status);
-            var claudeData = await claudeResp.json();
-            var claudeText = claudeData.content[0].text.trim().replace(/```json|```/g, '').trim();
-            var propre = JSON.parse(claudeText);
-
-            // Mettre à jour la fête si Claude la précise
             if (propre.fete) document.getElementById('propre-fete-input').value = propre.fete;
 
             _propresData = (propre.pieces || []).map(function(p, i) {
