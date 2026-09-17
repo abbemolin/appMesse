@@ -548,7 +548,7 @@ const Ordo1962 = (() => {
     { m:9, d:14, name:'Exaltation de la Sainte Croix', rang:2, couleur:'Rouge' },
     { m:9, d:15, name:'Sept Douleurs de la Très Sainte Vierge Marie', rang:2, couleur:'Blanc' },
     { m:9, d:16, name:'Saints Corneille et Cyprien, martyrs', rang:3, couleur:'Rouge' },
-    { m:9, d:17, name:'Saint Pierre d\'Alcantara, confesseur', rang:4, couleur:'Blanc' },
+    { m:9, d:17, name:'Impression des Stigmates de saint François', rang:3, couleur:'Rouge' },
     { m:9, d:18, name:'Saint Joseph de Cupertino, confesseur', rang:4, couleur:'Blanc' },
     { m:9, d:19, name:'Saints Janvier, évêque, et compagnons, martyrs', rang:3, couleur:'Rouge' },
     { m:9, d:20, name:'Saints Eustache et compagnons, martyrs', rang:4, couleur:'Rouge' },
