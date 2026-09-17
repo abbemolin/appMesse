@@ -709,18 +709,41 @@ const Ordo1962 = (() => {
     if (temporalDay && sanctoralDay.length > 0) {
       const bestSanc = sanctoralDay.reduce((a, b) => a.rang <= b.rang ? a : b);
 
-      if (temporalDay.rang <= bestSanc.rang) {
+      // Règles de préséance selon le missel de 1962 :
+      // 1. Rang strictement inférieur (meilleur) → l'emporte toujours
+      // 2. Rang égal → le sanctoral prime sur une férie temporale (sauf dimanche)
+      //    Exception : les dimanches et fêtes majeures du temporal (Noël, Pâques...) gardent la préséance
+      // 3. Rang strictement supérieur (moins bon) → l'autre l'emporte
+
+      const estFerieTemporale = temporalDay.fete === null ||
+        (temporalDay.fete && (
+          temporalDay.fete.includes('Férie') ||
+          temporalDay.fete.includes('férie') ||
+          temporalDay.fete.includes('Rogation') ||
+          temporalDay.fete.includes('Quatre-Temps') ||
+          temporalDay.fete.includes('O Sapientia') ||
+          temporalDay.fete.includes('O Oriens') ||
+          temporalDay.fete.includes('O Adonaï') ||
+          temporalDay.fete.includes('O Radix') ||
+          temporalDay.fete.includes('O Clavis') ||
+          temporalDay.fete.includes('O Rex') ||
+          temporalDay.fete.includes('O Emmanuel')
+        ));
+
+      // Le temporal l'emporte si son rang est strictement meilleur,
+      // OU si rang égal ET ce n'est pas une férie (c'est un dimanche ou fête majeure)
+      const temporalGagne = temporalDay.rang < bestSanc.rang ||
+        (temporalDay.rang === bestSanc.rang && !estFerieTemporale);
+
+      if (temporalGagne) {
         // Temporal prend le dessus
         principale = { ...temporalDay, source: 'temporal' };
         // Commémoraison du sanctoral si rang 3 ou 4
         if (bestSanc.rang >= 3) {
           commemoration = bestSanc.name;
         }
-        // Si temporal rang 1 et sanctoral rang 1 : cas exceptionnel (translation)
+        // Rang 1 des deux côtés : pas de commémoraison redondante
         if (temporalDay.rang === 1 && bestSanc.rang === 1) {
-          // Même rang 1 des deux côtés : le temporal l'emporte déjà
-          // Si c'est la même fête (ex: Noël + St Étienne qui est dans le temporal)
-          // pas de commémoraison redondante
           commemoration = null;
         }
       } else {
