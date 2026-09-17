@@ -203,6 +203,12 @@ const Ordo1962 = (() => {
       set(d, { fete: null, rang: 4, couleur: 'Violet', saison: 'Temps de la Septuagésime' });
     }
 
+    // ── Christ-Roi (dernier dimanche d'octobre, 1re classe) ──
+    // Chercher le dernier dimanche d'octobre de l'année
+    let christRoi = new Date(year, 9, 31); // 31 octobre
+    while (dow(christRoi) !== 0) christRoi = dateAdd(christRoi, -1);
+    set(christRoi, { fete: 'Fête de Notre-Seigneur Jésus-Christ Roi', rang: 1, couleur: 'Blanc', saison: 'Temps après la Pentecôte' });
+
     return feasts;
   }
 
@@ -871,6 +877,7 @@ if (typeof module !== 'undefined') module.exports = Ordo1962;
   "fête de la sainte famille": "temporal/2/1",
   "fête de la très sainte trinité": "temporal/9/0",
   "fête de n.-s. j.-c. roi": "temporal/9/30",
+  "fête de notre-seigneur jésus-christ roi": "temporal/9/30",
   "fête du sacré-cœur de jésus": "temporal/9/4",
   "fête du saint nom de jésus": "temporal/1/9",
   "fête-dieu": "temporal/9/2",
