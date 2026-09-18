@@ -556,6 +556,42 @@
         return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
+    // Clés de référence pour les communs des saints (pièces de fallback)
+    // Utilisées quand une pièce propre est manquante (épître surtout)
+    var COMMUN_KEYS = {
+        // Martyrs (couleur Rouge)
+        'martyr':           'sanctoral/1/13',  // Fratres : Rememorámini — martyrs
+        'martyrs':          'sanctoral/1/15',  // Fratres : Sancti per fidem — plur. martyrs
+        // Confesseurs pontifes (Blanc, évêque/pape)
+        'confesseur_pont':  'sanctoral/1/4',   // Caríssime : Testíficor — conf. pontife
+        // Confesseurs non-pontifes (Blanc, abbé/prêtre)
+        'confesseur':       'sanctoral/1/1',   // Caríssimi : Senióres — conf. non-pontife
+        // Vierges et femmes non-martyres
+        'vierge':           'sanctoral/10/3',  // Sainte Thérèse — vierge
+        'veuve':            'sanctoral/10/8',  // Sainte Brigitte — veuve
+        // Défaut : confesseur non-pontife
+        'defaut':           'sanctoral/1/1'
+    };
+
+    // Détermine la clé de commun selon la couleur et le titre du saint
+    function getCommunKey(ordo) {
+        if (!ordo || ordo.source !== 'sanctoral') return null;
+        var fete  = (ordo.fete || '').toLowerCase();
+        var col   = (ordo.couleur || '').toLowerCase();
+        if (col === 'rouge') {
+            // Martyr
+            if (fete.includes('martyrs') || fete.includes('et compagnons')) return COMMUN_KEYS.martyrs;
+            return COMMUN_KEYS.martyr;
+        }
+        // Blanc : confesseur pontife ou non-pontife, vierge, veuve
+        if (fete.includes('pape') || fete.includes('évêque') || fete.includes('archevêque') || fete.includes('patriarche')) {
+            return COMMUN_KEYS.confesseur_pont;
+        }
+        if (fete.includes('vierge') && !fete.includes('martyr')) return COMMUN_KEYS.vierge;
+        if (fete.includes('reine') || fete.includes('veuve') || fete.includes('matrone')) return COMMUN_KEYS.veuve;
+        return COMMUN_KEYS.confesseur;
+    }
+
     async function ouvrirPropre(dateISO, dateFr) {
         var parts = dateISO.split('-').map(Number);
         var ordo  = Ordo1962.getDay(parts[0], parts[1], parts[2]);
@@ -583,7 +619,41 @@
                 .order('display_order', { ascending: true });
 
             if (resp.error) throw resp.error;
-            _propresData = resp.data && resp.data.length ? resp.data : null;
+            var propData = resp.data && resp.data.length ? resp.data : null;
+
+            // Fallback vers le commun des saints pour les pièces manquantes
+            if (propData && ordo && ordo.source === 'sanctoral') {
+                var piecesCodes = new Set(propData.map(function(p) { return p.part_code; }));
+                var piecesAttendues = ['introit','collecte','epitre','graduel','evangile',
+                                       'offertoire','secrete','communion','postcommunion'];
+                var manquantes = piecesAttendues.filter(function(p) { return !piecesCodes.has(p); });
+
+                if (manquantes.length > 0) {
+                    var communKey = getCommunKey(ordo);
+                    if (communKey) {
+                        var respCommun = await maConnexion
+                            .from('propers')
+                            .select('part_code, part_label, reference, text_la, text_fr, display_order')
+                            .eq('mass_key', communKey)
+                            .in('part_code', manquantes);
+
+                        if (!respCommun.error && respCommun.data && respCommun.data.length) {
+                            // Marquer les pièces du commun et les ajouter
+                            var communPieces = respCommun.data.map(function(p) {
+                                return Object.assign({}, p, {
+                                    _du_commun: true,
+                                    part_label: p.part_label + ' (commun)'
+                                });
+                            });
+                            propData = propData.concat(communPieces);
+                            // Retrier par display_order
+                            propData.sort(function(a,b) { return a.display_order - b.display_order; });
+                        }
+                    }
+                }
+            }
+
+            _propresData = propData;
             renderProprePieces();
         } catch(e) {
             console.error('Erreur propre:', e);
@@ -614,9 +684,12 @@
             var txt = (lang === 'la' ? p.text_la : p.text_fr) || (lang === 'la' ? p.text_fr : p.text_la) || '';
             var col = PIECE_COLORS[p.part_code] || '#1a1108';
             var ref = p.reference ? '<span style="font-size:.85em;color:#8b7355;font-style:italic;margin-left:8px;">' + escH(p.reference) + '</span>' : '';
+            var communBadge = p._du_commun
+                ? '<span style="font-size:.7em;color:#8b7355;font-style:italic;margin-left:8px;font-family:\'EB Garamond\',serif;text-transform:none;letter-spacing:0;">du commun</span>'
+                : '';
             return '<div>'
                 + '<div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:' + col + ';border-bottom:1px solid ' + col + '22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;">'
-                + '<span>' + escH(p.part_label) + '</span>' + ref
+                + '<span>' + escH(p.part_label.replace(' (commun)','')) + '</span>' + ref + communBadge
                 + '</div>'
                 + '<div style="font-size:1.05rem;line-height:1.75;color:#1a1108;white-space:pre-wrap;">' + escH(txt) + '</div>'
                 + '</div>';
