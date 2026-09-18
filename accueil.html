@@ -182,7 +182,16 @@
                 <span class="db-paroisse">Paroisse La Croix Glorieuse</span>
                 <div class="db-title">Bonjour</div>
                 <div class="db-title" style="font-size:1rem;opacity:.6;">Tableau de bord</div>
-                <div id="db-date" class="db-date"></div>
+                <!-- Navigation date -->
+                <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0 0;">
+                    <button id="btn-jour-prev" onclick="naviguerJour(-1)" title="Jour précédent"
+                        style="background:none;border:none;cursor:pointer;color:var(--gold);font-size:1.1rem;opacity:.7;padding:4px 8px;line-height:1;font-family:'Cinzel',serif;letter-spacing:.02em;"
+                        aria-label="Jour précédent">&#8249;</button>
+                    <div id="db-date" class="db-date" style="cursor:default;"></div>
+                    <button id="btn-jour-next" onclick="naviguerJour(1)" title="Jour suivant"
+                        style="background:none;border:none;cursor:pointer;color:var(--gold);font-size:1.1rem;opacity:.7;padding:4px 8px;line-height:1;font-family:'Cinzel',serif;letter-spacing:.02em;"
+                        aria-label="Jour suivant">&#8250;</button>
+                </div>
                 <div class="db-ornament">✦ ✦ ✦</div>
                 <div class="db-status">
                     <span id="status-dot" class="status-dot"></span>
@@ -213,6 +222,30 @@
 
     <div id="toast" class="toast"></div>
 
+    <!-- ── Modale propre de la Messe ──────────────────────── -->
+    <div id="modal-propre-acc" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;">
+      <div style="background:#fffdf7;border-radius:10px;max-width:680px;width:100%;margin:auto;box-shadow:0 8px 40px rgba(0,0,0,.25);">
+        <div style="background:#1a1108;border-radius:10px 10px 0 0;padding:16px 20px;display:flex;align-items:center;gap:10px;">
+          <div style="flex:1;">
+            <div id="propre-acc-date" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;color:#b8962a;text-transform:uppercase;margin-bottom:4px;"></div>
+            <div id="propre-acc-fete" style="font-family:'Cinzel',serif;font-size:.95rem;color:#f5f0e4;letter-spacing:.04em;"></div>
+          </div>
+          <button onclick="fermerPropreAcc()" style="background:none;border:none;color:#b8962a;font-size:1.4rem;cursor:pointer;line-height:1;padding:4px 8px;flex-shrink:0;">&#10005;</button>
+        </div>
+        <div style="background:#f5f0e4;border-bottom:1px solid #d4c9a8;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;border:1px solid #b8962a;border-radius:6px;overflow:hidden;">
+            <button id="propre-acc-btn-la" onclick="setPropraAccLang('la')" style="padding:6px 16px;background:#b8962a;color:#fff;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;">LATIN</button>
+            <button id="propre-acc-btn-fr" onclick="setPropraAccLang('fr')" style="padding:6px 16px;background:transparent;color:#b8962a;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;">FRAN&#199;AIS</button>
+          </div>
+          <div id="propre-acc-multi" style="display:none;border:1px solid #8b1a1a;border-radius:6px;overflow:hidden;"></div>
+        </div>
+        <div id="propre-acc-pieces" style="padding:20px;display:flex;flex-direction:column;gap:18px;max-height:65vh;overflow-y:auto;font-family:Georgia,serif;"></div>
+        <div style="padding:12px 20px;border-top:1px solid #d4c9a8;text-align:center;">
+          <button onclick="fermerPropreAcc()" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:none;border:none;color:#8b7355;cursor:pointer;">Fermer</button>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="ordo1962.js"></script>
     <script src="config.js"></script>
@@ -231,14 +264,37 @@
         return `${y}-${m}-${j}`;
     }
 
-    // ── Date en français ────────────────────────────────────
-    (function() {
-        const now   = new Date();
+    // ── Date courante naviguée ──────────────────────────────
+    var _jourOffset = 0; // 0 = aujourd'hui, -1 = hier, +1 = demain
+
+    function dateNaviguee() {
+        var d = new Date();
+        d.setDate(d.getDate() + _jourOffset);
+        d.setHours(0,0,0,0);
+        return d;
+    }
+
+    function afficherDate(d) {
         const jours = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
         const mois  = ['janvier','février','mars','avril','mai','juin',
                         'juillet','août','septembre','octobre','novembre','décembre'];
         document.getElementById('db-date').textContent =
-            jours[now.getDay()] + ' ' + now.getDate() + ' ' + mois[now.getMonth()] + ' ' + now.getFullYear();
+            jours[d.getDay()] + ' ' + d.getDate() + ' ' + mois[d.getMonth()] + ' ' + d.getFullYear();
+        // Flèche retour : discrète si on est aujourd'hui
+        var btnNext = document.getElementById('btn-jour-next');
+        if (btnNext) btnNext.style.opacity = _jourOffset >= 7 ? '.25' : '.7';
+    }
+
+    function naviguerJour(delta) {
+        _jourOffset += delta;
+        var d = dateNaviguee();
+        afficherDate(d);
+        getTodayMasses();
+    }
+
+    // ── Date initiale ────────────────────────────────────────
+    (function() {
+        afficherDate(dateNaviguee());
     })();
 
     // ── Correspondances classe → étoiles liturgiques ────────
@@ -294,14 +350,14 @@
     async function getTodayMasses() {
         const listDiv = document.getElementById("today-masses-list");
         try {
-            const today   = new Date();
+            const today   = dateNaviguee();
             const isoDate = isoLocal(today);
-            today.setHours(0,0,0,0);
             const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
 
             // ── 3 requêtes parallèles ────────────────────────
             // Ordo calculé localement — moteur Ordo1962 (missel de 1962)
             const ordo = Ordo1962.getDay(today.getFullYear(), today.getMonth()+1, today.getDate());
+            const massKey = (typeof Ordo1962.getProperKey === 'function') ? Ordo1962.getProperKey(ordo) : null;
 
             const [
                 { data: intentions },
@@ -326,8 +382,18 @@
             const fete    = ordo ? ordo.fete   : null;
             const classe  = ordo ? ordo.classe : null;
 
+            // Bouton propre
+            const proprebtn = massKey ? `
+                <button onclick="ouvrirPropreAccueil('${isoDate}')"
+                    style="margin-top:12px;display:inline-flex;align-items:center;gap:7px;
+                    font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;
+                    padding:8px 18px;background:var(--ink);color:var(--gold);border:1px solid var(--gold)44;
+                    border-radius:2px;cursor:pointer;transition:opacity .2s;"
+                    onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
+                    ✝&nbsp; Propre de la Messe
+                </button>` : '';
+
             if (messes.length === 0) {
-                // Même sans messe, afficher l'ordo si disponible
                 const ordoHtml = fete ? `
                     <div class="chancel-ordo bg-${couleur}">
                         <span class="ordo-pip ${couleur}"></span>
@@ -338,8 +404,9 @@
                     <div class="chancel-panel classe-${classe || 'III'}" style="border-top:3px solid var(--border-soft);">
                         ${ordoHtml}
                         <div style="padding:20px 18px;text-align:center;color:var(--ink-muted);font-style:italic;font-size:.92rem;">
-                            🕯️ Aucune messe célébrée aujourd'hui
+                            🕯️ Aucune messe célébrée ce jour
                         </div>
+                        ${proprebtn ? `<div style="text-align:center;padding:0 18px 18px;">${proprebtn}</div>` : ''}
                     </div>`;
                 return;
             }
@@ -386,6 +453,11 @@
                         </div>`;
                 }
 
+                // Bouton propre sur le premier panneau seulement
+                const proprebtnPanel = (idx === 0 && proprebtn)
+                    ? `<div style="padding:0 18px 16px;">${proprebtn}</div>`
+                    : '';
+
                 return `
                     <div class="chancel-panel classe-${classe || 'III'}" style="animation-delay:${idx*.1}s">
                         ${ordoHtml}
@@ -397,6 +469,7 @@
                             </div>
                         </div>
                         ${choeurHTML}
+                        ${proprebtnPanel}
                     </div>`;
             }).join("");
 
@@ -445,6 +518,181 @@
         demanderPermissionNotification();
         setInterval(() => { countPendingIntentionsAvecNotif(); getTodayMasses(); }, 5*60*1000);
     };
+    </script>
+    <script>
+    // ── Propre de la Messe — Accueil ───────────────────────
+    var _propreAccLang = 'la';
+    var _propreAccData = null;
+    var _propreAccBaseKey = null;
+
+    var PIECE_COLORS_ACC = {
+        introit:'#4a2a1a', collecte:'#5a3e1b', epitre:'#2a3a2a',
+        graduel:'#3a1a4a', trait:'#3a1a4a', alleluia:'#3a1a4a',
+        evangile:'#8b1a1a', offertoire:'#1a3a5a', secrete:'#5a3e1b',
+        preface:'#4a2a1a', communion:'#1a1108', postcommunion:'#5a3e1b'
+    };
+
+    var MULTI_MESSES_ACC = {
+        'temporal/1/0': [
+            { key: 'temporal/1/0',  label: 'Messe de Minuit' },
+            { key: 'temporal/1/0b', label: 'Messe de l\'Aurore' },
+            { key: 'temporal/1/0c', label: 'Messe du Jour' }
+        ],
+        'sanctoral/11/2': [
+            { key: 'sanctoral/11/2',  label: '1re Messe' },
+            { key: 'sanctoral/11/2b', label: '2e Messe' },
+            { key: 'sanctoral/11/2c', label: '3e Messe' }
+        ]
+    };
+
+    var COMMUN_KEYS_ACC = {
+        martyr: 'sanctoral/1/13', martyrs: 'sanctoral/1/15',
+        confesseur_pont: 'sanctoral/1/4', confesseur: 'sanctoral/1/1',
+        vierge: 'sanctoral/10/3', veuve: 'sanctoral/10/8'
+    };
+
+    function getCommunKeyAcc(ordo) {
+        if (!ordo || ordo.source !== 'sanctoral') return null;
+        var fete = (ordo.fete || '').toLowerCase();
+        var col  = (ordo.couleur || '').toLowerCase();
+        if (col === 'rouge') return fete.includes('martyrs') ? COMMUN_KEYS_ACC.martyrs : COMMUN_KEYS_ACC.martyr;
+        if (fete.includes('pape') || fete.includes('évêque') || fete.includes('archevêque')) return COMMUN_KEYS_ACC.confesseur_pont;
+        if (fete.includes('vierge') && !fete.includes('martyr')) return COMMUN_KEYS_ACC.vierge;
+        if (fete.includes('reine') || fete.includes('veuve')) return COMMUN_KEYS_ACC.veuve;
+        return COMMUN_KEYS_ACC.confesseur;
+    }
+
+    function escHA(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function renderPropreAccPieces() {
+        var c = document.getElementById('propre-acc-pieces');
+        if (!_propreAccData) {
+            c.innerHTML = '<div style="text-align:center;padding:30px;color:#8b7355;font-style:italic;">Propre non disponible.</div>';
+            return;
+        }
+        c.innerHTML = _propreAccData.map(function(p) {
+            var txt = (_propreAccLang === 'la' ? p.text_la : p.text_fr) || (_propreAccLang === 'la' ? p.text_fr : p.text_la) || '';
+            var col = PIECE_COLORS_ACC[p.part_code] || '#1a1108';
+            var ref = p.reference ? '<span style="font-size:.85em;color:#8b7355;font-style:italic;margin-left:8px;">' + escHA(p.reference) + '</span>' : '';
+            var badge = p._du_commun ? '<span style="font-size:.7em;color:#8b7355;font-style:italic;margin-left:8px;font-family:\'EB Garamond\',serif;text-transform:none;letter-spacing:0;">du commun</span>' : '';
+            return '<div>'
+                + '<div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:'+col+';border-bottom:1px solid '+col+'22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;">'
+                + '<span>' + escHA(p.part_label.replace(' (commun)','')) + '</span>' + ref + badge
+                + '</div>'
+                + '<div style="font-size:1.05rem;line-height:1.75;color:#1a1108;white-space:pre-wrap;">' + escHA(txt) + '</div>'
+                + '</div>';
+        }).join('');
+    }
+
+    function setPropraAccLang(lang) {
+        _propreAccLang = lang;
+        document.getElementById('propre-acc-btn-la').style.background = lang === 'la' ? '#b8962a' : 'transparent';
+        document.getElementById('propre-acc-btn-la').style.color      = lang === 'la' ? '#fff' : '#b8962a';
+        document.getElementById('propre-acc-btn-fr').style.background = lang === 'fr' ? '#b8962a' : 'transparent';
+        document.getElementById('propre-acc-btn-fr').style.color      = lang === 'fr' ? '#fff' : '#b8962a';
+        renderPropreAccPieces();
+    }
+
+    function renderMultiAcc(baseKey, activeKey) {
+        var sel = document.getElementById('propre-acc-multi');
+        var cfg = MULTI_MESSES_ACC[baseKey];
+        if (!cfg) { sel.style.display = 'none'; return; }
+        sel.style.display = 'flex';
+        sel.innerHTML = cfg.map(function(m) {
+            var active = m.key === activeKey;
+            return '<button onclick="switchMesseAcc(\'' + m.key + '\',\'' + baseKey + '\')" style="'
+                + 'padding:6px 12px;border:none;cursor:pointer;font-family:\'Cinzel\',serif;font-size:.62rem;letter-spacing:.06em;'
+                + 'background:' + (active ? '#8b1a1a' : 'transparent') + ';'
+                + 'color:' + (active ? '#fff' : '#8b1a1a') + ';">'
+                + m.label + '</button>';
+        }).join('');
+    }
+
+    async function switchMesseAcc(newKey, baseKey) {
+        document.getElementById('propre-acc-pieces').innerHTML = '<div style="text-align:center;padding:40px;color:#8b7355;font-size:.85rem;">Chargement…</div>';
+        renderMultiAcc(baseKey, newKey);
+        var cfg = MULTI_MESSES_ACC[baseKey];
+        var m = cfg && cfg.find(function(x){ return x.key === newKey; });
+        if (m) document.getElementById('propre-acc-fete').textContent =
+            document.getElementById('propre-acc-fete').textContent.split(' — ')[0] + ' — ' + m.label;
+        var resp = await maConnexion.from('propers')
+            .select('part_code, part_label, reference, text_la, text_fr, display_order')
+            .eq('mass_key', newKey).order('display_order', { ascending: true });
+        _propreAccData = resp.data && resp.data.length ? resp.data : null;
+        renderPropreAccPieces();
+    }
+
+    async function ouvrirPropreAccueil(isoDate) {
+        var parts = isoDate.split('-').map(Number);
+        var ordo  = Ordo1962.getDay(parts[0], parts[1], parts[2]);
+        var massKey = (typeof Ordo1962.getProperKey === 'function') ? Ordo1962.getProperKey(ordo) : null;
+        var mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+        var d = new Date(parts[0], parts[1]-1, parts[2]);
+
+        document.getElementById('propre-acc-date').textContent =
+            d.getDate() + ' ' + mois[d.getMonth()] + ' ' + parts[0];
+        document.getElementById('propre-acc-fete').textContent = ordo && ordo.fete ? ordo.fete : '';
+        document.getElementById('propre-acc-pieces').innerHTML =
+            '<div style="text-align:center;padding:40px;color:#8b7355;font-size:.85rem;">Chargement…</div>';
+        document.getElementById('modal-propre-acc').style.display = 'flex';
+
+        if (!massKey) {
+            document.getElementById('propre-acc-multi').style.display = 'none';
+            document.getElementById('propre-acc-pieces').innerHTML =
+                '<div style="text-align:center;padding:30px;color:#8b7355;font-style:italic;">Propre non disponible pour ce jour.</div>';
+            return;
+        }
+
+        _propreAccBaseKey = massKey;
+        renderMultiAcc(massKey, massKey);
+        if (MULTI_MESSES_ACC[massKey]) {
+            document.getElementById('propre-acc-fete').textContent =
+                (ordo && ordo.fete ? ordo.fete : '') + ' — ' + MULTI_MESSES_ACC[massKey][0].label;
+        }
+
+        try {
+            var resp = await maConnexion.from('propers')
+                .select('part_code, part_label, reference, text_la, text_fr, display_order')
+                .eq('mass_key', massKey).order('display_order', { ascending: true });
+            if (resp.error) throw resp.error;
+            var data = resp.data && resp.data.length ? resp.data : null;
+
+            // Fallback commun des saints
+            if (data && ordo && ordo.source === 'sanctoral') {
+                var codes = new Set(data.map(function(p){ return p.part_code; }));
+                var attendus = ['introit','collecte','epitre','graduel','evangile','offertoire','secrete','communion','postcommunion'];
+                var manquants = attendus.filter(function(p){ return !codes.has(p); });
+                if (manquants.length > 0) {
+                    var communKey = getCommunKeyAcc(ordo);
+                    if (communKey) {
+                        var rc = await maConnexion.from('propers')
+                            .select('part_code, part_label, reference, text_la, text_fr, display_order')
+                            .eq('mass_key', communKey).in('part_code', manquants);
+                        if (!rc.error && rc.data && rc.data.length) {
+                            var communPieces = rc.data.map(function(p){ return Object.assign({}, p, {_du_commun:true, part_label: p.part_label + ' (commun)'}); });
+                            data = data.concat(communPieces).sort(function(a,b){ return a.display_order - b.display_order; });
+                        }
+                    }
+                }
+            }
+
+            _propreAccData = data;
+            renderPropreAccPieces();
+        } catch(e) {
+            document.getElementById('propre-acc-pieces').innerHTML =
+                '<div style="color:#8b1a1a;padding:20px;">Erreur : ' + escHA(String(e.message||e)) + '</div>';
+        }
+    }
+
+    function fermerPropreAcc() {
+        document.getElementById('modal-propre-acc').style.display = 'none';
+        _propreAccData = null;
+    }
+
+    // Fermer en cliquant sur le fond
+    document.getElementById('modal-propre-acc').addEventListener('click', function(e) {
+        if (e.target === this) fermerPropreAcc();
+    });
     </script>
 </body>
 </html>
