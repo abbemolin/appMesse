@@ -917,6 +917,7 @@
     // Fonctionne souris ET tactile (mobile)
     let drag = null; // état courant du drag
     let ghost = null; // élément fantôme qui suit le curseur
+    let dropInfo = null; // { jourDest, insertIdx } calculé en temps réel
 
     function initDragAndDrop() {
         const container = document.getElementById('preview-container');
@@ -933,7 +934,6 @@
     }
 
     function getHandleEl(e) {
-        // Retourne l'élément draggable-item si on a cliqué sur la poignée
         const target = e.target || e.touches[0].target;
         if (!target.classList.contains('drag-handle')) return null;
         return target.closest('.draggable-item');
@@ -942,29 +942,25 @@
     function startDrag(el, clientX, clientY) {
         if (!el) return;
         drag = {
-            type:    el.dataset.dragType,  // 'evt' ou 'note'
+            type:    el.dataset.dragType,
             jourSrc: parseInt(el.dataset.dragJour),
             idx:     parseInt(el.dataset.dragIdx),
             el
         };
+        dropInfo = null;
 
-        // Récupérer le texte à afficher dans le ghost
         const labelEl = el.querySelector('[data-field="label"]') || el.querySelector('[data-field="note"]');
         const labelTxt = labelEl ? labelEl.innerText.trim() : '…';
         const heurEl  = el.querySelector('[data-field="heure"]');
         const heurTxt = heurEl ? heurEl.innerText.trim() : '';
 
-        // Créer le ghost
         ghost = document.createElement('div');
         ghost.className = 'drag-ghost';
         ghost.textContent = (heurTxt ? heurTxt + ' — ' : '') + labelTxt;
         document.body.appendChild(ghost);
         moveGhost(clientX, clientY);
 
-        // Marquer la source
         el.classList.add('drag-source');
-
-        // Désactiver contenteditable le temps du drag (sinon conflit)
         el.querySelectorAll('[contenteditable]').forEach(c => c.setAttribute('contenteditable', 'false'));
     }
 
@@ -974,69 +970,110 @@
         ghost.style.top  = (y - 16) + 'px';
     }
 
-    function getDayUnderCursor(x, y) {
-        // Trouver le .preview-day sous le curseur
-        const els = document.elementsFromPoint(x, y);
-        for (const el of els) {
-            if (el.classList.contains('preview-day') || el.closest('.preview-day')) {
-                const day = el.classList.contains('preview-day') ? el : el.closest('.preview-day');
-                return parseInt(day.dataset.jour);
+    // Trouve le jour et la position d'insertion (entre quels éléments)
+    function computeDropInfo(x, y) {
+        const dayEls = document.querySelectorAll('.preview-day');
+        let jourDest = null, insertIdx = null;
+
+        for (const dayEl of dayEls) {
+            const rect = dayEl.getBoundingClientRect();
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                jourDest = parseInt(dayEl.dataset.jour);
+
+                // Trouver la position d'insertion parmi les items du même type
+                const selector = drag.type === 'evt' ? '.draggable-item[data-drag-type="evt"]' : '.draggable-item[data-drag-type="note"]';
+                const items = [...dayEl.querySelectorAll(selector)];
+                insertIdx = items.length; // par défaut : à la fin
+
+                for (let i = 0; i < items.length; i++) {
+                    const ir = items[i].getBoundingClientRect();
+                    const midY = ir.top + ir.height / 2;
+                    if (y < midY) { insertIdx = i; break; }
+                }
+                break;
             }
         }
-        return null;
+        return { jourDest, insertIdx };
     }
 
-    function highlightTarget(jourIdx) {
+    function highlightTarget(info) {
+        // Retirer anciens highlights et indicateurs
         document.querySelectorAll('.preview-day').forEach(d => d.classList.remove('drop-target'));
-        if (jourIdx === null || jourIdx === drag.jourSrc) return;
-        const day = document.querySelector(`.preview-day[data-jour="${jourIdx}"]`);
-        if (day) day.classList.add('drop-target');
+        document.querySelectorAll('.drop-indicator').forEach(d => d.remove());
+
+        if (!info || info.jourDest === null) return;
+
+        const dayEl = document.querySelector(`.preview-day[data-jour="${info.jourDest}"]`);
+        if (!dayEl) return;
+        dayEl.classList.add('drop-target');
+
+        // Indicateur de position d'insertion
+        const selector = drag.type === 'evt' ? '.draggable-item[data-drag-type="evt"]' : '.draggable-item[data-drag-type="note"]';
+        const items = [...dayEl.querySelectorAll(selector)];
+
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator visible';
+
+        if (items.length === 0 || info.insertIdx >= items.length) {
+            // Insérer à la fin — dans preview-events ou à la fin des notes
+            const zone = drag.type === 'evt'
+                ? dayEl.querySelector('.preview-events')
+                : dayEl.querySelector('.preview-day-header');
+            if (zone) zone.after(indicator);
+        } else {
+            items[info.insertIdx].before(indicator);
+        }
     }
 
     function endDrag(x, y) {
         if (!drag) return;
 
-        const jourDest = getDayUnderCursor(x, y);
+        const info = computeDropInfo(x, y);
 
-        // Nettoyer visuellement
+        // Nettoyer
         document.querySelectorAll('.preview-day').forEach(d => d.classList.remove('drop-target'));
+        document.querySelectorAll('.drop-indicator').forEach(d => d.remove());
         if (ghost) { ghost.remove(); ghost = null; }
         if (drag.el) {
             drag.el.classList.remove('drag-source');
             drag.el.querySelectorAll('[contenteditable]').forEach(c => c.setAttribute('contenteditable', 'true'));
         }
 
-        // Déplacer si destination valide et différente de la source
-        if (jourDest !== null && jourDest !== drag.jourSrc) {
-            deplacerElement(drag.type, drag.jourSrc, drag.idx, jourDest);
+        if (info.jourDest !== null && info.insertIdx !== null) {
+            deplacerElement(drag.type, drag.jourSrc, drag.idx, info.jourDest, info.insertIdx);
         }
 
         drag = null;
+        dropInfo = null;
     }
 
-    function deplacerElement(type, jourSrc, idx, jourDest) {
+    function deplacerElement(type, jourSrc, idxSrc, jourDest, insertIdx) {
         const src  = semaineData[jourSrc];
         const dest = semaineData[jourDest];
         if (!src || !dest) return;
 
+        const memeJour = jourSrc === jourDest;
+
         if (type === 'evt') {
-            const item = src.horaires.splice(idx, 1)[0];
-            dest.horaires.push(item);
-            // Trier par heure
-            dest.horaires.sort((a, b) => parseHeure(a.heure) - parseHeure(b.heure));
-        } else if (type === 'note') {
-            const item = src.notes.splice(idx, 1)[0];
-            dest.notes.push(item);
+            const item = src.horaires.splice(idxSrc, 1)[0];
+            // Si même jour, ajuster l'index d'insertion après suppression
+            let realIdx = insertIdx;
+            if (memeJour && idxSrc < insertIdx) realIdx = Math.max(0, insertIdx - 1);
+            dest.horaires.splice(realIdx, 0, item);
+        } else {
+            const item = src.notes.splice(idxSrc, 1)[0];
+            let realIdx = insertIdx;
+            if (memeJour && idxSrc < insertIdx) realIdx = Math.max(0, insertIdx - 1);
+            dest.notes.splice(realIdx, 0, item);
         }
 
         renderPreview();
-        initDragAndDrop(); // rebind après rerender
+        initDragAndDrop();
 
-        const nomDest = semaineData[jourDest].dateFr.split(' ')[0]; // ex: "Mardi"
-        showToast(`✓ Déplacé vers ${nomDest}`);
+        const nomDest = semaineData[jourDest].dateFr.split(' ')[0];
+        showToast(memeJour ? '✓ Réorganisé' : `✓ Déplacé vers ${nomDest}`);
     }
 
-    // ── Handlers souris ────────────────────────────────────
     function onDragStart(e) {
         const el = getHandleEl(e);
         if (!el) return;
@@ -1047,7 +1084,8 @@
     function onDragMove(e) {
         if (!drag) return;
         moveGhost(e.clientX, e.clientY);
-        highlightTarget(getDayUnderCursor(e.clientX, e.clientY));
+        dropInfo = computeDropInfo(e.clientX, e.clientY);
+        highlightTarget(dropInfo);
     }
 
     function onDragEnd(e) {
@@ -1055,7 +1093,6 @@
         endDrag(e.clientX, e.clientY);
     }
 
-    // ── Handlers tactile ───────────────────────────────────
     function onTouchStart(e) {
         const el = getHandleEl(e);
         if (!el) return;
@@ -1069,7 +1106,8 @@
         e.preventDefault();
         const t = e.touches[0];
         moveGhost(t.clientX, t.clientY);
-        highlightTarget(getDayUnderCursor(t.clientX, t.clientY));
+        dropInfo = computeDropInfo(t.clientX, t.clientY);
+        highlightTarget(dropInfo);
     }
 
     function onTouchEnd(e) {
