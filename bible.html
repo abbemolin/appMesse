@@ -489,7 +489,6 @@
             </button>
             <div class="bible-breadcrumb">
                 <div class="bible-breadcrumb-book" id="breadcrumb-book">Choisissez un livre</div>
-                <div class="bible-breadcrumb-chapter" id="breadcrumb-chap"></div>
             </div>
             <div class="chapter-nav" id="chapter-nav" style="display:none;">
                 <button class="chapter-btn chapter-arrows" id="btn-chap-prev" onclick="naviguerChapitre(-1)" title="Chapitre précédent">‹</button>
@@ -638,7 +637,6 @@ async function chargerChapitre(chap) {
     actualiserBoutonsChapitre();
 
     document.getElementById('breadcrumb-book').textContent = _livreActif;
-    document.getElementById('breadcrumb-chap').textContent = 'Chapitre ' + _chapActif;
 
     const textWrap = document.getElementById('bible-text');
     textWrap.innerHTML = '<div class="bible-loading">Chargement…</div>';
@@ -825,14 +823,33 @@ function escH(s) {
 (function init() {
     const ready = () => {
         renderSidebarBooks();
-        // Shortcut clavier : / pour ouvrir la recherche
+
+        // ── Swipe gauche/droite pour naviguer entre chapitres ──
+        const textZone = document.getElementById('bible-text');
+        let swipeStartX = null, swipeStartY = null;
+        textZone.addEventListener('touchstart', e => {
+            swipeStartX = e.touches[0].clientX;
+            swipeStartY = e.touches[0].clientY;
+        }, { passive: true });
+        textZone.addEventListener('touchend', e => {
+            if (swipeStartX === null || !_livreActif) return;
+            const dx = e.changedTouches[0].clientX - swipeStartX;
+            const dy = e.changedTouches[0].clientY - swipeStartY;
+            if (Math.abs(dx) > 60 && Math.abs(dy) < 80) {
+                if (dx < 0 && _chapActif < _chapMax) naviguerChapitre(1);
+                else if (dx > 0 && _chapActif > 1)   naviguerChapitre(-1);
+            }
+            swipeStartX = null; swipeStartY = null;
+        }, { passive: true });
+
+        // ── Raccourcis clavier ──────────────────────────────────
         document.addEventListener('keydown', e => {
             if (e.key === '/' && !e.target.matches('input,textarea,select')) {
                 e.preventDefault();
                 ouvrirRecherche();
             }
             if (e.key === 'Escape') fermerRecherche();
-            if (e.key === 'ArrowLeft' && _livreActif) naviguerChapitre(-1);
+            if (e.key === 'ArrowLeft'  && _livreActif) naviguerChapitre(-1);
             if (e.key === 'ArrowRight' && _livreActif) naviguerChapitre(1);
         });
     };
