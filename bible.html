@@ -409,25 +409,6 @@
         font-style: italic;
     }
 
-    /* ── Bouton flottant recherche (mobile) ──────────── */
-    .fab-search {
-        display: none;
-        position: fixed;
-        bottom: calc(75px + env(safe-area-inset-bottom));
-        right: 16px;
-        width: 46px; height: 46px;
-        border-radius: 50%;
-        background: var(--ink);
-        border: 2px solid var(--gold);
-        color: var(--gold);
-        font-size: 1rem;
-        cursor: pointer;
-        z-index: 100;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 4px 16px rgba(0,0,0,.3);
-    }
-
     /* ── Mobile ───────────────────────────────────────── */
     @media (max-width: 700px) {
         .bible-sidebar {
@@ -450,8 +431,10 @@
         .bible-sidebar-overlay.open { display: block; }
         .bible-layout { height: auto; overflow: visible; }
         .bible-main { height: calc(100vh - 65px - env(safe-area-inset-bottom)); }
-        .fab-search { display: flex; }
         .bible-text-wrap { padding: 18px 16px 30px; }
+        /* Sur mobile : cacher le ⌕ topbar et les flèches ‹ › */
+        .topbar-search-btn { display: none; }
+        .chapter-arrows    { display: none; }
     }
 
     /* ── Bouton ouvrir sidebar (topbar mobile) ────────── */
@@ -509,11 +492,11 @@
                 <div class="bible-breadcrumb-chapter" id="breadcrumb-chap"></div>
             </div>
             <div class="chapter-nav" id="chapter-nav" style="display:none;">
-                <button class="chapter-btn" id="btn-chap-prev" onclick="naviguerChapitre(-1)" title="Chapitre précédent">‹</button>
+                <button class="chapter-btn chapter-arrows" id="btn-chap-prev" onclick="naviguerChapitre(-1)" title="Chapitre précédent">‹</button>
                 <select class="chapter-select" id="chapter-select" onchange="chargerChapitre(this.value)"></select>
-                <button class="chapter-btn" id="btn-chap-next" onclick="naviguerChapitre(1)" title="Chapitre suivant">›</button>
+                <button class="chapter-btn chapter-arrows" id="btn-chap-next" onclick="naviguerChapitre(1)" title="Chapitre suivant">›</button>
             </div>
-            <button onclick="ouvrirRecherche()" title="Rechercher"
+            <button class="topbar-search-btn" onclick="ouvrirRecherche()" title="Rechercher"
                 style="background:none;border:1px solid var(--border-soft);border-radius:2px;padding:6px 12px;cursor:pointer;color:var(--ink-muted);font-size:.85rem;flex-shrink:0;transition:all .15s;"
                 onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
                 onmouseout="this.style.borderColor='var(--border-soft)';this.style.color='var(--ink-muted)'">
@@ -550,9 +533,7 @@
     </div>
 </div>
 
-<!-- FAB mobile -->
-<button class="fab-search" onclick="ouvrirRecherche()" title="Rechercher">⌕</button>
-
+<!-- FAB supprimé : recherche accessible via la sidebar sur mobile -->
 <div id="menu-container"></div>
 <script src="menu.js"></script>
 
