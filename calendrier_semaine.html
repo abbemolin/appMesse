@@ -195,6 +195,75 @@
     .spin { display: inline-block; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeInUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Drag-and-drop ───────────────────────────────────────── */
+    .draggable-item {
+        cursor: grab;
+        position: relative;
+        transition: opacity .15s, background .15s;
+    }
+    .draggable-item:active { cursor: grabbing; }
+    .draggable-item .drag-handle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        color: var(--border-soft);
+        font-size: .75rem;
+        flex-shrink: 0;
+        cursor: grab;
+        user-select: none;
+        transition: color .15s;
+        touch-action: none;
+    }
+    .draggable-item:hover .drag-handle { color: var(--ink-muted); }
+
+    /* Item en cours de drag */
+    .drag-ghost {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        background: var(--gold-pale);
+        border: 1px solid var(--gold);
+        border-radius: 3px;
+        padding: 6px 10px;
+        font-family: 'EB Garamond', serif;
+        font-size: .88rem;
+        color: var(--ink);
+        box-shadow: 0 4px 20px rgba(0,0,0,.25);
+        max-width: 220px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: .92;
+    }
+
+    /* Item source pendant le drag */
+    .drag-source {
+        opacity: .35;
+    }
+
+    /* Zone de dépôt active */
+    .preview-day.drop-target {
+        border-left-color: var(--gold) !important;
+        background: rgba(184,150,42,.06);
+        transition: background .15s, border-left-color .15s;
+    }
+    .preview-day.drop-target .preview-events {
+        outline: 2px dashed rgba(184,150,42,.4);
+        outline-offset: -3px;
+        border-radius: 2px;
+    }
+
+    /* Indicateur de position d'insertion */
+    .drop-indicator {
+        height: 2px;
+        background: var(--gold);
+        border-radius: 1px;
+        margin: 2px 0;
+        display: none;
+    }
+    .drop-indicator.visible { display: block; }
     </style>
 </head>
 <body>
@@ -435,6 +504,7 @@
 
             // Afficher l'aperçu
             renderPreview();
+            initDragAndDrop();
             loading.classList.remove('visible');
             document.getElementById('btn-generate').disabled = false;
             document.getElementById('btn-jpeg').disabled = false;
@@ -510,7 +580,9 @@
 
             // Notes
             jour.notes.forEach((n, ni) => {
-                h += `<div class="preview-note" style="display:flex;align-items:center;gap:4px;">
+                h += `<div class="preview-note draggable-item" style="display:flex;align-items:center;gap:4px;"
+                        data-drag-type="note" data-drag-jour="${jourIdx}" data-drag-idx="${ni}">
+                    <span class="drag-handle" title="Glisser vers un autre jour">⠿</span>
                     <span style="color:var(--rubric);">✦</span>
                     <span contenteditable="true" data-jour="${jourIdx}" data-field="note" data-note="${ni}"
                         style="${editStyle};flex:1;" title="Modifier">${escHtml(n)}</span>
@@ -526,10 +598,12 @@
             } else {
                 jour.horaires.forEach((evt, evtIdx) => {
                     const isMesse = evt.bold;
-                    h += `<div class="preview-evt${isMesse ? ' is-messe' : ''}" style="display:flex;align-items:baseline;gap:4px;">
+                    h += `<div class="preview-evt draggable-item${isMesse ? ' is-messe' : ''}" style="display:flex;align-items:center;gap:4px;"
+                            data-drag-type="evt" data-drag-jour="${jourIdx}" data-drag-idx="${evtIdx}">
+                        <span class="drag-handle" title="Glisser vers un autre jour">⠿</span>
                         <span contenteditable="true" class="preview-evt-heure" data-jour="${jourIdx}" data-evt="${evtIdx}" data-field="heure"
                             style="${editStyle}" title="Modifier">${escHtml(evt.heure || '')}</span>
-                        <span style="flex:1;">${isMesse ? '<strong>' : ''}<span contenteditable="true" data-jour="${jourIdx}" data-evt="${evtIdx}" data-field="label"
+                        <span style="flex:1;align-items:baseline;">${isMesse ? '<strong>' : ''}<span contenteditable="true" data-jour="${jourIdx}" data-evt="${evtIdx}" data-field="label"
                             style="${editStyle};width:100%;" title="Modifier">${escHtml(evt.label)}</span>${isMesse ? '</strong>' : ''}</span>
                         <button style="${btnStyle}" title="Supprimer cette ligne"
                             onmousedown="event.preventDefault();supprimerLigne(${jourIdx},${evtIdx})">✕</button>
@@ -837,6 +911,171 @@
         const t = document.getElementById('toast');
         t.textContent = msg; t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ── Drag-and-drop ─────────────────────────────────────────────────────
+    // Fonctionne souris ET tactile (mobile)
+    let drag = null; // état courant du drag
+    let ghost = null; // élément fantôme qui suit le curseur
+
+    function initDragAndDrop() {
+        const container = document.getElementById('preview-container');
+
+        // ── Écoute souris ──────────────────────────────────────
+        container.addEventListener('mousedown', onDragStart);
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup',   onDragEnd);
+
+        // ── Écoute tactile ─────────────────────────────────────
+        container.addEventListener('touchstart', onTouchStart, { passive: false });
+        document.addEventListener('touchmove',  onTouchMove,  { passive: false });
+        document.addEventListener('touchend',   onTouchEnd,   { passive: false });
+    }
+
+    function getHandleEl(e) {
+        // Retourne l'élément draggable-item si on a cliqué sur la poignée
+        const target = e.target || e.touches[0].target;
+        if (!target.classList.contains('drag-handle')) return null;
+        return target.closest('.draggable-item');
+    }
+
+    function startDrag(el, clientX, clientY) {
+        if (!el) return;
+        drag = {
+            type:    el.dataset.dragType,  // 'evt' ou 'note'
+            jourSrc: parseInt(el.dataset.dragJour),
+            idx:     parseInt(el.dataset.dragIdx),
+            el
+        };
+
+        // Récupérer le texte à afficher dans le ghost
+        const labelEl = el.querySelector('[data-field="label"]') || el.querySelector('[data-field="note"]');
+        const labelTxt = labelEl ? labelEl.innerText.trim() : '…';
+        const heurEl  = el.querySelector('[data-field="heure"]');
+        const heurTxt = heurEl ? heurEl.innerText.trim() : '';
+
+        // Créer le ghost
+        ghost = document.createElement('div');
+        ghost.className = 'drag-ghost';
+        ghost.textContent = (heurTxt ? heurTxt + ' — ' : '') + labelTxt;
+        document.body.appendChild(ghost);
+        moveGhost(clientX, clientY);
+
+        // Marquer la source
+        el.classList.add('drag-source');
+
+        // Désactiver contenteditable le temps du drag (sinon conflit)
+        el.querySelectorAll('[contenteditable]').forEach(c => c.setAttribute('contenteditable', 'false'));
+    }
+
+    function moveGhost(x, y) {
+        if (!ghost) return;
+        ghost.style.left = (x + 14) + 'px';
+        ghost.style.top  = (y - 16) + 'px';
+    }
+
+    function getDayUnderCursor(x, y) {
+        // Trouver le .preview-day sous le curseur
+        const els = document.elementsFromPoint(x, y);
+        for (const el of els) {
+            if (el.classList.contains('preview-day') || el.closest('.preview-day')) {
+                const day = el.classList.contains('preview-day') ? el : el.closest('.preview-day');
+                return parseInt(day.dataset.jour);
+            }
+        }
+        return null;
+    }
+
+    function highlightTarget(jourIdx) {
+        document.querySelectorAll('.preview-day').forEach(d => d.classList.remove('drop-target'));
+        if (jourIdx === null || jourIdx === drag.jourSrc) return;
+        const day = document.querySelector(`.preview-day[data-jour="${jourIdx}"]`);
+        if (day) day.classList.add('drop-target');
+    }
+
+    function endDrag(x, y) {
+        if (!drag) return;
+
+        const jourDest = getDayUnderCursor(x, y);
+
+        // Nettoyer visuellement
+        document.querySelectorAll('.preview-day').forEach(d => d.classList.remove('drop-target'));
+        if (ghost) { ghost.remove(); ghost = null; }
+        if (drag.el) {
+            drag.el.classList.remove('drag-source');
+            drag.el.querySelectorAll('[contenteditable]').forEach(c => c.setAttribute('contenteditable', 'true'));
+        }
+
+        // Déplacer si destination valide et différente de la source
+        if (jourDest !== null && jourDest !== drag.jourSrc) {
+            deplacerElement(drag.type, drag.jourSrc, drag.idx, jourDest);
+        }
+
+        drag = null;
+    }
+
+    function deplacerElement(type, jourSrc, idx, jourDest) {
+        const src  = semaineData[jourSrc];
+        const dest = semaineData[jourDest];
+        if (!src || !dest) return;
+
+        if (type === 'evt') {
+            const item = src.horaires.splice(idx, 1)[0];
+            dest.horaires.push(item);
+            // Trier par heure
+            dest.horaires.sort((a, b) => parseHeure(a.heure) - parseHeure(b.heure));
+        } else if (type === 'note') {
+            const item = src.notes.splice(idx, 1)[0];
+            dest.notes.push(item);
+        }
+
+        renderPreview();
+        initDragAndDrop(); // rebind après rerender
+
+        const nomDest = semaineData[jourDest].dateFr.split(' ')[0]; // ex: "Mardi"
+        showToast(`✓ Déplacé vers ${nomDest}`);
+    }
+
+    // ── Handlers souris ────────────────────────────────────
+    function onDragStart(e) {
+        const el = getHandleEl(e);
+        if (!el) return;
+        e.preventDefault();
+        startDrag(el, e.clientX, e.clientY);
+    }
+
+    function onDragMove(e) {
+        if (!drag) return;
+        moveGhost(e.clientX, e.clientY);
+        highlightTarget(getDayUnderCursor(e.clientX, e.clientY));
+    }
+
+    function onDragEnd(e) {
+        if (!drag) return;
+        endDrag(e.clientX, e.clientY);
+    }
+
+    // ── Handlers tactile ───────────────────────────────────
+    function onTouchStart(e) {
+        const el = getHandleEl(e);
+        if (!el) return;
+        e.preventDefault();
+        const t = e.touches[0];
+        startDrag(el, t.clientX, t.clientY);
+    }
+
+    function onTouchMove(e) {
+        if (!drag) return;
+        e.preventDefault();
+        const t = e.touches[0];
+        moveGhost(t.clientX, t.clientY);
+        highlightTarget(getDayUnderCursor(t.clientX, t.clientY));
+    }
+
+    function onTouchEnd(e) {
+        if (!drag) return;
+        const t = e.changedTouches[0];
+        endDrag(t.clientX, t.clientY);
     }
 
     // ── Initialisation ────────────────────────────────────────────────────
