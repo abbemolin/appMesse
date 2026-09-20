@@ -8,6 +8,81 @@
     --green:#3a6644; --border:#c9a840; --border-soft:#ddd09a;
     --shadow:rgba(26,17,8,.13);
 }
+
+/* ── Mode sombre ──────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --vellum:#1c1710;
+        --vellum-dark:#151209;
+        --vellum-light:#231e15;
+        --ink:#f0e8d5;
+        --ink-soft:#d4c9b0;
+        --ink-muted:#9a8f7a;
+        --rubric:#c04040;
+        --rubric-light:#d45050;
+        --gold:#c9a840;
+        --gold-light:#d4af37;
+        --gold-pale:#2e2510;
+        --green:#4a8055;
+        --border:#7a6420;
+        --border-soft:#3a3020;
+        --shadow:rgba(0,0,0,.45);
+    }
+
+    body {
+        background-color: var(--vellum);
+        background-image:
+            radial-gradient(ellipse at 18% 12%,rgba(184,150,42,.06) 0%,transparent 55%),
+            radial-gradient(ellipse at 82% 88%,rgba(139,26,26,.05) 0%,transparent 55%),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");
+    }
+
+    /* Inputs */
+    input, select, textarea {
+        background: var(--vellum-light);
+        color: var(--ink);
+        border-color: var(--border-soft);
+    }
+    input::placeholder, textarea::placeholder { color: var(--ink-muted); }
+
+    /* Règle dorée */
+    .rule-gold::before { background: var(--vellum); }
+
+    /* Cartes */
+    .card { background: var(--vellum-light); border-color: var(--border-soft); }
+
+    /* Intentions */
+    .messe-item.prise { background: var(--vellum-light); }
+    .no-result-zone { background: var(--vellum-light); border-color: var(--border-soft); }
+
+    /* Mail badge */
+    .mail-badge { background: #2a1e08; color: #c9a060; border-color: #5a4010; }
+    .mail-badge-sent { background: #0e2018; color: #5a9a6a; border-color: #2a5038; }
+
+    /* Modal propre */
+    .search-container { background: var(--vellum-light); }
+
+    /* App modal */
+    .app-modal-overlay { background: rgba(0,0,0,.75) !important; }
+    .app-modal-box { background: var(--vellum-light) !important; }
+
+    /* Toast */
+    .toast { background: var(--vellum-light); color: var(--ink); }
+
+    /* Time chip */
+    .time-chip { background: var(--vellum-light); border-color: var(--border-soft); }
+    .time-chip.taken { background: #2a1515; color: #b07068; border-color: #4a2020; }
+
+    /* Accordéon intentions */
+    .intention-card { background: var(--vellum-light); }
+    .traite-info { background: var(--vellum); border-left-color: var(--border-soft); color: var(--ink-soft); }
+    #mail-corps, #mail-destinataire {
+        background: var(--vellum);
+        color: var(--ink);
+        border-color: var(--border-soft);
+    }
+    .modal-mail-content, .modal-content { background: var(--vellum); }
+}
 *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
 body{
