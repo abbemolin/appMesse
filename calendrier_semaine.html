@@ -635,7 +635,7 @@
 
         // Focus → surligner, blur → sync vers semaineData
         container.querySelectorAll('[contenteditable]').forEach(el => {
-            el.addEventListener('focus', () => { el.style.background = '#fffbe8'; el.style.borderBottomColor = '#b8962a'; });
+            el.addEventListener('focus', () => { el.style.background = 'var(--gold-pale)'; el.style.borderBottomColor = '#b8962a'; });
             el.addEventListener('blur', () => {
                 el.style.background = '';
                 el.style.borderBottomColor = 'transparent';
@@ -873,7 +873,7 @@
   tr.row-head td {
     padding-top: 4px;
     padding-bottom: 2px;
-    border-bottom: 1px solid #999999;
+    border-bottom: 1px solid var(--border-soft);
     font-size: ${fs + 0.5}px;
   }
   tr.row-sep td { height: 4px; }
