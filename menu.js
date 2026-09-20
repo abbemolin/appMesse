@@ -10,7 +10,7 @@
     <style>
         .mobile-nav {
             position:fixed; bottom:0; left:0; right:0;
-            background:var(--ink, #1a1108);
+            background:var(--dark-bg, #1a1108);
             display:flex; justify-content:space-around; align-items:center;
             height:65px; border-top:2px solid var(--gold, #b8962a);
             z-index:1000; padding-bottom:env(safe-area-inset-bottom);
