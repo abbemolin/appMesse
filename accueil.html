@@ -250,7 +250,7 @@
     }
     .intention-type-sm.Défunt  { background: rgba(26,17,8,.07); color: var(--ink-soft); border: 1px solid rgba(26,17,8,.12); }
     .intention-type-sm.Vivant  { background: rgba(58,102,68,.08); color: var(--green); border: 1px solid rgba(58,102,68,.18); }
-    .intention-type-sm.grace   { background: rgba(184,150,42,.1); color: #8a6a00; border: 1px solid rgba(184,150,42,.22); }
+    .intention-type-sm.grace   { background: rgba(184,150,42,.1); color: var(--ink-muted); border: 1px solid rgba(184,150,42,.22); }
     .intention-type-dot { width: 5px; height: 5px; border-radius: 50%; }
     .intention-libre {
         font-family: 'EB Garamond', serif; font-style: italic;
@@ -415,7 +415,7 @@
     </div>
     <div id="propre-acc-pieces" style="padding:20px;display:flex;flex-direction:column;gap:18px;max-height:65vh;overflow-y:auto;font-family:Georgia,serif;"></div>
     <div style="padding:12px 20px;border-top:1px solid var(--border-soft);text-align:center;">
-      <button onclick="fermerPropreAcc()" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:none;border:none;color:#8b7355;cursor:pointer;">Fermer</button>
+      <button onclick="fermerPropreAcc()" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:none;border:none;color:var(--ink-muted);cursor:pointer;">Fermer</button>
     </div>
   </div>
 </div>
@@ -711,18 +711,18 @@ function getCommunKeyAcc(ordo) {
 function escHA(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function renderPropreAccPieces(){
     var c=document.getElementById('propre-acc-pieces');
-    if(!_propreAccData){c.innerHTML='<div style="text-align:center;padding:30px;color:#8b7355;font-style:italic;">Propre non disponible.</div>';return;}
+    if(!_propreAccData){c.innerHTML='<div style="text-align:center;padding:30px;color:var(--ink-muted);font-style:italic;">Propre non disponible.</div>';return;}
     c.innerHTML=_propreAccData.map(function(p){
         var txt=(_propreAccLang==='la'?p.text_la:p.text_fr)||(_propreAccLang==='la'?p.text_fr:p.text_la)||'';
         var col=PIECE_COLORS_ACC[p.part_code]||'#1a1108';
-        var ref=p.reference?'<span style="font-size:.85em;color:#8b7355;font-style:italic;margin-left:8px;">'+escHA(p.reference)+'</span>':'';
-        var badge=p._du_commun?'<span style="font-size:.7em;color:#8b7355;font-style:italic;margin-left:8px;">du commun</span>':'';
+        var ref=p.reference?'<span style="font-size:.85em;color:var(--ink-muted);font-style:italic;margin-left:8px;">'+escHA(p.reference)+'</span>':'';
+        var badge=p._du_commun?'<span style="font-size:.7em;color:var(--ink-muted);font-style:italic;margin-left:8px;">du commun</span>':'';
         return '<div><div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:'+col+';border-bottom:1px solid '+col+'22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;"><span>'+escHA(p.part_label.replace(' (commun)',''))+'</span>'+ref+badge+'</div><div style="font-size:1.05rem;line-height:1.75;color:var(--ink);white-space:pre-wrap;">'+escHA(txt)+'</div></div>';
     }).join('');
 }
 function setPropraAccLang(l){_propreAccLang=l;document.getElementById('propre-acc-btn-la').style.background=l==='la'?'#b8962a':'transparent';document.getElementById('propre-acc-btn-la').style.color=l==='la'?'#fff':'#b8962a';document.getElementById('propre-acc-btn-fr').style.background=l==='fr'?'#b8962a':'transparent';document.getElementById('propre-acc-btn-fr').style.color=l==='fr'?'#fff':'#b8962a';renderPropreAccPieces();}
 function renderMultiAcc(baseKey,activeKey){var sel=document.getElementById('propre-acc-multi');var cfg=MULTI_MESSES_ACC[baseKey];if(!cfg){sel.style.display='none';return;}sel.style.display='flex';sel.innerHTML=cfg.map(function(m){var a=m.key===activeKey;return '<button onclick="switchMesseAcc(\''+m.key+'\',\''+baseKey+'\')" style="padding:6px 12px;border:none;cursor:pointer;font-family:\'Cinzel\',serif;font-size:.62rem;letter-spacing:.06em;background:'+(a?'#8b1a1a':'transparent')+';color:'+(a?'#fff':'#8b1a1a')+';">'+m.label+'</button>';}).join('');}
-async function switchMesseAcc(newKey,baseKey){document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:40px;color:#8b7355;">Chargement…</div>';renderMultiAcc(baseKey,newKey);var resp=await maConnexion.from('propers').select('part_code,part_label,reference,text_la,text_fr,display_order').eq('mass_key',newKey).order('display_order',{ascending:true});_propreAccData=resp.data&&resp.data.length?resp.data:null;var cfg=MULTI_MESSES_ACC[baseKey];var m=cfg&&cfg.find(function(x){return x.key===newKey;});if(m)document.getElementById('propre-acc-fete').textContent=document.getElementById('propre-acc-fete').textContent.split(' — ')[0]+' — '+m.label;renderPropreAccPieces();}
+async function switchMesseAcc(newKey,baseKey){document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:40px;color:var(--ink-muted);">Chargement…</div>';renderMultiAcc(baseKey,newKey);var resp=await maConnexion.from('propers').select('part_code,part_label,reference,text_la,text_fr,display_order').eq('mass_key',newKey).order('display_order',{ascending:true});_propreAccData=resp.data&&resp.data.length?resp.data:null;var cfg=MULTI_MESSES_ACC[baseKey];var m=cfg&&cfg.find(function(x){return x.key===newKey;});if(m)document.getElementById('propre-acc-fete').textContent=document.getElementById('propre-acc-fete').textContent.split(' — ')[0]+' — '+m.label;renderPropreAccPieces();}
 async function ouvrirPropreAccueil(isoDate){
     var parts=isoDate.split('-').map(Number);
     var ordo=Ordo1962.getDay(parts[0],parts[1],parts[2]);
@@ -730,9 +730,9 @@ async function ouvrirPropreAccueil(isoDate){
     var d=new Date(parts[0],parts[1]-1,parts[2]);
     document.getElementById('propre-acc-date').textContent=d.getDate()+' '+MOIS[d.getMonth()]+' '+parts[0];
     document.getElementById('propre-acc-fete').textContent=ordo&&ordo.fete?ordo.fete:'';
-    document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:40px;color:#8b7355;">Chargement…</div>';
+    document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:40px;color:var(--ink-muted);">Chargement…</div>';
     document.getElementById('modal-propre-acc').style.display='flex';
-    if(!massKey){document.getElementById('propre-acc-multi').style.display='none';document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:30px;color:#8b7355;font-style:italic;">Propre non disponible pour ce jour.</div>';return;}
+    if(!massKey){document.getElementById('propre-acc-multi').style.display='none';document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:30px;color:var(--ink-muted);font-style:italic;">Propre non disponible pour ce jour.</div>';return;}
     renderMultiAcc(massKey,massKey);
     if(MULTI_MESSES_ACC[massKey])document.getElementById('propre-acc-fete').textContent=((ordo&&ordo.fete)?ordo.fete:'')+' — '+MULTI_MESSES_ACC[massKey][0].label;
     try{
