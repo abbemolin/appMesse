@@ -10,11 +10,11 @@
     <style>
         .mobile-nav {
             position:fixed; bottom:0; left:0; right:0;
-            background:var(--dark-bg, #1a1108);
+            background:#1a1108;
             display:flex; justify-content:space-around; align-items:center;
-            height:65px; border-top:2px solid var(--gold, #b8962a);
+            height:65px; border-top:2px solid #b8962a;
             z-index:1000; padding-bottom:env(safe-area-inset-bottom);
-            box-shadow:0 -4px 20px rgba(0,0,0,.35);
+            box-shadow:0 -4px 20px rgba(0,0,0,.45);
         }
         .nav-item {
             text-decoration:none; display:flex; flex-direction:column;
