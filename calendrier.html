@@ -135,7 +135,7 @@
     }
     .intention-type.Défunt  { background: rgba(26,17,8,.08);    color: var(--ink-soft);  border: 1px solid rgba(26,17,8,.15); }
     .intention-type.Vivant  { background: rgba(58,102,68,.09);  color: var(--green);     border: 1px solid rgba(58,102,68,.2); }
-    .intention-type.grace   { background: rgba(184,150,42,.1);  color: #8a6a00;          border: 1px solid rgba(184,150,42,.25); }
+    .intention-type.grace   { background: rgba(184,150,42,.1);  color: var(--ink-muted);          border: 1px solid rgba(184,150,42,.25); }
     .intention-type-dot {
         width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
     }
@@ -830,7 +830,7 @@ window.onload = chargerAgenda;
     </div>
     <div id="propre-pieces" style="padding:20px;display:flex;flex-direction:column;gap:18px;max-height:65vh;overflow-y:auto;font-family:Georgia,serif;"></div>
     <div style="padding:12px 20px;border-top:1px solid var(--border-soft);text-align:center;">
-      <button onclick="fermerModalPropre()" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:none;border:none;color:#8b7355;cursor:pointer;">Fermer</button>
+      <button onclick="fermerModalPropre()" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:none;border:none;color:var(--ink-muted);cursor:pointer;">Fermer</button>
     </div>
   </div>
 </div>
@@ -875,7 +875,7 @@ function renderMultiSelector(baseKey, activeKey) {
 async function switchMesse(newKey, baseKey) {
     _currentMultiKey = newKey;
     renderMultiSelector(baseKey, newKey);
-    document.getElementById('propre-pieces').innerHTML = '<div style="text-align:center;padding:40px;color:#8b7355;">Chargement…</div>';
+    document.getElementById('propre-pieces').innerHTML = '<div style="text-align:center;padding:40px;color:var(--ink-muted);">Chargement…</div>';
     try {
         var resp = await maConnexion.from('propers').select('part_code,part_label,reference,text_la,text_fr,display_order').eq('mass_key',newKey).order('display_order',{ascending:true});
         if (resp.error) throw resp.error;
@@ -912,11 +912,11 @@ async function ouvrirPropre(dateISO, dateFr) {
     document.getElementById('propre-date-label').textContent = dateFr;
     document.getElementById('propre-fete-input').value = (ordo&&ordo.fete)?ordo.fete:'';
     _propresDateISO = dateISO;
-    document.getElementById('propre-pieces').innerHTML='<div style="text-align:center;padding:40px;color:#8b7355;">Chargement…</div>';
+    document.getElementById('propre-pieces').innerHTML='<div style="text-align:center;padding:40px;color:var(--ink-muted);">Chargement…</div>';
     document.getElementById('modal-propre').style.display='flex';
     if (!massKey) {
         document.getElementById('multi-messe-selector').style.display='none';
-        document.getElementById('propre-pieces').innerHTML='<div style="text-align:center;padding:30px;color:#8b7355;font-style:italic;">Propre non disponible pour ce jour.</div>';
+        document.getElementById('propre-pieces').innerHTML='<div style="text-align:center;padding:30px;color:var(--ink-muted);font-style:italic;">Propre non disponible pour ce jour.</div>';
         return;
     }
     _currentMultiKey = massKey;
@@ -961,13 +961,13 @@ function setPropreLang(lang) {
 
 function renderProprePieces() {
     var c=document.getElementById('propre-pieces');
-    if (!_propresData){c.innerHTML='<div style="text-align:center;padding:30px;color:#8b7355;font-style:italic;">Propre non disponible.</div>';return;}
+    if (!_propresData){c.innerHTML='<div style="text-align:center;padding:30px;color:var(--ink-muted);font-style:italic;">Propre non disponible.</div>';return;}
     var lang=_propresLang;
     c.innerHTML=_propresData.map(function(p){
         var txt=(lang==='la'?p.text_la:p.text_fr)||(lang==='la'?p.text_fr:p.text_la)||'';
         var col=PIECE_COLORS[p.part_code]||'#1a1108';
-        var ref=p.reference?'<span style="font-size:.85em;color:#8b7355;font-style:italic;margin-left:8px;">'+escH(p.reference)+'</span>':'';
-        var badge=p._du_commun?'<span style="font-size:.7em;color:#8b7355;font-style:italic;margin-left:8px;">du commun</span>':'';
+        var ref=p.reference?'<span style="font-size:.85em;color:var(--ink-muted);font-style:italic;margin-left:8px;">'+escH(p.reference)+'</span>':'';
+        var badge=p._du_commun?'<span style="font-size:.7em;color:var(--ink-muted);font-style:italic;margin-left:8px;">du commun</span>':'';
         return '<div>'
             +'<div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:'+col+';border-bottom:1px solid '+col+'22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;">'
             +'<span>'+escH(p.part_label.replace(' (commun)',''))+'</span>'+ref+badge+'</div>'
@@ -1013,7 +1013,7 @@ function exportPropreJpeg() {
     document.body.appendChild(iframe);
     var idoc=iframe.contentDocument;
     idoc.open();
-    idoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;}body{width:'+PAGE_W+'px;background:#fff;color:#1a1108;padding:38px 52px;font-family:Georgia,serif;}</style></head><body><div style="font-family:Cinzel,serif;font-size:17px;font-weight:700;text-align:center;letter-spacing:.18em;margin-bottom:4px;">'+escH(fete)+'</div><div style="font-style:italic;text-align:center;color:#8b7355;font-size:13px;margin-bottom:12px;">'+escH(dateFr)+'</div><div style="text-align:center;color:#b8962a;letter-spacing:.5em;margin-bottom:14px;font-size:10px;">&#10022; &nbsp; &#10022; &nbsp; &#10022;</div><div style="border-top:1.5px solid #b8962a;margin-bottom:18px;"></div>'+rows+'</body></html>');
+    idoc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box;}body{width:'+PAGE_W+'px;background:#fff;color:#1a1108;padding:38px 52px;font-family:Georgia,serif;}</style></head><body><div style="font-family:Cinzel,serif;font-size:17px;font-weight:700;text-align:center;letter-spacing:.18em;margin-bottom:4px;">'+escH(fete)+'</div><div style="font-style:italic;text-align:center;color:var(--ink-muted);font-size:13px;margin-bottom:12px;">'+escH(dateFr)+'</div><div style="text-align:center;color:#b8962a;letter-spacing:.5em;margin-bottom:14px;font-size:10px;">&#10022; &nbsp; &#10022; &nbsp; &#10022;</div><div style="border-top:1.5px solid #b8962a;margin-bottom:18px;"></div>'+rows+'</body></html>');
     idoc.close();
     setTimeout(function(){
         var bodyH=idoc.body.scrollHeight;
