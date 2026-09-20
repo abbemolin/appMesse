@@ -28,7 +28,7 @@
     .ordo-badge.Vert .ordo-pip   { background: #3a6644; }
     .ordo-badge.Violet { background: rgba(92,45,122,.07);   border-color: rgba(92,45,122,.22);  color: #5c2d7a; }
     .ordo-badge.Violet .ordo-pip { background: #5c2d7a; }
-    .ordo-badge.Rose   { background: rgba(212,104,138,.08); border-color: rgba(212,104,138,.28); color: #a04060; }
+    .ordo-badge.Rose   { background: rgba(212,104,138,.08); border-color: rgba(212,104,138,.28); color: var(--rubric); }
     .ordo-badge.Rose .ordo-pip   { background: #d4688a; }
     .ordo-badge.Noir   { background: rgba(26,17,8,.05);     border-color: rgba(26,17,8,.18);     color: var(--ink-soft); }
     .ordo-badge.Noir .ordo-pip   { background: #1a1108; }
@@ -321,6 +321,7 @@
 
     /* ── Mode sombre — calendrier ────────────────────────── */
     @media (prefers-color-scheme: dark) {
+        .propre-piece-head { filter: brightness(1.4); }
         .messe-card         { background: var(--vellum-light); border-color: var(--border-soft); }
         .messe-card-head    { background: var(--vellum);       border-color: var(--border-soft); }
         .messe-card-actions { background: var(--vellum);       border-color: var(--border-soft); }
@@ -458,7 +459,7 @@ function chargerOrdo(dateMin, dateMax) {
 }
 
 function pipColor(c) {
-    return {Blanc:'#d4af37',Rouge:'#9b2020',Vert:'#3a6644',Violet:'#5c2d7a',Rose:'#d4688a',Noir:'#1a1108'}[c]||'#999';
+    return {Blanc:'#d4af37',Rouge:'#9b2020',Vert:'#3a6644',Violet:'#5c2d7a',Rose:'#d4688a',Noir:'#1a1108'}[c]||'var(--ink-muted)';
 }
 
 function badgeOrdo(iso) {
@@ -969,7 +970,7 @@ function renderProprePieces() {
         var ref=p.reference?'<span style="font-size:.85em;color:var(--ink-muted);font-style:italic;margin-left:8px;">'+escH(p.reference)+'</span>':'';
         var badge=p._du_commun?'<span style="font-size:.7em;color:var(--ink-muted);font-style:italic;margin-left:8px;">du commun</span>':'';
         return '<div>'
-            +'<div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:'+col+';border-bottom:1px solid '+col+'22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;">'
+            +'<div class="propre-piece-head" style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:'+col+';border-bottom:1px solid '+col+'22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;">'
             +'<span>'+escH(p.part_label.replace(' (commun)',''))+'</span>'+ref+badge+'</div>'
             +'<div style="font-size:1.05rem;line-height:1.75;color:var(--ink);white-space:pre-wrap;">'+escH(txt)+'</div>'
             +'</div>';
