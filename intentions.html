@@ -746,9 +746,13 @@ async function renderIntentions(filtre = '') {
 
     renderSectionPrioritaire();
 
-    // Stats
+    // Stats — filtrées par prêtre actif
     const year = new Date().getFullYear();
-    const n = intentionsGlobal.filter(i => i.statut === 'valide' && (i.date_messe||'').startsWith(year)).length;
+    const n = intentionsGlobal.filter(i =>
+        i.statut === 'valide' &&
+        (i.date_messe||'').startsWith(year) &&
+        (pretreActif === '' || (i.pretre_id || 'molin') === pretreActif)
+    ).length;
     document.getElementById('annual-count').textContent = n;
     document.getElementById('annual-label').textContent = 'Messes ' + year;
 }
