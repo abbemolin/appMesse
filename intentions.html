@@ -3,777 +3,1158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestion des Intentions</title>
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Gérer — Intentions</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-    .pretre-selector { display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
-    .pretre-btn {
-        padding:8px 18px; border:1px solid var(--border-soft); border-radius:2px;
-        background:var(--vellum-light); font-family:'Cinzel',serif; font-size:.6rem;
-        letter-spacing:.12em; text-transform:uppercase; color:var(--ink-muted); cursor:pointer; transition:all .2s;
+    /* ════════════════════════════════════════════════════════
+       GÉRER — Styles spécifiques
+    ════════════════════════════════════════════════════════ */
+
+    /* ── Header admin ─────────────────────────────────────── */
+    .admin-header {
+        background: #1a1108;
+        padding: calc(env(safe-area-inset-top,0px) + 16px) 0 0;
+        position: relative; overflow: hidden;
     }
-    .pretre-btn:hover { border-color:var(--gold); color:var(--gold); }
-    .pretre-btn.actif { background:var(--gold-pale); border-color:var(--gold); color:var(--ink); }
-    </style>
-    <style>
-    .pretre-selector-card {
-        display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 6px;
+    .admin-header-cross {
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%,-50%);
+        opacity: .05; pointer-events: none;
+        width: 180px; height: 220px;
+    }
+    .admin-header-body {
+        position: relative; z-index: 2;
+        padding: 0 18px 0;
+        display: flex; align-items: center; gap: 12px;
+    }
+    .admin-header-title {
+        flex: 1;
+    }
+    .admin-header-paroisse {
+        font-family: 'Cinzel', serif; font-size: .46rem;
+        letter-spacing: .28em; text-transform: uppercase;
+        color: rgba(184,150,42,.5); display: block; margin-bottom: 4px;
+    }
+    .admin-header-name {
+        font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700;
+        color: #f0e8d5; letter-spacing: .04em; line-height: 1.2;
+    }
+    .admin-header-sub {
+        font-family: 'EB Garamond', serif; font-style: italic;
+        font-size: .85rem; color: rgba(240,232,213,.5);
+        display: block; margin-top: 3px;
+    }
+    .admin-stat-pill {
+        display: flex; flex-direction: column; align-items: center;
+        background: rgba(184,150,42,.12); border: 1px solid rgba(184,150,42,.25);
+        border-radius: 4px; padding: 8px 14px; flex-shrink: 0;
+    }
+    .admin-stat-num {
+        font-family: 'Cinzel', serif; font-size: 1.6rem; font-weight: 700;
+        color: #c9a840; line-height: 1;
+    }
+    .admin-stat-label {
+        font-family: 'Cinzel', serif; font-size: .42rem;
+        letter-spacing: .14em; text-transform: uppercase;
+        color: rgba(184,150,42,.6); margin-top: 3px; white-space: nowrap;
+    }
+
+    /* ── Onglets prêtres ──────────────────────────────────── */
+    .admin-tabs {
+        display: flex; padding: 12px 18px 0; gap: 6px; position: relative; z-index: 2;
+    }
+    .admin-tab {
+        font-family: 'Cinzel', serif; font-size: .56rem;
+        letter-spacing: .12em; text-transform: uppercase;
+        padding: 7px 14px; border: none; cursor: pointer;
+        border-radius: 3px 3px 0 0; transition: all .2s;
+        color: rgba(240,230,184,.45); background: rgba(255,255,255,.04);
+        border-bottom: 2px solid transparent;
+    }
+    .admin-tab.actif {
+        color: #c9a840; background: rgba(184,150,42,.1);
+        border-bottom-color: #c9a840;
+    }
+
+    /* Barre de couleur bas du header */
+    .admin-header-bar {
+        height: 3px; margin-top: 12px;
+        background: linear-gradient(to right, transparent, rgba(184,150,42,.4), transparent);
+    }
+
+    /* ── Barre de recherche sticky ────────────────────────── */
+    .search-sticky {
+        position: sticky; top: 0; z-index: 50;
+        background: var(--vellum); border-bottom: 1px solid var(--border-soft);
+        padding: 10px 16px; display: flex; gap: 8px; align-items: center;
+        box-shadow: 0 2px 12px var(--shadow);
+    }
+    .search-sticky input {
+        flex: 1; padding: 9px 12px 9px 34px;
+        font-family: 'EB Garamond', serif; font-size: .95rem; font-style: italic;
+        border: 1px solid var(--border-soft); border-radius: 3px;
+        background: var(--vellum-light); color: var(--ink);
+        transition: border-color .2s;
+    }
+    .search-sticky input:focus { outline: none; border-color: var(--gold); }
+    .search-sticky-wrap { position: relative; flex: 1; }
+    .search-sticky-icon {
+        position: absolute; left: 10px; top: 50%;
+        transform: translateY(-50%); color: var(--ink-muted);
+        font-size: .85rem; pointer-events: none;
+    }
+
+    /* Boutons sync */
+    .sync-btn {
+        padding: 9px 12px; border: 1px solid var(--border-soft);
+        border-radius: 3px; background: var(--vellum-light);
+        color: var(--ink-muted); cursor: pointer; font-size: .85rem;
+        transition: all .15s; flex-shrink: 0; min-width: 36px;
+        display: flex; align-items: center; gap: 5px;
+        font-family: 'Cinzel', serif; font-size: .52rem;
+        letter-spacing: .08em; text-transform: uppercase;
+    }
+    .sync-btn:active { border-color: var(--gold); color: var(--gold); }
+    .sync-btn:disabled { opacity: .4; cursor: default; }
+
+    /* ── Cartes d'alerte prioritaire ──────────────────────── */
+    .alert-card {
+        border-radius: 3px; margin-bottom: 10px; overflow: hidden;
+        border: 1px solid; animation: fadeInUp .3s ease both;
+    }
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .alert-card-head {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 14px;
+    }
+    .alert-card-num {
+        font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 700;
+        line-height: 1; flex-shrink: 0; min-width: 32px; text-align: center;
+    }
+    .alert-card-info { flex: 1; }
+    .alert-card-type {
+        font-family: 'Cinzel', serif; font-size: .52rem;
+        letter-spacing: .16em; text-transform: uppercase; display: block;
+    }
+    .alert-card-sub {
+        font-family: 'EB Garamond', serif; font-size: .82rem;
+        font-style: italic; display: block; margin-top: 2px;
+    }
+    .alert-card.rouge {
+        border-color: rgba(139,26,26,.3);
+        background: rgba(139,26,26,.05);
+    }
+    .alert-card.rouge .alert-card-num,
+    .alert-card.rouge .alert-card-type { color: var(--rubric); }
+    .alert-card.rouge .alert-card-sub  { color: var(--ink-muted); }
+
+    .alert-card.or {
+        border-color: rgba(184,150,42,.35);
+        background: rgba(184,150,42,.06);
+    }
+    .alert-card.or .alert-card-num,
+    .alert-card.or .alert-card-type { color: var(--gold); }
+    .alert-card.or .alert-card-sub  { color: var(--ink-muted); }
+
+    .alert-card.vert {
+        border-color: rgba(58,102,68,.3);
+        background: rgba(58,102,68,.06);
+    }
+    .alert-card.vert .alert-card-num,
+    .alert-card.vert .alert-card-type { color: var(--green); }
+    .alert-card.vert .alert-card-sub  { color: var(--ink-muted); }
+
+    /* Lignes d'items dans les cartes d'alerte */
+    .alert-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 14px; border-top: 1px solid;
+        cursor: pointer; transition: background .15s;
+        gap: 8px;
+    }
+    .alert-card.rouge .alert-item { border-color: rgba(139,26,26,.12); }
+    .alert-card.or .alert-item    { border-color: rgba(184,150,42,.15); }
+    .alert-card.vert .alert-item  { border-color: rgba(58,102,68,.12); }
+    .alert-item:hover { background: rgba(255,255,255,.04); }
+    .alert-item-nom {
+        font-family: 'EB Garamond', serif; font-style: italic;
+        font-size: .95rem; color: var(--ink); flex: 1; min-width: 0;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .alert-item-meta {
+        font-family: 'Cinzel', serif; font-size: .48rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        color: var(--ink-muted); white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* ── Accordéons mois ──────────────────────────────────── */
+    .mois-header {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 14px; cursor: pointer;
+        background: #1a1108; border-radius: 3px;
+        margin-bottom: 3px; transition: opacity .15s;
+        user-select: none;
+    }
+    .mois-header:active { opacity: .8; }
+    .mois-header.refuse { background: #2e1414; }
+    .mois-label {
+        font-family: 'Cinzel', serif; font-size: .68rem; font-weight: 600;
+        color: #c9a840; letter-spacing: .1em; text-transform: uppercase; flex: 1;
+    }
+    .mois-badge {
+        font-family: 'EB Garamond', serif; font-style: italic;
+        font-size: .78rem; color: rgba(201,168,64,.6);
+        background: rgba(184,150,42,.12); border: 1px solid rgba(184,150,42,.2);
+        border-radius: 10px; padding: 1px 9px;
+    }
+    .mois-badge-warn {
+        font-family: 'Cinzel', serif; font-size: .52rem;
+        letter-spacing: .08em; color: #1a1108;
+        background: #c9a840; border-radius: 10px; padding: 2px 9px;
+    }
+    .mois-arrow {
+        color: rgba(201,168,64,.5); font-size: .7rem;
+        transition: transform .25s ease; flex-shrink: 0;
+    }
+    .mois-arrow.open { transform: rotate(180deg); }
+
+    /* ── Carte intention ──────────────────────────────────── */
+    .int-card {
+        background: var(--vellum-light); border: 1px solid var(--border-soft);
+        border-radius: 3px; margin-bottom: 8px; overflow: hidden;
+        position: relative; box-shadow: 0 1px 6px var(--shadow);
+        animation: fadeInUp .35s ease both;
+    }
+    .int-card::before {
+        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    }
+    .int-card.en-attente::before { background: var(--rubric); }
+    .int-card.valide::before     { background: var(--green); }
+    .int-card.refuse::before     { background: var(--ink-muted); }
+
+    /* Corps carte */
+    .int-card-body { padding: 11px 14px 10px 16px; }
+
+    /* Date + statut */
+    .int-card-top {
+        display: flex; align-items: center; gap: 8px; margin-bottom: 7px;
+    }
+    .int-date {
+        font-family: 'Cinzel', serif; font-size: .58rem; font-weight: 600;
+        letter-spacing: .1em; text-transform: uppercase;
+        background: #1a1108; color: #c9a840;
+        padding: 3px 10px; border-radius: 2px;
+    }
+    .int-statut {
+        font-family: 'Cinzel', serif; font-size: .47rem;
+        letter-spacing: .14em; text-transform: uppercase;
+        padding: 2px 9px; border-radius: 10px; flex-shrink: 0;
+    }
+    .int-statut.en-attente { background: rgba(139,26,26,.1); color: var(--rubric); border: 1px solid rgba(139,26,26,.2); }
+    .int-statut.valide     { background: rgba(58,102,68,.1); color: var(--green);  border: 1px solid rgba(58,102,68,.2); }
+    .int-statut.refuse     { background: rgba(107,85,64,.1); color: var(--ink-muted); border: 1px solid var(--border-soft); }
+
+    /* Nom intention */
+    .int-nom {
+        font-family: 'Cinzel', serif; font-size: .95rem; color: var(--ink);
+        line-height: 1.25; display: flex; align-items: baseline; gap: 6px;
+    }
+    .int-nom span { flex: 1; }
+    .int-nom-edit {
+        background: none; border: none; cursor: pointer;
+        color: var(--gold); font-size: .82rem; padding: 0 2px; flex-shrink: 0;
+    }
+
+    /* Meta */
+    .int-meta {
+        font-family: 'EB Garamond', serif; font-size: .82rem;
+        color: var(--ink-muted); font-style: italic; margin-top: 4px;
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .int-meta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border-soft); flex-shrink: 0; }
+
+    /* Type badge */
+    .int-type {
+        display: inline-flex; align-items: center; gap: 4px;
+        font-family: 'Cinzel', serif; font-size: .44rem;
+        letter-spacing: .12em; text-transform: uppercase;
+        padding: 2px 8px; border-radius: 10px; margin-top: 5px;
+    }
+    .int-type.Défunt  { background: rgba(26,17,8,.07);   color: var(--ink-soft);  border: 1px solid rgba(26,17,8,.12); }
+    .int-type.Vivant  { background: rgba(58,102,68,.08); color: var(--green);     border: 1px solid rgba(58,102,68,.18); }
+    .int-type.grace   { background: rgba(184,150,42,.1); color: var(--gold);      border: 1px solid rgba(184,150,42,.22); }
+    .int-type-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+    /* Mail badge */
+    .int-mail-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-family: 'Cinzel', serif; font-size: .44rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        padding: 3px 10px; border-radius: 3px; margin-top: 6px;
+    }
+    .int-mail-badge.sent    { background: rgba(58,102,68,.1); color: var(--green);      border: 1px solid rgba(58,102,68,.2); }
+    .int-mail-badge.pending { background: rgba(184,150,42,.1); color: var(--gold);      border: 1px solid rgba(184,150,42,.22); }
+    .int-mail-badge.warn    { background: rgba(139,26,26,.07); color: var(--rubric);    border: 1px solid rgba(139,26,26,.15); }
+
+    /* Commentaire */
+    .int-comment {
+        margin-top: 8px; padding: 7px 11px;
+        background: var(--gold-pale); border-left: 3px solid var(--gold);
+        border-radius: 2px; font-family: 'EB Garamond', serif;
+        font-size: .85rem; color: var(--ink-soft); font-style: italic;
+        line-height: 1.45;
+    }
+
+    /* ── Zone d'action (validation) ──────────────────────── */
+    .int-action {
+        border-top: 1px solid var(--border-soft);
+        padding: 12px 14px 12px 16px;
+        background: var(--vellum);
+    }
+    .int-action-label {
+        font-family: 'Cinzel', serif; font-size: .5rem;
+        letter-spacing: .18em; text-transform: uppercase;
+        color: var(--rubric); display: block; margin-bottom: 8px;
+    }
+    .int-action input[type="date"] {
+        margin-bottom: 8px;
+    }
+
+    /* Sélecteur prêtre */
+    .pretre-chips {
+        display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;
     }
     .pretre-chip {
-        padding: 5px 12px; border: 1px solid var(--border-soft); border-radius: 2px;
-        background: var(--vellum-light); font-family: 'Cinzel', serif; font-size: .58rem;
-        letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted);
-        cursor: pointer; transition: all .2s;
+        padding: 6px 14px; border: 1px solid var(--border-soft);
+        border-radius: 3px; background: var(--vellum-light);
+        font-family: 'Cinzel', serif; font-size: .56rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        color: var(--ink-muted); cursor: pointer; transition: all .18s;
     }
-    .pretre-chip:hover { border-color: var(--gold); color: var(--gold); }
-    .pretre-chip.actif { background: var(--gold-pale); border-color: var(--gold); color: var(--ink); font-weight: 600; }
+    .pretre-chip:hover  { border-color: var(--gold); color: var(--gold); }
+    .pretre-chip.actif  { background: var(--gold-pale); border-color: var(--gold); color: var(--ink); font-weight: 600; }
+
+    /* Chips horaires */
+    .horaire-chips {
+        display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;
+    }
+    .h-chip {
+        padding: 8px 14px; border-radius: 3px; cursor: pointer;
+        font-family: 'Cinzel', serif; font-size: .65rem; letter-spacing: .08em;
+        border: 1px solid var(--border-soft); background: var(--vellum-light);
+        color: var(--ink); transition: all .15s;
+    }
+    .h-chip:hover  { border-color: var(--gold); }
+    .h-chip.active { background: #1a1108; color: #c9a840; border-color: #1a1108; }
+    .h-chip.taken  { background: rgba(139,26,26,.06); color: var(--ink-muted);
+                     border-color: rgba(139,26,26,.15); cursor: not-allowed; opacity: .6; }
+    .h-chip-private-label {
+        font-family: 'Cinzel', serif; font-size: .52rem;
+        letter-spacing: .14em; color: var(--gold); display: block; margin-bottom: 6px;
+        text-transform: uppercase;
+    }
+
+    /* Boutons d'action */
+    .int-btns {
+        display: flex; gap: 7px; flex-wrap: wrap;
+    }
+    .btn-valider-int {
+        flex: 1; padding: 11px 14px; min-height: 42px;
+        font-family: 'Cinzel', serif; font-size: .6rem;
+        letter-spacing: .12em; text-transform: uppercase;
+        background: #1a1108; color: #c9a840;
+        border: none; border-radius: 3px; cursor: pointer; transition: opacity .2s;
+    }
+    .btn-valider-int:active { opacity: .75; }
+    .btn-ghost-int {
+        padding: 10px 14px; min-height: 42px;
+        font-family: 'Cinzel', serif; font-size: .58rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        background: none; border: 1px solid var(--border-soft);
+        color: var(--ink-muted); border-radius: 3px; cursor: pointer;
+        transition: all .15s;
+    }
+    .btn-ghost-int:hover { border-color: var(--rubric); color: var(--rubric); }
+    .btn-trash-int {
+        padding: 10px 12px; min-height: 42px;
+        font-family: 'Cinzel', serif; font-size: .82rem;
+        background: none; border: 1px solid var(--border-soft);
+        color: var(--ink-muted); border-radius: 3px; cursor: pointer;
+        transition: all .15s;
+    }
+    .btn-trash-int:hover { border-color: var(--rubric); color: var(--rubric); }
+
+    /* ── Pied de carte (traitée) ──────────────────────────── */
+    .int-card-foot {
+        display: flex; align-items: center; gap: 0;
+        border-top: 1px solid var(--border-soft);
+    }
+    .int-foot-btn {
+        flex: 1; padding: 10px 8px; text-align: center;
+        font-family: 'Cinzel', serif; font-size: .48rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        color: var(--ink-muted); background: none; border: none;
+        border-right: 1px solid var(--border-soft);
+        cursor: pointer; transition: all .15s; min-height: 38px;
+        display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .int-foot-btn:last-child { border-right: none; }
+    .int-foot-btn:active { background: var(--vellum); color: var(--ink); }
+    .int-foot-btn.mail  { color: var(--gold); }
+    .int-foot-btn.trash { color: var(--ink-muted); }
+    .int-foot-btn.trash:active { color: var(--rubric); }
+
+    /* Confirmé info */
+    .int-confirme {
+        padding: 8px 14px 0 16px;
+        font-family: 'EB Garamond', serif; font-size: .88rem;
+        color: var(--ink-soft); font-style: italic;
+    }
+
+    /* ── Modal mail ───────────────────────────────────────── */
+    #modal-mail {
+        display: none; position: fixed; inset: 0; z-index: 2000;
+        background: rgba(0,0,0,.6); align-items: flex-end; justify-content: center;
+    }
+    #modal-mail.open { display: flex; }
+    .mail-sheet {
+        background: var(--vellum); width: 100%; max-width: 560px;
+        border-radius: 12px 12px 0 0;
+        max-height: 90vh; overflow-y: auto;
+        box-shadow: 0 -4px 32px rgba(0,0,0,.3);
+        animation: slideUp .3s ease;
+    }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .mail-sheet-head {
+        background: #1a1108; border-radius: 12px 12px 0 0;
+        padding: 16px 18px; display: flex; align-items: center; gap: 10px;
+    }
+    .mail-sheet-title {
+        font-family: 'Cinzel', serif; font-size: .75rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        color: #c9a840; flex: 1;
+    }
+    .mail-sheet-close {
+        background: none; border: none; color: rgba(201,168,64,.6);
+        font-size: 1.2rem; cursor: pointer; padding: 4px 8px;
+    }
+    .mail-destinataire-pill {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: rgba(184,150,42,.1); border: 1px solid rgba(184,150,42,.25);
+        border-radius: 20px; padding: 5px 14px; margin: 14px 18px 4px;
+        font-family: 'EB Garamond', serif; font-size: .88rem;
+        color: var(--ink); font-style: italic;
+    }
+    .mail-sheet-body { padding: 0 18px 28px; }
+    .mail-sheet-label {
+        font-family: 'Cinzel', serif; font-size: .5rem;
+        letter-spacing: .18em; text-transform: uppercase;
+        color: var(--rubric); display: block; margin: 12px 0 5px;
+    }
+    #mail-corps {
+        width: 100%; min-height: 220px; resize: vertical;
+        padding: 12px 14px; font-family: 'EB Garamond', serif;
+        font-size: .95rem; line-height: 1.65; color: var(--ink);
+        background: var(--vellum-light); border: 1px solid var(--border-soft);
+        border-radius: 3px;
+    }
+    #mail-corps:focus { outline: none; border-color: var(--gold); }
+    .btn-approuver-mail {
+        width: 100%; margin-top: 14px; padding: 14px;
+        font-family: 'Cinzel', serif; font-size: .68rem;
+        letter-spacing: .14em; text-transform: uppercase;
+        background: linear-gradient(135deg, var(--green) 0%, #1e3a24 100%);
+        color: #f5f0e4; border: none; border-radius: 3px; cursor: pointer;
+        min-height: 48px; transition: opacity .2s;
+    }
+    .btn-approuver-mail:active { opacity: .8; }
+    .btn-fermer-mail {
+        width: 100%; margin-top: 10px; padding: 11px;
+        font-family: 'Cinzel', serif; font-size: .58rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        background: none; border: none; color: var(--ink-muted);
+        cursor: pointer; min-height: 38px;
+    }
+
+    /* ── Vide / chargement ────────────────────────────────── */
+    .empty-state {
+        text-align: center; padding: 40px 20px;
+        color: var(--ink-muted); font-style: italic;
+        font-family: 'EB Garamond', serif; font-size: 1rem;
+    }
+    .empty-state::before {
+        content: '✦'; display: block; color: var(--gold);
+        font-size: 1.2rem; margin-bottom: 12px; opacity: .4;
+    }
+
+    /* ── Mode sombre ──────────────────────────────────────── */
     @media (prefers-color-scheme: dark) {
-        .pretre-btn, .pretre-chip { background: var(--vellum-light); border-color: var(--border-soft); }
-        .pretre-btn.actif, .pretre-chip.actif { background: var(--gold-pale); color: var(--ink); }
+        .search-sticky { background: var(--vellum); border-color: var(--border-soft); }
+        .sync-btn { background: var(--vellum-light); border-color: var(--border-soft); }
+        .mois-header { background: #0e0c08; }
+        .mois-header.refuse { background: #1e0e0e; }
+        .int-card { background: var(--vellum-light); border-color: var(--border-soft); }
+        .int-action { background: var(--vellum); border-color: var(--border-soft); }
+        .int-card-foot { border-color: var(--border-soft); }
+        .int-foot-btn { border-color: var(--border-soft); }
+        .int-comment { background: var(--gold-pale); border-left-color: var(--gold); }
+        .pretre-chip { background: var(--vellum-light); border-color: var(--border-soft); }
+        .pretre-chip.actif { background: var(--gold-pale); color: var(--ink); }
+        .h-chip { background: var(--vellum-light); border-color: var(--border-soft); }
+        .h-chip.active { background: #0e0c08; color: #c9a840; border-color: #0e0c08; }
+        .h-chip.taken { background: rgba(139,26,26,.12); }
+        .mail-sheet { background: var(--vellum); }
+        #mail-corps { background: var(--vellum-light); color: var(--ink); border-color: var(--border-soft); }
+        .int-type.Défunt { background: rgba(240,232,213,.06); }
+        .alert-card.rouge { background: rgba(192,64,64,.07); }
+        .alert-card.or    { background: rgba(184,150,42,.08); }
+        .alert-card.vert  { background: rgba(74,128,85,.08); }
+        .alert-item:hover { background: rgba(255,255,255,.03); }
+        .mail-destinataire-pill { background: rgba(184,150,42,.08); }
+        .admin-stat-pill { background: rgba(184,150,42,.1); }
     }
     </style>
 </head>
 <body>
-    <div id="menu-container"></div>
-    <main>
-        <div class="page-header">
-            <span class="rubric-tag">Administration</span>
-            <h1>Intentions</h1>
-            <div class="ornament">✦ ✦ ✦</div>
+<div id="menu-container"></div>
+
+<!-- ════════════════════════════════════════════════════════
+     HEADER ADMIN
+════════════════════════════════════════════════════════ -->
+<div class="admin-header">
+    <svg class="admin-header-cross" viewBox="0 0 180 220" fill="none">
+        <rect x="72" y="0" width="36" height="220" fill="#b8962a"/>
+        <rect x="0"  y="58" width="180" height="36" fill="#b8962a"/>
+    </svg>
+    <div class="admin-header-body">
+        <div class="admin-header-title">
+            <span class="admin-header-paroisse">Administration</span>
+            <span class="admin-header-name" id="admin-pretre-name">Abbé Molin</span>
+            <span class="admin-header-sub">Gestion des intentions de Messe</span>
         </div>
-
-        <div class="pretre-selector">
-            <button class="pretre-btn actif" onclick="filtrerPretre('molin',this)">Abbé Molin</button>
-            <button class="pretre-btn" onclick="filtrerPretre('legall',this)">Abbé Le Gall</button>
-            <button class="pretre-btn" onclick="filtrerPretre('',this)">Tous</button>
+        <div class="admin-stat-pill">
+            <span class="admin-stat-num" id="annual-count">…</span>
+            <span class="admin-stat-label" id="annual-label">Messes 2026</span>
         </div>
+    </div>
+    <div class="admin-tabs">
+        <button class="admin-tab actif" onclick="filtrerPretre('molin',this)" id="tab-molin">Abbé Molin</button>
+        <button class="admin-tab" onclick="filtrerPretre('legall',this)" id="tab-legall">Abbé Le Gall</button>
+        <button class="admin-tab" onclick="filtrerPretre('',this)" id="tab-tous">Tous</button>
+    </div>
+    <div class="admin-header-bar"></div>
+</div>
 
-        <div class="stats-banner">
-            <div class="stats-count" id="annual-count">…</div>
-            <div class="stats-label" id="label-annee-intentions">MESSES CÉLÉBRÉES EN 2026</div>
+<!-- ════════════════════════════════════════════════════════
+     BARRE DE RECHERCHE STICKY
+════════════════════════════════════════════════════════ -->
+<div class="search-sticky">
+    <div class="search-sticky-wrap">
+        <span class="search-sticky-icon">⌕</span>
+        <input type="text" id="recherche-nom" placeholder="Rechercher par nom, donateur…"
+            oninput="filtrerRecherche(this.value)" autocomplete="off">
+    </div>
+    <button class="sync-btn" id="btn-importer" onclick="lancerAction('importer')" title="Vérifier les mails">
+        <span id="icon-importer">📥</span>
+    </button>
+    <button class="sync-btn" id="btn-envoyer" onclick="lancerAction('envoyer')" title="Envoyer les réponses">
+        <span id="icon-envoyer">📤</span>
+    </button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     CONTENU
+════════════════════════════════════════════════════════ -->
+<main>
+    <div id="section-prioritaire"></div>
+    <div id="loading-status" class="empty-state">Chargement des intentions…</div>
+    <div id="table-body"></div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<!-- ════════════════════════════════════════════════════════
+     MODAL MAIL
+════════════════════════════════════════════════════════ -->
+<div id="modal-mail">
+    <div class="mail-sheet">
+        <div class="mail-sheet-head">
+            <span class="mail-sheet-title">📧 Vérification du courrier</span>
+            <button class="mail-sheet-close" onclick="fermerModalMail()">✕</button>
         </div>
-
-        <!-- Boutons synchronisation manuelle -->
-        <div style="display:flex;gap:10px;margin-bottom:16px;">
-            <button id="btn-importer" onclick="lancerAction('importer')"
-                style="flex:1;padding:10px 6px;background:var(--vellum-light);border:1px solid var(--border);border-radius:2px;
-                font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;
-                color:var(--ink-muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;">
-                <span id="icon-importer">📥</span> Vérifier les mails
-            </button>
-            <button id="btn-envoyer" onclick="lancerAction('envoyer')"
-                style="flex:1;padding:10px 6px;background:var(--vellum-light);border:1px solid var(--border);border-radius:2px;
-                font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;
-                color:var(--ink-muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;">
-                <span id="icon-envoyer">📤</span> Envoyer les réponses
-            </button>
+        <div class="mail-destinataire-pill">
+            <span>✉</span>
+            <span id="mail-destinataire"></span>
         </div>
-
-        <!-- Section prioritaire : en attente + mails non envoyés -->
-        <div id="section-prioritaire"></div>
-
-        <!-- Recherche par nom -->
-        <div class="search-bar">
-            <input type="text" id="recherche-nom" placeholder="Rechercher par nom…" oninput="filtrerRecherche(this.value)">
-        </div>
-
-        <div id="loading-status" style="text-align:center;color:var(--ink-muted);font-style:italic;">Chargement des intentions&hellip;</div>
-        <div id="table-body"></div>
-    </main>
-
-    <!-- Modal mail -->
-    <div id="modal-mail">
-        <div class="modal-mail-content">
-            <h3 style="margin:0 0 14px;color:var(--ink);font-family:'Cinzel',serif;font-size:.95rem;letter-spacing:.07em;text-align:center;">📧 Vérification du courrier</h3>
-            <label>Destinataire</label>
-            <div id="mail-destinataire"></div>
-            <label>Contenu (modifiable)</label>
+        <div class="mail-sheet-body">
+            <span class="mail-sheet-label">Contenu du mail (modifiable)</span>
             <textarea id="mail-corps"></textarea>
-            <button class="btn-approuver" onclick="approuverMail()">✅ Approuver et autoriser l'envoi</button>
+            <button class="btn-approuver-mail" onclick="approuverMail()">✅ Approuver et autoriser l'envoi</button>
             <button class="btn-fermer-mail" onclick="fermerModalMail()">Fermer sans envoyer</button>
         </div>
     </div>
+</div>
 
-    <div id="toast" class="toast"></div>
+<script src="config.js"></script>
+<script src="menu.js"></script>
+<script src="modal.js"></script>
+<script>
+const GOOGLE_API_KEY  = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
+const CALENDAR_ID     = 'saintlouisenville67@gmail.com';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzA4wI1QmU4s8fVx8Nd3yeLxheo1kifLyQpuxNLvlxl4g1Q3yXAQ3pyuGKVSR40JT1/exec';
 
-    <script src="config.js"></script>
-    <script src="menu.js"></script>
-    <script src="modal.js"></script>
-    <script>
-    const GOOGLE_API_KEY = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
-    const CALENDAR_ID    = 'saintlouisenville67@gmail.com';
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzA4wI1QmU4s8fVx8Nd3yeLxheo1kifLyQpuxNLvlxl4g1Q3yXAQ3pyuGKVSR40JT1/exec';
+const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const PRETRES = {
+    molin:  { nom: "l'abbé Molin",    titre: 'Abbé MOLIN',   role: 'curé'    },
+    legall: { nom: "l'abbé Le Gall",  titre: 'Abbé LE GALL', role: 'vicaire' }
+};
 
-    let googleEventsGlobal = [];
-    let intentionsGlobal   = [];
-    let pretreActif        = 'molin';
+let googleEventsGlobal = [];
+let intentionsGlobal   = [];
+let pretreActif        = 'molin';
+let mailIdEnCours      = null;
+const mailsData        = {};
+let filtreActif        = '';
 
-    function filtrerPretre(id, btn) {
-        pretreActif = id;
-        document.querySelectorAll('.pretre-btn').forEach(b => b.classList.remove('actif'));
-        btn.classList.add('actif');
-        renderIntentions();
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── Filtre prêtre ────────────────────────────────────────
+function filtrerPretre(id, btn) {
+    pretreActif = id;
+    document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('actif'));
+    btn.classList.add('actif');
+    const names = { molin:'Abbé Molin', legall:'Abbé Le Gall', '':'Tous les prêtres' };
+    document.getElementById('admin-pretre-name').textContent = names[id] || 'Tous';
+    renderIntentions(filtreActif);
+}
+function filtrerRecherche(val) {
+    filtreActif = val;
+    renderIntentions(val);
+}
+
+// ── Chargement ───────────────────────────────────────────
+async function chargerDemandes() {
+    if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 300); return; }
+    try {
+        const tMin = new Date(); tMin.setMonth(tMin.getMonth() - 1);
+        const tMax = new Date(); tMax.setFullYear(tMax.getFullYear() + 1);
+        const urlGcal = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&timeMin=${tMin.toISOString()}&timeMax=${tMax.toISOString()}&maxResults=500`;
+
+        const [gcalResp, { data }] = await Promise.all([
+            fetch(urlGcal),
+            maConnexion.from('intentions').select('*').order('date_messe', { ascending: true })
+        ]);
+        const gcalData = await gcalResp.json();
+        googleEventsGlobal = gcalData.items || [];
+        intentionsGlobal   = data || [];
+
+        document.getElementById('loading-status').style.display = 'none';
+        await renderIntentions();
+    } catch (err) {
+        console.error(err);
+        document.getElementById('loading-status').innerHTML =
+            '<div class="empty-state" style="color:var(--rubric);">Erreur de connexion<br><button onclick="chargerDemandes()" class="btn-primary" style="margin-top:12px;width:auto;padding:10px 22px;">Réessayer</button></div>';
     }
-    let mailIdEnCours      = null;
-    const mailsData        = {};
+}
 
-    const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+// ── Rendu principal ──────────────────────────────────────
+async function renderIntentions(filtre = '') {
+    const tbody = document.getElementById('table-body');
+    let list = intentionsGlobal;
+    if (pretreActif) list = list.filter(i => (i.pretre_id || 'molin') === pretreActif);
 
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.textContent = msg; t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 3200);
-    }
+    const filtreLC = filtre.toLowerCase().trim();
+    const doFiltre = arr => filtreLC
+        ? arr.filter(i => (i.nom_intention||'').toLowerCase().includes(filtreLC)
+                       || (i.nom_donateur||'').toLowerCase().includes(filtreLC))
+        : arr;
 
-    async function chargerDemandes() {
-        if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 300); return; }
-        try {
-            // Google Calendar : toute l'année en cours ± 1 mois
-            const tMin = new Date(); tMin.setMonth(tMin.getMonth() - 1);
-            const tMax = new Date(); tMax.setFullYear(tMax.getFullYear() + 1);
-            const urlGcal = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&timeMin=${tMin.toISOString()}&timeMax=${tMax.toISOString()}&maxResults=500`;
-            const resp = await fetch(urlGcal);
-            const googleData = await resp.json();
-            googleEventsGlobal = googleData.items || [];
+    const actives  = doFiltre(list.filter(i => i.statut !== 'refuse'));
+    const refuses  = doFiltre(list.filter(i => i.statut === 'refuse'));
 
-            // Charger TOUTES les intentions
-            const { data } = await maConnexion.from('intentions').select('*')
-                .order('date_messe', { ascending: true });
-            intentionsGlobal = data || [];
+    // Groupes par mois
+    const groupes = {};
+    actives.forEach(item => {
+        const key = item.date_messe.substring(0, 7);
+        if (!groupes[key]) groupes[key] = [];
+        groupes[key].push(item);
+    });
 
-            document.getElementById('loading-status').style.display = 'none';
-            await renderIntentions();
-        } catch (err) {
-            console.error(err);
-            document.getElementById('loading-status').innerHTML =
-                '<p style="color:var(--rubric);text-align:center;padding:20px;font-style:italic;">' +
-                'Erreur de connexion à la base.<br>' +
-                '<button onclick="chargerDemandes()" class="btn-primary" style="margin-top:12px;width:auto;padding:10px 22px;">Réessayer</button></p>';
-        }
-    }
+    tbody.innerHTML = '';
+    const moisCourant = new Date().toISOString().substring(0, 7);
 
-    async function renderIntentions(filtre = '') {
-        const tbody = document.getElementById('table-body');
-        let list = intentionsGlobal;
-        if (pretreActif) list = list.filter(i => (i.pretre_id || 'molin') === pretreActif);
-        tbody.innerHTML = '';
+    Object.keys(groupes).sort().forEach(moisKey => {
+        const [annee, moisNum] = moisKey.split('-');
+        const labelMois = MOIS_FR[parseInt(moisNum)-1] + ' ' + annee;
+        const items = groupes[moisKey];
+        const nbAttente = items.filter(i => i.statut === 'en_attente' || i.en_edition).length;
+        const isOpen = moisKey === moisCourant || nbAttente > 0;
 
-        const intentionsActives  = list.filter(i => i.statut !== 'refuse');
-        const intentionsRefusees = list.filter(i => i.statut === 'refuse');
+        // Header mois
+        const header = document.createElement('div');
+        header.className = 'mois-header';
+        header.innerHTML = `<span class="mois-label">📅 ${labelMois}</span>
+            <span class="mois-badge">${items.length} intention${items.length>1?'s':''}</span>
+            ${nbAttente > 0 ? `<span class="mois-badge-warn">⏳ ${nbAttente}</span>` : ''}
+            <span id="arrow-${moisKey}" class="mois-arrow${isOpen?' open':''}">▼</span>`;
+        header.onclick = () => toggleMois(moisKey);
+        tbody.appendChild(header);
 
-        // Filtrage par nom si recherche active
-        const filtreLC = filtre.toLowerCase().trim();
-        const filtrer = list => filtreLC
-            ? list.filter(i => (i.nom_intention || '').toLowerCase().includes(filtreLC) || (i.nom_donateur || '').toLowerCase().includes(filtreLC))
-            : list;
+        const groupDiv = document.createElement('div');
+        groupDiv.id = 'mois-' + moisKey;
+        groupDiv.style.display = isOpen ? 'block' : 'none';
 
-        const actifsFiltres  = filtrer(intentionsActives);
-        const refusesFiltres = filtrer(intentionsRefusees);
-
-        // Groupement par mois
-        const groupes = {};
-        actifsFiltres.forEach(item => {
-            const key = item.date_messe.substring(0, 7);
-            if (!groupes[key]) groupes[key] = [];
-            groupes[key].push(item);
+        items.forEach(item => {
+            groupDiv.appendChild(buildIntentionCard(item));
+            mailsData[item.id] = { texte: genererTexteMail(item), email: item.email_donateur || '' };
+            if (item.statut === 'en_attente' || item.en_edition) {
+                setTimeout(() => refreshTimeChoices(item.id, item.heure_messe), 0);
+            }
         });
+        tbody.appendChild(groupDiv);
+    });
 
-        const moisTries = Object.keys(groupes).sort();
-        // FIX accordéon : mois en cours ouvert par défaut
-        const moisCourant = new Date().toISOString().substring(0, 7);
+    // Refusées
+    if (refuses.length > 0) {
+        const refHeader = document.createElement('div');
+        refHeader.className = 'mois-header refuse';
+        refHeader.innerHTML = `<span class="mois-label">✖ Demandes refusées</span>
+            <span class="mois-badge">${refuses.length}</span>
+            <span id="arrow-refuses" class="mois-arrow">▼</span>`;
+        refHeader.onclick = () => {
+            const d = document.getElementById('groupe-refuses');
+            const a = document.getElementById('arrow-refuses');
+            const open = d.style.display !== 'none';
+            d.style.display = open ? 'none' : 'block';
+            a.classList.toggle('open', !open);
+        };
+        tbody.appendChild(refHeader);
+        const refGroup = document.createElement('div');
+        refGroup.id = 'groupe-refuses';
+        refGroup.style.display = 'none';
+        refuses.forEach(item => refGroup.appendChild(buildIntentionCard(item)));
+        tbody.appendChild(refGroup);
+    }
 
-        moisTries.forEach(moisKey => {
-            const [annee, moisNum] = moisKey.split('-');
-            const labelMois = MOIS_FR[parseInt(moisNum) - 1] + ' ' + annee;
-            const items = groupes[moisKey];
-            const nbEnAttente = items.filter(i => i.statut === 'en_attente' || i.en_edition).length;
-            const estOuvert = false; // tous fermés par défaut
+    renderSectionPrioritaire();
 
-            const accordeonId = 'mois-' + moisKey;
-            const header = document.createElement('div');
-            header.className = 'accord-header';
-            header.innerHTML =
-                '<div class="accord-title">'
-                + '📅 ' + labelMois
-                + '<span class="accord-badge">' + items.length + ' intention' + (items.length > 1 ? 's' : '') + '</span>'
-                + (nbEnAttente > 0 ? '<span class="accord-badge-warn">⏳ ' + nbEnAttente + ' en attente</span>' : '')
-                + '</div>'
-                + '<span id="arrow-' + moisKey + '" class="accord-arrow' + (estOuvert ? ' open' : '') + '">▼</span>';
-            header.onclick = () => toggleMois(moisKey);
-            tbody.appendChild(header);
+    // Stats
+    const year = new Date().getFullYear();
+    const n = intentionsGlobal.filter(i => i.statut === 'valide' && (i.date_messe||'').startsWith(year)).length;
+    document.getElementById('annual-count').textContent = n;
+    document.getElementById('annual-label').textContent = 'Messes ' + year;
+}
 
-            const groupDiv = document.createElement('div');
-            groupDiv.id = accordeonId;
-            groupDiv.style.display = estOuvert ? 'block' : 'none';
+// ── Construction d'une carte intention ──────────────────
+function buildIntentionCard(item) {
+    const card = document.createElement('div');
+    const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
+    const statutCls  = estEnCours ? 'en-attente' : (item.statut === 'valide' ? 'valide' : 'refuse');
+    card.className = `int-card ${statutCls}`;
+    card.dataset.intentionId = item.id;
 
-            items.forEach(item => {
-                const estEnCours = item.statut === 'en_attente' || item.en_edition === true;
-                const dateObj = new Date(item.date_messe + 'T00:00:00');
-                const mailPrepare = genererTexteMail(item);
+    const dateObj = new Date(item.date_messe + 'T00:00:00');
+    const dateFr  = dateObj.toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+    const statutLabel = estEnCours ? 'En attente' : (item.statut === 'valide' ? 'Confirmée' : 'Refusée');
 
-                let badgeMail = '';
-                if (!estEnCours) {
-                    if (item.mail_envoye) {
-                        badgeMail = '<span class="mail-badge mail-badge-sent">✅ Mail envoyé</span>';
-                    } else if (item.mail_approuve) {
-                        badgeMail = '<span class="mail-badge">⏳ En attente d\u2019envoi</span>';
-                    } else {
-                        badgeMail = '<span class="mail-badge">⚠️ Non approuvé</span>';
-                    }
-                }
+    // Type
+    const tc = item.type_intention === 'Défunt' ? 'Défunt'
+             : item.type_intention === 'Vivant' ? 'Vivant' : 'grace';
+    const dotColor = tc === 'Défunt' ? 'var(--ink-soft)' : tc === 'Vivant' ? 'var(--green)' : 'var(--gold)';
 
-                const card = document.createElement('div');
-                card.className = 'intention-card ' + (estEnCours ? 'en-attente' : (item.statut === 'valide' ? 'valide' : 'refuse'));
-                card.dataset.intentionId = item.id;
+    // Badge mail
+    let mailBadge = '';
+    if (!estEnCours && item.statut !== 'refuse') {
+        if (item.mail_envoye)       mailBadge = '<span class="int-mail-badge sent">✅ Mail envoyé</span>';
+        else if (item.mail_approuve) mailBadge = '<span class="int-mail-badge pending">⏳ En attente d\'envoi</span>';
+        else                         mailBadge = '<span class="int-mail-badge warn">⚠ Mail à approuver</span>';
+    }
 
-                card.innerHTML =
-                    '<div>'
-                    + '<span class="date-badge">' + dateObj.toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) + '</span>'
-                    + '<div class="intention-nom" style="display:flex;align-items:center;gap:6px;">'
-                    + '<span id="nom-display-' + item.id + '" style="flex:1;">' + item.nom_intention + '</span>'
-                    + '<button title="Modifier le nom" style="background:none;border:none;cursor:pointer;color:var(--gold);font-size:.85rem;padding:0 2px;" onclick="editerNomIntention(' + item.id + ',this)">✏️</button>'
-                    + '</div>'
-                    + '<div class="intention-meta">Demandeur : ' + item.nom_donateur + ' &middot; ' + item.type_intention + '</div>'
-                    + '<div style="color:var(--ink-muted);font-size:.72rem;font-style:italic;">' + (item.email_donateur || '') + '</div>'
-                    + badgeMail
-                    + (item.commentaire ? '<div style="margin-top:8px;padding:8px 12px;background:var(--gold-pale);border-left:3px solid var(--gold);border-radius:2px;font-size:.82rem;color:var(--ink-soft);font-style:italic;">🗒 ' + item.commentaire + '</div>' : '')
-                    + '</div>'
-                    + (estEnCours ? renderActionGroup(item) : renderTraiteInfo(item));
+    const comment = item.commentaire
+        ? `<div class="int-comment">🗒 ${escH(item.commentaire)}</div>` : '';
 
-                mailsData[item.id] = { texte: mailPrepare, email: item.email_donateur || '' };
-                groupDiv.appendChild(card);
-                if (estEnCours) setTimeout(() => refreshTimeChoices(item.id, item.heure_messe), 0);
-            });
+    // Corps de la carte
+    let bodyHTML = `
+        <div class="int-card-body">
+            <div class="int-card-top">
+                <span class="int-date">${dateFr}</span>
+                <span class="int-statut ${statutCls}">${statutLabel}</span>
+            </div>
+            <div class="int-nom">
+                <span id="nom-display-${item.id}">${escH(item.nom_intention)}</span>
+                <button class="int-nom-edit" title="Modifier" onclick="editerNomIntention(${item.id},this)">✏️</button>
+            </div>
+            <div class="int-meta">
+                <span>${escH(item.nom_donateur)}</span>
+                <span class="int-meta-dot"></span>
+                <span>${escH(item.email_donateur||'')}</span>
+            </div>
+            <span class="int-type ${tc}">
+                <span class="int-type-dot" style="background:${dotColor}"></span>
+                ${escH(item.type_intention)}
+            </span>
+            ${mailBadge}
+            ${comment}
+        </div>`;
 
-            tbody.appendChild(groupDiv);
+    if (estEnCours) {
+        // Zone d'action validation
+        bodyHTML += `
+        <div class="int-action">
+            <span class="int-action-label">📅 Disponibilités — choisir un créneau</span>
+            <input type="date" id="d-${item.id}" value="${item.date_messe}"
+                onchange="refreshTimeChoicesFromInput(this)">
+            <div class="pretre-chips">
+                ${Object.entries(PRETRES).map(([id, p]) =>
+                    `<button class="pretre-chip${(item.pretre_id||'molin')===id?' actif':''}"
+                        data-iid="${item.id}" data-pid="${id}"
+                        onclick="setPretre(this,'${item.id}','${id}')">${p.titre}</button>`
+                ).join('')}
+            </div>
+            <div id="times-${item.id}" class="horaire-chips"></div>
+            <div class="int-btns">
+                <button class="btn-valider-int" onclick="getIdAndCall(this,finaliser)">✅ Valider</button>
+                <button class="btn-ghost-int" onclick="getIdAndCall(this,refuser)">✖ Refuser</button>
+                <button class="btn-trash-int" onclick="getIdAndCall(this,supprimerIntention)">🗑</button>
+            </div>
+        </div>`;
+    } else if (item.statut === 'valide') {
+        // Confirmé + pied de carte
+        bodyHTML += `
+        <div class="int-confirme">Confirmée : ${escH(item.reponse_pretre||'—')}</div>
+        <div class="int-card-foot">
+            <button class="int-foot-btn" onclick="getIdAndCall(this,editer)">✏️ Modifier</button>
+            ${!item.mail_envoye ? `<button class="int-foot-btn mail" onclick="getIdAndCall(this,ouvrirModalMailById)">📧 Mail</button>` : ''}
+            <button class="int-foot-btn trash" onclick="getIdAndCall(this,supprimerIntention)">🗑 Supprimer</button>
+        </div>`;
+    } else {
+        // Refusée
+        bodyHTML += `
+        <div class="int-card-foot">
+            <button class="int-foot-btn trash" onclick="getIdAndCall(this,supprimerIntention)">🗑 Supprimer</button>
+        </div>`;
+    }
+
+    card.innerHTML = bodyHTML;
+    return card;
+}
+
+// ── Section prioritaire ──────────────────────────────────
+function renderSectionPrioritaire() {
+    const section = document.getElementById('section-prioritaire');
+    const enAttente = intentionsGlobal.filter(i => i.statut === 'en_attente' || i.en_edition);
+    const mailsNonApprouves = intentionsGlobal.filter(i => i.statut==='valide' && !i.mail_envoye && !i.mail_approuve);
+    const mailsApprouves    = intentionsGlobal.filter(i => i.statut==='valide' && !i.mail_envoye && i.mail_approuve);
+
+    if (!enAttente.length && !mailsNonApprouves.length && !mailsApprouves.length) {
+        section.innerHTML = ''; return;
+    }
+
+    let html = '<div style="margin-bottom:16px;">';
+
+    const buildAlertCard = (type, items, label, sublabel) => {
+        if (!items.length) return '';
+        let h = `<div class="alert-card ${type}">
+            <div class="alert-card-head">
+                <span class="alert-card-num">${items.length}</span>
+                <div class="alert-card-info">
+                    <span class="alert-card-type">${label}</span>
+                    <span class="alert-card-sub">${sublabel}</span>
+                </div>
+            </div>`;
+        items.forEach(i => {
+            const d = new Date(i.date_messe+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+            const moisKey = i.date_messe.substring(0,7);
+            const ouvrirMail = type === 'or';
+            h += `<div class="alert-item" onclick="allerVersIntention('${i.id}','${moisKey}',${ouvrirMail})">
+                <span class="alert-item-nom">${escH(i.nom_intention)}</span>
+                <span class="alert-item-meta">${d} — ${type==='or'?'📧 Approuver':'voir'} →</span>
+            </div>`;
         });
-
-        // Section refusées
-        if (refusesFiltres.length > 0) {
-            const refHeader = document.createElement('div');
-            refHeader.className = 'accord-header refused';
-            refHeader.innerHTML =
-                '<div class="accord-title">✖️ Demandes refusées <span class="accord-badge">' + refusesFiltres.length + '</span></div>'
-                + '<span id="arrow-refuses" class="accord-arrow">▼</span>';
-            refHeader.onclick = () => {
-                const div = document.getElementById('groupe-refuses');
-                const arrow = document.getElementById('arrow-refuses');
-                const isOpen = div.style.display !== 'none';
-                div.style.display = isOpen ? 'none' : 'block';
-                arrow.classList.toggle('open', !isOpen);
-            };
-            tbody.appendChild(refHeader);
-
-            const refGroup = document.createElement('div');
-            refGroup.id = 'groupe-refuses';
-            refGroup.style.display = 'none';
-
-            refusesFiltres.forEach(item => {
-                const dateObj = new Date(item.date_messe + 'T00:00:00');
-                const card = document.createElement('div');
-                card.className = 'intention-card refuse';
-                card.dataset.intentionId = item.id;
-                card.style.opacity = '.75';
-                card.innerHTML =
-                    '<div>'
-                    + '<span class="date-badge" style="background:var(--ink-muted);">' + dateObj.toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) + '</span>'
-                    + '<div class="intention-nom" style="color:var(--ink-muted);">' + item.nom_intention + '</div>'
-                    + '<div class="intention-meta">Demandeur : ' + item.nom_donateur + '</div>'
-                    + '</div>'
-                    + '<div class="traite-info">Demande refusée'
-                    + '<div style="margin-top:8px;">'
-                    + '<button class="btn-danger-ghost" onclick="getIdAndCall(this, supprimerIntention)">🗑️ Supprimer</button>'
-                    + '</div></div>';
-                refGroup.appendChild(card);
-            });
-            tbody.appendChild(refGroup);
-        }
-
-        // Section prioritaire
-        renderSectionPrioritaire();
-
-        // Stats — calculé depuis intentionsGlobal déjà chargé
-        const year = new Date().getFullYear();
-        const n = intentionsGlobal.filter(i =>
-            i.statut === 'valide' && (i.date_messe || '').startsWith(year)
-        ).length;
-        document.getElementById('annual-count').textContent = n;
-        document.getElementById('label-annee-intentions').textContent = 'MESSES CÉLÉBRÉES EN ' + year;
-    }
-
-    function renderActionGroup(item) {
-        return '<div class="action-group">'
-            + '<div class="action-label">Disponibilités</div>'
-            + '<input type="date" id="d-' + item.id + '" value="' + item.date_messe + '" onchange="refreshTimeChoicesFromInput(this)">'
-            + '<div class="pretre-selector-card">'
-            + Object.entries(PRETRES).map(([id, p]) =>
-                `<button class="pretre-chip${(item.pretre_id||'molin')===id?' actif':''}" data-iid="${item.id}" data-pid="${id}"
-                    onclick="setPretre(this,'${item.id}','${id}')">${p.nom}</button>`
-              ).join('')
-            + '</div>'
-            + '<div id="times-' + item.id + '" class="time-selector-container"></div>'
-            + '<button class="btn-valider" onclick="getIdAndCall(this, finaliser)">✅ Valider cet horaire</button>'
-            + '<div class="inline-actions">'
-            + '<button class="btn-danger-ghost" onclick="getIdAndCall(this, refuser)">✖️ Refuser</button>'
-            + '<button class="btn-ghost" onclick="getIdAndCall(this, supprimerIntention)" style="color:var(--ink-muted);">🗑️ Supprimer</button>'
-            + '</div></div>';
-    }
-
-    function renderTraiteInfo(item) {
-        return '<div class="traite-info">'
-            + '<strong style="font-style:normal;">Confirmé :</strong> ' + (item.reponse_pretre || '—')
-            + '<div class="inline-actions" style="margin-top:10px;">'
-            + '<button class="btn-ghost" onclick="getIdAndCall(this, editer)">✏️ Modifier</button>'
-            + (!item.mail_envoye ? '<button class="btn-mail" onclick="getIdAndCall(this, ouvrirModalMailById)">📧 Vérifier le mail</button>' : '')
-            + '<button class="btn-danger-ghost" onclick="getIdAndCall(this, supprimerIntention)">🗑️ Supprimer</button>'
-            + '</div></div>';
-    }
-
-    async function filtrerRecherche(valeur) {
-        await renderIntentions(valeur);
-    }
-
-    const PRETRES = {
-        molin:        { nom: "l'abbé Molin",           titre: 'Abbé MOLIN',           role: 'curé'    },
-        legall:       { nom: "l'abbé Le Gall",          titre: 'Abbé LE GALL',         role: 'vicaire' },
+        return h + '</div>';
     };
 
-    function getPretreInfo(item) {
-        return PRETRES[item.pretre_id] || PRETRES.molin;
+    html += buildAlertCard('rouge', enAttente, '⏳ En attente de validation', 'Ces intentions n\'ont pas encore été traitées');
+    html += buildAlertCard('or',    mailsNonApprouves, '📧 Mails à approuver', 'Vérifiez et approuvez avant envoi');
+    html += buildAlertCard('vert',  mailsApprouves, '📤 Mails en file d\'envoi', 'Seront envoyés lors du prochain script');
+    html += '</div>';
+    section.innerHTML = html;
+}
+
+// ── Créneaux horaires ─────────────────────────────────────
+async function refreshTimeChoices(id, selectedHeure='') {
+    const inputDate = document.getElementById(`d-${id}`).value;
+    const container = document.getElementById(`times-${id}`);
+    const isMesse = e => /^(messe|grand.?messe)/i.test((e.summary||'').trim());
+
+    let matches = googleEventsGlobal.filter(e =>
+        (e.start.dateTime||e.start.date).split('T')[0] === inputDate && isMesse(e));
+
+    if (!matches.length && inputDate) {
+        container.innerHTML = '<span class="h-chip-private-label">Chargement…</span>';
+        try {
+            const tMin = new Date(inputDate+'T00:00:00').toISOString();
+            const tMax = new Date(inputDate+'T23:59:59').toISOString();
+            const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events?key=${GOOGLE_API_KEY}&timeMin=${tMin}&timeMax=${tMax}&singleEvents=true&orderBy=startTime&maxResults=20`);
+            const data = await resp.json();
+            matches = (data.items||[]).filter(isMesse);
+            googleEventsGlobal = [...googleEventsGlobal.filter(e=>(e.start.dateTime||e.start.date).split('T')[0]!==inputDate), ...(data.items||[])];
+        } catch(e) { console.error(e); }
     }
 
-    function genererTexteMail(item) {
-        const nomDonateur   = (item.nom_donateur || '').trim();
-        const texteIntention = (item.nom_intention || 'votre intention').trim();
-        const d = item.date_messe.split('-');
-        const dateFinaleFr = `${d[2]}/${d[1]}/${d[0]}`;
-        const heureFinale  = (item.heure_messe || 'à confirmer').replace(':', 'h');
-        const dateDemandee = item.date_originale_mail || '';
-
-        let phraseIntroduction = '';
-        if (dateDemandee && dateDemandee !== 'Non précisée' && dateDemandee !== dateFinaleFr) {
-            phraseIntroduction = `Le créneau du ${dateDemandee} étant déjà réservé, nous avons dû décaler votre demande pour "${texteIntention}".`;
-        } else {
-            phraseIntroduction = `La Messe pour "${texteIntention}" a bien été enregistrée.`;
-        }
-        let messagePretre = (item.reponse_pretre || '').trim();
-        // N'utiliser reponse_pretre que si c'est un court message personnel (< 120 car.)
-        // et qu'il ne ressemble pas à un mail déjà formaté
-        if (messagePretre
-            && messagePretre.length < 120
-            && !messagePretre.startsWith('La Messe')
-            && !messagePretre.startsWith('Bonjour')
-            && !messagePretre.includes('sera célébrée')) {
-            phraseIntroduction = `Concernant votre demande pour "${texteIntention}", ${messagePretre}.`;
-        }
-        const p = getPretreInfo(item);
-        return `Bonjour ${nomDonateur},\n\n${phraseIntroduction}\n\nLa Messe sera célébrée le ${dateFinaleFr} à ${heureFinale}.\n\nJe vous assure de ma prière,\n\n${p.titre},\n${p.role}\n\n---\n[Ce mail est envoyé automatiquement suite à l'accord de ${p.nom}.]`;
+    if (!matches.length) {
+        let h = '09:00';
+        if (selectedHeure && /^\d{2}:\d{2}$/.test(selectedHeure)) h = selectedHeure;
+        container.innerHTML = `<span class="h-chip-private-label">Messe privée — aucun créneau</span>
+            <input type="time" id="heure-privee-${id}" value="${h}"
+                style="width:auto;padding:8px 12px;border:2px solid var(--gold);border-radius:3px;
+                font-family:'Cinzel',serif;font-size:.9rem;background:var(--vellum-light);color:var(--ink);">`;
+        container.dataset.privee = 'true';
+        return;
     }
 
-    function ouvrirModalMailById(id) {
-        const data = mailsData[id];
-        if (!data) { AppModal.alert('⚠️', 'Données manquantes', 'Rechargez la page et réessayez.'); return; }
-        mailIdEnCours = id;
-        document.getElementById('mail-destinataire').innerText = data.email || '(email non renseigné)';
-        document.getElementById('mail-corps').value = data.texte;
-        document.getElementById('modal-mail').style.display = 'flex';
-    }
+    container.dataset.privee = 'false';
+    container.innerHTML = matches.map(m => {
+        const timeStr = new Date(m.start.dateTime).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}).replace(':','h');
+        const timeDb  = timeStr.replace('h',':');
+        const pris = intentionsGlobal.some(i => i.date_messe===inputDate && i.heure_messe===timeDb && i.statut==='valide' && String(i.id)!==String(id));
+        if (pris) return `<div class="h-chip taken" title="Déjà réservé">🔒 ${timeStr}</div>`;
+        const active = selectedHeure && selectedHeure.replace(':','h')===timeStr ? ' active' : '';
+        return `<div class="h-chip${active}" onclick="selectChip(this,'${id}')">${timeStr}</div>`;
+    }).join('');
+    container.querySelectorAll('.h-chip:not(.taken)').forEach((c,i) => { if(!selectedHeure && i===0) selectChip(c,id); });
+}
 
-    function fermerModalMail() {
-        document.getElementById('modal-mail').style.display = 'none';
-        mailIdEnCours = null;
-    }
+function selectChip(el, id) {
+    document.getElementById(`times-${id}`).querySelectorAll('.h-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+}
 
-    async function approuverMail() {
-        if (!mailIdEnCours) return;
-        const texteModifie = document.getElementById('mail-corps').value.trim();
-        if (!texteModifie) { AppModal.alert('⚠️', 'Mail vide', 'Le contenu du mail ne peut pas être vide.'); return; }
+function refreshTimeChoicesFromInput(input) {
+    const card = input.closest('[data-intention-id]');
+    if (card) refreshTimeChoices(card.dataset.intentionId);
+}
+
+// ── Edition nom inline ────────────────────────────────────
+async function editerNomIntention(id, btn) {
+    const span = document.getElementById('nom-display-'+id);
+    const ancien = span.textContent.trim();
+    const input = document.createElement('input');
+    input.type = 'text'; input.value = ancien;
+    input.style.cssText = 'font-family:inherit;font-size:inherit;border:1px solid var(--gold);border-radius:2px;padding:2px 6px;width:100%;background:var(--vellum-light);color:var(--ink);';
+    span.replaceWith(input);
+    btn.style.display = 'none';
+    input.focus(); input.select();
+    async function valider() {
+        const nouveau = input.value.trim();
+        if (!nouveau || nouveau === ancien) { input.replaceWith(span); btn.style.display=''; return; }
+        try {
+            const { error } = await maConnexion.from('intentions').update({nom_intention:nouveau}).eq('id',id);
+            if (error) throw error;
+            span.textContent = nouveau;
+            const found = intentionsGlobal.find(i => String(i.id)===String(id));
+            if (found) found.nom_intention = nouveau;
+            showToast('✅ Nom modifié');
+        } catch(e) { AppModal.alert('❌','Erreur',e.message); }
+        input.replaceWith(span); btn.style.display = '';
+    }
+    input.addEventListener('blur', valider);
+    input.addEventListener('keydown', e => {
+        if (e.key==='Enter') { e.preventDefault(); input.blur(); }
+        if (e.key==='Escape') { input.value=ancien; input.blur(); }
+    });
+}
+
+// ── Sélecteur prêtre ──────────────────────────────────────
+function setPretre(btn, intentionId, pretreId) {
+    const card = btn.closest('[data-intention-id]');
+    if (card) card.querySelectorAll('.pretre-chip').forEach(c => c.classList.remove('actif'));
+    btn.classList.add('actif');
+    const found = intentionsGlobal.find(i => String(i.id)===String(intentionId));
+    if (found) found.pretre_id = pretreId;
+    if (mailIdEnCours == intentionId && found)
+        document.getElementById('mail-corps').value = genererTexteMail(found);
+}
+
+// ── Actions ────────────────────────────────────────────────
+async function finaliser(id) {
+    const container = document.getElementById(`times-${id}`);
+    const estPrivee = container.dataset.privee === 'true';
+    let hLabel, hDb;
+    if (estPrivee) {
+        const inp = document.getElementById(`heure-privee-${id}`);
+        if (!inp || !inp.value) { AppModal.alert('⚠️','Horaire manquant','Veuillez indiquer l\'horaire.'); return; }
+        const [hh,mm] = inp.value.split(':');
+        hLabel = `${hh}h${mm}`; hDb = `${hh}:${mm}`;
+    } else {
+        const chip = document.querySelector(`#times-${id} .h-chip.active`);
+        if (!chip) { AppModal.alert('⚠️','Horaire manquant','Sélectionnez un créneau.'); return; }
+        hLabel = chip.innerText; hDb = hLabel.replace('h',':');
+    }
+    const d = document.getElementById(`d-${id}`).value;
+    const dateFr = new Date(d+'T00:00:00').toLocaleDateString('fr-FR');
+    const { data: doublon } = await maConnexion.from('intentions')
+        .select('id').eq('date_messe',d).eq('heure_messe',hDb).eq('statut','valide').neq('id',id).maybeSingle();
+    if (doublon) { AppModal.alert('⛔','Créneau indisponible','Ce créneau vient d\'être pris.'); return; }
+    const { data: info } = await maConnexion.from('intentions').select('nom_intention').eq('id',id).single();
+    const txt = `La Messe à votre intention (${info.nom_intention}) sera célébrée le ${dateFr} à ${hLabel}.`;
+    try {
+        const pretreId = intentionsGlobal.find(i => String(i.id)===String(id))?.pretre_id || 'molin';
         const { error } = await maConnexion.from('intentions').update({
-            reponse_pretre: texteModifie, mail_approuve: true, mail_envoye: false
-        }).eq('id', mailIdEnCours);
-        if (error) { AppModal.alert('❌', 'Erreur', error.message); return; }
-        fermerModalMail();
-        await AppModal.alert('✅', 'Mail approuvé', 'Le mail sera envoyé lors du prochain passage du script automatique.', 'OK', 'app-modal-btn-success');
+            date_messe:d, heure_messe:hDb, statut:'valide', pretre_id:pretreId,
+            reponse_pretre:txt, en_edition:false, mail_envoye:false, mail_approuve:false
+        }).eq('id',id);
+        if (error) throw error;
+        showToast('✅ Intention validée');
         chargerDemandes();
+    } catch(e) { AppModal.alert('❌','Erreur',e.message||'Veuillez réessayer.'); }
+}
+
+async function refuser(id) {
+    const ok = await AppModal.confirm('✖️','Refuser la demande ?','Un mail de refus sera préparé.','Refuser','app-modal-btn-danger');
+    if (!ok) return;
+    try {
+        const { error } = await maConnexion.from('intentions').update({
+            statut:'refuse', en_edition:false,
+            reponse_pretre:'Désolé, nous ne pouvons pas honorer cette demande pour la date demandée. N\'hésitez pas à nous recontacter pour une autre date.',
+            mail_approuve:true, mail_envoye:false
+        }).eq('id',id);
+        if (error) throw error;
+        showToast('✖️ Demande refusée'); chargerDemandes();
+    } catch(e) { AppModal.alert('❌','Erreur',e.message||'Impossible de refuser.'); }
+}
+
+async function editer(id) {
+    try {
+        const { error } = await maConnexion.from('intentions').update({en_edition:true,mail_approuve:false}).eq('id',id);
+        if (error) throw error; chargerDemandes();
+    } catch(e) { AppModal.alert('❌','Erreur',e.message); }
+}
+
+async function supprimerIntention(id) {
+    const ok = await AppModal.confirm('🗑️','Supprimer l\'intention ?','Cette action est irréversible.','Supprimer','app-modal-btn-danger');
+    if (!ok) return;
+    try {
+        const { error } = await maConnexion.from('intentions').delete().eq('id',id);
+        if (error) throw error;
+        showToast('🗑️ Intention supprimée'); chargerDemandes();
+    } catch(e) { AppModal.alert('❌','Erreur',e.message||'Impossible de supprimer.'); }
+}
+
+function getIdAndCall(btn, fn) {
+    const card = btn.closest('[data-intention-id]');
+    const id = card ? card.dataset.intentionId : null;
+    if (!id) return console.error('ID introuvable');
+    fn(id);
+}
+
+// ── Accordéon ─────────────────────────────────────────────
+function toggleMois(moisKey) {
+    const div   = document.getElementById('mois-'+moisKey);
+    const arrow = document.getElementById('arrow-'+moisKey);
+    const isOpen = div.style.display !== 'none';
+    div.style.display = isOpen ? 'none' : 'block';
+    arrow.classList.toggle('open', !isOpen);
+}
+
+// ── Navigation vers une intention ─────────────────────────
+function allerVersIntention(id, moisKey, ouvrirMail=false) {
+    const groupDiv = document.getElementById('mois-'+moisKey);
+    const arrow    = document.getElementById('arrow-'+moisKey);
+    if (groupDiv && groupDiv.style.display==='none') {
+        groupDiv.style.display = 'block';
+        if (arrow) arrow.classList.add('open');
     }
-
-    async function refreshTimeChoices(id, selectedHeure = '') {
-        const inputDate = document.getElementById(`d-${id}`).value;
-        const container = document.getElementById(`times-${id}`);
-        const estUneMesse = e => /messe/i.test((e.summary || '').trim());
-
-        // 1. Chercher dans le cache global
-        let matches = googleEventsGlobal.filter(e => {
-            const d = (e.start.dateTime || e.start.date).split('T')[0];
-            return d === inputDate && estUneMesse(e);
-        });
-
-        // 2. Si rien dans le cache, appel direct Google Calendar
-        if (matches.length === 0 && inputDate) {
-            container.innerHTML = '<p style="color:var(--ink-muted);font-size:.75rem;font-style:italic;">Chargement des créneaux…</p>';
-            try {
-                const tMin = new Date(inputDate + 'T00:00:00').toISOString();
-                const tMax = new Date(inputDate + 'T23:59:59').toISOString();
-                const url  = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
-                    + `?key=${GOOGLE_API_KEY}&timeMin=${tMin}&timeMax=${tMax}&singleEvents=true&orderBy=startTime&maxResults=20`;
-                const resp = await fetch(url);
-                const data = await resp.json();
-                matches = (data.items || []).filter(estUneMesse);
-                // Ajouter au cache pour éviter les requêtes répétées
-                googleEventsGlobal = [...googleEventsGlobal.filter(e => {
-                    const d = (e.start.dateTime || e.start.date).split('T')[0];
-                    return d !== inputDate;
-                }), ...data.items || []];
-            } catch(e) {
-                console.error('Erreur GCal refreshTimeChoices:', e);
-            }
+    setTimeout(() => {
+        const card = document.querySelector(`[data-intention-id="${id}"]`);
+        if (card) {
+            card.scrollIntoView({behavior:'smooth', block:'center'});
+            card.style.transition = 'box-shadow .3s';
+            card.style.boxShadow = '0 0 0 3px var(--gold)';
+            setTimeout(() => { card.style.boxShadow=''; }, 1800);
+            if (ouvrirMail) setTimeout(() => ouvrirModalMailById(id), 400);
         }
+    }, 150);
+}
 
-        if (matches.length === 0) {
-            let heureDefaut = '09:00';
-            if (selectedHeure && selectedHeure !== 'à confirmer' && /^\d{2}:\d{2}$/.test(selectedHeure)) heureDefaut = selectedHeure;
-            container.innerHTML =
-                '<p style="color:var(--gold);font-size:.75rem;font-weight:bold;margin-bottom:6px;font-family:\'Cinzel\',serif;">Messe privée — aucun créneau agenda</p>'
-                + '<input type="time" id="heure-privee-' + id + '" value="' + heureDefaut + '"'
-                + ' style="width:auto;padding:8px 10px;border:2px solid var(--gold);font-family:\'Cinzel\',serif;font-size:.9rem;">';
-            container.dataset.privee = 'true';
-            return;
-        }
-        container.dataset.privee = 'false';
-        container.innerHTML = matches.map(m => {
-            const timeStr = new Date(m.start.dateTime).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }).replace(':','h');
-            const timeDb  = timeStr.replace('h',':');
-            const estPris = intentionsGlobal.some(i => i.date_messe === inputDate && i.heure_messe === timeDb && i.statut === 'valide' && i.id !== id);
-            if (estPris) return `<div class="time-chip taken" title="Déjà réservé">🔒 ${timeStr}</div>`;
-            const isActive = selectedHeure && selectedHeure.replace(':','h') === timeStr ? 'active' : '';
-            return `<div class="time-chip ${isActive}" onclick="selectChip(this,'${id}')">${timeStr}</div>`;
-        }).join('');
-        const available = container.querySelectorAll('.time-chip:not(.taken)');
-        if (available.length === 1 && !selectedHeure) selectChip(available[0], id);
+// ── Mail ──────────────────────────────────────────────────
+function genererTexteMail(item) {
+    const nom = (item.nom_donateur||'').trim();
+    const intention = (item.nom_intention||'votre intention').trim();
+    const d = item.date_messe.split('-');
+    const dateFr = `${d[2]}/${d[1]}/${d[0]}`;
+    const heure  = (item.heure_messe||'à confirmer').replace(':','h');
+    const dateDemandee = item.date_originale_mail || '';
+    let phrase = dateDemandee && dateDemandee!=='Non précisée' && dateDemandee!==dateFr
+        ? `Le créneau du ${dateDemandee} étant déjà réservé, nous avons dû décaler votre demande pour "${intention}".`
+        : `La Messe pour "${intention}" a bien été enregistrée.`;
+    const msg = (item.reponse_pretre||'').trim();
+    if (msg && msg.length<120 && !msg.startsWith('La Messe') && !msg.startsWith('Bonjour') && !msg.includes('sera célébrée'))
+        phrase = `Concernant votre demande pour "${intention}", ${msg}.`;
+    const p = PRETRES[item.pretre_id] || PRETRES.molin;
+    return `Bonjour ${nom},\n\n${phrase}\n\nLa Messe sera célébrée le ${dateFr} à ${heure}.\n\nJe vous assure de ma prière,\n\n${p.titre},\n${p.role}\n\n---\n[Ce mail est envoyé automatiquement suite à l'accord de ${p.nom}.]`;
+}
+
+function ouvrirModalMailById(id) {
+    const data = mailsData[id];
+    if (!data) { AppModal.alert('⚠️','Données manquantes','Rechargez et réessayez.'); return; }
+    mailIdEnCours = id;
+    document.getElementById('mail-destinataire').textContent = data.email || '(email non renseigné)';
+    document.getElementById('mail-corps').value = data.texte;
+    document.getElementById('modal-mail').classList.add('open');
+}
+
+function fermerModalMail() {
+    document.getElementById('modal-mail').classList.remove('open');
+    mailIdEnCours = null;
+}
+
+async function approuverMail() {
+    if (!mailIdEnCours) return;
+    const texte = document.getElementById('mail-corps').value.trim();
+    if (!texte) { AppModal.alert('⚠️','Mail vide','Le contenu ne peut pas être vide.'); return; }
+    const { error } = await maConnexion.from('intentions').update({
+        reponse_pretre:texte, mail_approuve:true, mail_envoye:false
+    }).eq('id',mailIdEnCours);
+    if (error) { AppModal.alert('❌','Erreur',error.message); return; }
+    fermerModalMail();
+    await AppModal.alert('✅','Mail approuvé','Il sera envoyé lors du prochain passage du script.','OK','app-modal-btn-success');
+    chargerDemandes();
+}
+
+// Fermer modal en cliquant le fond
+document.getElementById('modal-mail').addEventListener('click', function(e) {
+    if (e.target === this) fermerModalMail();
+});
+
+// ── Synchronisation ───────────────────────────────────────
+async function lancerAction(action) {
+    const btn  = document.getElementById('btn-'+action);
+    const icon = document.getElementById('icon-'+action);
+    btn.disabled = true;
+    icon.textContent = '⏳';
+    showToast('⏳ Script lancé — patientez 10-15 secondes…');
+    try {
+        await fetch(APPS_SCRIPT_URL+'?action='+action, {mode:'no-cors'});
+        icon.textContent = '✅';
+        showToast('✅ Terminé — rechargement…');
+        setTimeout(() => { chargerDemandes(); icon.textContent = action==='importer'?'📥':'📤'; btn.disabled=false; }, 3000);
+    } catch(e) {
+        icon.textContent = '❌';
+        showToast('❌ Erreur — vérifiez l\'URL du script');
+        btn.disabled = false;
     }
+}
 
-    function selectChip(el, id) {
-        document.getElementById(`times-${id}`).querySelectorAll('.time-chip').forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
-    }
-
-    async function editerNomIntention(id, btn) {
-        const span = document.getElementById('nom-display-' + id);
-        const ancienNom = span.textContent.trim();
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = ancienNom;
-        input.style.cssText = 'font-family:inherit;font-size:inherit;border:1px solid var(--gold);border-radius:2px;padding:2px 6px;width:100%;background:var(--vellum-light);color:var(--ink);';
-        span.replaceWith(input);
-        btn.style.display = 'none';
-        input.focus();
-        input.select();
-
-        async function validerNom() {
-            const nouveauNom = input.value.trim();
-            if (!nouveauNom || nouveauNom === ancienNom) {
-                input.replaceWith(span);
-                btn.style.display = '';
-                return;
-            }
-            try {
-                const { error } = await maConnexion.from('intentions').update({ nom_intention: nouveauNom }).eq('id', id);
-                if (error) throw error;
-                span.textContent = nouveauNom;
-                // Mettre à jour le cache local
-                const found = intentionsGlobal.find(i => String(i.id) === String(id));
-                if (found) found.nom_intention = nouveauNom;
-                showToast('✅ Nom modifié');
-            } catch(e) {
-                AppModal.alert('❌', 'Erreur', e.message);
-            }
-            input.replaceWith(span);
-            btn.style.display = '';
-        }
-
-        input.addEventListener('blur', validerNom);
-        input.addEventListener('keydown', e => {
-            if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-            if (e.key === 'Escape') { input.value = ancienNom; input.blur(); }
-        });
-    }
-
-    function setPretre(btn, intentionId, pretreId) {
-        // Mettre à jour les chips visuellement
-        const card = btn.closest('[data-intention-id]') || btn.closest('.intention-card');
-        if (card) card.querySelectorAll('.pretre-chip').forEach(c => c.classList.remove('actif'));
-        btn.classList.add('actif');
-        // Stocker sur le bouton pour lecture dans finaliser
-        btn.dataset.iid = intentionId;
-        btn.dataset.pid = pretreId;
-        // Mettre à jour pretre_id dans le cache local
-        const found = intentionsGlobal.find(i => String(i.id) === String(intentionId));
-        if (found) found.pretre_id = pretreId;
-        // Régénérer le mail preview si la modal est ouverte
-        if (mailIdEnCours == intentionId && found) {
-            document.getElementById('mail-corps').value = genererTexteMail(found);
-        }
-    }
-
-    async function finaliser(id) {
-        const container = document.getElementById(`times-${id}`);
-        const estPrivee = container.dataset.privee === 'true';
-        let hLabel, hDb;
-        if (estPrivee) {
-            const inp = document.getElementById(`heure-privee-${id}`);
-            if (!inp || !inp.value) { AppModal.alert('⚠️', 'Horaire manquant', 'Veuillez indiquer l\'horaire de la Messe privée.'); return; }
-            const [hh, mm] = inp.value.split(':');
-            hLabel = `${hh}h${mm}`; hDb = `${hh}:${mm}`;
-        } else {
-            const chip = document.querySelector(`#times-${id} .time-chip.active`);
-            if (!chip) { AppModal.alert('⚠️', 'Horaire manquant', 'Veuillez sélectionner un horaire disponible.'); return; }
-            hLabel = chip.innerText; hDb = hLabel.replace('h',':');
-        }
-        const d = document.getElementById(`d-${id}`).value;
-        const dateFr = new Date(d + 'T00:00:00').toLocaleDateString('fr-FR');
-
-        const { data: doublon } = await maConnexion.from('intentions')
-            .select('id').eq('date_messe', d).eq('heure_messe', hDb).eq('statut', 'valide').neq('id', id).maybeSingle();
-        if (doublon) { AppModal.alert('⛔', 'Créneau indisponible', 'Ce créneau vient d\'être pris par une autre intention.'); return; }
-
-        const { data: info } = await maConnexion.from('intentions').select('nom_intention').eq('id', id).single();
-        const libelle = estPrivee ? 'Messe privée' : 'Messe';
-        const txt = `La ${libelle} à votre intention (${info.nom_intention}) sera célébrée le ${dateFr} à ${hLabel}.`;
-
-        // FIX 3 : try/catch sur l'update final
-        try {
-            const pretreId = intentionsGlobal.find(i => String(i.id) === String(id))?.pretre_id || 'molin';
-            const { error } = await maConnexion.from('intentions').update({
-                date_messe: d, heure_messe: hDb, statut: 'valide',
-                pretre_id: pretreId,
-                reponse_pretre: txt, en_edition: false,
-                mail_envoye: false, mail_approuve: false
-            }).eq('id', id);
-            if (error) throw error;
-            showToast('✅ Intention validée');
-            chargerDemandes();
-        } catch (e) {
-            AppModal.alert('❌', 'Erreur lors de la validation', e.message || 'Veuillez réessayer.');
-        }
-    }
-
-    function getIdAndCall(btn, fn) {
-        const card = btn.closest('[data-intention-id]');
-        const id = card ? card.dataset.intentionId : null;
-        if (!id) return console.error('ID introuvable');
-        fn(id);
-    }
-
-    function refreshTimeChoicesFromInput(input) {
-        const card = input.closest('[data-intention-id]');
-        const id = card ? card.dataset.intentionId : null;
-        if (id) refreshTimeChoices(id);
-    }
-
-    function toggleMois(moisKey) {
-        const div   = document.getElementById('mois-' + moisKey);
-        const arrow = document.getElementById('arrow-' + moisKey);
-        const isOpen = div.style.display !== 'none';
-        div.style.display = isOpen ? 'none' : 'block';
-        arrow.classList.toggle('open', !isOpen);
-    }
-
-    async function supprimerIntention(id) {
-        const ok = await AppModal.confirm('🗑️', "Supprimer l'intention ?", 'Cette action est irréversible. Aucun mail ne sera envoyé.', 'Supprimer', 'app-modal-btn-danger');
-        if (!ok) return;
-        try {
-            const { error } = await maConnexion.from('intentions').delete().eq('id', id);
-            if (error) throw error;
-            showToast('🗑️ Intention supprimée');
-            chargerDemandes();
-        } catch (e) {
-            AppModal.alert('❌', 'Erreur', e.message || 'Impossible de supprimer.');
-        }
-    }
-
-    // FIX 3 : try/catch sur editer
-    async function editer(id) {
-        try {
-            const { error } = await maConnexion.from('intentions').update({ en_edition: true, mail_approuve: false }).eq('id', id);
-            if (error) throw error;
-            chargerDemandes();
-        } catch (e) {
-            AppModal.alert('❌', 'Erreur', e.message || 'Impossible de passer en édition.');
-        }
-    }
-
-    // FIX 3 + FIX 4 : refuser avec mail de notification au donateur
-    async function refuser(id) {
-        const okRefus = await AppModal.confirm('✖️', 'Refuser la demande ?',
-            'Un mail de refus sera envoyé au donateur. La demande sera archivée.',
-            'Refuser', 'app-modal-btn-danger');
-        if (!okRefus) return;
-        try {
-            // FIX 4 : mail_approuve = true + statut = 'refuse'
-            // → Code.gs doit filtrer aussi statut=refuse pour envoyer le mail de refus
-            // On passe par un statut intermédiaire : on envoie d'abord le mail (approuve=true),
-            // puis le GS marquera mail_envoye=true. On met statut='refuse' directement.
-            const { error } = await maConnexion.from('intentions').update({
-                statut: 'refuse',
-                en_edition: false,
-                reponse_pretre: 'Désolé, nous ne pouvons pas honorer cette demande pour la date demandée. N\'hésitez pas à nous recontacter pour une autre date.',
-                mail_approuve: true,   // ← FIX 4 : le GS pourra envoyer le mail
-                mail_envoye: false
-            }).eq('id', id);
-            if (error) throw error;
-            showToast('✖️ Demande refusée — mail en attente d\'envoi');
-            chargerDemandes();
-        } catch (e) {
-            AppModal.alert('❌', 'Erreur', e.message || 'Impossible de refuser la demande.');
-        }
-    }
-
-    function renderSectionPrioritaire() {
-        const section = document.getElementById('section-prioritaire');
-        if (!section) return;
-
-        // Intentions en attente de traitement
-        const enAttente = intentionsGlobal.filter(i => i.statut === 'en_attente' || i.en_edition);
-        // Intentions validées dont le mail n'a pas encore été envoyé
-        const mailsNonEnvoyes = intentionsGlobal.filter(i =>
-            i.statut === 'valide' && !i.mail_envoye && !i.mail_approuve
-        );
-        const mailsEnAttente = intentionsGlobal.filter(i =>
-            i.statut === 'valide' && !i.mail_envoye && i.mail_approuve
-        );
-
-        if (enAttente.length === 0 && mailsNonEnvoyes.length === 0 && mailsEnAttente.length === 0) {
-            section.innerHTML = '';
-            return;
-        }
-
-        let html = '<div style="margin-bottom:20px;">';
-
-        // ── En attente de validation ──
-        if (enAttente.length > 0) {
-            html += `<div style="background:var(--gold-pale);border:1px solid var(--gold);border-left:4px solid var(--rubric);
-                border-radius:2px;padding:12px 16px;margin-bottom:10px;">
-                <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--rubric);
-                    text-transform:uppercase;margin-bottom:8px;">⏳ ${enAttente.length} intention${enAttente.length>1?'s':''} en attente de validation</div>`;
-            enAttente.forEach(i => {
-                const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
-                const moisKey = i.date_messe.substring(0, 7);
-                html += `<div onclick="allerVersIntention('${i.id}','${moisKey}')"
-                    style="display:flex;align-items:center;justify-content:space-between;padding:8px 6px;
-                    border-top:1px solid rgba(184,150,42,.2);font-family:'EB Garamond',serif;font-size:.9rem;
-                    cursor:pointer;border-radius:2px;transition:background .15s;"
-                    onmouseover="this.style.background='rgba(184,150,42,.08)'"
-                    onmouseout="this.style.background=''"  >
-                    <span style="font-style:italic;color:var(--ink);">${i.nom_intention}</span>
-                    <span style="color:var(--ink-muted);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — ${i.nom_donateur} →</span>
-                </div>`;
-            });
-            html += '</div>';
-        }
-
-        // ── Mails à approuver ──
-        if (mailsNonEnvoyes.length > 0) {
-            html += `<div style="background:rgba(184,150,42,.08);border:1px solid rgba(184,150,42,.4);border-left:4px solid var(--gold);
-                border-radius:2px;padding:12px 16px;margin-bottom:10px;">
-                <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--gold);
-                    text-transform:uppercase;margin-bottom:8px;">⚠️ ${mailsNonEnvoyes.length} mail${mailsNonEnvoyes.length>1?'s':''} à approuver</div>`;
-            mailsNonEnvoyes.forEach(i => {
-                const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
-                const moisKey = i.date_messe.substring(0, 7);
-                html += `<div onclick="allerVersIntention('${i.id}','${moisKey}', true)"
-                    style="display:flex;align-items:center;justify-content:space-between;padding:8px 6px;
-                    border-top:1px solid rgba(192,112,48,.2);font-family:'EB Garamond',serif;font-size:.9rem;
-                    cursor:pointer;border-radius:2px;transition:background .15s;"
-                    onmouseover="this.style.background='rgba(192,112,48,.08)'"
-                    onmouseout="this.style.background=''">
-                    <span style="font-style:italic;color:var(--ink);">${i.nom_intention}</span>
-                    <span style="color:var(--gold);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — 📧 Approuver →</span>
-                </div>`;
-            });
-            html += '</div>';
-        }
-
-        // ── Mails approuvés en attente d'envoi ──
-        if (mailsEnAttente.length > 0) {
-            html += `<div style="background:rgba(58,102,68,.12);border:1px solid var(--green);border-left:4px solid var(--green);
-                border-radius:2px;padding:12px 16px;margin-bottom:10px;">
-                <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--green);
-                    text-transform:uppercase;margin-bottom:8px;">📤 ${mailsEnAttente.length} mail${mailsEnAttente.length>1?'s':''} approuvé${mailsEnAttente.length>1?'s':''} — en attente d'envoi</div>`;
-            mailsEnAttente.forEach(i => {
-                const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
-                const moisKey = i.date_messe.substring(0, 7);
-                html += `<div onclick="allerVersIntention('${i.id}','${moisKey}')"
-                    style="display:flex;align-items:center;justify-content:space-between;padding:8px 6px;
-                    border-top:1px solid rgba(58,120,80,.2);font-family:'EB Garamond',serif;font-size:.9rem;
-                    cursor:pointer;border-radius:2px;transition:background .15s;"
-                    onmouseover="this.style.background='rgba(58,120,80,.08)'"
-                    onmouseout="this.style.background=''">
-                    <span style="font-style:italic;color:var(--ink);">${i.nom_intention}</span>
-                    <span style="color:var(--ink-muted);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — ${i.email_donateur || ''} →</span>
-                </div>`;
-            });
-            html += '</div>';
-        }
-
-        html += '</div>';
-        section.innerHTML = html;
-    }
-
-    async function lancerAction(action) {
-        const btnId  = 'btn-' + action;
-        const iconId = 'icon-' + action;
-        const btn  = document.getElementById(btnId);
-        const icon = document.getElementById(iconId);
-        btn.disabled = true;
-        icon.textContent = '⏳';
-        showToast('⏳ Script lancé — patientez 10-15 secondes…');
-        try {
-            // no-cors : Apps Script s'exécute mais ne renvoie pas de réponse lisible
-            await fetch(APPS_SCRIPT_URL + '?action=' + action, { mode: 'no-cors' });
-            icon.textContent = '✅';
-            showToast('✅ Terminé — rechargement en cours…');
-            setTimeout(() => {
-                chargerDemandes();
-                icon.textContent = action === 'importer' ? '📥' : '📤';
-                btn.disabled = false;
-            }, 3000);
-        } catch(e) {
-            icon.textContent = '❌';
-            showToast("❌ Erreur — vérifiez l'URL du script dans le code");
-            btn.disabled = false;
-        }
-    }
-
-    function allerVersIntention(id, moisKey, ouvrirMail = false) {
-        // 1. Ouvrir l'accordéon du bon mois s'il est fermé
-        const groupDiv = document.getElementById('mois-' + moisKey);
-        const arrow    = document.getElementById('arrow-' + moisKey);
-        if (groupDiv && groupDiv.style.display === 'none') {
-            groupDiv.style.display = 'block';
-            if (arrow) arrow.classList.add('open');
-        }
-
-        // 2. Trouver la carte et scroller vers elle
-        setTimeout(() => {
-            const card = document.querySelector('[data-intention-id="' + id + '"]');
-            if (card) {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Flash visuel pour repérer la carte
-                card.style.transition = 'box-shadow .3s';
-                card.style.boxShadow = '0 0 0 3px var(--gold)';
-                setTimeout(() => { card.style.boxShadow = ''; }, 1800);
-
-                // 3. Si demandé, ouvrir la modal mail directement
-                if (ouvrirMail) {
-                    setTimeout(() => ouvrirModalMailById(id), 400);
-                }
-            }
-        }, 150);
-    }
-
-    window.onload = chargerDemandes;
-    </script>
+window.onload = chargerDemandes;
+</script>
 </body>
 </html>
