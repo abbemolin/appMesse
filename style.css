@@ -122,7 +122,7 @@ h2{font-family:'Cinzel',serif;font-size:.72rem;font-weight:500;color:var(--rubri
 .btn-green{background:linear-gradient(135deg,var(--green) 0%,#274d30 100%);color:#faf7ef;border:none;padding:13px 20px;font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;border-radius:2px;cursor:pointer;width:100%;min-height:46px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .btn-ghost{background:transparent;color:var(--ink-muted);border:1px solid var(--border-soft);padding:9px 16px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;border-radius:2px;cursor:pointer;min-height:38px;transition:all .2s}
 .btn-ghost:hover{border-color:var(--border);color:var(--ink)}
-.btn-danger-ghost{background:none;border:1px solid #e8c4c4;color:var(--rubric);padding:9px 16px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;border-radius:2px;cursor:pointer;min-height:38px;transition:all .2s}
+.btn-danger-ghost{background:none;border:1px solid rgba(139,26,26,.25);color:var(--rubric);padding:9px 16px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;border-radius:2px;cursor:pointer;min-height:38px;transition:all .2s}
 .btn-danger-ghost:hover{background:rgba(139,26,26,.08);border-color:var(--rubric)}
 
 input,select,textarea{font-family:'EB Garamond',serif;font-size:1rem !important;padding:11px 13px;border-radius:2px;border:1px solid var(--border-soft);background:var(--vellum-light);color:var(--ink);width:100%;transition:border-color .2s;line-height:1.4}
@@ -136,7 +136,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);bo
 .messe-item-home:last-child{border-bottom:none}
 .messe-heure{font-family:'Cinzel',serif;color:var(--rubric);font-size:.88rem;font-weight:600}
 .messe-titre{font-weight:500;font-size:.95rem;font-style:italic}
-.intention-chip{display:inline-block;margin-top:4px;padding:3px 10px;border-radius:2px;font-size:.78rem;font-style:italic;background:#fdf3e8;color:var(--rubric);border-left:2px solid var(--rubric)}
+.intention-chip{display:inline-block;margin-top:4px;padding:3px 10px;border-radius:2px;font-size:.78rem;font-style:italic;background:rgba(139,26,26,.08);color:var(--rubric);border-left:2px solid var(--rubric)}
 .intention-chip.vide{background:var(--vellum);color:var(--ink-muted);border-left-color:var(--border-soft)}
 
 .messe-item{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;margin-bottom:9px;background:var(--vellum-light);border:1px solid var(--border-soft);border-radius:2px;box-shadow:0 1px 4px var(--shadow)}
