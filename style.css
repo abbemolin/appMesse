@@ -1,12 +1,93 @@
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cinzel:wght@400;500;600;700&display=swap');
 
 :root {
+    /* Parchemin */
     --vellum:#f5f0e4; --vellum-dark:#ede5cc; --vellum-light:#faf7ef;
+    /* Encre (texte) */
     --ink:#1a1108; --ink-soft:#3b2c18; --ink-muted:#6b5540;
+    /* Fonds fixes sombres (nav, hero, header modales) — NE S'INVERSENT PAS */
+    --dark-bg:#1a1108; --dark-bg-soft:#231a0e;
+    /* Rubrique */
     --rubric:#8b1a1a; --rubric-light:#b52222;
+    /* Or */
     --gold:#b8962a; --gold-light:#d4af37; --gold-pale:#f0e6b8;
-    --green:#3a6644; --border:#c9a840; --border-soft:#ddd09a;
+    /* Vert */
+    --green:#3a6644;
+    /* Bordures */
+    --border:#c9a840; --border-soft:#ddd09a;
     --shadow:rgba(26,17,8,.13);
+}
+
+/* ── Mode sombre ──────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Parchemin → sombre */
+        --vellum:#1c1710;
+        --vellum-dark:#151209;
+        --vellum-light:#231e15;
+        /* Encre → clair (texte sur fond sombre) */
+        --ink:#f0e8d5;
+        --ink-soft:#d4c9b0;
+        --ink-muted:#9a8f7a;
+        /* Fonds fixes sombres — IDENTIQUES en dark (déjà sombres) */
+        --dark-bg:#1a1108;
+        --dark-bg-soft:#231a0e;
+        /* Rubrique — légèrement plus vive */
+        --rubric:#c04040;
+        --rubric-light:#d45050;
+        /* Or — légèrement plus lumineux */
+        --gold:#c9a840;
+        --gold-light:#d4af37;
+        --gold-pale:#2e2510;
+        /* Vert */
+        --green:#4a8055;
+        /* Bordures */
+        --border:#7a6420;
+        --border-soft:#3a3020;
+        --shadow:rgba(0,0,0,.45);
+    }
+
+    body {
+        background-color: var(--vellum);
+        background-image:
+            radial-gradient(ellipse at 18% 12%,rgba(184,150,42,.06) 0%,transparent 55%),
+            radial-gradient(ellipse at 82% 88%,rgba(139,26,26,.05) 0%,transparent 55%),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");
+    }
+
+    input, select, textarea {
+        background: var(--vellum-light);
+        color: var(--ink);
+        border-color: var(--border-soft);
+    }
+    input::placeholder, textarea::placeholder { color: var(--ink-muted); }
+
+    .rule-gold::before { background: var(--vellum); }
+    .card { background: var(--vellum-light); border-color: var(--border-soft); }
+    .messe-item.prise { background: var(--vellum-light); }
+    .no-result-zone { background: var(--vellum-light); border-color: var(--border-soft); }
+    .mail-badge { background: #2a1e08; color: #c9a060; border-color: #5a4010; }
+    .mail-badge-sent { background: #0e2018; color: #5a9a6a; border-color: #2a5038; }
+    .search-container { background: var(--vellum-light); }
+    .app-modal-overlay { background: rgba(0,0,0,.75) !important; }
+    .app-modal-box { background: var(--vellum-light) !important; }
+    .toast { background: var(--vellum-light); color: var(--ink); }
+    .time-chip { background: var(--vellum-light); border-color: var(--border-soft); }
+    .time-chip.taken { background: #2a1515; color: #b07068; border-color: #4a2020; }
+    .intention-card { background: var(--vellum-light); }
+    .traite-info { background: var(--vellum); border-left-color: var(--border-soft); color: var(--ink-soft); }
+    #mail-corps, #mail-destinataire { background: var(--vellum); color: var(--ink); border-color: var(--border-soft); }
+    .modal-mail-content, .modal-content { background: var(--vellum); }
+
+    /* Boutons */
+    .btn-green  { background: linear-gradient(135deg,var(--green) 0%,#1e3a24 100%); color: #f5f0e4; }
+    .btn-save   { background: linear-gradient(135deg,var(--green) 0%,#1e3a24 100%); color: #f5f0e4; }
+    .btn-mail   { background: linear-gradient(135deg,#5a3a0e 0%,#3a2206 100%);    color: #f5f0e4; }
+    .btn-approuver { background: linear-gradient(135deg,var(--green) 0%,#1e3a24 100%); }
+    .btn-danger-ghost:hover { background: rgba(139,26,26,.15); }
+    .intention-chip  { background: rgba(139,26,26,.15); color: var(--rubric); border-left-color: var(--rubric); }
+    .intention-chip.vide { background: var(--vellum-light); color: var(--ink-muted); border-left-color: var(--border-soft); }
+    .intention-card.refuse::before { background: #7a4040; }
 }
 
 /* ── Mode sombre ──────────────────────────────────────────── */
