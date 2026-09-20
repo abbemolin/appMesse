@@ -307,6 +307,15 @@
         font-family: 'Cinzel', serif; font-size: .52rem;
         letter-spacing: .1em; color: var(--rubric);
     }
+    /* ── Mode sombre — accueil ───────────────────────────── */
+    @media (prefers-color-scheme: dark) {
+        .hero { /* déjà sombre par nature — fond --ink */ }
+        .pending-pill-inner { background: var(--vellum-light); border-color: var(--border-soft); }
+        .messe-card { background: var(--vellum-light); border-color: var(--border-soft); }
+        .messe-card-head { background: var(--vellum); border-color: var(--border-soft); }
+        .no-messe-card { background: var(--vellum-light); border-color: var(--border-soft); }
+        .section-sep-line { background: var(--border-soft); }
+    }
     </style>
 </head>
 <body>
@@ -389,7 +398,7 @@
      MODALE PROPRE DE LA MESSE
 ════════════════════════════════════════════════════════ -->
 <div id="modal-propre-acc" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;">
-  <div style="background:#fffdf7;border-radius:10px;max-width:680px;width:100%;margin:auto;box-shadow:0 8px 40px rgba(0,0,0,.25);">
+  <div style="background:var(--vellum-light);border-radius:10px;max-width:680px;width:100%;margin:auto;box-shadow:0 8px 40px rgba(0,0,0,.25);">
     <div style="background:#1a1108;border-radius:10px 10px 0 0;padding:16px 20px;display:flex;align-items:center;gap:10px;">
       <div style="flex:1;">
         <div id="propre-acc-date" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;color:#b8962a;text-transform:uppercase;margin-bottom:4px;"></div>
@@ -397,7 +406,7 @@
       </div>
       <button onclick="fermerPropreAcc()" style="background:none;border:none;color:#b8962a;font-size:1.4rem;cursor:pointer;line-height:1;padding:4px 8px;flex-shrink:0;">✕</button>
     </div>
-    <div style="background:#f5f0e4;border-bottom:1px solid #d4c9a8;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div style="background:#f5f0e4;border-bottom:1px solid var(--border-soft);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <div style="display:flex;border:1px solid #b8962a;border-radius:6px;overflow:hidden;">
         <button id="propre-acc-btn-la" onclick="setPropraAccLang('la')" style="padding:6px 16px;background:#b8962a;color:#fff;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;">LATIN</button>
         <button id="propre-acc-btn-fr" onclick="setPropraAccLang('fr')" style="padding:6px 16px;background:transparent;color:#b8962a;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;">FRANÇAIS</button>
@@ -405,7 +414,7 @@
       <div id="propre-acc-multi" style="display:none;border:1px solid #8b1a1a;border-radius:6px;overflow:hidden;"></div>
     </div>
     <div id="propre-acc-pieces" style="padding:20px;display:flex;flex-direction:column;gap:18px;max-height:65vh;overflow-y:auto;font-family:Georgia,serif;"></div>
-    <div style="padding:12px 20px;border-top:1px solid #d4c9a8;text-align:center;">
+    <div style="padding:12px 20px;border-top:1px solid var(--border-soft);text-align:center;">
       <button onclick="fermerPropreAcc()" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:none;border:none;color:#8b7355;cursor:pointer;">Fermer</button>
     </div>
   </div>
@@ -708,7 +717,7 @@ function renderPropreAccPieces(){
         var col=PIECE_COLORS_ACC[p.part_code]||'#1a1108';
         var ref=p.reference?'<span style="font-size:.85em;color:#8b7355;font-style:italic;margin-left:8px;">'+escHA(p.reference)+'</span>':'';
         var badge=p._du_commun?'<span style="font-size:.7em;color:#8b7355;font-style:italic;margin-left:8px;">du commun</span>':'';
-        return '<div><div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:'+col+';border-bottom:1px solid '+col+'22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;"><span>'+escHA(p.part_label.replace(' (commun)',''))+'</span>'+ref+badge+'</div><div style="font-size:1.05rem;line-height:1.75;color:#1a1108;white-space:pre-wrap;">'+escHA(txt)+'</div></div>';
+        return '<div><div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:'+col+';border-bottom:1px solid '+col+'22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;"><span>'+escHA(p.part_label.replace(' (commun)',''))+'</span>'+ref+badge+'</div><div style="font-size:1.05rem;line-height:1.75;color:var(--ink);white-space:pre-wrap;">'+escHA(txt)+'</div></div>';
     }).join('');
 }
 function setPropraAccLang(l){_propreAccLang=l;document.getElementById('propre-acc-btn-la').style.background=l==='la'?'#b8962a':'transparent';document.getElementById('propre-acc-btn-la').style.color=l==='la'?'#fff':'#b8962a';document.getElementById('propre-acc-btn-fr').style.background=l==='fr'?'#b8962a':'transparent';document.getElementById('propre-acc-btn-fr').style.color=l==='fr'?'#fff':'#b8962a';renderPropreAccPieces();}
