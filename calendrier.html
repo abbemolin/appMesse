@@ -484,8 +484,11 @@ function renderCarteDate(dateFr) {
 function renderCarte(dateISO, dateFr, heureFr, summary, estLibre, intention) {
     // En-tête heure
     const [h, m] = heureFr.includes('h') ? heureFr.split('h') : heureFr.split(':');
-    const typeLabel = summary.toLowerCase().includes('chantée') ? 'Messe chantée'
-                    : summary.toLowerCase().includes('anticipée') ? 'Messe anticipée'
+    const _sl = (summary||'').toLowerCase();
+    const typeLabel = _sl.includes('solennelle')        ? 'Grand-Messe solennelle'
+                    : /grand.?messe/i.test(summary)     ? 'Grand-Messe'
+                    : _sl.includes('chantée')           ? 'Messe chantée'
+                    : _sl.includes('anticipée')         ? 'Messe anticipée'
                     : 'Messe lue';
 
     const dfEsc = dateFr.replace(/'/g,"&#39;");
@@ -609,7 +612,7 @@ async function chargerAgenda() {
         document.getElementById('chargement').style.display = 'none';
         if (!data.items) return;
 
-        const messes = data.items.filter(e => /messe/i.test((e.summary||'').trim()));
+        const messes = data.items.filter(e => /^(messe|grand.?messe)/i.test((e.summary||'').trim()));
         if (!messes.length) return;
 
         const dates  = messes.map(e => (e.start.dateTime||e.start.date).split('T')[0]);
@@ -765,7 +768,7 @@ async function validerRecherche() {
             maConnexion.from('intentions').select('*').eq('date_messe',val).eq('statut','valide')
         ]);
         const gcalData = await gcalResp.json();
-        const messes   = (gcalData.items||[]).filter(e => /messe/i.test((e.summary||'')));
+        const messes   = (gcalData.items||[]).filter(e => /^(messe|grand.?messe)/i.test((e.summary||'').trim()));
         const liste    = document.getElementById('liste-globale');
         if (messes.length > 0) {
             await chargerOrdo(val, val);
