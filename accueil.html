@@ -538,7 +538,7 @@ async function chargerJour() {
 
         const gcalData = await gcalResp.json();
         const messes = (gcalData.items || []).filter(e =>
-            /^messe/i.test((e.summary || '').trim()));
+            /^(messe|grand.?messe)/i.test((e.summary || '').trim()));
 
         const couleur = COULEURS_VALIDES.includes(ordo && ordo.couleur) ? ordo.couleur : null;
 
@@ -551,9 +551,12 @@ async function chargerJour() {
             const dt  = new Date(evt.start.dateTime || evt.start.date);
             const hh  = dt.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
             const [h, m] = hh.split(':');
-            const typeMesse = evt.summary.toLowerCase().includes('chantée') ? 'Messe chantée'
-                            : evt.summary.toLowerCase().includes('anticipée') ? 'Messe anticipée'
-                            : 'Messe lue';
+            const _s = (evt.summary||'').toLowerCase();
+        const typeMesse = _s.includes('solennelle') ? 'Grand-Messe solennelle'
+                        : /grand.?messe/i.test(evt.summary)  ? 'Grand-Messe'
+                        : _s.includes('chantée')             ? 'Messe chantée'
+                        : _s.includes('anticipée')           ? 'Messe anticipée'
+                        : 'Messe lue';
             let intention = (intentions||[]).find(i => i.google_event_id === evt.id);
             if (!intention) intention = (intentions||[]).find(i =>
                 (i.heure_messe||'').substring(0,5) === hh.substring(0,5));
