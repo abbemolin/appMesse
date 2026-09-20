@@ -507,6 +507,29 @@
         flex-shrink: 0;
     }
     @media (max-width: 700px) { .sidebar-toggle { display: flex; align-items: center; gap: 5px; } }
+
+    /* ── Mode sombre — bible ─────────────────────────────── */
+    @media (prefers-color-scheme: dark) {
+        .bible-sidebar      { background: #0e0c08; border-right-color: var(--border); }
+        .sidebar-header     { border-color: rgba(184,150,42,.2); }
+        .sidebar-search input { background: rgba(255,255,255,.05); color: var(--ink); }
+        .sidebar-book       { color: rgba(240,230,184,.5); }
+        .sidebar-book:hover { background: rgba(184,150,42,.1); color: var(--ink); }
+        .sidebar-book.active{ background: rgba(184,150,42,.15); }
+        .bible-main         { background: var(--vellum); }
+        .bible-topbar       { background: var(--vellum-light); border-color: var(--border-soft); }
+        .chapter-btn        { border-color: var(--border-soft); color: var(--ink-muted); }
+        .chapter-select     { background: var(--vellum-light); color: var(--ink); border-color: var(--border-soft); }
+        .bible-text-wrap    { background: var(--vellum); }
+        .bible-paragraph    { color: var(--ink); }
+        .search-modal       { background: var(--vellum-light); border-top-color: var(--gold); }
+        .search-modal-head  { border-color: var(--border-soft); }
+        .search-modal-input { background: var(--vellum); color: var(--ink); border-color: var(--border-soft); }
+        .search-result-item { border-color: var(--border-soft); }
+        .search-result-item:hover { background: var(--vellum); }
+        .search-count       { background: var(--vellum); border-color: var(--border-soft); }
+        .drag-ghost         { background: var(--vellum-light); border-color: var(--gold); }
+    }
     </style>
 </head>
 <body>
