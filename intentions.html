@@ -10,25 +10,29 @@
     <style>
     .pretre-selector { display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
     .pretre-btn {
-        padding:8px 18px; border:1px solid #e8e0cc; border-radius:2px;
-        background:#faf7f0; font-family:'Cinzel',serif; font-size:.6rem;
-        letter-spacing:.12em; text-transform:uppercase; color:#8b7355; cursor:pointer; transition:all .2s;
+        padding:8px 18px; border:1px solid var(--border-soft); border-radius:2px;
+        background:var(--vellum-light); font-family:'Cinzel',serif; font-size:.6rem;
+        letter-spacing:.12em; text-transform:uppercase; color:var(--ink-muted); cursor:pointer; transition:all .2s;
     }
-    .pretre-btn:hover { border-color:#b8962a; color:#b8962a; }
-    .pretre-btn.actif { background:#f5edcf; border-color:#b8962a; color:#1a1108; }
+    .pretre-btn:hover { border-color:var(--gold); color:var(--gold); }
+    .pretre-btn.actif { background:var(--gold-pale); border-color:var(--gold); color:var(--ink); }
     </style>
     <style>
     .pretre-selector-card {
         display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 6px;
     }
     .pretre-chip {
-        padding: 5px 12px; border: 1px solid #e8e0cc; border-radius: 2px;
-        background: #faf7f0; font-family: 'Cinzel', serif; font-size: .58rem;
-        letter-spacing: .1em; text-transform: uppercase; color: #8b7355;
+        padding: 5px 12px; border: 1px solid var(--border-soft); border-radius: 2px;
+        background: var(--vellum-light); font-family: 'Cinzel', serif; font-size: .58rem;
+        letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted);
         cursor: pointer; transition: all .2s;
     }
-    .pretre-chip:hover { border-color: #b8962a; color: #b8962a; }
-    .pretre-chip.actif { background: #f5edcf; border-color: #b8962a; color: #1a1108; font-weight: 600; }
+    .pretre-chip:hover { border-color: var(--gold); color: var(--gold); }
+    .pretre-chip.actif { background: var(--gold-pale); border-color: var(--gold); color: var(--ink); font-weight: 600; }
+    @media (prefers-color-scheme: dark) {
+        .pretre-btn, .pretre-chip { background: var(--vellum-light); border-color: var(--border-soft); }
+        .pretre-btn.actif, .pretre-chip.actif { background: var(--gold-pale); color: var(--ink); }
+    }
     </style>
 </head>
 <body>
