@@ -675,9 +675,9 @@
 
         // ── Mails à approuver ──
         if (mailsNonEnvoyes.length > 0) {
-            html += `<div style="background:#fff8f0;border:1px solid #e8a060;border-left:4px solid #c07030;
+            html += `<div style="background:rgba(184,150,42,.08);border:1px solid rgba(184,150,42,.4);border-left:4px solid var(--gold);
                 border-radius:2px;padding:12px 16px;margin-bottom:10px;">
-                <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:#8b4010;
+                <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--gold);
                     text-transform:uppercase;margin-bottom:8px;">⚠️ ${mailsNonEnvoyes.length} mail${mailsNonEnvoyes.length>1?'s':''} à approuver</div>`;
             mailsNonEnvoyes.forEach(i => {
                 const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
@@ -689,7 +689,7 @@
                     onmouseover="this.style.background='rgba(192,112,48,.08)'"
                     onmouseout="this.style.background=''">
                     <span style="font-style:italic;color:var(--ink);">${i.nom_intention}</span>
-                    <span style="color:#8b4010;font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — 📧 Approuver →</span>
+                    <span style="color:var(--gold);font-size:.78rem;white-space:nowrap;margin-left:10px;">${d} — 📧 Approuver →</span>
                 </div>`;
             });
             html += '</div>';
@@ -697,9 +697,9 @@
 
         // ── Mails approuvés en attente d'envoi ──
         if (mailsEnAttente.length > 0) {
-            html += `<div style="background:#f0f8f0;border:1px solid #60a870;border-left:4px solid #3a7850;
+            html += `<div style="background:rgba(58,102,68,.12);border:1px solid var(--green);border-left:4px solid var(--green);
                 border-radius:2px;padding:12px 16px;margin-bottom:10px;">
-                <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:#2a5830;
+                <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--green);
                     text-transform:uppercase;margin-bottom:8px;">📤 ${mailsEnAttente.length} mail${mailsEnAttente.length>1?'s':''} approuvé${mailsEnAttente.length>1?'s':''} — en attente d'envoi</div>`;
             mailsEnAttente.forEach(i => {
                 const d = new Date(i.date_messe + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
