@@ -20,7 +20,7 @@
     ════════════════════════════════════════════════════════ */
     .hero {
         position: relative;
-        background: var(--ink);
+        background: var(--dark-bg);
         overflow: hidden;
         padding: calc(env(safe-area-inset-top, 0px) + 20px) 0 0;
         animation: heroIn .5s ease both;
@@ -220,7 +220,7 @@
     .ordo-pip-sm.Vert   { background: #3a6644; }
     .ordo-pip-sm.Violet { background: #5c2d7a; }
     .ordo-pip-sm.Rose   { background: #d4688a; }
-    .ordo-pip-sm.Noir   { background: #1a1108; }
+    .ordo-pip-sm.Noir   { background: var(--dark-bg); }
     .ordo-fete-sm {
         font-family: 'EB Garamond', serif; font-style: italic;
         font-size: .9rem; color: var(--ink-soft); line-height: 1.3;
@@ -400,7 +400,7 @@
 ════════════════════════════════════════════════════════ -->
 <div id="modal-propre-acc" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;">
   <div style="background:var(--vellum-light);border-radius:10px;max-width:680px;width:100%;margin:auto;box-shadow:0 8px 40px rgba(0,0,0,.25);">
-    <div style="background:#1a1108;border-radius:10px 10px 0 0;padding:16px 20px;display:flex;align-items:center;gap:10px;">
+    <div style="background:var(--dark-bg);border-radius:10px 10px 0 0;padding:16px 20px;display:flex;align-items:center;gap:10px;">
       <div style="flex:1;">
         <div id="propre-acc-date" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;color:#b8962a;text-transform:uppercase;margin-bottom:4px;"></div>
         <div id="propre-acc-fete" style="font-family:'Cinzel',serif;font-size:.95rem;color:#f5f0e4;letter-spacing:.04em;"></div>
@@ -632,7 +632,7 @@ function renderMesseCard({ h, m, typeMesse, ordo, couleur, intention, isoDate, m
 
 function renderNoMesse(isoDate, massKey) {
     const proprebtn = massKey
-        ? `<button onclick="ouvrirPropreAccueil('${isoDate}')" style="margin-top:14px;display:inline-flex;align-items:center;gap:7px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:9px 20px;background:var(--ink);color:var(--gold);border:none;border-radius:2px;cursor:pointer;">✦ Propre de la Messe</button>`
+        ? `<button onclick="ouvrirPropreAccueil('${isoDate}')" style="margin-top:14px;display:inline-flex;align-items:center;gap:7px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:9px 20px;background:var(--dark-bg);color:var(--gold);border:none;border-radius:2px;cursor:pointer;">✦ Propre de la Messe</button>`
         : '';
     return `<div class="no-messe-card">
         <span class="no-messe-icon">🕯</span>
