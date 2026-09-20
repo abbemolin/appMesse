@@ -264,6 +264,16 @@
         display: none;
     }
     .drop-indicator.visible { display: block; }
+
+    /* ── Mode sombre — semaine ───────────────────────────── */
+    @media (prefers-color-scheme: dark) {
+        .preview-week       { background: var(--vellum-light); border-color: var(--border-soft); }
+        .preview-day        { background: var(--vellum);       border-color: var(--border-soft); }
+        .preview-day-header { background: var(--vellum-light); border-color: var(--border-soft); }
+        .preview-day.drop-target { background: rgba(184,150,42,.08); }
+        .semaine-header     { background: var(--vellum-light); border-color: var(--border-soft); }
+        .drag-ghost         { background: var(--vellum-light); border-color: var(--gold); color: var(--ink); }
+    }
     </style>
 </head>
 <body>
