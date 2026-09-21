@@ -332,7 +332,228 @@
 <script src="menu.js"></script>
 <script>
 
-// ── Mapping heures canoniales → sections DivinumOfficium ──
+// ── Calcul de Pâques ──────────────────────────────────────
+function getEaster(year) {
+    const a = year % 19;
+    const b = Math.floor(year / 100), c = year % 100;
+    const d = Math.floor(b / 4), e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19*a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4), k = c % 4;
+    const l = (32 + 2*e + 2*i - h - k) % 7;
+    const m = Math.floor((a + 11*h + 22*l) / 451);
+    const month = Math.floor((h + l - 7*m + 114) / 31);
+    const day   = ((h + l - 7*m + 114) % 31) + 1;
+    return new Date(year, month-1, day);
+}
+
+function addDays(d, n) {
+    const r = new Date(d); r.setDate(r.getDate() + n); return r;
+}
+function diffDays(a, b) {
+    return Math.round((a - b) / 86400000);
+}
+// Dimanche précédant ou égal à d
+function prevSunday(d) {
+    const r = new Date(d);
+    r.setDate(r.getDate() - r.getDay());
+    return r;
+}
+
+// Mapping semaine après la Pentecôte → fichier de lectures scripturaires
+const PENT_TO_NUM = {
+    1:'081',2:'082',3:'083',4:'084',5:'085',
+    6:'091',7:'092',8:'093',9:'094',10:'095',
+    11:'101',12:'102',13:'103',14:'104',15:'105',
+    16:'111',17:'112',18:'113',19:'114',20:'115',
+    21:'112',22:'113',23:'114',24:'115',
+};
+
+// ── Mapping date → fichiers Tempora ───────────────────────
+function getBrevFiles(d) {
+    const year  = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const day   = d.getDate();
+    // Convention DO : 0=dim, 1=lun, …, 6=sam
+    const dow   = d.getDay();  // 0=dim natif JS ✓
+
+    const easter      = getEaster(year);
+    const pentecost   = addDays(easter, 49);
+    const ashWed      = addDays(easter, -46);
+    const christmas   = new Date(year, 11, 25);
+    const epiphany    = new Date(year, 0, 6);
+
+    // 1er dimanche de l'Avent (4 dimanches avant Noël)
+    const adv1 = addDays(prevSunday(addDays(christmas, -1)), -21);
+
+    // 1er dimanche après l'Épiphanie
+    let epi1Sun = addDays(epiphany, (7 - epiphany.getDay()) % 7);
+    if (epi1Sun <= epiphany) epi1Sun = addDays(epi1Sun, 7);
+
+    // Septuagésime = dimanche -63j avant Pâques
+    const septuagesima = addDays(prevSunday(addDays(ashWed, -1)), -14);
+
+    // Fichier sancti MM-DD
+    const sanctiFile = String(month).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+
+    let temporaFile = null;
+    let scripturaFile = null;  // fichier de lectures scripturaires numérique
+
+    const dDate = new Date(year, month-1, day);
+
+    if (dDate >= adv1 || month === 12 && day >= 25) {
+        // ── Avent ──────────────────────────────────────────
+        const weekSun = prevSunday(dDate);
+        const wk = Math.floor(diffDays(weekSun, adv1) / 7) + 1;
+        const w = Math.min(Math.max(wk, 1), 4);
+        temporaFile = `Adv${w}-${dow}`;
+
+    } else if (dDate >= new Date(year, 11, 25) || dDate < epiphany) {
+        // ── Noël ───────────────────────────────────────────
+        const nat = diffDays(dDate, new Date(year-1,11,25));
+        temporaFile = nat <= 7 ? 'Nat1-0' : 'Nat2-0';
+
+    } else if (dDate < epi1Sun) {
+        temporaFile = null;
+
+    } else if (dDate < septuagesima) {
+        // ── Temps après l'Épiphanie ─────────────────────────
+        const weekSun = prevSunday(dDate);
+        const wk = Math.floor(diffDays(weekSun, epi1Sun) / 7) + 1;
+        temporaFile = `Epi${Math.min(wk,6)}-${dow}`;
+
+    } else if (dDate < ashWed) {
+        // ── Septuagésime / Sexagésime / Quinquagésime ───────
+        const weekSun = prevSunday(dDate);
+        const wk = Math.floor(diffDays(weekSun, septuagesima) / 7) + 1;
+        const prefixes = ['Quadp1','Quadp2','Quadp3'];
+        temporaFile = `${prefixes[Math.min(wk,3)-1]}-${dow}`;
+
+    } else if (dDate < easter) {
+        // ── Carême ─────────────────────────────────────────
+        const weekSun = prevSunday(dDate);
+        const lentStart = addDays(ashWed, (7 - ashWed.getDay()) % 7);
+        const wk = Math.max(1, Math.floor(diffDays(weekSun, lentStart) / 7) + 1);
+        temporaFile = `Quad${Math.min(wk,6)}-${dow}`;
+
+    } else if (dDate < pentecost) {
+        // ── Temps pascal ───────────────────────────────────
+        const wk = Math.floor(diffDays(dDate, easter) / 7);
+        temporaFile = `Pasc${wk}-${dow}`;
+
+    } else if (diffDays(dDate, pentecost) < 7) {
+        // ── Octave de Pentecôte ─────────────────────────────
+        temporaFile = `Pasc7-${dow}`;
+
+    } else {
+        // ── Temps après la Pentecôte ────────────────────────
+        const weekSun = prevSunday(dDate);
+        const wkAfterPent = Math.floor(diffDays(weekSun, pentecost) / 7);
+        const wkNum = String(wkAfterPent).padStart(2,'0');
+        temporaFile = `Pent${wkNum}-${dow}`;
+
+        // Fichier de lectures scripturaires (081-115)
+        const numKey = PENT_TO_NUM[wkAfterPent];
+        if (numKey) scripturaFile = `${numKey}-${dow}`;
+    }
+
+    const ordo = (typeof Ordo1962 !== 'undefined')
+        ? Ordo1962.getDay(year, month, day) : null;
+    const feteName = ordo && ordo.fete ? ordo.fete
+        : temporaFile ? temporaFile : '—';
+
+    return { sanctiFile, temporaFile, scripturaFile, ordo, feteName };
+}
+
+function naviguerJour(delta) {
+    _offset += delta;
+    chargerOffice();
+}
+
+function setHeure(btn) {
+    document.querySelectorAll('.heure-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _heure = btn.dataset.heure;
+    afficherHeure();
+}
+
+function setLang(lang) {
+    _lang = lang;
+    ['la','fr','bi'].forEach(l => {
+        const b = document.getElementById('btn-'+l);
+        if (b) b.classList.toggle('active', l === lang);
+    });
+    afficherHeure();
+}
+
+// ── Chargement depuis Supabase ────────────────────────────
+async function chargerOffice() {
+    if (typeof maConnexion === 'undefined') { setTimeout(chargerOffice, 300); return; }
+
+    const d = dateNav();
+    document.getElementById('brev-date').textContent =
+        JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear();
+
+    const { sanctiFile, temporaFile, scripturaFile, ordo, feteName } = getBrevFiles(d);
+    document.getElementById('brev-fete').textContent = feteName;
+
+    document.getElementById('brev-content').innerHTML =
+        '<div class="brev-loading">Chargement de l\'office…</div>';
+
+    const cacheKey = [sanctiFile, temporaFile, scripturaFile].join('|');
+    if (_cache[cacheKey]) { _currentSections = _cache[cacheKey]; afficherHeure(); return; }
+
+    const EXCL = '("Rank","Rule","Name","Officium","Comment")';
+
+    try {
+        const queries = [];
+
+        // Sancti du jour
+        queries.push(maConnexion.from('breviaire')
+            .select('dossier,fichier,section,text_la,text_fr')
+            .eq('dossier','Sancti').eq('fichier', sanctiFile)
+            .not('section','in',EXCL));
+
+        // Temporal propre
+        if (temporaFile) {
+            queries.push(maConnexion.from('breviaire')
+                .select('dossier,fichier,section,text_la,text_fr')
+                .eq('dossier','Tempora').eq('fichier', temporaFile)
+                .not('section','in',EXCL));
+        }
+
+        // Lectures scripturaires per annum
+        if (scripturaFile) {
+            queries.push(maConnexion.from('breviaire')
+                .select('dossier,fichier,section,text_la,text_fr')
+                .eq('dossier','Tempora').eq('fichier', scripturaFile)
+                .not('section','in',EXCL));
+        }
+
+        const results = await Promise.all(queries);
+        let sections = [];
+        results.forEach(r => { if (!r.error && r.data) sections = sections.concat(r.data); });
+
+        // Dédupliquer par section (sancti prioritaire sur temporal)
+        const seen = new Set();
+        sections = sections.filter(s => {
+            const k = s.section;
+            if (seen.has(k)) return false;
+            seen.add(k);
+            return true;
+        });
+
+        _cache[cacheKey] = sections;
+        _currentSections = sections;
+        afficherHeure();
+
+    } catch(e) {
+        console.error(e);
+        document.getElementById('brev-content').innerHTML =
+            '<div class="brev-empty">Erreur de chargement.</div>';
+    }
+}
 const HEURE_SECTIONS = {
     'Matines': [
         'Ant 1','Ant 2','Ant 3','Ant Matutinum',
@@ -435,166 +656,6 @@ function dateNav() {
 }
 
 // ── Trouver le fichier bréviaire pour une date ────────────
-function getBrevFiles(d) {
-    const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate();
-    const dow = d.getDay(); // 0=dim
-
-    const ordo = (typeof Ordo1962 !== 'undefined')
-        ? Ordo1962.getDay(y, m, day) : null;
-
-    // Fichier Sancti : MM-DD
-    const sanctiFile = String(m).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-
-    // Fichier Tempora : utiliser l'ordo1962 si disponible
-    // Sinon fallback sur calcul simple
-    let temporaFile = null;
-    if (ordo && ordo.source === 'sanctoral') {
-        temporaFile = null; // Pas de propre temporal ce jour
-    }
-
-    // Mapping semaine liturgique → fichier Tempora
-    // On utilise le cycle du Psautier : semaine du Psautier = semaine de l'an
-    const weekNum = getWeekOfYear(d);
-    temporaFile = getTemporaFile(d, ordo);
-
-    return { sanctiFile, temporaFile, ordo };
-}
-
-function getWeekOfYear(d) {
-    const start = new Date(d.getFullYear(), 0, 1);
-    return Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7);
-}
-
-function getTemporaFile(d, ordo) {
-    // Correspondance simplifiée ordo → fichier Tempora
-    if (!ordo) return null;
-    const fete = (ordo.fete || '').toLowerCase();
-    const dow = d.getDay();
-    const dowChar = dow; // 0=dim, 1=lun...
-
-    // Mapping basé sur le nom de la fête
-    const mappings = [
-        [/avent.*1/i, 'Adv1'], [/avent.*2/i, 'Adv2'],
-        [/avent.*3/i, 'Adv3'], [/avent.*4/i, 'Adv4'],
-        [/noël|nativit/i, 'Nat1'],
-        [/circoncision|octave.*noël/i, 'Nat2'],
-        [/épiphanie.*1|après.*épiphanie/i, 'Epi1'],
-        [/épiphanie.*2/i, 'Epi2'],
-        [/septuagésime/i, 'Quadp1'],
-        [/sexagésime/i, 'Quadp2'],
-        [/quinquagésime/i, 'Quadp3'],
-        [/mercredi.*cendres|carême.*1/i, 'Quad1'],
-        [/carême.*2/i, 'Quad2'], [/carême.*3/i, 'Quad3'],
-        [/laetare|carême.*4/i, 'Quad4'],
-        [/carême.*5|passion/i, 'Quad5'],
-        [/rameaux|semaine.*sainte/i, 'Quad6'],
-        [/pâques|résurrection/i, 'Pasc0'],
-        [/octave.*pâques/i, 'Pasc1'],
-        [/2.*pâques/i, 'Pasc2'], [/3.*pâques/i, 'Pasc3'],
-        [/4.*pâques/i, 'Pasc4'], [/5.*pâques/i, 'Pasc5'],
-        [/ascension/i, 'Pasc6'],
-        [/pentecôte/i, 'Pent01'],
-        [/trinité/i, 'Pent02'],
-        [/fête-dieu|corpus/i, 'Pent03'],
-    ];
-
-    for (const [re, prefix] of mappings) {
-        if (re.test(fete)) return `${prefix}-${dowChar}`;
-    }
-
-    // Per annum : calculer la semaine après la Pentecôte
-    return null;
-}
-
-// ── Navigation ────────────────────────────────────────────
-function naviguerJour(delta) {
-    _offset += delta;
-    chargerOffice();
-}
-
-function setHeure(btn) {
-    document.querySelectorAll('.heure-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    _heure = btn.dataset.heure;
-    afficherHeure();
-}
-
-function setLang(lang) {
-    _lang = lang;
-    ['la','fr','bi'].forEach(l => {
-        const b = document.getElementById('btn-'+l);
-        if (b) b.classList.toggle('active', l === lang);
-    });
-    afficherHeure();
-}
-
-// ── Chargement depuis Supabase ────────────────────────────
-async function chargerOffice() {
-    if (typeof maConnexion === 'undefined') { setTimeout(chargerOffice, 300); return; }
-
-    const d = dateNav();
-    document.getElementById('brev-date').textContent =
-        JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear();
-
-    const { sanctiFile, temporaFile, ordo } = getBrevFiles(d);
-    const feteName = ordo ? ordo.fete : '—';
-    document.getElementById('brev-fete').textContent = feteName;
-
-    document.getElementById('brev-content').innerHTML =
-        '<div class="brev-loading">Chargement de l\'office…</div>';
-
-    // Construire les clés de cache
-    const cacheKey = sanctiFile + '|' + (temporaFile || '');
-    if (_cache[cacheKey]) { _currentSections = _cache[cacheKey]; afficherHeure(); return; }
-
-    try {
-        // Charger Sancti + Tempora en parallèle
-        const queries = [];
-        if (sanctiFile) {
-            queries.push(
-                maConnexion.from('breviaire')
-                    .select('dossier,fichier,section,text_la,text_fr')
-                    .eq('dossier','Sancti')
-                    .eq('fichier', sanctiFile)
-                    .not('section','in','("Rank","Rule","Name","Officium","Comment")')
-            );
-        }
-        if (temporaFile) {
-            queries.push(
-                maConnexion.from('breviaire')
-                    .select('dossier,fichier,section,text_la,text_fr')
-                    .eq('dossier','Tempora')
-                    .eq('fichier', temporaFile)
-                    .not('section','in','("Rank","Rule","Name","Officium","Comment")')
-            );
-        }
-
-        const results = await Promise.all(queries);
-        let sections = [];
-        results.forEach(r => { if (!r.error && r.data) sections = sections.concat(r.data); });
-
-        // Si aucune section Tempora trouvée, charger Psalterium commun
-        if (!sections.some(s => s.dossier==='Tempora')) {
-            const { data: psalt } = await maConnexion.from('breviaire')
-                .select('dossier,fichier,section,text_la,text_fr')
-                .eq('dossier','Psalterium')
-                .like('fichier','Special/%')
-                .not('section','in','("Rank","Rule","Name","Officium","Comment")')
-                .limit(100);
-            if (psalt) sections = sections.concat(psalt);
-        }
-
-        _cache[cacheKey] = sections;
-        _currentSections = sections;
-        afficherHeure();
-
-    } catch(e) {
-        console.error(e);
-        document.getElementById('brev-content').innerHTML =
-            '<div class="brev-empty">Erreur de chargement.</div>';
-    }
-}
-
 let _currentSections = [];
 
 // ── Affichage d'une heure canoniale ──────────────────────
