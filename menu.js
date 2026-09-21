@@ -5,6 +5,7 @@
     const isIntentions = href.includes('intentions');
     const isSemaine    = href.includes('calendrier_semaine');
     const isBible      = href.includes('bible.html');
+    const isBreviaire  = href.includes('breviaire.html');
 
     const menuHTML = `
     <style>
@@ -53,6 +54,10 @@
         <a href="bible.html" class="nav-item ${isBible ? 'active' : ''}">
             <span class="nav-icon">📖</span>
             <span class="nav-label">Bible</span>
+        </a>
+        <a href="breviaire.html" class="nav-item ${isBreviaire ? 'active' : ''}">
+            <span class="nav-icon">🕯</span>
+            <span class="nav-label">Bréviaire</span>
         </a>
         <a href="intentions.html" class="nav-item ${isIntentions ? 'active' : ''}">
             <span class="nav-icon">✍️</span>
