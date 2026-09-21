@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bréviaire — Officium Divinum</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <style>
+    /* ════════════════════════════════════════════════════════
+       BRÉVIAIRE
+    ════════════════════════════════════════════════════════ */
+
+    /* ── Hero ────────────────────────────────────────────── */
+    .brev-hero {
+        background: #1a1108;
+        padding: calc(env(safe-area-inset-top,0px) + 16px) 0 0;
+        position: relative; overflow: hidden;
+    }
+    .brev-hero-cross {
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%,-50%);
+        opacity: .05; pointer-events: none; width: 160px; height: 200px;
+    }
+    .brev-hero-body {
+        position: relative; z-index: 2;
+        text-align: center; padding: 0 20px 16px;
+    }
+    .brev-hero-label {
+        font-family: 'Cinzel', serif; font-size: .46rem;
+        letter-spacing: .32em; text-transform: uppercase;
+        color: rgba(184,150,42,.5); display: block; margin-bottom: 6px;
+    }
+    .brev-hero-fete {
+        font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700;
+        color: #f0e8d5; letter-spacing: .04em; line-height: 1.25;
+        display: block; margin-bottom: 4px;
+    }
+    .brev-hero-date {
+        font-family: 'EB Garamond', serif; font-style: italic;
+        font-size: .9rem; color: rgba(240,232,213,.5);
+    }
+
+    /* Navigation ±jour */
+    .brev-nav-jour {
+        position: absolute; top: 0; bottom: 0; width: 50px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; opacity: 0; transition: opacity .2s; z-index: 10;
+    }
+    .brev-nav-jour:hover, .brev-nav-jour:active { opacity: 1; }
+    .brev-nav-jour-left  { left: 0; }
+    .brev-nav-jour-right { right: 0; }
+    .brev-nav-arrow { color: #c9a840; font-family: 'Cinzel',serif; font-size: 1.3rem; }
+
+    .brev-hero-bar { height: 3px; background: linear-gradient(to right,transparent,rgba(184,150,42,.4),transparent); }
+
+    /* ── Onglets heures canoniales ───────────────────────── */
+    .heures-tabs {
+        display: flex; overflow-x: auto; padding: 10px 16px 0;
+        gap: 4px; background: var(--vellum-light);
+        border-bottom: 1px solid var(--border-soft);
+        scrollbar-width: none;
+    }
+    .heures-tabs::-webkit-scrollbar { display: none; }
+    .heure-tab {
+        font-family: 'Cinzel', serif; font-size: .54rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        padding: 7px 12px; border: none; cursor: pointer;
+        border-radius: 3px 3px 0 0; white-space: nowrap;
+        color: var(--ink-muted); background: none;
+        border-bottom: 2px solid transparent; transition: all .2s;
+        flex-shrink: 0;
+    }
+    .heure-tab.active {
+        color: var(--rubric); border-bottom-color: var(--rubric);
+        background: rgba(139,26,26,.04);
+    }
+    .heure-tab:hover:not(.active) { color: var(--ink); }
+
+    /* ── Barre langue + options ──────────────────────────── */
+    .brev-toolbar {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 16px; background: var(--vellum);
+        border-bottom: 1px solid var(--border-soft);
+        position: sticky; top: 0; z-index: 40;
+        box-shadow: 0 2px 8px var(--shadow);
+    }
+    .lang-toggle {
+        display: flex; border: 1px solid var(--border-soft); border-radius: 3px; overflow: hidden;
+    }
+    .lang-btn {
+        font-family: 'Cinzel', serif; font-size: .54rem; letter-spacing: .1em;
+        padding: 6px 12px; border: none; cursor: pointer; transition: all .15s;
+        background: none; color: var(--ink-muted);
+    }
+    .lang-btn.active { background: #1a1108; color: #c9a840; }
+    .brev-toolbar-filler { flex: 1; }
+    .brev-search-btn {
+        background: none; border: 1px solid var(--border-soft);
+        border-radius: 3px; padding: 6px 10px; cursor: pointer;
+        color: var(--ink-muted); font-size: .85rem; transition: all .15s;
+    }
+    .brev-search-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── Corps du texte ──────────────────────────────────── */
+    .brev-content {
+        padding: 20px 16px 40px; max-width: 720px; margin: 0 auto;
+    }
+
+    /* Bloc de section liturgique */
+    .brev-section {
+        margin-bottom: 22px; animation: fadeInUp .3s ease both;
+    }
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+
+    .brev-section-title {
+        font-family: 'Cinzel', serif; font-size: .58rem;
+        letter-spacing: .2em; text-transform: uppercase;
+        color: var(--rubric); border-bottom: 1px solid rgba(139,26,26,.15);
+        padding-bottom: 4px; margin-bottom: 10px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .brev-section-title .no-fr {
+        font-family: 'Cinzel', serif; font-size: .44rem;
+        letter-spacing: .1em; color: var(--ink-muted);
+        background: var(--vellum-light); border: 1px solid var(--border-soft);
+        border-radius: 10px; padding: 1px 8px; flex-shrink: 0;
+    }
+
+    .brev-text {
+        font-family: 'EB Garamond', serif; font-size: 1.06rem;
+        line-height: 1.8; color: var(--ink);
+        white-space: pre-wrap; hyphens: auto;
+    }
+    .brev-text.latin { font-style: italic; color: var(--ink-soft); }
+    .brev-text.francais { color: var(--ink); }
+
+    /* Mode bilingue côte à côte (desktop) */
+    .brev-bilingue {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    }
+    .brev-bilingue-col-la { border-right: 1px solid var(--border-soft); padding-right: 20px; }
+    .brev-bilingue-col-fr { padding-left: 0; }
+    .brev-bilingue-label {
+        font-family: 'Cinzel', serif; font-size: .48rem;
+        letter-spacing: .18em; text-transform: uppercase;
+        color: var(--ink-muted); display: block; margin-bottom: 6px;
+    }
+    @media (max-width: 600px) {
+        .brev-bilingue { grid-template-columns: 1fr; gap: 10px; }
+        .brev-bilingue-col-la { border-right: none; padding-right: 0;
+            border-bottom: 1px solid var(--border-soft); padding-bottom: 10px; }
+    }
+
+    /* Verset numéroté */
+    .brev-verset { display: block; padding-left: 0; }
+    sup.vnum {
+        font-family: 'Cinzel', serif; font-size: .58rem;
+        color: var(--gold); vertical-align: super; margin-right: 2px;
+        opacity: .7; user-select: none;
+    }
+
+    /* Référence biblique */
+    .brev-ref {
+        font-family: 'Cinzel', serif; font-size: .52rem;
+        letter-spacing: .12em; color: var(--gold);
+        display: block; margin-bottom: 5px; font-style: normal;
+    }
+
+    /* ── Chargement / vide ───────────────────────────────── */
+    .brev-loading {
+        text-align: center; padding: 50px 20px;
+        color: var(--ink-muted); font-family: 'EB Garamond', serif;
+        font-style: italic;
+    }
+    .brev-loading::before {
+        content: '✦'; display: block; color: var(--gold);
+        font-size: 1.2rem; margin-bottom: 14px;
+        animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:.25} 50%{opacity:1} }
+
+    .brev-empty {
+        text-align: center; padding: 40px 20px;
+        color: var(--ink-muted); font-style: italic;
+        font-family: 'EB Garamond', serif;
+    }
+
+    /* ── Modale de recherche ─────────────────────────────── */
+    .brev-modal-bg {
+        display: none; position: fixed; inset: 0; z-index: 3000;
+        background: rgba(0,0,0,.6);
+        align-items: flex-start; justify-content: center;
+        padding: 60px 16px 20px;
+    }
+    .brev-modal-bg.open { display: flex; }
+    .brev-modal {
+        background: var(--vellum-light); border-radius: 4px;
+        width: 100%; max-width: 600px;
+        box-shadow: 0 12px 48px rgba(0,0,0,.3);
+        max-height: calc(100vh - 100px);
+        display: flex; flex-direction: column;
+        border-top: 3px solid var(--gold);
+    }
+    .brev-modal-head {
+        padding: 14px 18px; border-bottom: 1px solid var(--border-soft);
+        display: flex; gap: 10px; align-items: center;
+    }
+    .brev-modal-input {
+        flex: 1; padding: 9px 12px;
+        font-family: 'EB Garamond', serif; font-size: 1rem;
+        border: 1px solid var(--border-soft); border-radius: 2px;
+        background: var(--vellum); color: var(--ink);
+    }
+    .brev-modal-input:focus { outline: none; border-color: var(--gold); }
+    .brev-modal-close {
+        background: none; border: none; color: var(--ink-muted);
+        font-size: 1.2rem; cursor: pointer; padding: 4px 8px;
+    }
+    .brev-modal-results {
+        flex: 1; overflow-y: auto; padding: 0;
+    }
+    .brev-result {
+        padding: 12px 18px; border-bottom: 1px solid var(--border-soft);
+        cursor: pointer; transition: background .15s;
+    }
+    .brev-result:hover { background: var(--vellum); }
+    .brev-result-ref {
+        font-family: 'Cinzel', serif; font-size: .54rem;
+        letter-spacing: .12em; color: var(--rubric);
+        text-transform: uppercase; display: block; margin-bottom: 3px;
+    }
+    .brev-result-text {
+        font-family: 'EB Garamond', serif; font-size: .92rem;
+        color: var(--ink); line-height: 1.5;
+    }
+    .brev-result-text mark {
+        background: var(--gold-pale); color: var(--ink); border-radius: 1px;
+    }
+    .brev-modal-count {
+        font-family: 'Cinzel', serif; font-size: .52rem;
+        letter-spacing: .12em; color: var(--ink-muted);
+        text-transform: uppercase; padding: 8px 18px;
+        border-bottom: 1px solid var(--border-soft);
+        background: var(--vellum);
+    }
+
+    /* ── Mode sombre ─────────────────────────────────────── */
+    @media (prefers-color-scheme: dark) {
+        .heures-tabs { background: var(--vellum-light); border-color: var(--border-soft); }
+        .brev-toolbar { background: var(--vellum); border-color: var(--border-soft); }
+        .lang-btn.active { background: #0e0c08; }
+        .brev-modal { background: var(--vellum-light); }
+        .brev-modal-input { background: var(--vellum); color: var(--ink); border-color: var(--border-soft); }
+        .brev-result:hover { background: var(--vellum); }
+        .brev-modal-count { background: var(--vellum); }
+        .brev-bilingue-col-la { border-color: var(--border-soft); }
+    }
+    </style>
+</head>
+<body>
+<div id="menu-container"></div>
+
+<!-- ════════════ HERO ════════════ -->
+<div class="brev-hero" id="brev-hero">
+    <svg class="brev-hero-cross" viewBox="0 0 160 200" fill="none">
+        <rect x="64" y="0" width="32" height="200" fill="#b8962a"/>
+        <rect x="0" y="60" width="160" height="32" fill="#b8962a"/>
+    </svg>
+    <div class="brev-nav-jour brev-nav-jour-left" onclick="naviguerJour(-1)">
+        <span class="brev-nav-arrow">‹</span>
+    </div>
+    <div class="brev-nav-jour brev-nav-jour-right" onclick="naviguerJour(1)">
+        <span class="brev-nav-arrow">›</span>
+    </div>
+    <div class="brev-hero-body">
+        <span class="brev-hero-label">Officium Divinum · 1962</span>
+        <span class="brev-hero-fete" id="brev-fete">Chargement…</span>
+        <span class="brev-hero-date" id="brev-date"></span>
+    </div>
+    <div class="brev-hero-bar"></div>
+</div>
+
+<!-- ════════════ ONGLETS HEURES ════════════ -->
+<div class="heures-tabs" id="heures-tabs">
+    <button class="heure-tab active" data-heure="Matines"   onclick="setHeure(this)">Matines</button>
+    <button class="heure-tab"        data-heure="Laudes"    onclick="setHeure(this)">Laudes</button>
+    <button class="heure-tab"        data-heure="Prime"     onclick="setHeure(this)">Prime</button>
+    <button class="heure-tab"        data-heure="Tierce"    onclick="setHeure(this)">Tierce</button>
+    <button class="heure-tab"        data-heure="Sexte"     onclick="setHeure(this)">Sexte</button>
+    <button class="heure-tab"        data-heure="None"      onclick="setHeure(this)">None</button>
+    <button class="heure-tab"        data-heure="Vêpres"    onclick="setHeure(this)">Vêpres</button>
+    <button class="heure-tab"        data-heure="Complies"  onclick="setHeure(this)">Complies</button>
+</div>
+
+<!-- ════════════ TOOLBAR ════════════ -->
+<div class="brev-toolbar">
+    <div class="lang-toggle">
+        <button class="lang-btn active" id="btn-la" onclick="setLang('la')">Latin</button>
+        <button class="lang-btn"        id="btn-fr" onclick="setLang('fr')">Français</button>
+        <button class="lang-btn"        id="btn-bi" onclick="setLang('bi')">Bilingue</button>
+    </div>
+    <div class="brev-toolbar-filler"></div>
+    <button class="brev-search-btn" onclick="ouvrirRecherche()" title="Rechercher (/)">⌕</button>
+</div>
+
+<!-- ════════════ CONTENU ════════════ -->
+<div class="brev-content" id="brev-content">
+    <div class="brev-loading">Chargement de l'office…</div>
+</div>
+
+<!-- ════════════ MODALE RECHERCHE ════════════ -->
+<div class="brev-modal-bg" id="brev-modal-bg" onclick="if(event.target===this)fermerRecherche()">
+    <div class="brev-modal">
+        <div class="brev-modal-head">
+            <input class="brev-modal-input" id="brev-search-input" type="text"
+                placeholder="Rechercher dans le bréviaire…"
+                oninput="debounceSearch()" autocomplete="off"
+                onkeydown="if(event.key==='Escape')fermerRecherche()">
+            <button class="brev-modal-close" onclick="fermerRecherche()">✕</button>
+        </div>
+        <div class="brev-modal-results" id="brev-search-results">
+            <div class="brev-empty">Entrez un mot ou une référence liturgique</div>
+        </div>
+    </div>
+</div>
+
+<script src="ordo1962.js"></script>
+<script src="menu.js"></script>
+<script>
+
+// ── Mapping heures canoniales → sections DivinumOfficium ──
+const HEURE_SECTIONS = {
+    'Matines': [
+        'Ant 1','Ant 2','Ant 3','Ant Matutinum',
+        'Hymnus Matutinum','HymnusM Matutinum',
+        'Lectio1','Lectio2','Lectio3',
+        'Lectio4','Lectio5','Lectio6',
+        'Lectio7','Lectio8','Lectio9',
+        'Responsory1','Responsory2','Responsory3',
+        'Responsory4','Responsory5','Responsory6',
+        'Responsory7','Responsory8','Responsory9',
+        'Oratio'
+    ],
+    'Laudes': [
+        'Hymnus Laudes','HymnusM Laudes',
+        'Ant Laudes','Capitulum Laudes',
+        'Versum Laudes','Ant Benedictus','Benedictus','Oratio'
+    ],
+    'Prime': [
+        'Hymnus Prima','HymnusM Prima',
+        'Ant Prima','Capitulum Prima','Oratio'
+    ],
+    'Tierce': [
+        'Hymnus Tertia','HymnusM Tertia',
+        'Ant Tertia','Capitulum Tertia',
+        'Responsory Breve Tertia','Oratio'
+    ],
+    'Sexte': [
+        'Hymnus Sexta','HymnusM Sexta',
+        'Ant Sexta','Capitulum Sexta',
+        'Responsory Breve Sexta','Oratio'
+    ],
+    'None': [
+        'Hymnus Nona','HymnusM Nona',
+        'Ant Nona','Capitulum Nona',
+        'Responsory Breve Nona','Oratio'
+    ],
+    'Vêpres': [
+        'Ant Vespera','Ant Vespera 2','Ant Vespera 3',
+        'Hymnus Vespera','HymnusM Vespera',
+        'Capitulum Vespera','Versum Vespera',
+        'Ant Magnificat','Magnificat','Oratio'
+    ],
+    'Complies': [
+        'Hymnus Completorium','HymnusM Completorium',
+        'Ant Completorium','Capitulum Completorium',
+        'Versum Completorium','Oratio'
+    ],
+};
+
+const SECTION_LABELS = {
+    'Ant 1':'Antienne 1', 'Ant 2':'Antienne 2', 'Ant 3':'Antienne 3',
+    'Ant Matutinum':'Antienne des Matines',
+    'Ant Laudes':'Antienne des Laudes',
+    'Ant Vespera':'Antienne des Vêpres','Ant Vespera 2':'Antienne des Vêpres 2','Ant Vespera 3':'Antienne des Vêpres 3',
+    'Ant Prima':'Antienne de Prime','Ant Tertia':'Antienne de Tierce',
+    'Ant Sexta':'Antienne de Sexte','Ant Nona':'Antienne de None',
+    'Ant Completorium':'Antienne des Complies',
+    'Ant Benedictus':'Antienne du Benedictus','Ant Magnificat':'Antienne du Magnificat',
+    'Hymnus Matutinum':'Hymne des Matines','HymnusM Matutinum':'Hymne des Matines',
+    'Hymnus Laudes':'Hymne des Laudes','HymnusM Laudes':'Hymne des Laudes',
+    'Hymnus Prima':'Hymne de Prime','HymnusM Prima':'Hymne de Prime',
+    'Hymnus Tertia':'Hymne de Tierce','HymnusM Tertia':'Hymne de Tierce',
+    'Hymnus Sexta':'Hymne de Sexte','HymnusM Sexta':'Hymne de Sexte',
+    'Hymnus Nona':'Hymne de None','HymnusM Nona':'Hymne de None',
+    'Hymnus Vespera':'Hymne des Vêpres','HymnusM Vespera':'Hymne des Vêpres',
+    'Hymnus Completorium':'Hymne des Complies','HymnusM Completorium':'Hymne des Complies',
+    'Lectio1':'Leçon I','Lectio2':'Leçon II','Lectio3':'Leçon III',
+    'Lectio4':'Leçon IV','Lectio5':'Leçon V','Lectio6':'Leçon VI',
+    'Lectio7':'Leçon VII','Lectio8':'Leçon VIII','Lectio9':'Leçon IX',
+    'Responsory1':'Répons I','Responsory2':'Répons II','Responsory3':'Répons III',
+    'Responsory4':'Répons IV','Responsory5':'Répons V','Responsory6':'Répons VI',
+    'Responsory7':'Répons VII','Responsory8':'Répons VIII','Responsory9':'Répons IX',
+    'Responsory Breve Tertia':'Répons bref','Responsory Breve Sexta':'Répons bref',
+    'Responsory Breve Nona':'Répons bref',
+    'Capitulum Laudes':'Capitule','Capitulum Prima':'Capitule',
+    'Capitulum Tertia':'Capitule','Capitulum Sexta':'Capitule',
+    'Capitulum Nona':'Capitule','Capitulum Vespera':'Capitule',
+    'Capitulum Completorium':'Capitule',
+    'Versum Laudes':'Verset','Versum Vespera':'Verset','Versum Completorium':'Verset',
+    'Benedictus':'Cantique de Zacharie','Magnificat':'Magnificat',
+    'Oratio':'Oraison',
+};
+
+const MOIS = ['janvier','février','mars','avril','mai','juin',
+               'juillet','août','septembre','octobre','novembre','décembre'];
+const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+// ── État ──────────────────────────────────────────────────
+let _offset = 0;
+let _heure = 'Matines';
+let _lang = 'la';
+let _searchTimer = null;
+let _cache = {};  // {cacheKey: [{section, text_la, text_fr}, ...]}
+
+function dateNav() {
+    const d = new Date();
+    d.setDate(d.getDate() + _offset);
+    d.setHours(0,0,0,0);
+    return d;
+}
+
+// ── Trouver le fichier bréviaire pour une date ────────────
+function getBrevFiles(d) {
+    const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate();
+    const dow = d.getDay(); // 0=dim
+
+    const ordo = (typeof Ordo1962 !== 'undefined')
+        ? Ordo1962.getDay(y, m, day) : null;
+
+    // Fichier Sancti : MM-DD
+    const sanctiFile = String(m).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+
+    // Fichier Tempora : utiliser l'ordo1962 si disponible
+    // Sinon fallback sur calcul simple
+    let temporaFile = null;
+    if (ordo && ordo.source === 'sanctoral') {
+        temporaFile = null; // Pas de propre temporal ce jour
+    }
+
+    // Mapping semaine liturgique → fichier Tempora
+    // On utilise le cycle du Psautier : semaine du Psautier = semaine de l'an
+    const weekNum = getWeekOfYear(d);
+    temporaFile = getTemporaFile(d, ordo);
+
+    return { sanctiFile, temporaFile, ordo };
+}
+
+function getWeekOfYear(d) {
+    const start = new Date(d.getFullYear(), 0, 1);
+    return Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7);
+}
+
+function getTemporaFile(d, ordo) {
+    // Correspondance simplifiée ordo → fichier Tempora
+    if (!ordo) return null;
+    const fete = (ordo.fete || '').toLowerCase();
+    const dow = d.getDay();
+    const dowChar = dow; // 0=dim, 1=lun...
+
+    // Mapping basé sur le nom de la fête
+    const mappings = [
+        [/avent.*1/i, 'Adv1'], [/avent.*2/i, 'Adv2'],
+        [/avent.*3/i, 'Adv3'], [/avent.*4/i, 'Adv4'],
+        [/noël|nativit/i, 'Nat1'],
+        [/circoncision|octave.*noël/i, 'Nat2'],
+        [/épiphanie.*1|après.*épiphanie/i, 'Epi1'],
+        [/épiphanie.*2/i, 'Epi2'],
+        [/septuagésime/i, 'Quadp1'],
+        [/sexagésime/i, 'Quadp2'],
+        [/quinquagésime/i, 'Quadp3'],
+        [/mercredi.*cendres|carême.*1/i, 'Quad1'],
+        [/carême.*2/i, 'Quad2'], [/carême.*3/i, 'Quad3'],
+        [/laetare|carême.*4/i, 'Quad4'],
+        [/carême.*5|passion/i, 'Quad5'],
+        [/rameaux|semaine.*sainte/i, 'Quad6'],
+        [/pâques|résurrection/i, 'Pasc0'],
+        [/octave.*pâques/i, 'Pasc1'],
+        [/2.*pâques/i, 'Pasc2'], [/3.*pâques/i, 'Pasc3'],
+        [/4.*pâques/i, 'Pasc4'], [/5.*pâques/i, 'Pasc5'],
+        [/ascension/i, 'Pasc6'],
+        [/pentecôte/i, 'Pent01'],
+        [/trinité/i, 'Pent02'],
+        [/fête-dieu|corpus/i, 'Pent03'],
+    ];
+
+    for (const [re, prefix] of mappings) {
+        if (re.test(fete)) return `${prefix}-${dowChar}`;
+    }
+
+    // Per annum : calculer la semaine après la Pentecôte
+    return null;
+}
+
+// ── Navigation ────────────────────────────────────────────
+function naviguerJour(delta) {
+    _offset += delta;
+    chargerOffice();
+}
+
+function setHeure(btn) {
+    document.querySelectorAll('.heure-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _heure = btn.dataset.heure;
+    afficherHeure();
+}
+
+function setLang(lang) {
+    _lang = lang;
+    ['la','fr','bi'].forEach(l => {
+        const b = document.getElementById('btn-'+l);
+        if (b) b.classList.toggle('active', l === lang);
+    });
+    afficherHeure();
+}
+
+// ── Chargement depuis Supabase ────────────────────────────
+async function chargerOffice() {
+    if (typeof maConnexion === 'undefined') { setTimeout(chargerOffice, 300); return; }
+
+    const d = dateNav();
+    document.getElementById('brev-date').textContent =
+        JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear();
+
+    const { sanctiFile, temporaFile, ordo } = getBrevFiles(d);
+    const feteName = ordo ? ordo.fete : '—';
+    document.getElementById('brev-fete').textContent = feteName;
+
+    document.getElementById('brev-content').innerHTML =
+        '<div class="brev-loading">Chargement de l\'office…</div>';
+
+    // Construire les clés de cache
+    const cacheKey = sanctiFile + '|' + (temporaFile || '');
+    if (_cache[cacheKey]) { _currentSections = _cache[cacheKey]; afficherHeure(); return; }
+
+    try {
+        // Charger Sancti + Tempora en parallèle
+        const queries = [];
+        if (sanctiFile) {
+            queries.push(
+                maConnexion.from('breviaire')
+                    .select('dossier,fichier,section,text_la,text_fr')
+                    .eq('dossier','Sancti')
+                    .eq('fichier', sanctiFile)
+                    .not('section','in','("Rank","Rule","Name","Officium","Comment")')
+            );
+        }
+        if (temporaFile) {
+            queries.push(
+                maConnexion.from('breviaire')
+                    .select('dossier,fichier,section,text_la,text_fr')
+                    .eq('dossier','Tempora')
+                    .eq('fichier', temporaFile)
+                    .not('section','in','("Rank","Rule","Name","Officium","Comment")')
+            );
+        }
+
+        const results = await Promise.all(queries);
+        let sections = [];
+        results.forEach(r => { if (!r.error && r.data) sections = sections.concat(r.data); });
+
+        // Si aucune section Tempora trouvée, charger Psalterium commun
+        if (!sections.some(s => s.dossier==='Tempora')) {
+            const { data: psalt } = await maConnexion.from('breviaire')
+                .select('dossier,fichier,section,text_la,text_fr')
+                .eq('dossier','Psalterium')
+                .like('fichier','Special/%')
+                .not('section','in','("Rank","Rule","Name","Officium","Comment")')
+                .limit(100);
+            if (psalt) sections = sections.concat(psalt);
+        }
+
+        _cache[cacheKey] = sections;
+        _currentSections = sections;
+        afficherHeure();
+
+    } catch(e) {
+        console.error(e);
+        document.getElementById('brev-content').innerHTML =
+            '<div class="brev-empty">Erreur de chargement.</div>';
+    }
+}
+
+let _currentSections = [];
+
+// ── Affichage d'une heure canoniale ──────────────────────
+function afficherHeure() {
+    const sections = _currentSections;
+    const sectionsAttendues = HEURE_SECTIONS[_heure] || [];
+    const content = document.getElementById('brev-content');
+
+    // Trouver les sections disponibles pour cette heure
+    const disponibles = sectionsAttendues
+        .map(sName => sections.find(s => s.section === sName || s.section.startsWith(sName)))
+        .filter(Boolean)
+        .filter((s, i, arr) => arr.findIndex(x => x.section === s.section) === i);
+
+    if (!disponibles.length) {
+        content.innerHTML = `<div class="brev-empty">
+            <div style="color:var(--gold);font-size:1.4rem;opacity:.35;margin-bottom:12px;">✦</div>
+            Aucune section disponible pour les ${_heure}<br>
+            <span style="font-size:.85rem;color:var(--ink-muted);">${_heure} — ${dateNav().toLocaleDateString('fr-FR')}</span>
+        </div>`;
+        return;
+    }
+
+    content.innerHTML = disponibles.map((s, idx) => buildSection(s, idx)).join('');
+}
+
+function escH(t) { return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function formatText(raw) {
+    if (!raw || !raw.trim()) return '';
+    let lines = raw.split('\n');
+    let out = '';
+    let inPara = false;
+
+    for (let line of lines) {
+        // Référence biblique
+        if (line.match(/^!(.+)/)) {
+            const ref = line.replace(/^!/, '').trim();
+            out += `<span class="brev-ref">📖 ${escH(ref)}</span>`;
+            continue;
+        }
+        // Directives à ignorer
+        if (line.match(/^[@$&]/) || line.match(/^[_~]/)) continue;
+
+        // Numéro de verset
+        const mVerset = line.match(/^(\d+)\s+(.+)/);
+        if (mVerset) {
+            out += `<span class="brev-verset"><sup class="vnum">${mVerset[1]}</sup>${escH(mVerset[2])}</span>\n`;
+            continue;
+        }
+
+        // Ligne normale
+        if (line.trim()) {
+            out += escH(line) + '\n';
+        } else {
+            out += '\n';
+        }
+    }
+    return out.trim();
+}
+
+function buildSection(s, idx) {
+    const label = SECTION_LABELS[s.section] || s.section;
+    const la = formatText(s.text_la);
+    const fr = formatText(s.text_fr);
+    const noFr = !s.text_fr || !s.text_fr.trim();
+
+    const titleHtml = `<div class="brev-section-title" style="animation-delay:${idx*40}ms">
+        ${escH(label)}
+        ${noFr && _lang !== 'la' ? '<span class="no-fr">latin uniquement</span>' : ''}
+    </div>`;
+
+    let textHtml = '';
+
+    if (_lang === 'la') {
+        textHtml = `<div class="brev-text latin">${la}</div>`;
+    } else if (_lang === 'fr') {
+        textHtml = noFr
+            ? `<div class="brev-text latin" style="opacity:.65">${la}</div>`
+            : `<div class="brev-text francais">${fr}</div>`;
+    } else {
+        // Bilingue
+        textHtml = `<div class="brev-bilingue">
+            <div class="brev-bilingue-col-la">
+                <span class="brev-bilingue-label">Latin</span>
+                <div class="brev-text latin">${la}</div>
+            </div>
+            <div class="brev-bilingue-col-fr">
+                <span class="brev-bilingue-label">Français</span>
+                <div class="brev-text francais">${noFr ? '<em style="color:var(--ink-muted)">Traduction non disponible</em>' : fr}</div>
+            </div>
+        </div>`;
+    }
+
+    return `<div class="brev-section" style="animation-delay:${idx*40}ms">
+        ${titleHtml}
+        ${textHtml}
+    </div>`;
+}
+
+// ── Recherche ─────────────────────────────────────────────
+function ouvrirRecherche() {
+    document.getElementById('brev-modal-bg').classList.add('open');
+    setTimeout(() => document.getElementById('brev-search-input').focus(), 100);
+}
+function fermerRecherche() {
+    document.getElementById('brev-modal-bg').classList.remove('open');
+}
+function debounceSearch() {
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(lancerRecherche, 350);
+}
+
+async function lancerRecherche() {
+    if (typeof maConnexion === 'undefined') return;
+    const q = document.getElementById('brev-search-input').value.trim();
+    const results = document.getElementById('brev-search-results');
+    if (q.length < 2) {
+        results.innerHTML = '<div class="brev-empty">Entrez au moins 2 caractères</div>';
+        return;
+    }
+    results.innerHTML = '<div class="brev-empty">Recherche…</div>';
+
+    const lang = _lang === 'fr' ? 'text_fr' : 'text_la';
+    const { data } = await maConnexion.from('breviaire')
+        .select('dossier,fichier,section,text_la,text_fr')
+        .ilike(lang, `%${q}%`)
+        .not('section','in','("Rank","Rule","Name","Officium")')
+        .limit(60);
+
+    if (!data || !data.length) {
+        results.innerHTML = '<div class="brev-empty">Aucun résultat.</div>';
+        return;
+    }
+
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const hi = (t, q) => t ? t.replace(new RegExp(esc(q),'gi'), m => `<mark>${m}</mark>`) : '';
+    const txt = s => _lang === 'fr' ? (s.text_fr || s.text_la) : s.text_la;
+
+    results.innerHTML =
+        `<div class="brev-modal-count">${data.length} résultat${data.length>1?'s':''}</div>` +
+        data.map(s => {
+            const label = SECTION_LABELS[s.section] || s.section;
+            const preview = (txt(s)||'').replace(/^[!@$].+\n?/gm,'').trim().substring(0,120);
+            return `<div class="brev-result" onclick="allerVersSection('${s.dossier}','${s.fichier}','${s.section}')">
+                <span class="brev-result-ref">${escH(s.dossier)} · ${escH(s.fichier)} · ${escH(label)}</span>
+                <span class="brev-result-text">${hi(escH(preview), escH(q))}…</span>
+            </div>`;
+        }).join('');
+}
+
+async function allerVersSection(dossier, fichier, section) {
+    fermerRecherche();
+    // Charger ce fichier directement
+    const { data } = await maConnexion.from('breviaire')
+        .select('dossier,fichier,section,text_la,text_fr')
+        .eq('dossier', dossier)
+        .eq('fichier', fichier)
+        .not('section','in','("Rank","Rule","Name","Officium","Comment")');
+    if (!data) return;
+    _currentSections = data;
+    // Trouver quelle heure correspond à cette section
+    for (const [heure, secs] of Object.entries(HEURE_SECTIONS)) {
+        if (secs.some(s => section.startsWith(s) || section === s)) {
+            document.querySelectorAll('.heure-tab').forEach(b => {
+                b.classList.toggle('active', b.dataset.heure === heure);
+            });
+            _heure = heure;
+            break;
+        }
+    }
+    afficherHeure();
+    // Scroller vers la section
+    setTimeout(() => {
+        const label = SECTION_LABELS[section] || section;
+        const titles = [...document.querySelectorAll('.brev-section-title')];
+        const el = titles.find(t => t.textContent.includes(label.substring(0,10)));
+        if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 300);
+}
+
+// ── Raccourcis clavier ────────────────────────────────────
+document.addEventListener('keydown', e => {
+    if (e.key === '/' && !e.target.matches('input,textarea')) {
+        e.preventDefault(); ouvrirRecherche();
+    }
+    if (e.key === 'Escape') fermerRecherche();
+});
+
+// ── Démarrage ─────────────────────────────────────────────
+function init() {
+    if (typeof maConnexion === 'undefined') { setTimeout(init, 200); return; }
+    chargerOffice();
+}
+init();
+</script>
+</body>
+</html>
