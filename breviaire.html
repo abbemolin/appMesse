@@ -155,21 +155,43 @@
             border-bottom: 1px solid var(--border-soft); padding-bottom: 10px; }
     }
 
-    /* Psaumes — liste antiennes + numéros */
-    .brev-psaume { margin-bottom: 4px; }
-    .brev-psaume-ligne {
-        display: flex; align-items: baseline; gap: 10px;
-        padding: 5px 0; border-bottom: 1px solid rgba(184,150,42,.08);
+    /* ── Antienne ────────────────────────────────────────── */
+    .brev-antienne {
+        margin-bottom: 6px;
+        padding: 8px 12px;
+        background: rgba(184,150,42,.06);
+        border-left: 3px solid var(--gold);
+        border-radius: 2px;
     }
-    .brev-psaume-ligne:last-child { border-bottom: none; }
-    .brev-ps-num {
-        font-family: 'Cinzel', serif; font-size: .54rem;
-        letter-spacing: .1em; color: var(--gold);
-        flex-shrink: 0; min-width: 42px;
+    .brev-ant-label {
+        font-family: 'Cinzel', serif; font-size: .48rem;
+        letter-spacing: .18em; text-transform: uppercase;
+        color: var(--gold); display: block; margin-bottom: 4px;
     }
-    .brev-ps-ant {
+    .brev-ant-text {
         font-family: 'EB Garamond', serif; font-size: 1rem;
-        font-style: italic; color: var(--ink); line-height: 1.5;
+        font-style: italic; display: block; line-height: 1.6;
+        color: var(--ink);
+    }
+    .brev-ant-text.francais { color: var(--ink-soft); margin-top: 4px; }
+
+    /* ── Psaume complet ──────────────────────────────────── */
+    .psaume-section { margin-bottom: 20px; }
+    .brev-psalm-text {
+        font-family: 'EB Garamond', serif; font-size: 1rem;
+        line-height: 1.85; color: var(--ink);
+    }
+    .brev-psalm-text.latin { font-style: italic; color: var(--ink-soft); }
+    .brev-psalm-text.muted { opacity: .6; }
+    .brev-ps-verset { display: block; }
+    .brev-ps-verset sup.vnum {
+        font-family: 'Cinzel', serif; font-size: .54rem;
+        color: var(--gold); opacity: .7; margin-right: 3px;
+        vertical-align: super; user-select: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .brev-antienne { background: rgba(184,150,42,.08); }
     }
 
     /* Répons et versicules */
@@ -572,7 +594,7 @@ async function chargerOffice() {
                 .eq('dossier','Tempora').eq('fichier', scripturaFile)
                 .not('section','in',EXCL) : Promise.resolve({data:[]}),
 
-            // 4. Psaumes du jour (Psalmi major + minor)
+            // 4. Antiennes du jour (contiennent numéros de psaumes)
             maConnexion.from('breviaire')
                 .select('dossier,fichier,section,text_la,text_fr')
                 .eq('dossier','Psalterium')
@@ -599,8 +621,32 @@ async function chargerOffice() {
         let sections = [];
         results.forEach(r => { if (r && !r.error && r.data) sections = sections.concat(r.data); });
 
+        // Extraire les numéros de psaumes depuis les antiennes
+        const psNums = new Set();
+        sections.forEach(s => {
+            if (s.fichier && s.fichier.includes('Psalmi')) {
+                s.text_la.split('\n').forEach(line => {
+                    if (line.includes(';;')) {
+                        const num = line.split(';;')[1].split('(')[0].split(';')[0].trim();
+                        if (num && /^\d+$/.test(num) && parseInt(num) <= 266) {
+                            psNums.add(num);
+                        }
+                    }
+                });
+            }
+        });
+
+        // Charger les textes complets des psaumes identifiés
+        if (psNums.size > 0) {
+            const fichiersPsaumes = [...psNums].map(n => `Psalmorum/Psalm${n}`);
+            const { data: psData } = await maConnexion.from('breviaire')
+                .select('dossier,fichier,section,text_la,text_fr')
+                .eq('dossier','Psalterium')
+                .in('fichier', fichiersPsaumes);
+            if (psData) sections = sections.concat(psData);
+        }
+
         // Dédupliquer : Sancti > Tempora > Psalterium
-        // Priorité : premier arrivé sur une même section
         const seen = new Set();
         const PRIORITY_ORDER = ['Sancti','Tempora','Psalterium'];
         sections.sort((a,b) => PRIORITY_ORDER.indexOf(a.dossier) - PRIORITY_ORDER.indexOf(b.dossier));
@@ -749,7 +795,51 @@ function dateNav() {
 // ── Trouver le fichier bréviaire pour une date ────────────
 let _currentSections = [];
 
-// ── Affichage d'une heure canoniale ──────────────────────
+// ── Enrichir une section d'antiennes avec les psaumes complets ──
+function enrichirAvecPsaumes(sectionAnt, allSections) {
+    const blocs = [];
+    const lignes = sectionAnt.text_la.split('\n');
+    const lignesFr = (sectionAnt.text_fr || '').split('\n');
+
+    lignes.forEach((ligne, i) => {
+        if (!ligne.trim() || !ligne.includes(';;')) return;
+
+        const parts = ligne.split(';;');
+        const antLA = parts[0].trim();
+        const num   = parts[1].split('(')[0].split(';')[0].trim();
+
+        // Antienne FR correspondante
+        const antFR = (lignesFr[i] || '').split(';;')[0].trim();
+
+        // Chercher le psaume complet
+        const psSection = allSections.find(s => s.section === `Psalm${num}`);
+
+        // Bloc antienne
+        blocs.push({
+            dossier: 'Psalterium',
+            fichier: sectionAnt.fichier,
+            section: `${sectionAnt.section}_ant${num}`,
+            _label: `Antienne · Ps ${num}`,
+            _type: 'antienne',
+            text_la: antLA,
+            text_fr: antFR,
+        });
+
+        // Bloc psaume complet
+        if (psSection) {
+            blocs.push({
+                ...psSection,
+                section: `${sectionAnt.section}_ps${num}`,
+                _label: `Psaume ${num}`,
+                _type: 'psaume',
+            });
+        }
+    });
+
+    return blocs.length ? blocs : [sectionAnt];
+}
+
+
 function afficherHeure() {
     const sections = _currentSections;
     const d = dateNav();
@@ -766,11 +856,18 @@ function afficherHeure() {
         const found = sections.find(s =>
             s.section === sName ||
             s.section.startsWith(sName + ' ') ||
-            sName.endsWith('*') && s.section.startsWith(sName.slice(0,-1))
+            (sName.endsWith('*') && s.section.startsWith(sName.slice(0,-1)))
         );
         if (found && !seen.has(found.section)) {
-            disponibles.push(found);
-            seen.add(found.section);
+            // Si c'est une antienne avec psaumes, injecter les psaumes complets
+            if (found.fichier && found.fichier.includes('Psalmi') && found.text_la.includes(';;')) {
+                const enrichi = enrichirAvecPsaumes(found, sections);
+                disponibles.push(...enrichi);
+                enrichi.forEach(s => seen.add(s.section));
+            } else {
+                disponibles.push(found);
+                seen.add(found.section);
+            }
         }
     }
 
@@ -877,53 +974,104 @@ function formaterTexte(raw) {
     return html.replace(/(<br>\s*){3,}/g, '<br><br>').trim();
 }
 
-function buildSection(s, idx) {
-    const label = getSectionLabel(s.section);
-    const isPsaume = estGroupePsaumes(s.text_la);
-    const la = formaterTexte(s.text_la);
-    const fr = formaterTexte(s.text_fr);
-    const noFr = !s.text_fr || !s.text_fr.trim();
-
-    // Type de section pour le style du titre
-    const isMajeur = ['Lectio1','Lectio2','Lectio3','Lectio4','Lectio5','Lectio6',
-        'Lectio7','Lectio8','Lectio9','Benedictus','Magnificat','Oratio'].includes(s.section);
-
-    const titleHtml = `<div class="brev-section-title${isMajeur?' majeur':''}" style="animation-delay:${idx*50}ms">
-        ${escH(label)}
-        ${noFr && _lang !== 'la' ? '<span class="no-fr">lat.</span>' : ''}
-    </div>`;
-
-    let textHtml = '';
-    const cls = isPsaume ? 'brev-psaume' : 'brev-text';
-
-    if (_lang === 'la') {
-        textHtml = `<div class="${cls} latin">${la}</div>`;
-    } else if (_lang === 'fr') {
-        textHtml = noFr
-            ? `<div class="${cls} latin muted">${la}</div>`
-            : `<div class="${cls} francais">${fr}</div>`;
-    } else {
-        // Bilingue
-        textHtml = `<div class="brev-bilingue">
-            <div class="brev-bilingue-col-la">
-                <span class="brev-bilingue-label">Latin</span>
-                <div class="${cls} latin">${la}</div>
-            </div>
-            <div class="brev-bilingue-col-fr">
-                <span class="brev-bilingue-label">Français</span>
-                <div class="${cls} francais">${noFr ? '<em class="no-fr-txt">Traduction non disponible</em>' : fr}</div>
-            </div>
-        </div>`;
+// ── Formatage psaume complet (versets N:V texte) ──────────
+function formaterPsaume(raw) {
+    if (!raw) return '';
+    let html = '';
+    for (const ligne of raw.split('\n')) {
+        const t = ligne.trim();
+        if (!t) continue;
+        // Format : "1:1 Beátus vir..." ou "1:3a Et erit..."
+        const m = t.match(/^(\d+:\w+)\s+(.+)/);
+        if (m) {
+            const versetNum = m[1].split(':')[1]; // "1", "3a"...
+            const texte = m[2];
+            html += `<span class="brev-ps-verset"><sup class="vnum">${escH(versetNum)}</sup>${escH(texte)}</span>\n`;
+        } else {
+            // Suite d'un verset (ligne sans numéro)
+            html += escH(t) + '\n';
+        }
     }
-
-    return `<div class="brev-section" style="animation-delay:${idx*50}ms">
-        ${titleHtml}${textHtml}
-    </div>`;
+    return html.trim();
 }
 
 function getSectionLabel(section) {
-    return SECTION_LABELS[section]
-        || (section.startsWith('Day') ? 'Psaumes · ' + section.replace(/Day\d+ /,'') : section);
+    if (SECTION_LABELS[section]) return SECTION_LABELS[section];
+    if (section.startsWith('Day')) return 'Psaumes — ' + section.replace(/Day\d+ /,'');
+    if (section.startsWith('Psalm')) return 'Psaume ' + section.replace('Psalm','');
+    return section;
+}
+
+function buildSection(s, idx) {
+    const label = s._label || getSectionLabel(s.section);
+    const type  = s._type || 'normal';
+    const noFr  = !s.text_fr || !s.text_fr.trim();
+    const delay = `animation-delay:${idx*40}ms`;
+
+    // ── Antienne ──────────────────────────────────────────
+    if (type === 'antienne') {
+        const aLA = escH(s.text_la || '');
+        const aFR = s.text_fr ? escH(s.text_fr) : null;
+        let inner = '';
+        if (_lang === 'la' || _lang === 'bi')
+            inner += `<span class="brev-ant-text latin">Ant. ${aLA}</span>`;
+        if (_lang === 'fr' || _lang === 'bi')
+            inner += aFR
+                ? `<span class="brev-ant-text francais">Ant. ${aFR}</span>`
+                : (_lang==='fr' ? `<span class="brev-ant-text latin muted">Ant. ${aLA}</span>` : '');
+        return `<div class="brev-antienne" style="${delay}">
+            <span class="brev-ant-label">${escH(label)}</span>${inner}</div>`;
+    }
+
+    // ── Psaume complet ────────────────────────────────────
+    if (type === 'psaume') {
+        const laH = formaterPsaume(s.text_la);
+        const frH = s.text_fr ? formaterPsaume(s.text_fr) : null;
+        let textHtml = '';
+        if (_lang === 'la') {
+            textHtml = `<div class="brev-psalm-text latin">${laH}</div>`;
+        } else if (_lang === 'fr') {
+            textHtml = frH
+                ? `<div class="brev-psalm-text francais">${frH}</div>`
+                : `<div class="brev-psalm-text latin muted">${laH}</div>`;
+        } else {
+            textHtml = `<div class="brev-bilingue">
+                <div class="brev-bilingue-col-la"><span class="brev-bilingue-label">Latin</span>
+                    <div class="brev-psalm-text latin">${laH}</div></div>
+                <div class="brev-bilingue-col-fr"><span class="brev-bilingue-label">Français</span>
+                    <div class="brev-psalm-text francais">${frH||'<em class="no-fr-txt">Traduction non disponible</em>'}</div></div>
+            </div>`;
+        }
+        return `<div class="brev-section psaume-section" style="${delay}">
+            <div class="brev-section-title">${escH(label)}</div>${textHtml}</div>`;
+    }
+
+    // ── Section liturgique normale ─────────────────────────
+    const la = formaterTexte(s.text_la);
+    const fr = formaterTexte(s.text_fr);
+    const isMajeur = ['Lectio1','Lectio2','Lectio3','Lectio4','Lectio5','Lectio6',
+        'Lectio7','Lectio8','Lectio9','Benedictus','Magnificat','Oratio'].includes(s.section);
+    const cls = 'brev-text';
+
+    let textHtml = '';
+    if (_lang === 'la') {
+        textHtml = `<div class="${cls} latin">${la}</div>`;
+    } else if (_lang === 'fr') {
+        textHtml = noFr ? `<div class="${cls} latin muted">${la}</div>`
+                        : `<div class="${cls} francais">${fr}</div>`;
+    } else {
+        textHtml = `<div class="brev-bilingue">
+            <div class="brev-bilingue-col-la"><span class="brev-bilingue-label">Latin</span>
+                <div class="${cls} latin">${la}</div></div>
+            <div class="brev-bilingue-col-fr"><span class="brev-bilingue-label">Français</span>
+                <div class="${cls} francais">${noFr?'<em class="no-fr-txt">Traduction non disponible</em>':fr}</div></div>
+        </div>`;
+    }
+
+    return `<div class="brev-section" style="${delay}">
+        <div class="brev-section-title${isMajeur?' majeur':''}" style="${delay}">
+            ${escH(label)}${noFr&&_lang!=='la'?'<span class="no-fr">lat.</span>':''}
+        </div>${textHtml}</div>`;
 }
 
 // ── Recherche ─────────────────────────────────────────────
