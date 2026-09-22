@@ -530,34 +530,56 @@ function formaterTexte(raw) {
     if (!raw) return '';
     const lines = raw.split('\n');
     let html = '';
+    let inPsaume = false;
+
     for (const line of lines) {
         const t = line.trim();
-        if (!t) { html += '<br>'; continue; }
+        if (!t) { html += ''; continue; }
 
-        // Répons ℣ ℟ R. V.
-        if (/^[℣℟]|^[RV]\.\s/.test(t)) {
-            html += `<span class="brev-resp">${escH(t)}</span>`;
-            continue;
-        }
-        // Antienne
-        if (/^Ant\.\s|^Antiphon/i.test(t)) {
-            html += `<span class="brev-ant-inline">${escH(t)}</span>`;
-            continue;
-        }
-        // Référence biblique (ex: 95:1 texte)
-        const mVerset = t.match(/^(\d+:\w+)\s+(.*)/);
-        if (mVerset) {
-            html += `<span class="brev-ps-verset"><sup class="vnum">${escH(mVerset[1].split(':')[1])}</sup>${escH(mVerset[2])}</span>\n`;
-            continue;
-        }
-        // Psaume (ex: Psalmus 95 [1])
-        if (/^Psalm(us|e)?\s+\d+/i.test(t)) {
+        // Titre de psaume : "Psalmus 95 [1]" ou "Canticum Zachariæ"
+        if (/^(Psalmus|Psalm|Canticum|Hymnus)\s/i.test(t)) {
+            inPsaume = true;
             html += `<span class="brev-ps-titre">${escH(t)}</span>`;
             continue;
         }
-        html += escH(t) + '\n';
+
+        // Verset numéroté : "95:1 Cantáte..." ou "1:68 Benedíctus..."
+        const mVerset = t.match(/^\d+:(\w+)\s+(.*)/);
+        if (mVerset) {
+            inPsaume = true;
+            html += `<span class="brev-ps-verset"><sup class="vnum">${escH(mVerset[1])}</sup>${escH(mVerset[2])}</span>`;
+            continue;
+        }
+
+        // Antienne : "Ant. texte *" — encadré en or
+        if (/^Ant\.\s/i.test(t)) {
+            inPsaume = false;
+            html += `<span class="brev-ant-inline">${escH(t)}</span>`;
+            continue;
+        }
+
+        // Répons et versicules ℣ ℟ R. V.
+        if (/^[℣℟✠]|^[RV]\.\s/.test(t)) {
+            html += `<span class="brev-resp">${escH(t)}</span>`;
+            continue;
+        }
+
+        // Référence biblique seule (ex: "Sir 44:16-17", "Luc. 1:68-79")
+        if (/^[A-Z][a-z]+\.?\s+\d+:\d+/.test(t)) {
+            html += `<span class="brev-bible-ref">📖 ${escH(t)}</span>`;
+            continue;
+        }
+
+        // Ligne d'hymne (commence par majuscule, contient *)
+        if (t.includes('*') && !t.startsWith('Ant.')) {
+            html += `<span class="brev-hymne-line">${escH(t)}</span>`;
+            continue;
+        }
+
+        // Ligne normale
+        html += `<span class="brev-line">${escH(t)}</span>`;
     }
-    return html.trim();
+    return html;
 }
 
 function buildSection(s, idx) {
