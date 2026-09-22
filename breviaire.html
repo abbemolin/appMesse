@@ -360,9 +360,9 @@
 <!-- ════════════ TOOLBAR ════════════ -->
 <div class="brev-toolbar">
     <div class="lang-toggle">
-        <button class="lang-btn active" id="btn-la" onclick="setLang('la')">Latin</button>
-        <button class="lang-btn"        id="btn-fr" onclick="setLang('fr')">Français</button>
-        <button class="lang-btn"        id="btn-bi" onclick="setLang('bi')">Bilingue</button>
+        <button class="lang-btn active" id="btn-la" onclick="setLang('Latin')">Latin</button>
+        <button class="lang-btn"        id="btn-fr" onclick="setLang('Francais')">Français</button>
+        <button class="lang-btn"        id="btn-bi" onclick="setLang('Bilingue')">Bilingue</button>
     </div>
     <div class="brev-toolbar-filler"></div>
     <button class="brev-search-btn" onclick="ouvrirRecherche()" title="Rechercher (/)">⌕</button>
@@ -392,141 +392,49 @@
 <script src="ordo1962.js"></script>
 <script src="menu.js"></script>
 <script>
+<script src="ordo1962.js"></script>
+<script src="menu.js"></script>
+<script>
 
-// ── Calcul de Pâques ──────────────────────────────────────
-function getEaster(year) {
-    const a = year % 19;
-    const b = Math.floor(year / 100), c = year % 100;
-    const d = Math.floor(b / 4), e = b % 4;
-    const f = Math.floor((b + 8) / 25);
-    const g = Math.floor((b - f + 1) / 3);
-    const h = (19*a + b - d - g + 15) % 30;
-    const i = Math.floor(c / 4), k = c % 4;
-    const l = (32 + 2*e + 2*i - h - k) % 7;
-    const m = Math.floor((a + 11*h + 22*l) / 451);
-    const month = Math.floor((h + l - 7*m + 114) / 31);
-    const day   = ((h + l - 7*m + 114) % 31) + 1;
-    return new Date(year, month-1, day);
-}
+// ══════════════════════════════════════════════════════════
+// BRÉVIAIRE — utilise la table breviaire_offices
+// ══════════════════════════════════════════════════════════
 
-function addDays(d, n) {
-    const r = new Date(d); r.setDate(r.getDate() + n); return r;
-}
-function diffDays(a, b) {
-    return Math.round((a - b) / 86400000);
-}
-// Dimanche précédant ou égal à d
-function prevSunday(d) {
-    const r = new Date(d);
-    r.setDate(r.getDate() - r.getDay());
-    return r;
-}
+const MOIS = ['janvier','février','mars','avril','mai','juin',
+              'juillet','août','septembre','octobre','novembre','décembre'];
+const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
 
-// Mapping semaine après la Pentecôte → fichier de lectures scripturaires
-const PENT_TO_NUM = {
-    1:'081',2:'082',3:'083',4:'084',5:'085',
-    6:'091',7:'092',8:'093',9:'094',10:'095',
-    11:'101',12:'102',13:'103',14:'104',15:'105',
-    16:'111',17:'112',18:'113',19:'114',20:'115',
-    21:'112',22:'113',23:'114',24:'115',
+const SECTION_LABELS = {
+    'hymne':       'Hymne',
+    'antienne':    'Antienne',
+    'psaume':      'Psaumes',
+    'capitule':    'Capitule',
+    'lecture':     'Leçon',
+    'repons':      'Répons',
+    'verset':      'Verset',
+    'oraison':     'Oraison',
+    'cantique':    'Cantique',
+    'invitatoire': 'Invitatoire',
+    'preces':      'Prières',
+    'titre':       '',
+    'autre':       '',
 };
 
-// ── Mapping date → fichiers Tempora ───────────────────────
-function getBrevFiles(d) {
-    const year  = d.getFullYear();
-    const month = d.getMonth() + 1;
-    const day   = d.getDate();
-    // Convention DO : 0=dim, 1=lun, …, 6=sam
-    const dow   = d.getDay();  // 0=dim natif JS ✓
+// ── État ──────────────────────────────────────────────────
+let _offset = 0;
+let _heure  = 'Laudes';
+let _lang   = 'Latin';
+let _cache  = {};
+let _searchTimer = null;
 
-    const easter      = getEaster(year);
-    const pentecost   = addDays(easter, 49);
-    const ashWed      = addDays(easter, -46);
-    const christmas   = new Date(year, 11, 25);
-    const epiphany    = new Date(year, 0, 6);
-
-    // 1er dimanche de l'Avent (4 dimanches avant Noël)
-    const adv1 = addDays(prevSunday(addDays(christmas, -1)), -21);
-
-    // 1er dimanche après l'Épiphanie
-    let epi1Sun = addDays(epiphany, (7 - epiphany.getDay()) % 7);
-    if (epi1Sun <= epiphany) epi1Sun = addDays(epi1Sun, 7);
-
-    // Septuagésime = dimanche -63j avant Pâques
-    const septuagesima = addDays(prevSunday(addDays(ashWed, -1)), -14);
-
-    // Fichier sancti MM-DD
-    const sanctiFile = String(month).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-
-    let temporaFile = null;
-    let scripturaFile = null;  // fichier de lectures scripturaires numérique
-
-    const dDate = new Date(year, month-1, day);
-
-    if (dDate >= adv1 || month === 12 && day >= 25) {
-        // ── Avent ──────────────────────────────────────────
-        const weekSun = prevSunday(dDate);
-        const wk = Math.floor(diffDays(weekSun, adv1) / 7) + 1;
-        const w = Math.min(Math.max(wk, 1), 4);
-        temporaFile = `Adv${w}-${dow}`;
-
-    } else if (dDate >= new Date(year, 11, 25) || dDate < epiphany) {
-        // ── Noël ───────────────────────────────────────────
-        const nat = diffDays(dDate, new Date(year-1,11,25));
-        temporaFile = nat <= 7 ? 'Nat1-0' : 'Nat2-0';
-
-    } else if (dDate < epi1Sun) {
-        temporaFile = null;
-
-    } else if (dDate < septuagesima) {
-        // ── Temps après l'Épiphanie ─────────────────────────
-        const weekSun = prevSunday(dDate);
-        const wk = Math.floor(diffDays(weekSun, epi1Sun) / 7) + 1;
-        temporaFile = `Epi${Math.min(wk,6)}-${dow}`;
-
-    } else if (dDate < ashWed) {
-        // ── Septuagésime / Sexagésime / Quinquagésime ───────
-        const weekSun = prevSunday(dDate);
-        const wk = Math.floor(diffDays(weekSun, septuagesima) / 7) + 1;
-        const prefixes = ['Quadp1','Quadp2','Quadp3'];
-        temporaFile = `${prefixes[Math.min(wk,3)-1]}-${dow}`;
-
-    } else if (dDate < easter) {
-        // ── Carême ─────────────────────────────────────────
-        const weekSun = prevSunday(dDate);
-        const lentStart = addDays(ashWed, (7 - ashWed.getDay()) % 7);
-        const wk = Math.max(1, Math.floor(diffDays(weekSun, lentStart) / 7) + 1);
-        temporaFile = `Quad${Math.min(wk,6)}-${dow}`;
-
-    } else if (dDate < pentecost) {
-        // ── Temps pascal ───────────────────────────────────
-        const wk = Math.floor(diffDays(dDate, easter) / 7);
-        temporaFile = `Pasc${wk}-${dow}`;
-
-    } else if (diffDays(dDate, pentecost) < 7) {
-        // ── Octave de Pentecôte ─────────────────────────────
-        temporaFile = `Pasc7-${dow}`;
-
-    } else {
-        // ── Temps après la Pentecôte ────────────────────────
-        const weekSun = prevSunday(dDate);
-        const wkAfterPent = Math.floor(diffDays(weekSun, pentecost) / 7);
-        const wkNum = String(wkAfterPent).padStart(2,'0');
-        temporaFile = `Pent${wkNum}-${dow}`;
-
-        // Fichier de lectures scripturaires (081-115)
-        const numKey = PENT_TO_NUM[wkAfterPent];
-        if (numKey) scripturaFile = `${numKey}-${dow}`;
-    }
-
-    const ordo = (typeof Ordo1962 !== 'undefined')
-        ? Ordo1962.getDay(year, month, day) : null;
-    const feteName = ordo && ordo.fete ? ordo.fete
-        : temporaFile ? temporaFile : '—';
-
-    return { sanctiFile, temporaFile, scripturaFile, ordo, feteName };
+function dateNav() {
+    const d = new Date();
+    d.setDate(d.getDate() + _offset);
+    d.setHours(0,0,0,0);
+    return d;
 }
 
+// ── Navigation ────────────────────────────────────────────
 function naviguerJour(delta) {
     _offset += delta;
     chargerOffice();
@@ -536,601 +444,181 @@ function setHeure(btn) {
     document.querySelectorAll('.heure-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     _heure = btn.dataset.heure;
-    afficherHeure();
+    chargerOffice();
 }
 
 function setLang(lang) {
     _lang = lang;
-    ['la','fr','bi'].forEach(l => {
-        const b = document.getElementById('btn-'+l);
+    ['Latin','Francais','Bilingue'].forEach(l => {
+        const b = document.getElementById('btn-' + l);
         if (b) b.classList.toggle('active', l === lang);
     });
-    afficherHeure();
+    chargerOffice();
 }
 
-// ── Chargement depuis Supabase ────────────────────────────
+// ── Chargement depuis breviaire_offices ───────────────────
 async function chargerOffice() {
     if (typeof maConnexion === 'undefined') { setTimeout(chargerOffice, 300); return; }
 
     const d = dateNav();
+    const dateStr = d.toISOString().split('T')[0];
+
     document.getElementById('brev-date').textContent =
         JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear();
 
-    const { sanctiFile, temporaFile, scripturaFile, ordo, feteName } = getBrevFiles(d);
-    document.getElementById('brev-fete').textContent = feteName;
+    // Nom de la fête depuis ordo1962
+    const ordo = (typeof Ordo1962 !== 'undefined')
+        ? Ordo1962.getDay(d.getFullYear(), d.getMonth()+1, d.getDate()) : null;
+    document.getElementById('brev-fete').textContent =
+        ordo && ordo.fete ? ordo.fete : dateStr;
 
     document.getElementById('brev-content').innerHTML =
         '<div class="brev-loading">Chargement de l\'office…</div>';
 
-    const cacheKey = [sanctiFile, temporaFile, scripturaFile].join('|');
-    if (_cache[cacheKey]) { _currentSections = _cache[cacheKey]; afficherHeure(); return; }
-
-    const EXCL = '("Rank","Rule","Name","Officium","Comment")';
-
-    // Convention jour DO : Day1=dim, Day2=lun, Day3=mar, Day4=mer, Day5=jeu, Day6=ven, Day7=sam
-    // dow JS : 0=dim, 1=lun...6=sam → doDay = dow+1 (1=dim...7=sam)
-    const doDay = d.getDay() + 1; // 1=dim...7=sam
-    const dayKey = `Day${doDay}`;
-    // Antiennes fériaux : Feria2=lun, Feria3=mar...Feria7=sam
-    const feriaKey = ['', '', 'Feria2', 'Feria3', 'Feria4', 'Feria5', 'Feria6', 'Feria7'][d.getDay() + 1] || '';
+    const cacheKey = `${dateStr}|${_heure}|${_lang}`;
+    if (_cache[cacheKey]) { afficher(_cache[cacheKey]); return; }
 
     try {
-        const queries = [
-            // 1. Sancti du jour
-            maConnexion.from('breviaire')
-                .select('dossier,fichier,section,text_la,text_fr')
-                .eq('dossier','Sancti').eq('fichier', sanctiFile)
-                .not('section','in',EXCL),
-
-            // 2. Temporal propre (antiennes propres, oraison de la semaine)
-            temporaFile ? maConnexion.from('breviaire')
-                .select('dossier,fichier,section,text_la,text_fr')
-                .eq('dossier','Tempora').eq('fichier', temporaFile)
-                .not('section','in',EXCL) : Promise.resolve({data:[]}),
-
-            // 3. Lectures scripturaires (081-115)
-            scripturaFile ? maConnexion.from('breviaire')
-                .select('dossier,fichier,section,text_la,text_fr')
-                .eq('dossier','Tempora').eq('fichier', scripturaFile)
-                .not('section','in',EXCL) : Promise.resolve({data:[]}),
-
-            // 4. Antiennes du jour (contiennent numéros de psaumes)
-            maConnexion.from('breviaire')
-                .select('dossier,fichier,section,text_la,text_fr')
-                .eq('dossier','Psalterium')
-                .in('fichier',['Psalmi/Psalmi major','Psalmi/Psalmi minor','Psalmi/Psalmi matutinum'])
-                .ilike('section', `${dayKey}%`),
-
-            // 5. Hymnes et versicules du jour (Major + Minor Special)
-            maConnexion.from('breviaire')
-                .select('dossier,fichier,section,text_la,text_fr')
-                .eq('dossier','Psalterium')
-                .in('fichier',['Special/Major Special','Special/Minor Special','Special/Matutinum Special'])
-                .or(`section.ilike.${dayKey}%,section.ilike.Hymnus ${dayKey}%,section.ilike.HymnusM ${dayKey}%,section.ilike.${feriaKey}%`)
-                .not('section','in',EXCL),
-
-            // 6. Antiennes fériaux du Magnificat/Benedictus
-            feriaKey ? maConnexion.from('breviaire')
-                .select('dossier,fichier,section,text_la,text_fr')
-                .eq('dossier','Psalterium')
-                .eq('fichier','Special/Major Special')
-                .ilike('section', `${feriaKey}%`) : Promise.resolve({data:[]}),
-        ];
-
-        const results = await Promise.all(queries);
         let sections = [];
-        results.forEach(r => { if (r && !r.error && r.data) sections = sections.concat(r.data); });
 
-        // Extraire les numéros de psaumes depuis les antiennes
-        const psNums = new Set();
-        sections.forEach(s => {
-            if (s.fichier && s.fichier.includes('Psalmi')) {
-                s.text_la.split('\n').forEach(line => {
-                    if (line.includes(';;')) {
-                        const num = line.split(';;')[1].split('(')[0].split(';')[0].trim();
-                        if (num && /^\d+$/.test(num) && parseInt(num) <= 266) {
-                            psNums.add(num);
-                        }
-                    }
-                });
-            }
-        });
-
-        // Charger les textes complets des psaumes identifiés
-        if (psNums.size > 0) {
-            const fichiersPsaumes = [...psNums].map(n => `Psalmorum/Psalm${n}`);
-            const { data: psData } = await maConnexion.from('breviaire')
-                .select('dossier,fichier,section,text_la,text_fr')
-                .eq('dossier','Psalterium')
-                .in('fichier', fichiersPsaumes);
-            if (psData) sections = sections.concat(psData);
+        if (_lang === 'Bilingue') {
+            // Charger latin + français en parallèle
+            const [resLA, resFR] = await Promise.all([
+                maConnexion.from('breviaire_offices')
+                    .select('section_ord,section_type,section_ref,texte')
+                    .eq('date', dateStr).eq('hora', _heure).eq('langue', 'Latin')
+                    .order('section_ord'),
+                maConnexion.from('breviaire_offices')
+                    .select('section_ord,section_type,section_ref,texte')
+                    .eq('date', dateStr).eq('hora', _heure).eq('langue', 'Francais')
+                    .order('section_ord'),
+            ]);
+            // Fusionner par section_ord
+            const frMap = {};
+            (resFR.data || []).forEach(r => frMap[r.section_ord] = r.texte);
+            sections = (resLA.data || []).map(r => ({
+                ...r,
+                texte_fr: frMap[r.section_ord] || '',
+            }));
+        } else {
+            const { data, error } = await maConnexion.from('breviaire_offices')
+                .select('section_ord,section_type,section_ref,texte')
+                .eq('date', dateStr)
+                .eq('hora', _heure)
+                .eq('langue', _lang)
+                .order('section_ord');
+            if (error) throw error;
+            sections = data || [];
         }
 
-        // Dédupliquer : Sancti > Tempora > Psalterium
-        const seen = new Set();
-        const PRIORITY_ORDER = ['Sancti','Tempora','Psalterium'];
-        sections.sort((a,b) => PRIORITY_ORDER.indexOf(a.dossier) - PRIORITY_ORDER.indexOf(b.dossier));
-        sections = sections.filter(s => {
-            if (seen.has(s.section)) return false;
-            seen.add(s.section);
-            return true;
-        });
-
         _cache[cacheKey] = sections;
-        _currentSections = sections;
-        afficherHeure();
+        afficher(sections);
 
     } catch(e) {
         console.error(e);
         document.getElementById('brev-content').innerHTML =
-            '<div class="brev-empty">Erreur de chargement.</div>';
+            '<div class="brev-empty">Erreur de chargement — ' + e.message + '</div>';
     }
 }
-// ── Mapping heures → sections (dynamique selon le jour) ──
-function getHeureSections(heure, doDay, feriaKey) {
-    const day = 'Day' + doDay;
-    const maps = {
-        'Matines': [
-            day+' Matutinum1', day+' Matutinum2', day+' Matutinum3',
-            'Ant 1','Ant 2','Ant 3','Ant Matutinum',
-            'Hymnus Matutinum','HymnusM Matutinum','HymnusM Day'+doDay+' Matutinum',
-            'Lectio1','Lectio2','Lectio3',
-            'Lectio4','Lectio5','Lectio6',
-            'Lectio7','Lectio8','Lectio9',
-            'Responsory1','Responsory2','Responsory3',
-            'Responsory4','Responsory5','Responsory6',
-            'Responsory7','Responsory8','Responsory9',
-            'Oratio',
-        ],
-        'Laudes': [
-            day+' Laudes1', day+' Laudes2', day+' Laudes3', day+' Laudes4', day+' Laudes5',
-            'Hymnus Laudes','HymnusM Laudes','Hymnus '+day+' Laudes','HymnusM '+day+' Laudes',
-            'Ant Laudes', feriaKey+' Ant 3',
-            'Capitulum Laudes','Versum Laudes',
-            'Ant Benedictus', feriaKey+' Ant Benedictus',
-            'Benedictus','Oratio',
-        ],
-        'Prime': [
-            day+' Prima', day+' Prima1', day+' Prima2',
-            'Hymnus Prima','HymnusM Prima','Hymnus '+day+' Prima',
-            'Ant Prima','Capitulum Prima','Oratio',
-        ],
-        'Tierce': [
-            day+' Tertia', day+' Tertia1',
-            'Hymnus Tertia','HymnusM Tertia',
-            'Ant Tertia','Capitulum Tertia',
-            'Responsory Breve Tertia', feriaKey+' Tertia',
-            'Feria Tertia','Oratio',
-        ],
-        'Sexte': [
-            day+' Sexta', day+' Sexta1',
-            'Hymnus Sexta','HymnusM Sexta',
-            'Ant Sexta','Capitulum Sexta',
-            'Responsory Breve Sexta', feriaKey+' Sexta',
-            'Feria Sexta','Oratio',
-        ],
-        'None': [
-            day+' Nona', day+' Nona1',
-            'Hymnus Nona','HymnusM Nona',
-            'Ant Nona','Capitulum Nona',
-            'Responsory Breve Nona', feriaKey+' Nona',
-            'Feria Nona','Oratio',
-        ],
-        'Vêpres': [
-            day+' Vespera', day+' Vespera1', day+' Vespera2',
-            'Ant Vespera','Ant Vespera 2','Ant Vespera 3',
-            feriaKey+' Ant 2', feriaKey+'C Ant 2',
-            'Hymnus Vespera','HymnusM Vespera','Hymnus '+day+' Vespera',
-            'Capitulum Vespera','Versum Vespera',
-            feriaKey+' Ant 3', feriaKey+'C Ant 3',
-            'Ant Magnificat','Magnificat','Oratio',
-        ],
-        'Complies': [
-            'Hymnus Completorium','HymnusM Completorium',
-            'Ant Completorium','Capitulum Completorium',
-            'Versum Completorium','Oratio',
-        ],
-    };
-    return maps[heure] || [];
-}
-// Alias statique pour la recherche
-const HEURE_SECTIONS = {
-    'Matines':['Lectio1','Lectio2','Lectio3','Responsory1','Responsory2','Responsory3','Oratio'],
-    'Laudes':['Benedictus','Oratio'],'Prime':['Oratio'],'Tierce':['Oratio'],
-    'Sexte':['Oratio'],'None':['Oratio'],'Vêpres':['Magnificat','Oratio'],'Complies':['Oratio'],
-};
 
-const SECTION_LABELS = {
-    'Ant 1':'Antienne 1', 'Ant 2':'Antienne 2', 'Ant 3':'Antienne 3',
-    'Ant Matutinum':'Antienne des Matines',
-    'Ant Laudes':'Antienne des Laudes',
-    'Ant Vespera':'Antienne des Vêpres','Ant Vespera 2':'Antienne des Vêpres 2','Ant Vespera 3':'Antienne des Vêpres 3',
-    'Ant Prima':'Antienne de Prime','Ant Tertia':'Antienne de Tierce',
-    'Ant Sexta':'Antienne de Sexte','Ant Nona':'Antienne de None',
-    'Ant Completorium':'Antienne des Complies',
-    'Ant Benedictus':'Antienne du Benedictus','Ant Magnificat':'Antienne du Magnificat',
-    'Hymnus Matutinum':'Hymne des Matines','HymnusM Matutinum':'Hymne des Matines',
-    'Hymnus Laudes':'Hymne des Laudes','HymnusM Laudes':'Hymne des Laudes',
-    'Hymnus Prima':'Hymne de Prime','HymnusM Prima':'Hymne de Prime',
-    'Hymnus Tertia':'Hymne de Tierce','HymnusM Tertia':'Hymne de Tierce',
-    'Hymnus Sexta':'Hymne de Sexte','HymnusM Sexta':'Hymne de Sexte',
-    'Hymnus Nona':'Hymne de None','HymnusM Nona':'Hymne de None',
-    'Hymnus Vespera':'Hymne des Vêpres','HymnusM Vespera':'Hymne des Vêpres',
-    'Hymnus Completorium':'Hymne des Complies','HymnusM Completorium':'Hymne des Complies',
-    'Lectio1':'Leçon I','Lectio2':'Leçon II','Lectio3':'Leçon III',
-    'Lectio4':'Leçon IV','Lectio5':'Leçon V','Lectio6':'Leçon VI',
-    'Lectio7':'Leçon VII','Lectio8':'Leçon VIII','Lectio9':'Leçon IX',
-    'Responsory1':'Répons I','Responsory2':'Répons II','Responsory3':'Répons III',
-    'Responsory4':'Répons IV','Responsory5':'Répons V','Responsory6':'Répons VI',
-    'Responsory7':'Répons VII','Responsory8':'Répons VIII','Responsory9':'Répons IX',
-    'Responsory Breve Tertia':'Répons bref','Responsory Breve Sexta':'Répons bref',
-    'Responsory Breve Nona':'Répons bref',
-    'Capitulum Laudes':'Capitule','Capitulum Prima':'Capitule',
-    'Capitulum Tertia':'Capitule','Capitulum Sexta':'Capitule',
-    'Capitulum Nona':'Capitule','Capitulum Vespera':'Capitule',
-    'Capitulum Completorium':'Capitule',
-    'Versum Laudes':'Verset','Versum Vespera':'Verset','Versum Completorium':'Verset',
-    'Benedictus':'Cantique de Zacharie','Magnificat':'Magnificat',
-    'Oratio':'Oraison',
-};
-
-const MOIS = ['janvier','février','mars','avril','mai','juin',
-               'juillet','août','septembre','octobre','novembre','décembre'];
-const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-
-const PSALMODIE = {"1":{"Prime":[{"ant_la":"Allelúja, * confitémini Dómino, quóniam in sǽculum misericórdia ejus, allelúja, allelúja.","ant_fr":"Alléluia, chantez au Seigneur * qu’éternelle est sa miséricorde, alléluia, alléluia.","psaumes":["117","118","118"]}],"Tierce":[{"ant_la":"Allelúja, * deduc me, Dómine, in sémitam mandatórum tuórum, allelúja, allelúja.","ant_fr":"Alléluia, * conduisez-moi, Seigneur, dans la voie de vos commandements, alléluia, alléluia.","psaumes":["118","118","118"]}],"Sexte":[{"ant_la":"Allelúja, * tuus sum ego, salvum me fac, Dómine, allelúja, allelúja.","ant_fr":"Alléluia, je suis vôtre, gardez-moi sauf, Seigneur, alléluia, alléluia.","psaumes":["118","118","118"]}],"None":[{"ant_la":"Allelúja, * fáciem tuam, Dómine, illúmina super servum tuum, allelúja, allelúja.","ant_fr":"Alléluia, * faites luire votre face, Seigneur, sur votre serviteur, alléluia, alléluia.","psaumes":["118","118","118"]}],"Complies":[{"ant_la":"Miserére * mihi, Dómine, et exáudi oratiónem meam.","ant_fr":"Ayez pitié de moi, * Seigneur, et exaucez ma prière.","psaumes":["4","90","133"]}],"Laudes":[{"ant_la":"Allelúja, * Dóminus regnávit, decórem índuit, allelúja, allelúja.","ant_fr":"Alléluia, * le Seigneur règne, vêtu de majesté, alléluia, alléluia.","psaumes":["92"]},{"ant_la":"Jubiláte * Deo omnis terra, allelúja.","ant_fr":"Acclamez * Dieu, terre entière, alléluia.","psaumes":["99"]},{"ant_la":"Benedícam te * in vita mea, Dómine: et in nómine tuo levábo manus meas, allelúja.","ant_fr":"Je veux Vous bénir * en ma vie Seigneur, élever mes mains à Votre nom, alléluia.","psaumes":["62"]},{"ant_la":"Tres púeri * jussu regis in fornácem missi sunt, non timéntes flammam ignis, dicéntes: Benedíctus Deus, allelúja.","ant_fr":"Les trois enfants * par ordre du roi, furent jetés dans la fournaise : sans craindre les flammes, ils disaient : Dieu soit béni, alléluia.","psaumes":["210"]},{"ant_la":"Allelúja, * laudáte Dóminum de cælis, allelúja, allelúja.","ant_fr":"Alléluia, * louez le Seigneur du haut des cieux, alléluia, alléluia.","psaumes":["148"]},{"ant_la":"","ant_fr":"","psaumes":["50"]},{"ant_la":"","ant_fr":"","psaumes":["117"]},{"ant_la":"","ant_fr":"","psaumes":["62"]},{"ant_la":"","ant_fr":"","psaumes":["220"]},{"ant_la":"","ant_fr":"","psaumes":["148"]}],"Vêpres":[{"ant_la":"Dixit Dóminus * Dómino meo: Sede a dextris meis.","ant_fr":"Le Seigneur a dit à mon Seigneur : * Asseyez-Vous à ma droite.","psaumes":["109"]},{"ant_la":"Magna ópera Dómini: * exquisíta in omnes voluntátes ejus.","ant_fr":"Les œuvres du Seigneur sont grandes, * proportionnées à toutes Ses volontés.","psaumes":["110"]},{"ant_la":"Qui timet Dóminum, * in mandátis ejus cupit nimis.","ant_fr":"Celui qui craint le Seigneur * met ses délices dans Ses commandements.","psaumes":["111"]},{"ant_la":"Sit nomen Dómini * benedíctum in sǽcula.","ant_fr":"Que le Nom du Seigneur * soit béni dans tous les siècles.","psaumes":["112"]},{"ant_la":"Deus autem noster * in cælo: ómnia quæcúmque vóluit, fecit.","ant_fr":"Notre Dieu est * dans le Ciel : tout ce qu’Il a voulu, Il l’a fait.","psaumes":["113"]}],"Matines":[{"ant_la":"Beátus vir * qui in lege Dómini meditátur.","ant_fr":"Bienheureux l’homme * qui médite la loi du Seigneur.","psaumes":["1"]},{"ant_la":"Servíte Dómino * in timóre, et exsultáte ei cum tremóre.","ant_fr":"Servez le Seigneur * dans la crainte, et exultez devant lui avec tremblement.","psaumes":["2"]},{"ant_la":"Exsúrge, * Dómine, salvum me fac, Deus meus.","ant_fr":"Levez-vous, * Seigneur, sauvez-moi, mon Dieu.","psaumes":["3"]},{"ant_la":"Quam admirábile * est nomen tuum, Dómine, in univérsa terra!","ant_fr":"Qu’il est admirable * votre nom, Seigneur, par toute la terre !","psaumes":["8"]},{"ant_la":"Sedísti super thronum * qui júdicas justítiam.","ant_fr":"Vous siégez sur un trône * vous qui jugez la justice.","psaumes":["9"]},{"ant_la":"Exsúrge, Dómine, * non præváleat homo.","ant_fr":"Levez-vous, Seigneur, * que l’homme ne triomphe pas.","psaumes":["9"]},{"ant_la":"Ut quid, Dómine, * recessísti longe?","ant_fr":"Pourquoi, Seigneur, * vous tenir à l’écart ?","psaumes":["9"]},{"ant_la":"Exsúrge, * Dómine Deus, exaltétur manus tua.","ant_fr":"Levez-vous, * Seigneur Dieu, que soit exaltée votre main.","psaumes":["9"]},{"ant_la":"Justus Dóminus * et justítiam diléxit.","ant_fr":"Juste est le Seigneur * et il aime la justice.","psaumes":["10"]}]},"2":{"Prime":[{"ant_la":"Ínnocens mánibus * et mundo corde ascéndet in montem Dómini.","ant_fr":"L’homme aux mains innocentes * et au cœur pur montera à la montagne du Seigneur.","psaumes":["23","18","18","46"]}],"Tierce":[{"ant_la":"Illuminátio mea * et salus mea Dóminus.","ant_fr":"Ma lumière * et mon salut, c’est le Seigneur.","psaumes":["26","26","27"]}],"Sexte":[{"ant_la":"In tua justítia * líbera me, Dómine.","ant_fr":"En votre justice, * délivrez- moi, Seigneur.","psaumes":["30","30","30"]}],"None":[{"ant_la":"Exsultáte, justi, * et gloriámini, omnes recti corde.","ant_fr":"Exultez, justes, * et soyez glorifiés, vous tous hommes au cœur droit.","psaumes":["31","32","32"]}],"Complies":[{"ant_la":"Salvum me fac, * Dómine, propter misericórdiam tuam.","ant_fr":"Sauvez-moi, * Seigneur, dans votre miséricorde.","psaumes":["6","7","7"]}],"Laudes":[{"ant_la":"Jubiláte * Deo in voce exsultatiónis.","ant_fr":"Célébrez * Dieu par des cris d’allégresse.","psaumes":["46"]},{"ant_la":"Inténde * voci oratiónis meæ, Rex meus et Deus meus.","ant_fr":"Soyez attentif à la voix de ma prière, * mon Roi et mon Dieu.","psaumes":["5"]},{"ant_la":"Deus majestátis * intónuit: afférte glóriam nómini ejus.","ant_fr":"Le Dieu de gloire * a tonné : offrez au Seigneur la gloire due à Son Nom.","psaumes":["28"]},{"ant_la":"Laudámus nomen tuum * ínclitum, Deus noster.","ant_fr":"Nous louons * Votre illustre Nom, notre Dieu.","psaumes":["211"]},{"ant_la":"Laudáte * Dóminum omnes gentes.","ant_fr":"Nations * louez toutes le Seigneur.","psaumes":["116"]},{"ant_la":"Miserére * mei, Deus, secúndum magnam misericórdiam tuam.","ant_fr":"Ayez pitié * de moi, ô Dieu, selon Votre grande miséricorde.","psaumes":["50"]},{"ant_la":"Deduc me * in justítia tua, Dómine.","ant_fr":"Conduisez-moi * dans Votre justice Seigneur.","psaumes":["5"]},{"ant_la":"Dóminus dabit virtútem * et benedícet pópulo suo in pace.","ant_fr":"Le Seigneur donnera la force * Il bénira Son peuple dans la paix.","psaumes":["28"]},{"ant_la":"Convérsus est furor tuus, * Dómine, et consolátus es me.","ant_fr":"Votre fureur s’est apaisée, * Seigneur et Vous m’avez consolé.","psaumes":["221"]},{"ant_la":"Laudáte * Dóminum quóniam confirmáta est super nos misericórdia ejus.","ant_fr":"Louez * le Seigneur car Sa miséricorde a été affermie sur nous.","psaumes":["116"]},{"ant_la":"Ecce véniet * Dóminus princeps regum terræ: beáti, qui parati sunt occúrrere illi.","ant_fr":"","psaumes":[]},{"ant_la":"Cum vénerit * Fílius hóminis, putas invéniet fidem super terram?","ant_fr":"","psaumes":[]},{"ant_la":"Ecce jam venit * plenitúdo témporis, in quo misit Deus Fílium suum in terras.","ant_fr":"","psaumes":[]},{"ant_la":"Hauriétis aquas * in gáudio de fóntibus Salvatóris.","ant_fr":"","psaumes":[]},{"ant_la":"Egrediétur * Dóminus de loco sancto suo: véniet ut salvet pópulum suum.","ant_fr":"","psaumes":[]}],"Vêpres":[{"ant_la":"Inclinávit Dóminus * aurem suam mihi.","ant_fr":"Le Seigneur a incliné * vers moi Son oreille.","psaumes":["114"]},{"ant_la":"Vota mea * Dómino reddam coram omni pópulo ejus.","ant_fr":"Je rendrai mes vœux * au Seigneur devant tout Son peuple.","psaumes":["115"]},{"ant_la":"Clamávi * et Dóminus exaudívit me.","ant_fr":"J’ai crié * et le Seigneur m’a exaucé.","psaumes":["119"]},{"ant_la":"Auxílium meum * a Dómino, qui fecit cælum et terram.","ant_fr":"Mon secours * vient du Seigneur, qui a fait le ciel et la terre.","psaumes":["120"]},{"ant_la":"Lætátus sum * in his, quæ dicta sunt mihi.","ant_fr":"Je me suis réjoui * de ce qui m’a été dit.","psaumes":["121"]}],"Matines":[{"ant_la":"Dóminus de cælo * prospéxit super fílios hóminum.","ant_fr":"Le Seigneur du haut du Ciel * a abaissé son regard sur les enfants des hommes.","psaumes":["13"]},{"ant_la":"Qui operátur justítiam * requiéscet in monte sancto tuo, Dómine.","ant_fr":"Celui qui pratique la justice * se reposera sur votre montagne sainte, Seigneur.","psaumes":["14"]},{"ant_la":"Inclína, Dómine, * aurem tuam mihi, et exáudi verba mea.","ant_fr":"Penchez, Seigneur, * votre oreille vers moi, et exaucez mes paroles.","psaumes":["16"]},{"ant_la":"Díligam te, * Dómine, virtus mea.","ant_fr":"Je vous aimerai, * Seigneur, ma force.","psaumes":["17"]},{"ant_la":"Exáudiat te * Dóminus in die tribulatiónis.","ant_fr":"Il me récompensera, le Seigneur * selon ma justice.","psaumes":["19"]},{"ant_la":"Dómine, * in virtúte tua lætábitur rex.","ant_fr":"Le Seigneur est vivant * et béni le Dieu de mon salut.","psaumes":["20"]},{"ant_la":"Exaltábo te, * Dómine, quóniam suscepísti me.","ant_fr":"Que le Seigneur t’exauce * au jour d’angoisse.","psaumes":["29"]},{"ant_la":"","ant_fr":"Seigneur, * le roi se réjouira de votre force.","psaumes":["33"]},{"ant_la":"Expúgna * impugnántes me","ant_fr":"Je vous exalterai, * Seigneur, parce que vous m’avez relevé.","psaumes":["34"]},{"ant_la":"","ant_fr":"","psaumes":["36"]},{"ant_la":"Ne in ira tua * árguas me Dómine","ant_fr":"","psaumes":["37"]},{"ant_la":"Ut non delínquam * in lingua mea","ant_fr":"","psaumes":["38","39"]},{"ant_la":"Sana Dómine * ánimam meam, quia peccávi tibi","ant_fr":"","psaumes":["40","41"]},{"ant_la":"Eructávit * cor meum verbum bonum","ant_fr":"","psaumes":["43","44"]}]},"3":{"Prime":[{"ant_la":"Deus meus * in te confído non erubéscam.","ant_fr":"Mon Dieu, * en vous j’ai confiance, je n’en rougirai pas.","psaumes":["24","24","24","95"]}],"Tierce":[{"ant_la":"Respéxit me * et exaudívit deprecatiónem meam Dóminus.","ant_fr":"Il m’a regardé * et il a exaucé ma prière, le Seigneur.","psaumes":["39","39","39"]}],"Sexte":[{"ant_la":"Suscepísti me, Dómine: * et confirmásti me in conspéctu tuo.","ant_fr":"Vous m’avez soutenu, * Seigneur, et fortifié en votre présence.","psaumes":["40","41","41"]}],"None":[{"ant_la":"Salvásti nos, * Dómine, et in nómine tuo confitébimur in sǽcula.","ant_fr":"Vous nous avez sauvés, * Seigneur, et en votre nom, toujours nous louerons.","psaumes":["43","43","43"]}],"Complies":[{"ant_la":"Tu, Dómine, * servábis nos: et custódies nos in ætérnum.","ant_fr":"C’est vous, Seigneur, * qui nous sauverez et nous garderez pour l’éternité.","psaumes":["11","12","15"]}],"Laudes":[{"ant_la":"Cantáte * Dómino et benedícite nómini ejus.","ant_fr":"Chantez * au Seigneur, et bénissez Son Nom.","psaumes":["95"]},{"ant_la":"Salutáre vultus mei, * Deus meus.","ant_fr":"Le salut de mon visage * et mon Dieu.","psaumes":["42"]},{"ant_la":"Illúmina, Dómine, * vultum tuum super nos.","ant_fr":"Faites briller Seigneur * Votre visage sur nous.","psaumes":["66"]},{"ant_la":"Exaltáte * Regem sæculórum in opéribus vestris.","ant_fr":"Exaltez * le Roi des siècles par vos œuvres.","psaumes":["212"]},{"ant_la":"Laudáte * nomen Dómini, qui statis in domo Dómini.","ant_fr":"Louez * le Nom du Seigneur vous qui demeurez dans la maison du Seigneur.","psaumes":["134"]},{"ant_la":"Dele iniquitátem meam, * Dómine, secúndum multitúdinem miseratiónum tuárum.","ant_fr":"Effacez mon iniquité * ô Dieu selon la multitude de Vos bontés.","psaumes":["50"]},{"ant_la":"Discérne causam meam, * Deus, de gente non sancta.","ant_fr":"Séparez ma cause * ô Dieu de celle d’une nation qui n’est pas sainte.","psaumes":["42"]},{"ant_la":"Deus misereátur * nostri, et benedícat nobis.","ant_fr":"Que Dieu ait pitié * de nous, et nous bénisse.","psaumes":["66"]},{"ant_la":"Corrípies me, Dómine, * et vivificábis me.","ant_fr":"Vous me châtieriez, Seigneur, * et Vous me rendrez la vie.","psaumes":["222"]},{"ant_la":"Laudáte * Dóminum quia benígnus est, et in servis suis deprecábitur.","ant_fr":"Louez * le Seigneur car Il est bon et Il aura pitié de Ses serviteurs.","psaumes":["134"]},{"ant_la":"Roráte, cæli, désuper, * et nubes pluant justum: aperiátur terra, et gérminet Salvatórem.","ant_fr":"","psaumes":[]},{"ant_la":"Emítte Agnum, Dómine, * Dominatórem terræ, de Petra desérti, ad montem fíliæ Sion.","ant_fr":"","psaumes":[]},{"ant_la":"Ut cognoscámus, Dómine, * in terra viam tuam, in ómnibus géntibus salutáre tuum.","ant_fr":"","psaumes":[]},{"ant_la":"Da mercédem, Dómine, * sustinéntibus te, ut prophétæ tui fidéles inveniántur.","ant_fr":"","psaumes":[]},{"ant_la":"Lex per Móysen data est, * grátia et véritas per Jesum Christum facta est.","ant_fr":"","psaumes":[]}],"Vêpres":[{"ant_la":"Qui hábitas in cælis, * miserére nobis.","ant_fr":"Vous qui habitez dans les cieux, * ayez pitié de nous.","psaumes":["122"]},{"ant_la":"Adjutórium nostrum * in nómine Dómini.","ant_fr":"Notre secours * est dans le Nom du Seigneur.","psaumes":["123"]},{"ant_la":"In circúitu pópuli sui * Dóminus, ex hoc nunc et usque in sǽculum.","ant_fr":"Autour de Son peuple * est le Seigneur, dès maintenant et à jamais.","psaumes":["124"]},{"ant_la":"Magnificávit Dóminus * fácere nobíscum: facti sumus lætántes.","ant_fr":"Le Seigneur a fait de grandes choses * pour nous : nous en avons été remplis de joie.","psaumes":["125"]},{"ant_la":"Dóminus ædíficet * nobis domum, et custódiat civitátem.","ant_fr":"Que le Seigneur bâtisse * une maison pour nous et qu’Il garde la cité.","psaumes":["126"]}],"Matines":[{"ant_la":"Expúgna, Dómine, * impugnántes me.","ant_fr":"Combattez, Seigneur, * ceux qui me combattent.","psaumes":["34"]},{"ant_la":"Exsúrge, Dómine, * et inténde judício meo.","ant_fr":"Guérissez mon âme * des coups qu’ils m’ont portés, Seigneur.","psaumes":["34"]},{"ant_la":"Noli æmulári * in eo qui prosperátur et facit iniquitátem.","ant_fr":"Levez-vous, Seigneur, * et veillez à mon jugement.","psaumes":["36"]},{"ant_la":"Brácchia peccatórum * conteréntur, confírmat autem justos Dóminus.","ant_fr":"N’envie point * la postérité de celui qui commet l’iniquité.","psaumes":["36"]},{"ant_la":"Custódi innocéntiam * et vide æquitátem.","ant_fr":"Les bras des pécheurs * seront brisés, tandis que le Seigneur soutient les justes.","psaumes":["36"]},{"ant_la":"Ne in ira tua * corrípias me, Dómine.","ant_fr":"Garde l’innocence * et considère l’équité.","psaumes":["37"]},{"ant_la":"Inténde in adjutórium meum, * Dómine, virtus salútis meæ.","ant_fr":"Ne me corrigez pas * dans votre colère, Seigneur.","psaumes":["37"]},{"ant_la":"Ámove, Dómine, * a me plagas tuas.","ant_fr":"Venez à mon aide, * Seigneur, force de mon salut.","psaumes":["38"]},{"ant_la":"Adjútor * in tribulatiónibus","ant_fr":"Détournez de moi, * vos coups, Seigneur.","psaumes":["45","46"]},{"ant_la":"Magnus Dóminus * et laudábilis nimis","ant_fr":"","psaumes":["47","48"]},{"ant_la":"Deus deórum * Dóminus locútus est","ant_fr":"","psaumes":["49","51"]},{"ant_la":"Avértit Dóminus * captivitátem plebis suæ","ant_fr":"","psaumes":["52","53"]},{"ant_la":"Inténde in me * et exáudi me","ant_fr":"","psaumes":["54","55"]},{"ant_la":"Justa judicáte * fílii hóminum","ant_fr":"","psaumes":["57","58"]}]},"4":{"Prime":[{"ant_la":"Misericórdia tua, * Dómine, ante óculos meos: et complácui in veritáte tua.","ant_fr":"Votre miséricorde est devant mes yeux, * Seigneur, et je me suis complu dans votre vérité.","psaumes":["25","51","52","96"]}],"Tierce":[{"ant_la":"Deus ádjuvat me: * et Dóminus suscéptor est ánimæ meæ.","ant_fr":"Dieu m’aide * et le Seigneur est le soutien de mon âme.","psaumes":["53","54","54"]}],"Sexte":[{"ant_la":"In Deo sperávi * non timébo quid fáciat mihi homo.","ant_fr":"En Dieu j’ai mis ma confiance, * je ne craindrai pas ce que peut me faire l’homme.","psaumes":["55","56","57"]}],"None":[{"ant_la":"Deus meus * misericórdia tua prævéniet me.","ant_fr":"Mon Dieu, * votre miséricorde me préviendra.","psaumes":["58","58","59"]}],"Complies":[{"ant_la":"Immíttet Ángelus Dómini * in circúitu timéntium eum: et erípiet eos.","ant_fr":"L’Ange du Seigneur * s’intéressera à ceux qui le révèrent et les sauvera.","psaumes":["33","33","60"]}],"Laudes":[{"ant_la":"Dóminus regnávit, * exsúltet terra.","ant_fr":"Le Seigneur est Roi, * que la terre tressaille de joie.","psaumes":["96"]},{"ant_la":"Te decet hymnus, * Deus, in Sion.","ant_fr":"L’hymne de louange Vous est due, * ô Dieu, dans Sion.","psaumes":["64"]},{"ant_la":"Tibi, Dómine, psallam, * et intéllegam in via immaculáta.","ant_fr":"Je chanterai Seigneur, * et je m’appliquerai à connaître la voie sans tache.","psaumes":["100"]},{"ant_la":"Dómine, magnus es tu, * et præclárus in virtúte tua.","ant_fr":"Seigneur Vous êtes grand * et magnifique dans Votre puissance.","psaumes":["213"]},{"ant_la":"Laudábo Deum meum * in vita mea.","ant_fr":"Je louerai mon Dieu * pendant ma vie.","psaumes":["145"]},{"ant_la":"Ámplius lava me, * Dómine, ab injustítia mea.","ant_fr":"Lavez-moi, * Seigneur de plus en plus de mon iniquité.","psaumes":["50"]},{"ant_la":"Impietátibus nostris * tu propitiáberis Deus.","ant_fr":"Nos impiétés * Vous nous les pardonnerez Seigneur.","psaumes":["64"]},{"ant_la":"In innocéntia * cordis mei perambulábo, Dómine.","ant_fr":"Dans l’innocence * de mon cœur je marchais Seigneur.","psaumes":["100"]},{"ant_la":"Exsultávit cor meum * in Dómino, qui humíliat et súblevat.","ant_fr":"Mon cœur a tressailli * d’allégresse dans le Seigneur, Lui qui abaisse et qui élève.","psaumes":["223"]},{"ant_la":"Lauda * ánima mea Dóminum, qui érigit elísos et díligit justos.","ant_fr":"Loue * mon âme, le Seigneur Lui qui relève ceux qui sont brisés et aime les justes.","psaumes":["145"]},{"ant_la":"Prophétæ prædicavérunt * nasci Salvatórem de Vírgine María.","ant_fr":"","psaumes":[]},{"ant_la":"Spíritus * Dómini super me, evangelizáre paupéribus misit me.","ant_fr":"","psaumes":[]},{"ant_la":"Propter Sion * non tacébo, donec egrediátur ut splendor justus ejus.","ant_fr":"","psaumes":[]},{"ant_la":"Ecce, véniet Dóminus, * ut sédeat cum princípibus, et sólium glóriæ téneat.","ant_fr":"","psaumes":[]},{"ant_la":"Annuntiáte * pópulis, et dícite: Ecce, Deus Salvátor noster véniet.","ant_fr":"","psaumes":[]}],"Vêpres":[{"ant_la":"Beáti omnes * qui timent Dóminum.","ant_fr":"Heureux tous ceux * qui craignent le Seigneur.","psaumes":["127"]},{"ant_la":"Confundántur omnes * qui odérunt Sion.","ant_fr":"Qu’ils soient confondus tous ceux * qui haïssent Sion.","psaumes":["128"]},{"ant_la":"De profúndis * clamávi ad te, Dómine.","ant_fr":"Du fond * des abîmes je crie vers Vous, Seigneur.","psaumes":["129"]},{"ant_la":"Dómine, * non est exaltátum cor meum.","ant_fr":"Seigneur, * mon cœur ne s’est pas enorgueilli.","psaumes":["130"]},{"ant_la":"Elégit Dóminus * Sion in habitatiónem sibi.","ant_fr":"Le Seigneur a choisi * Sion pour Sa demeure.","psaumes":["131"]}],"Matines":[{"ant_la":"Speciósus forma * præ fíliis hóminum, diffúsa est grátia in lábiis tuis.","ant_fr":"Vous êtes beau * plus que les fils des hommes, la grâce est répandue sur vos lèvres.","psaumes":["44"]},{"ant_la":"Confitebúntur tibi * pópuli Deus in ætérnum.","ant_fr":"Les peuples vous loueront * ô Dieu, éternellement.","psaumes":["44"]},{"ant_la":"Adjútor in tribulatiónibus * Deus noster.","ant_fr":"Secours dans les détresses * est notre Dieu.","psaumes":["45"]},{"ant_la":"Magnus Dóminus * et laudábilis nimis in civitáte Dei nostri.","ant_fr":"Grand est le Seigneur * et digne d’une louange magnifique dans la cité de notre Dieu.","psaumes":["47"]},{"ant_la":"Os meum loquétur * sapiéntiam: et meditátio cordis mei prudéntiam.","ant_fr":"Ma bouche proclamera * la sagesse : et mon cœur méditera la prudence.","psaumes":["48"]},{"ant_la":"Ne timúeris * cum dívite non descéndet in sepúlcrum glória ejus.","ant_fr":"Ne crains pas * le riche car sa gloire ne descendra pas dans la tombe.","psaumes":["48"]},{"ant_la":"Deus deórum, * Dóminus locútus est.","ant_fr":"Le Dieu suprême, * le Seigneur a parlé.","psaumes":["49"]},{"ant_la":"Intellégite, * qui obliviscímini Deum.","ant_fr":"Comprenez, * vous qui oubliez Dieu.","psaumes":["49"]},{"ant_la":"Acceptábis sacrifícium * justítiæ super altáre tuum, Dómine.","ant_fr":"Vous accepterez le sacrifice * de justice sur votre autel, Seigneur.","psaumes":["50"]},{"ant_la":"Da nobis Dómine * auxílium de tribulatióne","ant_fr":"","psaumes":["59","60"]},{"ant_la":"Benedícite, * gentes, Deum nostrum","ant_fr":"","psaumes":["61","65"]},{"ant_la":"In ecclésiis, * benedícite Dóminum","ant_fr":"","psaumes":["67","67"]},{"ant_la":"Quǽrite Dóminum * et vivet ánima vestra","ant_fr":"","psaumes":["68","68"]},{"ant_la":"Dómine * Deus in adjutórium meum inténde","ant_fr":"","psaumes":["69","70"]},{"ant_la":"Quam bonus * Israël Deus","ant_fr":"","psaumes":["71","72"]}]},"5":{"Prime":[{"ant_la":"In loco páscuæ * ibi Dóminus me collocávit.","ant_fr":"Dans un lieu de pâturage, * voilà où le Seigneur m’a placé.","psaumes":["22","71","71","97"]}],"Tierce":[{"ant_la":"Quam bonus * Israël Deus, his, qui recto sunt corde.","ant_fr":"Combien bon est Dieu, * Israël, pour ceux qui ont le cœur droit.","psaumes":["72","72","72"]}],"Sexte":[{"ant_la":"Memor esto * congregatiónis tuæ, Dómine, quam possedísti ab inítio.","ant_fr":"Souvenez-vous, Seigneur, * de votre congrégation qui est vôtre dès le commencement.","psaumes":["73","73","73"]}],"None":[{"ant_la":"Invocábimus * nomen tuum, Dómine: narrábimus mirabília tua.","ant_fr":"Nous invoquerons votre nom, * Seigneur, nous raconterons vos merveilles.","psaumes":["74","75","75"]}],"Complies":[{"ant_la":"Adjútor meus * et liberátor meus esto, Dómine.","ant_fr":"Soyez mon secours et mon libérateur, Seigneur.","psaumes":["69","70","70"]}],"Laudes":[{"ant_la":"Jubiláte * in conspéctu regis Dómini.","ant_fr":"Poussez des cris de joie * en présence du Seigneur votre Roi.","psaumes":["97"]},{"ant_la":"Dómine, * refúgium factus es nobis.","ant_fr":"Seigneur * Vous avez été pour nous un refuge.","psaumes":["89"]},{"ant_la":"Dómine, * in cælo misericórdia tua.","ant_fr":"Seigneur, * Votre miséricorde est dans le Ciel.","psaumes":["35"]},{"ant_la":"Pópulus meus, * ait Dóminus, bonis meis adimplébitur.","ant_fr":"Mon peuple, * dit le Seigneur, sera rempli de Mes biens.","psaumes":["214"]},{"ant_la":"Deo nostro * jucúnda sit laudátio.","ant_fr":"À notre Dieu * agréable soit la louange.","psaumes":["146"]},{"ant_la":"Tibi soli peccávi, * Dómine, miserére mei.","ant_fr":"J’ai péché contre Vous seul, * Seigneur ; ayez pitié de moi.","psaumes":["50"]},{"ant_la":"Convértere, Dómine, * et deprecábilis esto super servos tuos.","ant_fr":"Revenez, Seigneur * laissez-Vous fléchir en faveur de Vos serviteurs.","psaumes":["89"]},{"ant_la":"Multiplicásti, Deus, * misericórdiam tuam.","ant_fr":"Vous avez multiplié ô Dieu, * Votre miséricorde !","psaumes":["35"]},{"ant_la":"Fortitúdo mea * et laus mea Dóminus: et factus est mihi in salútem.","ant_fr":"Ma force * et le sujet de mes louanges c’est le Seigneur, c’est Lui qui m’a sauvé.","psaumes":["224"]},{"ant_la":"Laudáte * Dóminum qui sanat contrítos corde, et álligat contritiónes eórum.","ant_fr":"Louez * le Seigneur, Il guérit ceux dont le cœur est brisé, et Il bande leurs plaies.","psaumes":["146"]},{"ant_la":"De Sion * véniet Dóminus omnípotens, ut salvum fáciat pópulum suum.","ant_fr":"","psaumes":[]},{"ant_la":"Convértere, Dómine, * aliquántulum, et ne tardes veníre ad servos tuos.","ant_fr":"","psaumes":[]},{"ant_la":"De Sion * véniet, qui regnatúrus est Dóminus, Emmánuel magnum nomen ejus.","ant_fr":"","psaumes":[]},{"ant_la":"Ecce Deus meus, * et honorábo eum: Deus patris mei, et exaltábo eum.","ant_fr":"","psaumes":[]},{"ant_la":"Dóminus * légifer noster, Dóminus Rex noster, ipse véniet, et salvábit nos.","ant_fr":"","psaumes":[]}],"Vêpres":[{"ant_la":"Ecce quam bonum * et quam jucúndum habitáre fratres in unum.","ant_fr":"Ah ! qu’il est bon et agréable * pour des frères d’habiter ensemble !","psaumes":["132"]},{"ant_la":"Confitémini Dómino * quóniam in ætérnum misericórdia ejus.","ant_fr":"Célébrez le Seigneur * car Sa miséricorde est éternelle.","psaumes":["135"]},{"ant_la":"Confitémini Dómino * quia in humilitáte nostra memor fuit nostri.","ant_fr":"Célébrez le Seigneur * car Il s’est souvenu de nous dans notre humiliation.","psaumes":["135"]},{"ant_la":"Adhǽreat lingua mea * fáucibus meis, si non memínero tui Jerúsalem.","ant_fr":"Que ma langue s’attache * à mon palais, si je ne me souviens point de toi, Jérusalem.","psaumes":["136"]},{"ant_la":"Confitébor * nómini tuo, Dómine, super misericórdia et veritáte tua.","ant_fr":"Je célébrerai * Votre Nom, Seigneur à cause de Votre miséricorde et de Votre vérité.","psaumes":["137"]}],"Matines":[{"ant_la":"In Deo salutáre meum * et glória mea: et spes mea in Deo est.","ant_fr":"En Dieu mon salut * et ma gloire : et mon espoir est en Dieu.","psaumes":["61"]},{"ant_la":"Audíte, omnes * qui timétis Deum, quanta fecit ánimæ meæ.","ant_fr":"Voyez les œuvres du Seigneur, * et faites entendre sa voix de louange.","psaumes":["65"]},{"ant_la":"Exsúrgat Deus, * et dissipéntur inimíci ejus.","ant_fr":"Écoutez tous * vous qui craignez Dieu, les grandes choses qu’il a faites à mon âme.","psaumes":["67"]},{"ant_la":"Deus noster, * Deus salvos faciéndi: et Dómini sunt éxitus mortis.","ant_fr":"Que Dieu se lève, * et que ses ennemis soient dispersés.","psaumes":["67"]},{"ant_la":"In ecclésiis * benedícite Dómino Deo.","ant_fr":"Notre Dieu, * est un Dieu qui sauve : et le Seigneur délivre de la mort.","psaumes":["67"]},{"ant_la":"Salvum me fac, * Deus, quóniam intravérunt aquæ usque ad ánimam meam.","ant_fr":"Dans les assemblées * bénissez le Seigneur Dieu.","psaumes":["68"]},{"ant_la":"Propter inimícos meos * éripe me, Dómine.","ant_fr":"Sauvez-moi, * ô Dieu, car les eaux sont entrées jusqu’à mon âme.","psaumes":["68"]},{"ant_la":"Quǽrite Dóminum, * et vivet ánima vestra.","ant_fr":"À cause de mes ennemis, * délivrez-moi, Seigneur.","psaumes":["68"]}]},"6":{"Prime":[{"ant_la":"Ne discédas a me, * Dómine: quóniam tribulátio próxima est: quóniam non est qui ádjuvet.","ant_fr":"Ne vous éloignez pas de moi, Seigneur, * car la tribulation est tout proche et il n’est personne qui m’aide.","psaumes":["21","21","21","98"]}],"Tierce":[{"ant_la":"Éxcita, Dómine, * poténtiam tuam, ut salvos fácias nos.","ant_fr":"Réveillez, * Seigneur, votre puissance, pour nous sauver.","psaumes":["79","79","81"]}],"Sexte":[{"ant_la":"Beáti, qui hábitant * in domo tua, Dómine.","ant_fr":"Bienheureux * ceux qui habitent dans votre maison, Seigneur.","psaumes":["83","83","86"]}],"None":[{"ant_la":"Misericórdia et véritas * præcédent fáciem tuam, Dómine.","ant_fr":"Miséricorde et vérité * précéderont votre face, Seigneur.","psaumes":["88","88","88"]}],"Complies":[{"ant_la":"Voce mea * ad Dóminum clamávi: neque obliviscétur miseréri Deus.","ant_fr":"Avec ma voix, * vers le Seigneur j’ai crié, et que Dieu n’oublie point de faire miséricorde.","psaumes":["76","76","85"]}],"Laudes":[{"ant_la":"Exaltáte * Dóminum Deum nostrum, et adoráte in monte sancto ejus.","ant_fr":"Exaltez * le Seigneur notre Dieu, et adorez-Le sur Sa montagne sainte.","psaumes":["98"]},{"ant_la":"Éripe me * de inimícis meis, Dómine, ad te confúgi.","ant_fr":"Délivrez-moi * de mes ennemis, Seigneur, je me réfugie auprès de Vous.","psaumes":["142"]},{"ant_la":"Benedixísti, * Dómine, terram tuam: remisísti iniquitátem plebis tuæ.","ant_fr":"Vous avez béni, * Seigneur, Votre terre : Vous avez remis l’iniquité de Votre peuple.","psaumes":["84"]},{"ant_la":"In Dómino justificábitur * et laudábitur omne semen Israël.","ant_fr":"Par le Seigneur sera justifiée * et glorifiée toute la race d’Israël.","psaumes":["215"]},{"ant_la":"Lauda, * Jerúsalem, Dóminum.","ant_fr":"Loue * Jérusalem, le Seigneur.","psaumes":["147"]},{"ant_la":"Cor contrítum * et humiliátum, Deus, non despícies.","ant_fr":"Un cœur contrit * et humilié ô Dieu, Vous ne le mépriserez pas.","psaumes":["50"]},{"ant_la":"Propter nomen tuum, * Dómine, vivificábis me in æquitáte tua.","ant_fr":"À cause de Votre Nom * Seigneur, Vous me ferez vivre dans Votre justice.","psaumes":["142"]},{"ant_la":"Deus, tu convérsus * vivificábis nos, et plebs tua lætábitur in te.","ant_fr":"Ô Dieu, Vous nous donnerez * de nouveau la vie, et Votre peuple se réjouira en Vous.","psaumes":["84"]},{"ant_la":"Cum irátus fúeris, * Dómine, misericórdiæ recordáberis.","ant_fr":"Lorsque Vous serez irrité, * Seigneur, Vous vous souviendrez de la miséricorde.","psaumes":["225"]},{"ant_la":"Lauda * Deum tuum, Sion, qui annúntiat judícia sua Israël.","ant_fr":"Loue * ton Dieu, ô Sion, qui annonce Ses préceptes à Israël.","psaumes":["147"]},{"ant_la":"Constántes estóte, * vidébitis auxílium Dómini super vos.","ant_fr":"","psaumes":[]},{"ant_la":"Ad te, Dómine, * levávi ánimam meam: veni, et éripe me, Dómine, ad te confúgi.","ant_fr":"","psaumes":[]},{"ant_la":"Veni, Dómine, * et noli tardáre: reláxa facínora plebi tuæ Israël.","ant_fr":"","psaumes":[]},{"ant_la":"Deus a Líbano véniet, * et splendor ejus sicut lumen erit.","ant_fr":"","psaumes":[]},{"ant_la":"Ego autem * ad Dóminum aspíciam, et exspectábo Deum Salvatórem meum.","ant_fr":"","psaumes":[]}],"Vêpres":[{"ant_la":"Dómine, * probásti me et cognovísti me.","ant_fr":"Seigneur, Vous m’avez sondé * et Vous me connaissez.","psaumes":["138"]},{"ant_la":"Mirabília ópera tua, * Dómine, et ánima mea cognóscit nimis.","ant_fr":"Vos œuvres sont admirables, * Seigneur, et mon âme en est toute pénétrée.","psaumes":["138"]},{"ant_la":"Ne derelínquas me, * Dómine, virtus salútis meæ.","ant_fr":"Ne m’abandonnez pas * Seigneur, qui êtes la force de mon salut.","psaumes":["139"]},{"ant_la":"Dómine, * clamávi ad te, exáudi me.","ant_fr":"Seigneur, * j’ai crié vers Vous, exaucez-moi.","psaumes":["140"]},{"ant_la":"Educ de custódia * ánimam meam, Dómine, ad confiténdum nómini tuo.","ant_fr":"Tirez de cette prison * mon âme, Seigneur, afin que je célèbre Votre Nom.","psaumes":["141"]}],"Matines":[{"ant_la":"Suscitávit Dóminus * testimónium in Jacob: et legem pósuit in Israël.","ant_fr":"Le Seigneur a suscité * un témoignage en Jacob : et il a établi une loi en Israël.","psaumes":["77"]},{"ant_la":"Coram pátribus eórum * fecit Deus mirabília.","ant_fr":"Devant leurs pères * Dieu fit des prodiges.","psaumes":["77"]},{"ant_la":"Jánuas cæli apéruit * Dóminus, et pluit illis manna ad manducándum.","ant_fr":"Le Seigneur ouvrit le portes du ciel, * et il fit pleuvoir la manne pour les nourrir.","psaumes":["77"]},{"ant_la":"Deus adjútor * est eórum: et Excélsus redémptor eórum est.","ant_fr":"Dieu est leur secours * : et le Très Haut leur rédempteur.","psaumes":["77"]},{"ant_la":"Ædificávit * Deus sanctifícium suum in terra.","ant_fr":"Le Seigneur les a délivrés * de la main qui les accablait.","psaumes":["77"]},{"ant_la":"Ádjuva nos, * Deus, salutáris noster: et propítius esto peccátis nostris.","ant_fr":"Dieu a édifié * son sanctuaire dans le pays.","psaumes":["78"]},{"ant_la":"Ego sum Dóminus * Deus tuus Israël, qui edúxi te de terra Ægýpti.","ant_fr":"Aidez-nous, * ô Dieu, notre Sauveur : et pardonnez nos péchés.","psaumes":["80"]},{"ant_la":"Ne táceas Deus * quóniam inimíci tui extulérunt caput.","ant_fr":"C’est moi qui suis le Seigneur * ton Dieu, Israël, qui t’a fait sortir de la terre d’Égypte.","psaumes":["82"]},{"ant_la":"Inclína Dómine, * aurem tuam, et exáudi me","ant_fr":"Ne vous taisez pas, ô Dieu * car vos ennemis ont relevé la tête.","psaumes":["85","86"]},{"ant_la":"Benedíctus * Dóminus in ætérnum","ant_fr":"","psaumes":["88","88"]},{"ant_la":"Exaltáre, * qui júdicas terram","ant_fr":"","psaumes":["92","93"]},{"ant_la":"Cantáte Dómino, * et benedícite nómini ejus","ant_fr":"","psaumes":["95","96"]},{"ant_la":"Quia mirabília * fecit Dóminus","ant_fr":"","psaumes":["97","98"]},{"ant_la":"Jubiláte * Deo omnis terra","ant_fr":"","psaumes":["99","100"]}]},"7":{"Prime":[{"ant_la":"Exaltáre, Dómine, * qui júdicas terram: redde retributiónem supérbis.","ant_fr":"Levez-vous, * Seigneur, qui jugez la terre et donnez rétribution aux orgueilleux.","psaumes":["93","93","107","149"]}],"Tierce":[{"ant_la":"Clamor meus, * Dómine, ad te pervéniat: non avértas fáciem tuam a me.","ant_fr":"Que mon cri, * Seigneur, arrive jusqu’à vous, et ne détournez pas de moi votre face.","psaumes":["101","101","101"]}],"Sexte":[{"ant_la":"Dómine, Deus meus * magnificátus es veheménter.","ant_fr":"Seigneur, mon Dieu, votre grandeur est sans mesure.","psaumes":["103","103","103"]}],"None":[{"ant_la":"Ne tacúeris Deus, * quia sermónibus ódii circumdedérunt me.","ant_fr":"Ne vous taisez pas, * ô Dieu, car ils m’ont entouré de paroles de haine.","psaumes":["108","108","108"]}],"Complies":[{"ant_la":"Intret orátio mea * in conspéctu tuo, Dómine.","ant_fr":"Qu’elle vienne, * ma prière, devant vous, Seigneur.","psaumes":["87","102","102"]}],"Laudes":[{"ant_la":"Fílii Sion * exsúltent in Rege suo.","ant_fr":"Les enfants de Sion * exultent de joie en leur Roi.","psaumes":["149"]},{"ant_la":"Quam magnificáta * sunt ópera tua, Dómine.","ant_fr":"Qu’elles sont magnifiques * Vos œuvres, Seigneur !","psaumes":["91"]},{"ant_la":"Lætábitur justus * in Dómino et sperábit in eo.","ant_fr":"Le juste se réjouira * dans le Seigneur, et espérera en Lui.","psaumes":["63"]},{"ant_la":"Osténde nobis, Dómine, * lucem miseratiónum tuárum.","ant_fr":"Montrez-nous Seigneur, * la lumière de Vos miséricordes.","psaumes":["216"]},{"ant_la":"Omnis spíritus * laudet Dóminum.","ant_fr":"Que tout ce qui respire * loue le Seigneur.","psaumes":["150"]},{"ant_la":"Benígne fac, Dómine, * in bona voluntáte tua Sion.","ant_fr":"Seigneur, traitez favorablement * Sion dans Votre bonté.","psaumes":["50"]},{"ant_la":"Rectus Dóminus, * Deus noster, et non est iníquitas in eo.","ant_fr":"Le Seigneur notre Dieu * est juste, et il n’y a point d’iniquité en Lui.","psaumes":["91"]},{"ant_la":"A timóre inimíci * éripe, Dómine, ánimam meam.","ant_fr":"De la crainte de l’ennemi * délivrez Seigneur mon âme.","psaumes":["63"]},{"ant_la":"In servis suis * miserébitur Dóminus et propítius erit terræ pópuli sui.","ant_fr":"De Ses serviteurs * le Seigneur aura pitié et Il sera propice à la terre de Son peuple.","psaumes":["226"]},{"ant_la":"(sed rubrica 1960) In servis suis * miserébitur Dóminus et propítius erit terræ pópuli sui.","ant_fr":"(sed rubrica 1960) De Ses serviteurs * le Seigneur aura pitié et Il sera propice à la terre de Son peuple.","psaumes":["226"]},{"ant_la":"Laudáte * Dóminum secúndum multitúdinem magnitúdinis ejus.","ant_fr":"Louez * le Seigneur selon l’immensité de Sa grandeur.","psaumes":["150"]},{"ant_la":"Intuémini * quam sit gloriósus iste, qui ingréditur ad salvándos pópulos.","ant_fr":"","psaumes":[]},{"ant_la":"Multiplicábitur * ejus impérium, et pacis non erit finis.","ant_fr":"","psaumes":[]},{"ant_la":"Ego Dóminus * prope feci justítiam meam, non elongábitur, et salus mea non morábitur.","ant_fr":"","psaumes":[]},{"ant_la":"Exspectétur, * sicut plúvia, elóquium Dómini: et descéndat, sicut ros, super nos Dóminus Deus noster.","ant_fr":"","psaumes":[]},{"ant_la":"Parátus esto * Israël, in occúrsum Dómini, quóniam venit.","ant_fr":"","psaumes":[]}],"Vêpres":[{"ant_la":"Benedíctus Dóminus * suscéptor meus et liberátor meus.","ant_fr":"Béni soit le Seigneur * mon défenseur et mon libérateur.","psaumes":["143"]},{"ant_la":"Beátus pópulus * cujus Dóminus Deus ejus.","ant_fr":"Heureux le peuple * qui a le Seigneur pour son Dieu.","psaumes":["143"]},{"ant_la":"Magnus Dóminus * et laudábilis nimis: et magnitúdinis ejus non est finis.","ant_fr":"Le Seigneur est grand * et très digne de louange, et Sa grandeur n’a pas de bornes.","psaumes":["144"]},{"ant_la":"Suávis Dóminus * univérsis: et miseratiónes ejus super ómnia ópera ejus.","ant_fr":"Le Seigneur est bon * envers tous, et Ses miséricordes s’étendent sur toutes Ses œuvres.","psaumes":["144"]},{"ant_la":"Fidélis Dóminus * in ómnibus verbis suis: et sanctus in ómnibus opéribus suis.","ant_fr":"Le Seigneur est fidèle * dans toutes Ses paroles, et saint dans toutes Ses œuvres.","psaumes":["144"]}],"Matines":[{"ant_la":"Memor fuit in sǽculum * testaménti sui Dóminus Deus noster.","ant_fr":"Il s’est toujours souvenu * de son alliance, le Seigneur notre Dieu.","psaumes":["104"]},{"ant_la":"Auxit Dóminus * pópulum suum: et firmávit eum super inimícos ejus.","ant_fr":"Le Seigneur fit croître * son peuple : et le rendit plus fort que ses ennemis.","psaumes":["104"]},{"ant_la":"Edúxit Deus * pópulum suum in exsultatióne, et eléctos suos in lætítia.","ant_fr":"Dieu fit sortir * son peuple dans l’exultation, et les élus dans la joie.","psaumes":["104"]},{"ant_la":"Salvávit eos Dóminus * propter nomen suum.","ant_fr":"Le Seigneur les a sauvés * à cause de son nom.","psaumes":["105"]},{"ant_la":"Oblíti sunt Deum * qui salvávit eos.","ant_fr":"Ils ont oublié Dieu * qui les a sauvés.","psaumes":["105"]},{"ant_la":"Cum tribularéntur * vidit Dóminus: et audívit oratiónem eórum.","ant_fr":"Quand ils étaient dans l’épreuve * le Seigneur le vit : et il exauça leur prière.","psaumes":["105"]},{"ant_la":"Clamavérunt ad Dóminum * et de necessitátibus eórum liberávit eos.","ant_fr":"Ils ont crié vers le Seigneur * et il les a délivrés de leurs angoisses.","psaumes":["106"]},{"ant_la":"Ipsi vidérunt * ópera Dei et mirabília ejus.","ant_fr":"Ils ont vu de leurs yeux * les œuvres de Dieu et ses merveilles.","psaumes":["106"]},{"ant_la":"Clamor meus * ad te véniat, Deus","ant_fr":"Les hommes droits verront * et se réjouiront, et ils comprendront les miséricordes du Seigneur.","psaumes":["101","102"]},{"ant_la":"Bénedic, * ánima mea Dómino","ant_fr":"","psaumes":["103","103"]},{"ant_la":"Lætétur cor * quæréntium Dóminum","ant_fr":"","psaumes":["104","104"]},{"ant_la":"","ant_fr":"","psaumes":["105"]},{"ant_la":"De necessitátibus meis * éripe me, Dómine","ant_fr":"","psaumes":["106","106"]},{"ant_la":"Confitébor * Dómino nimis in ore meo","ant_fr":"","psaumes":["107","108"]}]}};
-
-// ── État ──────────────────────────────────────────────────
-let _offset = 0;
-let _heure = 'Matines';
-let _lang = 'la';
-let _searchTimer = null;
-let _cache = {};  // {cacheKey: [{section, text_la, text_fr}, ...]}
-
-function dateNav() {
-    const d = new Date();
-    d.setDate(d.getDate() + _offset);
-    d.setHours(0,0,0,0);
-    return d;
-}
-
-// ── Trouver le fichier bréviaire pour une date ────────────
-let _currentSections = [];
-
-// ── Enrichir une section d'antiennes avec les psaumes complets ──
-function enrichirAvecPsaumes(sectionAnt, allSections) {
-    const blocs = [];
-    const lignes = sectionAnt.text_la.split('\n');
-    const lignesFr = (sectionAnt.text_fr || '').split('\n');
-
-    lignes.forEach((ligne, i) => {
-        if (!ligne.trim() || !ligne.includes(';;')) return;
-
-        const parts = ligne.split(';;');
-        const antLA = parts[0].trim();
-        const num   = parts[1].split('(')[0].split(';')[0].trim();
-
-        // Antienne FR correspondante
-        const antFR = (lignesFr[i] || '').split(';;')[0].trim();
-
-        // Chercher le psaume complet
-        const psSection = allSections.find(s => s.section === `Psalm${num}`);
-
-        // Bloc antienne
-        blocs.push({
-            dossier: 'Psalterium',
-            fichier: sectionAnt.fichier,
-            section: `${sectionAnt.section}_ant${num}`,
-            _label: `Antienne · Ps ${num}`,
-            _type: 'antienne',
-            text_la: antLA,
-            text_fr: antFR,
-        });
-
-        // Bloc psaume complet
-        if (psSection) {
-            blocs.push({
-                ...psSection,
-                section: `${sectionAnt.section}_ps${num}`,
-                _label: `Psaume ${num}`,
-                _type: 'psaume',
-            });
-        }
-    });
-
-    return blocs.length ? blocs : [sectionAnt];
-}
-
-
-function afficherHeure() {
-    const sections = _currentSections;
-    const d = dateNav();
-    const doDay = d.getDay() + 1; // 1=dim...7=sam (convention DO)
-    const content = document.getElementById('brev-content');
-
-    // Blocs psalmodiques depuis la table pré-calculée
-    const psBlocs = (PSALMODIE[String(doDay)] || {})[_heure] || [];
-
-    // Sections propres par heure (hymne, lectures, capitule, oraison...)
-    const doD = doDay;
-    const PROPRES = {
-        'Matines':  ['Day'+doD+' Hymnus','HymnusM Matutinum','Hymnus Matutinum',
-                     'Lectio1','Lectio2','Lectio3','Lectio4','Lectio5','Lectio6',
-                     'Lectio7','Lectio8','Lectio9',
-                     'Responsory1','Responsory2','Responsory3',
-                     'Responsory4','Responsory5','Responsory6',
-                     'Responsory7','Responsory8','Responsory9',
-                     'Oratio'],
-        'Laudes':   ['Hymnus Day'+doD+' Laudes','HymnusM Day'+doD+' Laudes',
-                     'Hymnus Laudes','HymnusM Laudes',
-                     'Capitulum Laudes','Versum Laudes',
-                     'Ant Benedictus','Benedictus','Oratio'],
-        'Prime':    ['Hymnus Prima','HymnusM Prima','Capitulum Prima','Oratio'],
-        'Tierce':   ['Hymnus Tertia','HymnusM Tertia','Capitulum Tertia',
-                     'Responsory Breve Tertia','Oratio'],
-        'Sexte':    ['Hymnus Sexta','HymnusM Sexta','Capitulum Sexta',
-                     'Responsory Breve Sexta','Oratio'],
-        'None':     ['Hymnus Nona','HymnusM Nona','Capitulum Nona',
-                     'Responsory Breve Nona','Oratio'],
-        'Vêpres':   ['Hymnus Day'+doD+' Vespera','HymnusM Day'+doD+' Vespera',
-                     'Hymnus Vespera','HymnusM Vespera',
-                     'Capitulum Vespera','Versum Vespera',
-                     'Ant Magnificat','Magnificat','Oratio'],
-        'Complies': ['Hymnus Completorium','HymnusM Completorium',
-                     'Capitulum Completorium','Oratio'],
-    };
-    const propresVoulus = PROPRES[_heure] || [];
-    const disponibles = [];
-    const seenSec = new Set();
-
-    // ── 1. Hymne ──────────────────────────────────────────
-    for (const sName of propresVoulus.slice(0,3)) {
-        const found = sections.find(s => s.section === sName);
-        if (found && !seenSec.has(found.section)) {
-            disponibles.push(found); seenSec.add(found.section); break;
-        }
-    }
-
-    // ── 2. Blocs psalmodiques (antienne + psaume complet) ─
-    const psVus = new Set();
-    for (const bloc of psBlocs) {
-        if (!bloc) continue;
-        const psNums = [...new Set(bloc.psaumes)];
-        const labelAnt = psNums.length ? 'Antienne — Ps ' + psNums.join(', ') : 'Antienne';
-
-        // Antienne
-        if (bloc.ant_la && bloc.ant_la.trim()) {
-            disponibles.push({
-                dossier:'Psalterium', fichier:'psalmodie',
-                section:'_ant_' + psNums.join('_') + '_' + disponibles.length,
-                _label: labelAnt, _type:'antienne',
-                text_la: bloc.ant_la, text_fr: bloc.ant_fr || '',
-            });
-        }
-
-        // Psaume(s) complet(s)
-        for (const num of psNums) {
-            if (psVus.has(num)) continue;
-            psVus.add(num);
-            const ps = sections.find(s => s.section === 'Psalm' + num);
-            if (ps) {
-                disponibles.push({...ps,
-                    section: '_ps_' + num + '_' + disponibles.length,
-                    _label: 'Psaume ' + num, _type:'psaume'});
-            }
-        }
-    }
-
-    // ── 3. Reste des sections propres ─────────────────────
-    for (const sName of propresVoulus.slice(3)) {
-        const found = sections.find(s =>
-            s.section === sName || s.section.startsWith(sName + ' '));
-        if (found && !seenSec.has(found.section)) {
-            disponibles.push(found); seenSec.add(found.section);
-        }
-    }
-
-    if (!disponibles.length) {
-        content.innerHTML = `<div class="brev-empty">
-            <div style="color:var(--gold);font-size:1.4rem;opacity:.35;margin-bottom:12px;">✦</div>
-            Aucune section disponible pour les ${_heure}<br>
-            <span style="font-size:.85rem;color:var(--ink-muted);">${_heure} — ${dateNav().toLocaleDateString('fr-FR')}</span>
-        </div>`;
-        return;
-    }
-
-    content.innerHTML = disponibles.map((s, idx) => buildSection(s, idx)).join('');
-}
-
-function escH(t) { return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ── Nettoyage et formatage du texte DivinumOfficium ──────
-function nettoyer(raw) {
-    if (!raw) return '';
-    // Supprimer le tag de style {:H-xxx:}
-    raw = raw.replace(/\{:H-[^:]+:\}/g, '');
-    // Supprimer les lignes de directives/rubricales
-    const lines = raw.split('\n').filter(l => {
-        const t = l.trim();
-        if (!t) return true;
-        if (t.startsWith('@') || t.startsWith('$') || t.startsWith('_') || t.startsWith('~')) return false;
-        if (t.startsWith('(sed ') || t.startsWith('(rubrica') || t.startsWith('(mon')) return false;
-        return true;
-    });
-    return lines.join('\n').trim();
-}
-
-// Déterminer si une section est un groupe de psaumes (format antienne;;numéro)
-function estGroupePsaumes(texte) {
-    return texte && texte.includes(';;') && !texte.includes('\n\n');
-}
-
-// Formater un groupe de psaumes (antiennes + numéros)
-function formaterPsaumes(texte) {
-    if (!texte) return '';
-    let html = '';
-    const lignes = texte.split('\n');
-    for (const ligne of lignes) {
-        if (!ligne.trim()) continue;
-        if (ligne.includes(';;')) {
-            const [ant, num] = ligne.split(';;');
-            const antClean = ant.trim();
-            const numClean = num.trim();
-            // Afficher : numéro de psaume en or + antienne
-            html += `<div class="brev-psaume-ligne">
-                <span class="brev-ps-num">Ps ${escH(numClean)}</span>
-                <span class="brev-ps-ant">${escH(antClean)}</span>
-            </div>`;
-        } else {
-            html += `<div class="brev-psaume-ligne"><span class="brev-ps-ant">${escH(ligne.trim())}</span></div>`;
-        }
-    }
-    return html;
+// ── Affichage ─────────────────────────────────────────────
+function escH(t) {
+    return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function formaterTexte(raw) {
     if (!raw) return '';
-    raw = nettoyer(raw);
-    if (!raw) return '';
-
-    // Psaumes (format antienne;;numéro)
-    if (estGroupePsaumes(raw)) return formaterPsaumes(raw);
-
+    const lines = raw.split('\n');
     let html = '';
-    const lignes = raw.split('\n');
-    for (const ligne of lignes) {
-        const t = ligne.trim();
+    for (const line of lines) {
+        const t = line.trim();
         if (!t) { html += '<br>'; continue; }
 
-        // Référence biblique !Livre X:Y
-        if (t.startsWith('!')) {
-            html += `<span class="brev-ref">📖 ${escH(t.slice(1).trim())}</span>`;
-            continue;
-        }
-
-        // Répons R. / Verset V. / R.br.
-        if (t.match(/^R\.br\.|^R\.|^V\.|^℟|^℣/)) {
+        // Répons ℣ ℟ R. V.
+        if (/^[℣℟]|^[RV]\.\s/.test(t)) {
             html += `<span class="brev-resp">${escH(t)}</span>`;
             continue;
         }
-
-        // Numéro de verset au début (ex: "1 Ecce factum est")
-        const mVerset = t.match(/^(\d+)\s+(.+)/);
+        // Antienne
+        if (/^Ant\.\s|^Antiphon/i.test(t)) {
+            html += `<span class="brev-ant-inline">${escH(t)}</span>`;
+            continue;
+        }
+        // Référence biblique (ex: 95:1 texte)
+        const mVerset = t.match(/^(\d+:\w+)\s+(.*)/);
         if (mVerset) {
-            html += `<span class="brev-verset"><sup class="vnum">${mVerset[1]}</sup>${escH(mVerset[2])}</span>\n`;
+            html += `<span class="brev-ps-verset"><sup class="vnum">${escH(mVerset[1].split(':')[1])}</sup>${escH(mVerset[2])}</span>\n`;
             continue;
         }
-
-        // Ligne d'hymne commençant par v. (verset)
-        if (t.startsWith('v. ')) {
-            html += `<span class="brev-hymne-v">${escH(t.slice(3))}</span>`;
+        // Psaume (ex: Psalmus 95 [1])
+        if (/^Psalm(us|e)?\s+\d+/i.test(t)) {
+            html += `<span class="brev-ps-titre">${escH(t)}</span>`;
             continue;
         }
-
-        // Ligne normale
         html += escH(t) + '\n';
-    }
-    return html.replace(/(<br>\s*){3,}/g, '<br><br>').trim();
-}
-
-// ── Formatage psaume complet (versets N:V texte) ──────────
-function formaterPsaume(raw) {
-    if (!raw) return '';
-    let html = '';
-    for (const ligne of raw.split('\n')) {
-        const t = ligne.trim();
-        if (!t) continue;
-        // Format : "1:1 Beátus vir..." ou "1:3a Et erit..."
-        const m = t.match(/^(\d+:\w+)\s+(.+)/);
-        if (m) {
-            const versetNum = m[1].split(':')[1]; // "1", "3a"...
-            const texte = m[2];
-            html += `<span class="brev-ps-verset"><sup class="vnum">${escH(versetNum)}</sup>${escH(texte)}</span>\n`;
-        } else {
-            // Suite d'un verset (ligne sans numéro)
-            html += escH(t) + '\n';
-        }
     }
     return html.trim();
 }
 
-function getSectionLabel(section) {
-    if (SECTION_LABELS[section]) return SECTION_LABELS[section];
-    if (section.startsWith('Day')) return 'Psaumes — ' + section.replace(/Day\d+ /,'');
-    if (section.startsWith('Psalm')) return 'Psaume ' + section.replace('Psalm','');
-    return section;
+function buildSection(s, idx) {
+    const type  = s.section_type || 'autre';
+    const label = SECTION_LABELS[type] || type;
+    const isMajeur = ['lecture','oraison','cantique','invitatoire'].includes(type);
+    const isEmpty  = !s.texte || !s.texte.trim();
+
+    // Ne pas afficher les sections sans label et sans texte utile (titre de page)
+    if (type === 'titre' && isEmpty) return '';
+
+    const titleHtml = label ? `<div class="brev-section-title${isMajeur?' majeur':''}">
+        ${escH(label)}
+        ${s.section_ref && s.section_ref !== label ? `<span class="brev-sec-ref">${escH(s.section_ref)}</span>` : ''}
+    </div>` : '';
+
+    // Mode bilingue
+    if (_lang === 'Bilingue') {
+        const la = formaterTexte(s.texte);
+        const fr = formaterTexte(s.texte_fr);
+        const textHtml = `<div class="brev-bilingue">
+            <div class="brev-bilingue-col-la">
+                <span class="brev-bilingue-label">Latin</span>
+                <div class="brev-text latin">${la}</div>
+            </div>
+            <div class="brev-bilingue-col-fr">
+                <span class="brev-bilingue-label">Français</span>
+                <div class="brev-text francais">${fr || '<em class="no-fr-txt">—</em>'}</div>
+            </div>
+        </div>`;
+        return `<div class="brev-section" style="animation-delay:${idx*40}ms">${titleHtml}${textHtml}</div>`;
+    }
+
+    // Mode mono-langue
+    const isLatin = _lang === 'Latin';
+    const texte   = formaterTexte(s.texte);
+    const cls     = isLatin ? 'brev-text latin' : 'brev-text francais';
+    return `<div class="brev-section" style="animation-delay:${idx*40}ms">
+        ${titleHtml}
+        <div class="${cls}">${texte}</div>
+    </div>`;
 }
 
-function buildSection(s, idx) {
-    const label = s._label || getSectionLabel(s.section);
-    const type  = s._type || 'normal';
-    const noFr  = !s.text_fr || !s.text_fr.trim();
-    const delay = `animation-delay:${idx*40}ms`;
+function afficher(sections) {
+    const content = document.getElementById('brev-content');
 
-    // ── Antienne ──────────────────────────────────────────
-    if (type === 'antienne') {
-        const aLA = escH(s.text_la || '');
-        const aFR = s.text_fr ? escH(s.text_fr) : null;
-        let inner = '';
-        if (_lang === 'la' || _lang === 'bi')
-            inner += `<span class="brev-ant-text latin">Ant. ${aLA}</span>`;
-        if (_lang === 'fr' || _lang === 'bi')
-            inner += aFR
-                ? `<span class="brev-ant-text francais">Ant. ${aFR}</span>`
-                : (_lang==='fr' ? `<span class="brev-ant-text latin muted">Ant. ${aLA}</span>` : '');
-        return `<div class="brev-antienne" style="${delay}">
-            <span class="brev-ant-label">${escH(label)}</span>${inner}</div>`;
-    }
-
-    // ── Psaume complet ────────────────────────────────────
-    if (type === 'psaume') {
-        const laH = formaterPsaume(s.text_la);
-        const frH = s.text_fr ? formaterPsaume(s.text_fr) : null;
-        let textHtml = '';
-        if (_lang === 'la') {
-            textHtml = `<div class="brev-psalm-text latin">${laH}</div>`;
-        } else if (_lang === 'fr') {
-            textHtml = frH
-                ? `<div class="brev-psalm-text francais">${frH}</div>`
-                : `<div class="brev-psalm-text latin muted">${laH}</div>`;
-        } else {
-            textHtml = `<div class="brev-bilingue">
-                <div class="brev-bilingue-col-la"><span class="brev-bilingue-label">Latin</span>
-                    <div class="brev-psalm-text latin">${laH}</div></div>
-                <div class="brev-bilingue-col-fr"><span class="brev-bilingue-label">Français</span>
-                    <div class="brev-psalm-text francais">${frH||'<em class="no-fr-txt">Traduction non disponible</em>'}</div></div>
-            </div>`;
-        }
-        return `<div class="brev-section psaume-section" style="${delay}">
-            <div class="brev-section-title">${escH(label)}</div>${textHtml}</div>`;
-    }
-
-    // ── Section liturgique normale ─────────────────────────
-    const la = formaterTexte(s.text_la);
-    const fr = formaterTexte(s.text_fr);
-    const isMajeur = ['Lectio1','Lectio2','Lectio3','Lectio4','Lectio5','Lectio6',
-        'Lectio7','Lectio8','Lectio9','Benedictus','Magnificat','Oratio'].includes(s.section);
-    const cls = 'brev-text';
-
-    let textHtml = '';
-    if (_lang === 'la') {
-        textHtml = `<div class="${cls} latin">${la}</div>`;
-    } else if (_lang === 'fr') {
-        textHtml = noFr ? `<div class="${cls} latin muted">${la}</div>`
-                        : `<div class="${cls} francais">${fr}</div>`;
-    } else {
-        textHtml = `<div class="brev-bilingue">
-            <div class="brev-bilingue-col-la"><span class="brev-bilingue-label">Latin</span>
-                <div class="${cls} latin">${la}</div></div>
-            <div class="brev-bilingue-col-fr"><span class="brev-bilingue-label">Français</span>
-                <div class="${cls} francais">${noFr?'<em class="no-fr-txt">Traduction non disponible</em>':fr}</div></div>
+    if (!sections || !sections.length) {
+        content.innerHTML = `<div class="brev-empty">
+            <div style="color:var(--gold);font-size:1.4rem;opacity:.35;margin-bottom:12px">✦</div>
+            Office non disponible pour ce jour.<br>
+            <span style="font-size:.85rem;color:var(--ink-muted)">
+                Générez les offices avec generate_breviaire.py
+            </span>
         </div>`;
+        return;
     }
 
-    return `<div class="brev-section" style="${delay}">
-        <div class="brev-section-title${isMajeur?' majeur':''}" style="${delay}">
-            ${escH(label)}${noFr&&_lang!=='la'?'<span class="no-fr">lat.</span>':''}
-        </div>${textHtml}</div>`;
+    content.innerHTML = sections
+        .map((s, i) => buildSection(s, i))
+        .filter(Boolean)
+        .join('');
 }
 
 // ── Recherche ─────────────────────────────────────────────
@@ -1150,18 +638,19 @@ async function lancerRecherche() {
     if (typeof maConnexion === 'undefined') return;
     const q = document.getElementById('brev-search-input').value.trim();
     const results = document.getElementById('brev-search-results');
-    if (q.length < 2) {
-        results.innerHTML = '<div class="brev-empty">Entrez au moins 2 caractères</div>';
+    if (q.length < 3) {
+        results.innerHTML = '<div class="brev-empty">Entrez au moins 3 caractères</div>';
         return;
     }
     results.innerHTML = '<div class="brev-empty">Recherche…</div>';
 
-    const lang = _lang === 'fr' ? 'text_fr' : 'text_la';
-    const { data } = await maConnexion.from('breviaire')
-        .select('dossier,fichier,section,text_la,text_fr')
-        .ilike(lang, `%${q}%`)
-        .not('section','in','("Rank","Rule","Name","Officium")')
-        .limit(60);
+    const langue = _lang === 'Francais' ? 'Francais' : 'Latin';
+    const { data } = await maConnexion.from('breviaire_offices')
+        .select('date,hora,langue,section_type,section_ref,texte')
+        .eq('langue', langue)
+        .ilike('texte', `%${q}%`)
+        .order('date', { ascending: false })
+        .limit(50);
 
     if (!data || !data.length) {
         results.innerHTML = '<div class="brev-empty">Aucun résultat.</div>';
@@ -1169,49 +658,32 @@ async function lancerRecherche() {
     }
 
     const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    const hi = (t, q) => t ? t.replace(new RegExp(esc(q),'gi'), m => `<mark>${m}</mark>`) : '';
-    const txt = s => _lang === 'fr' ? (s.text_fr || s.text_la) : s.text_la;
+    const hi  = (t, q) => t ? t.replace(new RegExp(esc(q),'gi'), m => `<mark>${m}</mark>`) : '';
 
     results.innerHTML =
         `<div class="brev-modal-count">${data.length} résultat${data.length>1?'s':''}</div>` +
         data.map(s => {
-            const label = SECTION_LABELS[s.section] || s.section;
-            const preview = (txt(s)||'').replace(/^[!@$].+\n?/gm,'').trim().substring(0,120);
-            return `<div class="brev-result" onclick="allerVersSection('${s.dossier}','${s.fichier}','${s.section}')">
-                <span class="brev-result-ref">${escH(s.dossier)} · ${escH(s.fichier)} · ${escH(label)}</span>
+            const label = SECTION_LABELS[s.section_type] || s.section_type;
+            const preview = (s.texte||'').replace(/^\d+:\w+\s+/gm,'').trim().substring(0,120);
+            return `<div class="brev-result" onclick="allerVers('${s.date}','${s.hora}')">
+                <span class="brev-result-ref">${escH(s.date)} · ${escH(s.hora)} · ${escH(label)}</span>
                 <span class="brev-result-text">${hi(escH(preview), escH(q))}…</span>
             </div>`;
         }).join('');
 }
 
-async function allerVersSection(dossier, fichier, section) {
+function allerVers(dateStr, hora) {
     fermerRecherche();
-    // Charger ce fichier directement
-    const { data } = await maConnexion.from('breviaire')
-        .select('dossier,fichier,section,text_la,text_fr')
-        .eq('dossier', dossier)
-        .eq('fichier', fichier)
-        .not('section','in','("Rank","Rule","Name","Officium","Comment")');
-    if (!data) return;
-    _currentSections = data;
-    // Trouver quelle heure correspond à cette section
-    for (const [heure, secs] of Object.entries(HEURE_SECTIONS)) {
-        if (secs.some(s => section.startsWith(s) || section === s)) {
-            document.querySelectorAll('.heure-tab').forEach(b => {
-                b.classList.toggle('active', b.dataset.heure === heure);
-            });
-            _heure = heure;
-            break;
-        }
-    }
-    afficherHeure();
-    // Scroller vers la section
-    setTimeout(() => {
-        const label = SECTION_LABELS[section] || section;
-        const titles = [...document.querySelectorAll('.brev-section-title')];
-        const el = titles.find(t => t.textContent.includes(label.substring(0,10)));
-        if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
-    }, 300);
+    // Naviguer à la date
+    const d = new Date(dateStr);
+    const today = new Date(); today.setHours(0,0,0,0);
+    _offset = Math.round((d - today) / 86400000);
+    // Sélectionner l'heure
+    document.querySelectorAll('.heure-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.heure === hora);
+    });
+    _heure = hora;
+    chargerOffice();
 }
 
 // ── Raccourcis clavier ────────────────────────────────────
@@ -1220,6 +692,8 @@ document.addEventListener('keydown', e => {
         e.preventDefault(); ouvrirRecherche();
     }
     if (e.key === 'Escape') fermerRecherche();
+    if (e.key === 'ArrowLeft'  && !e.target.matches('input')) naviguerJour(-1);
+    if (e.key === 'ArrowRight' && !e.target.matches('input')) naviguerJour(1);
 });
 
 // ── Démarrage ─────────────────────────────────────────────
