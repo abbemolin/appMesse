@@ -506,41 +506,67 @@ async function chargerOffice() {
 
     const EXCL = '("Rank","Rule","Name","Officium","Comment")';
 
+    // Convention jour DO : Day1=dim, Day2=lun, Day3=mar, Day4=mer, Day5=jeu, Day6=ven, Day7=sam
+    // dow JS : 0=dim, 1=lun...6=sam → doDay = dow+1 (1=dim...7=sam)
+    const doDay = d.getDay() + 1; // 1=dim...7=sam
+    const dayKey = `Day${doDay}`;
+    // Antiennes fériaux : Feria2=lun, Feria3=mar...Feria7=sam
+    const feriaKey = ['', '', 'Feria2', 'Feria3', 'Feria4', 'Feria5', 'Feria6', 'Feria7'][d.getDay() + 1] || '';
+
     try {
-        const queries = [];
+        const queries = [
+            // 1. Sancti du jour
+            maConnexion.from('breviaire')
+                .select('dossier,fichier,section,text_la,text_fr')
+                .eq('dossier','Sancti').eq('fichier', sanctiFile)
+                .not('section','in',EXCL),
 
-        // Sancti du jour
-        queries.push(maConnexion.from('breviaire')
-            .select('dossier,fichier,section,text_la,text_fr')
-            .eq('dossier','Sancti').eq('fichier', sanctiFile)
-            .not('section','in',EXCL));
-
-        // Temporal propre
-        if (temporaFile) {
-            queries.push(maConnexion.from('breviaire')
+            // 2. Temporal propre (antiennes propres, oraison de la semaine)
+            temporaFile ? maConnexion.from('breviaire')
                 .select('dossier,fichier,section,text_la,text_fr')
                 .eq('dossier','Tempora').eq('fichier', temporaFile)
-                .not('section','in',EXCL));
-        }
+                .not('section','in',EXCL) : Promise.resolve({data:[]}),
 
-        // Lectures scripturaires per annum
-        if (scripturaFile) {
-            queries.push(maConnexion.from('breviaire')
+            // 3. Lectures scripturaires (081-115)
+            scripturaFile ? maConnexion.from('breviaire')
                 .select('dossier,fichier,section,text_la,text_fr')
                 .eq('dossier','Tempora').eq('fichier', scripturaFile)
-                .not('section','in',EXCL));
-        }
+                .not('section','in',EXCL) : Promise.resolve({data:[]}),
+
+            // 4. Psaumes du jour (Psalmi major + minor)
+            maConnexion.from('breviaire')
+                .select('dossier,fichier,section,text_la,text_fr')
+                .eq('dossier','Psalterium')
+                .in('fichier',['Psalmi/Psalmi major','Psalmi/Psalmi minor','Psalmi/Psalmi matutinum'])
+                .ilike('section', `${dayKey}%`),
+
+            // 5. Antiennes, hymnes et versicules communs (Major + Minor Special)
+            maConnexion.from('breviaire')
+                .select('dossier,fichier,section,text_la,text_fr')
+                .eq('dossier','Psalterium')
+                .in('fichier',['Special/Major Special','Special/Minor Special','Special/Matutinum Special'])
+                .not('section','in',EXCL),
+
+            // 6. Antiennes fériaux du Magnificat/Benedictus
+            feriaKey ? maConnexion.from('breviaire')
+                .select('dossier,fichier,section,text_la,text_fr')
+                .eq('dossier','Psalterium')
+                .eq('fichier','Special/Major Special')
+                .ilike('section', `${feriaKey}%`) : Promise.resolve({data:[]}),
+        ];
 
         const results = await Promise.all(queries);
         let sections = [];
-        results.forEach(r => { if (!r.error && r.data) sections = sections.concat(r.data); });
+        results.forEach(r => { if (r && !r.error && r.data) sections = sections.concat(r.data); });
 
-        // Dédupliquer par section (sancti prioritaire sur temporal)
+        // Dédupliquer : Sancti > Tempora > Psalterium
+        // Priorité : premier arrivé sur une même section
         const seen = new Set();
+        const PRIORITY_ORDER = ['Sancti','Tempora','Psalterium'];
+        sections.sort((a,b) => PRIORITY_ORDER.indexOf(a.dossier) - PRIORITY_ORDER.indexOf(b.dossier));
         sections = sections.filter(s => {
-            const k = s.section;
-            if (seen.has(k)) return false;
-            seen.add(k);
+            if (seen.has(s.section)) return false;
+            seen.add(s.section);
             return true;
         });
 
@@ -554,53 +580,78 @@ async function chargerOffice() {
             '<div class="brev-empty">Erreur de chargement.</div>';
     }
 }
+// ── Mapping heures → sections (dynamique selon le jour) ──
+function getHeureSections(heure, doDay, feriaKey) {
+    const day = 'Day' + doDay;
+    const maps = {
+        'Matines': [
+            day+' Matutinum1', day+' Matutinum2', day+' Matutinum3',
+            'Ant 1','Ant 2','Ant 3','Ant Matutinum',
+            'Hymnus Matutinum','HymnusM Matutinum','HymnusM Day'+doDay+' Matutinum',
+            'Lectio1','Lectio2','Lectio3',
+            'Lectio4','Lectio5','Lectio6',
+            'Lectio7','Lectio8','Lectio9',
+            'Responsory1','Responsory2','Responsory3',
+            'Responsory4','Responsory5','Responsory6',
+            'Responsory7','Responsory8','Responsory9',
+            'Oratio',
+        ],
+        'Laudes': [
+            day+' Laudes1', day+' Laudes2', day+' Laudes3', day+' Laudes4', day+' Laudes5',
+            'Hymnus Laudes','HymnusM Laudes','Hymnus '+day+' Laudes','HymnusM '+day+' Laudes',
+            'Ant Laudes', feriaKey+' Ant 3',
+            'Capitulum Laudes','Versum Laudes',
+            'Ant Benedictus', feriaKey+' Ant Benedictus',
+            'Benedictus','Oratio',
+        ],
+        'Prime': [
+            day+' Prima', day+' Prima1', day+' Prima2',
+            'Hymnus Prima','HymnusM Prima','Hymnus '+day+' Prima',
+            'Ant Prima','Capitulum Prima','Oratio',
+        ],
+        'Tierce': [
+            day+' Tertia', day+' Tertia1',
+            'Hymnus Tertia','HymnusM Tertia',
+            'Ant Tertia','Capitulum Tertia',
+            'Responsory Breve Tertia', feriaKey+' Tertia',
+            'Feria Tertia','Oratio',
+        ],
+        'Sexte': [
+            day+' Sexta', day+' Sexta1',
+            'Hymnus Sexta','HymnusM Sexta',
+            'Ant Sexta','Capitulum Sexta',
+            'Responsory Breve Sexta', feriaKey+' Sexta',
+            'Feria Sexta','Oratio',
+        ],
+        'None': [
+            day+' Nona', day+' Nona1',
+            'Hymnus Nona','HymnusM Nona',
+            'Ant Nona','Capitulum Nona',
+            'Responsory Breve Nona', feriaKey+' Nona',
+            'Feria Nona','Oratio',
+        ],
+        'Vêpres': [
+            day+' Vespera', day+' Vespera1', day+' Vespera2',
+            'Ant Vespera','Ant Vespera 2','Ant Vespera 3',
+            feriaKey+' Ant 2', feriaKey+'C Ant 2',
+            'Hymnus Vespera','HymnusM Vespera','Hymnus '+day+' Vespera',
+            'Capitulum Vespera','Versum Vespera',
+            feriaKey+' Ant 3', feriaKey+'C Ant 3',
+            'Ant Magnificat','Magnificat','Oratio',
+        ],
+        'Complies': [
+            'Hymnus Completorium','HymnusM Completorium',
+            'Ant Completorium','Capitulum Completorium',
+            'Versum Completorium','Oratio',
+        ],
+    };
+    return maps[heure] || [];
+}
+// Alias statique pour la recherche
 const HEURE_SECTIONS = {
-    'Matines': [
-        'Ant 1','Ant 2','Ant 3','Ant Matutinum',
-        'Hymnus Matutinum','HymnusM Matutinum',
-        'Lectio1','Lectio2','Lectio3',
-        'Lectio4','Lectio5','Lectio6',
-        'Lectio7','Lectio8','Lectio9',
-        'Responsory1','Responsory2','Responsory3',
-        'Responsory4','Responsory5','Responsory6',
-        'Responsory7','Responsory8','Responsory9',
-        'Oratio'
-    ],
-    'Laudes': [
-        'Hymnus Laudes','HymnusM Laudes',
-        'Ant Laudes','Capitulum Laudes',
-        'Versum Laudes','Ant Benedictus','Benedictus','Oratio'
-    ],
-    'Prime': [
-        'Hymnus Prima','HymnusM Prima',
-        'Ant Prima','Capitulum Prima','Oratio'
-    ],
-    'Tierce': [
-        'Hymnus Tertia','HymnusM Tertia',
-        'Ant Tertia','Capitulum Tertia',
-        'Responsory Breve Tertia','Oratio'
-    ],
-    'Sexte': [
-        'Hymnus Sexta','HymnusM Sexta',
-        'Ant Sexta','Capitulum Sexta',
-        'Responsory Breve Sexta','Oratio'
-    ],
-    'None': [
-        'Hymnus Nona','HymnusM Nona',
-        'Ant Nona','Capitulum Nona',
-        'Responsory Breve Nona','Oratio'
-    ],
-    'Vêpres': [
-        'Ant Vespera','Ant Vespera 2','Ant Vespera 3',
-        'Hymnus Vespera','HymnusM Vespera',
-        'Capitulum Vespera','Versum Vespera',
-        'Ant Magnificat','Magnificat','Oratio'
-    ],
-    'Complies': [
-        'Hymnus Completorium','HymnusM Completorium',
-        'Ant Completorium','Capitulum Completorium',
-        'Versum Completorium','Oratio'
-    ],
+    'Matines':['Lectio1','Lectio2','Lectio3','Responsory1','Responsory2','Responsory3','Oratio'],
+    'Laudes':['Benedictus','Oratio'],'Prime':['Oratio'],'Tierce':['Oratio'],
+    'Sexte':['Oratio'],'None':['Oratio'],'Vêpres':['Magnificat','Oratio'],'Complies':['Oratio'],
 };
 
 const SECTION_LABELS = {
@@ -661,14 +712,27 @@ let _currentSections = [];
 // ── Affichage d'une heure canoniale ──────────────────────
 function afficherHeure() {
     const sections = _currentSections;
-    const sectionsAttendues = HEURE_SECTIONS[_heure] || [];
+    const d = dateNav();
+    const doDay = d.getDay() + 1; // 1=dim...7=sam
+    const feriaKey = ['','','Feria2','Feria3','Feria4','Feria5','Feria6','Feria7'][d.getDay()+1]||'';
+    const sectionsAttendues = getHeureSections(_heure, doDay, feriaKey);
     const content = document.getElementById('brev-content');
 
-    // Trouver les sections disponibles pour cette heure
-    const disponibles = sectionsAttendues
-        .map(sName => sections.find(s => s.section === sName || s.section.startsWith(sName)))
-        .filter(Boolean)
-        .filter((s, i, arr) => arr.findIndex(x => x.section === s.section) === i);
+    // Trouver les sections disponibles — correspondance exacte ET partielle
+    const disponibles = [];
+    const seen = new Set();
+    for (const sName of sectionsAttendues) {
+        if (!sName) continue;
+        const found = sections.find(s =>
+            s.section === sName ||
+            s.section.startsWith(sName + ' ') ||
+            sName.endsWith('*') && s.section.startsWith(sName.slice(0,-1))
+        );
+        if (found && !seen.has(found.section)) {
+            disponibles.push(found);
+            seen.add(found.section);
+        }
+    }
 
     if (!disponibles.length) {
         content.innerHTML = `<div class="brev-empty">
