@@ -155,9 +155,48 @@
             border-bottom: 1px solid var(--border-soft); padding-bottom: 10px; }
     }
 
-    /* Verset numéroté */
-    .brev-verset { display: block; padding-left: 0; }
-    sup.vnum {
+    /* Psaumes — liste antiennes + numéros */
+    .brev-psaume { margin-bottom: 4px; }
+    .brev-psaume-ligne {
+        display: flex; align-items: baseline; gap: 10px;
+        padding: 5px 0; border-bottom: 1px solid rgba(184,150,42,.08);
+    }
+    .brev-psaume-ligne:last-child { border-bottom: none; }
+    .brev-ps-num {
+        font-family: 'Cinzel', serif; font-size: .54rem;
+        letter-spacing: .1em; color: var(--gold);
+        flex-shrink: 0; min-width: 42px;
+    }
+    .brev-ps-ant {
+        font-family: 'EB Garamond', serif; font-size: 1rem;
+        font-style: italic; color: var(--ink); line-height: 1.5;
+    }
+
+    /* Répons et versicules */
+    .brev-resp {
+        display: block; font-family: 'EB Garamond', serif;
+        font-size: 1rem; color: var(--rubric); line-height: 1.7;
+        font-style: italic;
+    }
+
+    /* Verset d'hymne */
+    .brev-hymne-v {
+        display: block; font-family: 'EB Garamond', serif;
+        font-size: 1rem; color: var(--ink); line-height: 1.7;
+    }
+
+    /* Section majeure (titre plus visible) */
+    .brev-section-title.majeur {
+        color: var(--ink); font-size: .65rem;
+        border-bottom-color: rgba(26,17,8,.2);
+    }
+    @media (prefers-color-scheme:dark) {
+        .brev-section-title.majeur { color: var(--ink-soft); border-bottom-color: var(--border-soft); }
+    }
+
+    /* Texte muted (latin affiché en fallback) */
+    .brev-text.muted, .brev-psaume.muted { opacity: .6; }
+    .no-fr-txt { color: var(--ink-muted); font-size: .88rem; }
         font-family: 'Cinzel', serif; font-size: .58rem;
         color: var(--gold); vertical-align: super; margin-right: 2px;
         opacity: .7; user-select: none;
@@ -540,11 +579,12 @@ async function chargerOffice() {
                 .in('fichier',['Psalmi/Psalmi major','Psalmi/Psalmi minor','Psalmi/Psalmi matutinum'])
                 .ilike('section', `${dayKey}%`),
 
-            // 5. Antiennes, hymnes et versicules communs (Major + Minor Special)
+            // 5. Hymnes et versicules du jour (Major + Minor Special)
             maConnexion.from('breviaire')
                 .select('dossier,fichier,section,text_la,text_fr')
                 .eq('dossier','Psalterium')
                 .in('fichier',['Special/Major Special','Special/Minor Special','Special/Matutinum Special'])
+                .or(`section.ilike.${dayKey}%,section.ilike.Hymnus ${dayKey}%,section.ilike.HymnusM ${dayKey}%,section.ilike.${feriaKey}%`)
                 .not('section','in',EXCL),
 
             // 6. Antiennes fériaux du Magnificat/Benedictus
@@ -748,76 +788,142 @@ function afficherHeure() {
 
 function escH(t) { return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function formatText(raw) {
-    if (!raw || !raw.trim()) return '';
-    let lines = raw.split('\n');
-    let out = '';
-    let inPara = false;
+// ── Nettoyage et formatage du texte DivinumOfficium ──────
+function nettoyer(raw) {
+    if (!raw) return '';
+    // Supprimer le tag de style {:H-xxx:}
+    raw = raw.replace(/\{:H-[^:]+:\}/g, '');
+    // Supprimer les lignes de directives/rubricales
+    const lines = raw.split('\n').filter(l => {
+        const t = l.trim();
+        if (!t) return true;
+        if (t.startsWith('@') || t.startsWith('$') || t.startsWith('_') || t.startsWith('~')) return false;
+        if (t.startsWith('(sed ') || t.startsWith('(rubrica') || t.startsWith('(mon')) return false;
+        return true;
+    });
+    return lines.join('\n').trim();
+}
 
-    for (let line of lines) {
-        // Référence biblique
-        if (line.match(/^!(.+)/)) {
-            const ref = line.replace(/^!/, '').trim();
-            out += `<span class="brev-ref">📖 ${escH(ref)}</span>`;
+// Déterminer si une section est un groupe de psaumes (format antienne;;numéro)
+function estGroupePsaumes(texte) {
+    return texte && texte.includes(';;') && !texte.includes('\n\n');
+}
+
+// Formater un groupe de psaumes (antiennes + numéros)
+function formaterPsaumes(texte) {
+    if (!texte) return '';
+    let html = '';
+    const lignes = texte.split('\n');
+    for (const ligne of lignes) {
+        if (!ligne.trim()) continue;
+        if (ligne.includes(';;')) {
+            const [ant, num] = ligne.split(';;');
+            const antClean = ant.trim();
+            const numClean = num.trim();
+            // Afficher : numéro de psaume en or + antienne
+            html += `<div class="brev-psaume-ligne">
+                <span class="brev-ps-num">Ps ${escH(numClean)}</span>
+                <span class="brev-ps-ant">${escH(antClean)}</span>
+            </div>`;
+        } else {
+            html += `<div class="brev-psaume-ligne"><span class="brev-ps-ant">${escH(ligne.trim())}</span></div>`;
+        }
+    }
+    return html;
+}
+
+function formaterTexte(raw) {
+    if (!raw) return '';
+    raw = nettoyer(raw);
+    if (!raw) return '';
+
+    // Psaumes (format antienne;;numéro)
+    if (estGroupePsaumes(raw)) return formaterPsaumes(raw);
+
+    let html = '';
+    const lignes = raw.split('\n');
+    for (const ligne of lignes) {
+        const t = ligne.trim();
+        if (!t) { html += '<br>'; continue; }
+
+        // Référence biblique !Livre X:Y
+        if (t.startsWith('!')) {
+            html += `<span class="brev-ref">📖 ${escH(t.slice(1).trim())}</span>`;
             continue;
         }
-        // Directives à ignorer
-        if (line.match(/^[@$&]/) || line.match(/^[_~]/)) continue;
 
-        // Numéro de verset
-        const mVerset = line.match(/^(\d+)\s+(.+)/);
+        // Répons R. / Verset V. / R.br.
+        if (t.match(/^R\.br\.|^R\.|^V\.|^℟|^℣/)) {
+            html += `<span class="brev-resp">${escH(t)}</span>`;
+            continue;
+        }
+
+        // Numéro de verset au début (ex: "1 Ecce factum est")
+        const mVerset = t.match(/^(\d+)\s+(.+)/);
         if (mVerset) {
-            out += `<span class="brev-verset"><sup class="vnum">${mVerset[1]}</sup>${escH(mVerset[2])}</span>\n`;
+            html += `<span class="brev-verset"><sup class="vnum">${mVerset[1]}</sup>${escH(mVerset[2])}</span>\n`;
+            continue;
+        }
+
+        // Ligne d'hymne commençant par v. (verset)
+        if (t.startsWith('v. ')) {
+            html += `<span class="brev-hymne-v">${escH(t.slice(3))}</span>`;
             continue;
         }
 
         // Ligne normale
-        if (line.trim()) {
-            out += escH(line) + '\n';
-        } else {
-            out += '\n';
-        }
+        html += escH(t) + '\n';
     }
-    return out.trim();
+    return html.replace(/(<br>\s*){3,}/g, '<br><br>').trim();
 }
 
 function buildSection(s, idx) {
-    const label = SECTION_LABELS[s.section] || s.section;
-    const la = formatText(s.text_la);
-    const fr = formatText(s.text_fr);
+    const label = getSectionLabel(s.section);
+    const isPsaume = estGroupePsaumes(s.text_la);
+    const la = formaterTexte(s.text_la);
+    const fr = formaterTexte(s.text_fr);
     const noFr = !s.text_fr || !s.text_fr.trim();
 
-    const titleHtml = `<div class="brev-section-title" style="animation-delay:${idx*40}ms">
+    // Type de section pour le style du titre
+    const isMajeur = ['Lectio1','Lectio2','Lectio3','Lectio4','Lectio5','Lectio6',
+        'Lectio7','Lectio8','Lectio9','Benedictus','Magnificat','Oratio'].includes(s.section);
+
+    const titleHtml = `<div class="brev-section-title${isMajeur?' majeur':''}" style="animation-delay:${idx*50}ms">
         ${escH(label)}
-        ${noFr && _lang !== 'la' ? '<span class="no-fr">latin uniquement</span>' : ''}
+        ${noFr && _lang !== 'la' ? '<span class="no-fr">lat.</span>' : ''}
     </div>`;
 
     let textHtml = '';
+    const cls = isPsaume ? 'brev-psaume' : 'brev-text';
 
     if (_lang === 'la') {
-        textHtml = `<div class="brev-text latin">${la}</div>`;
+        textHtml = `<div class="${cls} latin">${la}</div>`;
     } else if (_lang === 'fr') {
         textHtml = noFr
-            ? `<div class="brev-text latin" style="opacity:.65">${la}</div>`
-            : `<div class="brev-text francais">${fr}</div>`;
+            ? `<div class="${cls} latin muted">${la}</div>`
+            : `<div class="${cls} francais">${fr}</div>`;
     } else {
         // Bilingue
         textHtml = `<div class="brev-bilingue">
             <div class="brev-bilingue-col-la">
                 <span class="brev-bilingue-label">Latin</span>
-                <div class="brev-text latin">${la}</div>
+                <div class="${cls} latin">${la}</div>
             </div>
             <div class="brev-bilingue-col-fr">
                 <span class="brev-bilingue-label">Français</span>
-                <div class="brev-text francais">${noFr ? '<em style="color:var(--ink-muted)">Traduction non disponible</em>' : fr}</div>
+                <div class="${cls} francais">${noFr ? '<em class="no-fr-txt">Traduction non disponible</em>' : fr}</div>
             </div>
         </div>`;
     }
 
-    return `<div class="brev-section" style="animation-delay:${idx*40}ms">
-        ${titleHtml}
-        ${textHtml}
+    return `<div class="brev-section" style="animation-delay:${idx*50}ms">
+        ${titleHtml}${textHtml}
     </div>`;
+}
+
+function getSectionLabel(section) {
+    return SECTION_LABELS[section]
+        || (section.startsWith('Day') ? 'Psaumes · ' + section.replace(/Day\d+ /,'') : section);
 }
 
 // ── Recherche ─────────────────────────────────────────────
