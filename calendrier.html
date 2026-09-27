@@ -737,7 +737,7 @@ async function enregistrerIntention() {
     }
     const commentaire = document.getElementById('commentaire').value.trim();
     if (!nom_intention) { AppModal.alert('⚠️','Champ manquant',"Veuillez indiquer l'intention."); return; }
-    const { error } = await maConnexion.from('intentions').insert([{
+    const { error } = await maConnexion.from('intentions').upsert([{
         date_messe, google_event_id,
         heure_messe:    heure_brute,
         nom_intention,
@@ -747,7 +747,7 @@ async function enregistrerIntention() {
         statut:         'valide',
         email_donateur: 'non@renseigne.fr',
         mail_envoye:    true
-    }]);
+    }], { onConflict: 'google_event_id', ignoreDuplicates: false });
     if (error) { AppModal.alert('❌','Erreur',error.message); return; }
     fermerModal();
     showToast('✅ Intention enregistrée');
