@@ -317,6 +317,19 @@
     }
     #libre-date-heure { gap: 10px; margin-bottom: 10px; }
 
+    /* ── Chips abbé ───────────────────────────────────────── */
+    .pretre-chip {
+        padding: 8px 16px; border: 1px solid var(--border-soft);
+        border-radius: 3px; background: var(--vellum-light);
+        font-family: 'Cinzel', serif; font-size: .58rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        color: var(--ink-muted); cursor: pointer; transition: all .18s;
+    }
+    .pretre-chip.actif {
+        background: #1a1108; border-color: var(--gold);
+        color: var(--gold); font-weight: 600;
+    }
+
     /* ── Zone chargement ──────────────────────────────────── */
     .loading-zone {
         text-align: center; padding: 40px 20px;
@@ -420,6 +433,14 @@
                 <input type="text" id="nom_donateur" placeholder="Mme Dupont">
             </div>
         </div>
+        <label>Abbé célébrant</label>
+        <div style="display:flex;gap:8px;margin-bottom:4px;">
+            <button type="button" class="pretre-chip actif" id="chip-molin"
+                onclick="selectAbbe('molin')">Abbé Molin</button>
+            <button type="button" class="pretre-chip" id="chip-legall"
+                onclick="selectAbbe('legall')">Abbé Le Gall</button>
+        </div>
+        <input type="hidden" id="input-pretre" value="molin">
         <label>Note privée</label>
         <textarea id="commentaire" rows="2"></textarea>
         <button class="btn-save" onclick="enregistrerIntention()">✅ Confirmer l'intention</button>
@@ -435,6 +456,14 @@
 const GOOGLE_API_KEY  = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
 const CALENDAR_ID     = 'saintlouisenville67@gmail.com';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzA4wI1QmU4s8fVx8Nd3yeLxheo1kifLyQpuxNLvlxl4g1Q3yXAQ3pyuGKVSR40JT1/exec';
+
+// ── Sélecteur abbé ───────────────────────────────────────
+function selectAbbe(id) {
+    document.getElementById('input-pretre').value = id;
+    ['molin','legall'].forEach(a => {
+        document.getElementById('chip-'+a).classList.toggle('actif', a === id);
+    });
+}
 
 function isoLocal(d) {
     return d.getFullYear() + '-'
@@ -718,6 +747,8 @@ function ouvrirModal(iso, dateFr, googleId, heure) {
 
 function fermerModal() {
     document.getElementById('modal-saisie').classList.remove('open');
+    // Reset sélecteur abbé
+    selectAbbe('molin');
 }
 
 // Fermer en tapant hors du panneau
@@ -737,6 +768,7 @@ async function enregistrerIntention() {
     }
     const commentaire = document.getElementById('commentaire').value.trim();
     if (!nom_intention) { AppModal.alert('⚠️','Champ manquant',"Veuillez indiquer l'intention."); return; }
+    const pretre_id = document.getElementById('input-pretre')?.value || 'molin';
     const { error } = await maConnexion.from('intentions').upsert([{
         date_messe, google_event_id,
         heure_messe:    heure_brute,
@@ -746,7 +778,8 @@ async function enregistrerIntention() {
         commentaire,
         statut:         'valide',
         email_donateur: 'non@renseigne.fr',
-        mail_envoye:    true
+        mail_envoye:    true,
+        pretre_id,
     }], { onConflict: 'google_event_id', ignoreDuplicates: false });
     if (error) { AppModal.alert('❌','Erreur',error.message); return; }
     fermerModal();
