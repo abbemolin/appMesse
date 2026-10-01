@@ -317,12 +317,36 @@
         .no-messe-card { background: var(--vellum-light); border-color: var(--border-soft); }
         .section-sep-line { background: var(--border-soft); }
     }
+    
+    /* ── Bandeau hors ligne ────────────────────────────────── */
+    #offline-banner {
+        display: none; position: fixed; top: 0; left: 0; right: 0;
+        z-index: 9000; background: #8b1a1a; color: #f0e8d5;
+        font-family: 'Cinzel', serif; font-size: .58rem;
+        letter-spacing: .12em; text-transform: uppercase;
+        padding: 8px 16px; text-align: center;
+        padding-top: calc(8px + env(safe-area-inset-top, 0px));
+    }
+    #offline-banner.visible { display: block; }
+    #sync-badge {
+        display: none; position: fixed; bottom: 80px; right: 16px;
+        z-index: 8000; background: #8b1a1a; color: #f0e8d5;
+        border-radius: 50%; width: 36px; height: 36px;
+        font-size: .65rem; font-family: 'Cinzel', serif;
+        align-items: center; justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,.3);
+        cursor: pointer; font-weight: bold;
+    }
+    #sync-badge.visible { display: flex; }
     </style>
 </head>
 <body>
 </div>
 
 <div id="menu-container"></div>
+<!-- Bandeau hors ligne -->
+<div id="offline-banner">⚡ Hors ligne — les modifications seront synchronisées à la reconnexion</div>
+<div id="sync-badge" title="Actions en attente" onclick="syncMaintenant()"></div>
 
 <!-- ════════════════════════════════════════════════════════
      HERO
@@ -751,6 +775,64 @@ async function ouvrirPropreAccueil(isoDate){
 }
 function fermerPropreAcc(){document.getElementById('modal-propre-acc').style.display='none';_propreAccData=null;}
 document.getElementById('modal-propre-acc').addEventListener('click',function(e){if(e.target===this)fermerPropreAcc();});
+</script>
+<script>
+// ── Gestion hors ligne ────────────────────────────────────
+(function() {
+    const banner = document.getElementById('offline-banner');
+    const badge  = document.getElementById('sync-badge');
+
+    function majEtat() {
+        if (navigator.onLine) {
+            banner.classList.remove('visible');
+            // Déclencher sync dès reconnexion
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'SYNC_NOW' });
+            }
+            // Background Sync API si dispo
+            navigator.serviceWorker.ready.then(reg => {
+                if (reg.sync) reg.sync.register('sync-intentions').catch(() => {});
+            });
+        } else {
+            banner.classList.add('visible');
+        }
+        // Mettre à jour le badge
+        if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'GET_QUEUE_SIZE' });
+        }
+    }
+
+    window.addEventListener('online',  majEtat);
+    window.addEventListener('offline', majEtat);
+    majEtat();
+
+    // Écouter les messages du SW
+    navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data?.type === 'QUEUE_SIZE') {
+            const n = e.data.count;
+            badge.textContent = n;
+            badge.classList.toggle('visible', n > 0);
+        }
+        if (e.data?.type === 'SYNC_COMPLETE') {
+            const { success, errors } = e.data;
+            if (success > 0) {
+                const toast = document.getElementById('toast');
+                if (toast) {
+                    toast.textContent = `✅ ${success} action${success>1?'s':''} synchronisée${success>1?'s':''}`;
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 3000);
+                }
+                badge.classList.remove('visible');
+            }
+        }
+    });
+
+    window.syncMaintenant = function() {
+        if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'SYNC_NOW' });
+        }
+    };
+})();
 </script>
 </body>
 </html>
