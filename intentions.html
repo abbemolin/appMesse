@@ -696,12 +696,21 @@ async function renderIntentions(filtre = '') {
     tbody.innerHTML = '';
     const moisCourant = new Date().toISOString().substring(0, 7);
 
-    Object.keys(groupes).sort().forEach(moisKey => {
+    // Calculer les 13 mois autorisés (mois courant + 12 prochains)
+    const moisAutorises = new Set();
+    const refDate = new Date();
+    for (let i = 0; i < 13; i++) {
+        const d = new Date(refDate.getFullYear(), refDate.getMonth() + i, 1);
+        const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+        moisAutorises.add(key);
+    }
+
+    Object.keys(groupes).sort().filter(k => moisAutorises.has(k)).forEach(moisKey => {
         const [annee, moisNum] = moisKey.split('-');
         const labelMois = MOIS_FR[parseInt(moisNum)-1] + ' ' + annee;
         const items = groupes[moisKey];
         const nbAttente = items.filter(i => i.statut === 'en_attente' || i.en_edition).length;
-        const isOpen = moisKey === moisCourant || nbAttente > 0;
+        const isOpen = false; // jamais ouvert automatiquement // jamais ouvert automatiquement
 
         // Header mois
         const header = document.createElement('div');
@@ -1069,7 +1078,7 @@ function getIdAndCall(btn, fn) {
 function toggleMois(moisKey) {
     const div   = document.getElementById('mois-'+moisKey);
     const arrow = document.getElementById('arrow-'+moisKey);
-    const isOpen = div.style.display !== 'none';
+    const isOpen = false; // jamais ouvert automatiquement
     div.style.display = isOpen ? 'none' : 'block';
     arrow.classList.toggle('open', !isOpen);
 }
