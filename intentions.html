@@ -697,10 +697,11 @@ async function renderIntentions(filtre = '') {
     const moisCourant = new Date().toISOString().substring(0, 7);
 
     // Calculer les 13 mois autorisés (mois courant + 12 prochains)
+    // new Date(année, mois+i) gère automatiquement le passage d'année
     const moisAutorises = new Set();
-    const refDate = new Date();
+    const now = new Date();
     for (let i = 0; i < 13; i++) {
-        const d = new Date(refDate.getFullYear(), refDate.getMonth() + i, 1);
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
         const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
         moisAutorises.add(key);
     }
@@ -1078,7 +1079,7 @@ function getIdAndCall(btn, fn) {
 function toggleMois(moisKey) {
     const div   = document.getElementById('mois-'+moisKey);
     const arrow = document.getElementById('arrow-'+moisKey);
-    const isOpen = false; // jamais ouvert automatiquement
+    const isOpen = div.style.display === 'block';  // état réel du DOM
     div.style.display = isOpen ? 'none' : 'block';
     arrow.classList.toggle('open', !isOpen);
 }
