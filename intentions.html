@@ -650,7 +650,7 @@ async function chargerDemandes() {
     if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 300); return; }
     try {
         const tMin = new Date(); tMin.setMonth(tMin.getMonth() - 1);
-        const tMax = new Date(); tMax.setFullYear(tMax.getFullYear() + 1);
+        const tMax = new Date(); tMax.setFullYear(tMax.getFullYear() + 2);
         const urlGcal = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events?key=${GOOGLE_API_KEY}&singleEvents=true&orderBy=startTime&timeMin=${tMin.toISOString()}&timeMax=${tMax.toISOString()}&maxResults=500`;
 
         const [gcalResp, { data }] = await Promise.all([
@@ -696,17 +696,17 @@ async function renderIntentions(filtre = '') {
     tbody.innerHTML = '';
     const moisCourant = new Date().toISOString().substring(0, 7);
 
-    // Calculer les 13 mois autorisés (mois courant + 12 prochains)
-    // new Date(année, mois+i) gère automatiquement le passage d'année
-    const moisAutorises = new Set();
+    // Construire la liste ordonnée des 13 mois (courant + 12 prochains)
+    // Inclut les mois VIDES — new Date gère le passage d'année automatiquement
     const now = new Date();
+    const moisAfficher = [];
     for (let i = 0; i < 13; i++) {
         const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-        const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-        moisAutorises.add(key);
+        moisAfficher.push(d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'));
     }
 
-    Object.keys(groupes).sort().filter(k => moisAutorises.has(k)).forEach(moisKey => {
+    moisAfficher.forEach(moisKey => {
+        if (!groupes[moisKey]) groupes[moisKey] = []; // mois vide : tableau vide
         const [annee, moisNum] = moisKey.split('-');
         const labelMois = MOIS_FR[parseInt(moisNum)-1] + ' ' + annee;
         const items = groupes[moisKey];
