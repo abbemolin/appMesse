@@ -384,6 +384,31 @@ body {
     </div>
 </div>
 
+
+<!-- ════ MODALE PROPRE (partagée avec accueil) ════ -->
+<div id="modal-propre-acc" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.55);align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;">
+  <div style="background:var(--vellum-light);border-radius:10px;max-width:680px;width:100%;margin:auto;box-shadow:0 8px 40px rgba(0,0,0,.25);">
+    <div style="background:var(--dark-bg);border-radius:10px 10px 0 0;padding:16px 20px;display:flex;align-items:center;gap:10px;">
+      <div style="flex:1;">
+        <div id="propre-acc-date" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;color:#b8962a;text-transform:uppercase;margin-bottom:4px;"></div>
+        <div id="propre-acc-fete" style="font-family:'Cinzel',serif;font-size:.95rem;color:#f5f0e4;letter-spacing:.04em;"></div>
+      </div>
+      <button onclick="fermerPropreAcc()" style="background:none;border:none;color:#b8962a;font-size:1.4rem;cursor:pointer;line-height:1;padding:4px 8px;flex-shrink:0;">✕</button>
+    </div>
+    <div style="background:#f5f0e4;border-bottom:1px solid var(--border-soft);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div style="display:flex;border:1px solid #b8962a;border-radius:6px;overflow:hidden;">
+        <button id="propre-acc-btn-la" onclick="setPropraAccLang('la')" style="padding:6px 16px;background:#b8962a;color:#fff;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;">LATIN</button>
+        <button id="propre-acc-btn-fr" onclick="setPropraAccLang('fr')" style="padding:6px 16px;background:transparent;color:#b8962a;border:none;cursor:pointer;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;">FRANÇAIS</button>
+      </div>
+      <div id="propre-acc-multi" style="display:none;border:1px solid #8b1a1a;border-radius:6px;overflow:hidden;"></div>
+    </div>
+    <div id="propre-acc-pieces" style="padding:20px;display:flex;flex-direction:column;gap:18px;max-height:65vh;overflow-y:auto;font-family:Georgia,serif;"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border-soft);text-align:center;">
+      <button onclick="fermerPropreAcc()" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;background:none;border:none;color:var(--ink-muted);cursor:pointer;">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <script src="ordo1962.js"></script>
 <script src="menu.js"></script>
 <script>
@@ -560,6 +585,18 @@ function renderDetail(iso) {
         </div>`;
     }
 
+    // Bouton propre du jour (toujours présent)
+    html += `<div style="padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.04);">
+        <button onclick="ouvrirPropreAccueil('${iso}')"
+            style="width:100%;padding:10px;background:rgba(184,150,42,.1);
+            border:1px solid rgba(184,150,42,.2);border-radius:6px;
+            font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.12em;
+            text-transform:uppercase;color:#b8962a;cursor:pointer;
+            transition:background .15s;">
+            📖 Propre de la Messe
+        </button>
+    </div>`;
+
     if (!messes.length) {
         html += `<div class="cal-detail-empty">Aucune messe ce jour</div>`;
     } else {
@@ -730,6 +767,69 @@ async function enregistrerIntention() {
     showToast('✅ Intention enregistrée');
     await chargerMois();
 }
+
+var _propreAccLang = 'la', _propreAccData = null;
+var PIECE_COLORS_ACC = {
+    introit:'#4a2a1a',collecte:'#5a3e1b',epitre:'#2a3a2a',
+    graduel:'#3a1a4a',trait:'#3a1a4a',alleluia:'#3a1a4a',
+    evangile:'#8b1a1a',offertoire:'#1a3a5a',secrete:'#5a3e1b',
+    preface:'#4a2a1a',communion:'#1a1108',postcommunion:'#5a3e1b'
+};
+var MULTI_MESSES_ACC = {
+    'temporal/1/0':[{key:'temporal/1/0',label:'Messe de Minuit'},{key:'temporal/1/0b',label:"Messe de l'Aurore"},{key:'temporal/1/0c',label:'Messe du Jour'}],
+    'sanctoral/11/2':[{key:'sanctoral/11/2',label:'1re Messe'},{key:'sanctoral/11/2b',label:'2e Messe'},{key:'sanctoral/11/2c',label:'3e Messe'}]
+};
+var COMMUN_KEYS_ACC = {martyr:'sanctoral/1/13',martyrs:'sanctoral/1/15',confesseur_pont:'sanctoral/1/4',confesseur:'sanctoral/1/1',vierge:'sanctoral/10/3',veuve:'sanctoral/10/8'};
+
+function getCommunKeyAcc(ordo) {
+    if (!ordo||ordo.source!=='sanctoral') return null;
+    var f=(ordo.fete||'').toLowerCase(),c=(ordo.couleur||'').toLowerCase();
+    if (c==='rouge') return f.includes('martyrs')?COMMUN_KEYS_ACC.martyrs:COMMUN_KEYS_ACC.martyr;
+    if (f.includes('pape')||f.includes('évêque')||f.includes('archevêque')) return COMMUN_KEYS_ACC.confesseur_pont;
+    if (f.includes('vierge')&&!f.includes('martyr')) return COMMUN_KEYS_ACC.vierge;
+    if (f.includes('reine')||f.includes('veuve')) return COMMUN_KEYS_ACC.veuve;
+    return COMMUN_KEYS_ACC.confesseur;
+}
+function escHA(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function renderPropreAccPieces(){
+    var c=document.getElementById('propre-acc-pieces');
+    if(!_propreAccData){c.innerHTML='<div style="text-align:center;padding:30px;color:var(--ink-muted);font-style:italic;">Propre non disponible.</div>';return;}
+    c.innerHTML=_propreAccData.map(function(p){
+        var txt=(_propreAccLang==='la'?p.text_la:p.text_fr)||(_propreAccLang==='la'?p.text_fr:p.text_la)||'';
+        var col=PIECE_COLORS_ACC[p.part_code]||'#1a1108';
+        var ref=p.reference?'<span style="font-size:.85em;color:var(--ink-muted);font-style:italic;margin-left:8px;">'+escHA(p.reference)+'</span>':'';
+        var badge=p._du_commun?'<span style="font-size:.7em;color:var(--ink-muted);font-style:italic;margin-left:8px;">du commun</span>':'';
+        return '<div><div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:'+col+';border-bottom:1px solid '+col+'22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;"><span>'+escHA(p.part_label.replace(' (commun)',''))+'</span>'+ref+badge+'</div><div style="font-size:1.05rem;line-height:1.75;color:var(--ink);white-space:pre-wrap;">'+escHA(txt)+'</div></div>';
+    }).join('');
+}
+function setPropraAccLang(l){_propreAccLang=l;document.getElementById('propre-acc-btn-la').style.background=l==='la'?'#b8962a':'transparent';document.getElementById('propre-acc-btn-la').style.color=l==='la'?'#fff':'#b8962a';document.getElementById('propre-acc-btn-fr').style.background=l==='fr'?'#b8962a':'transparent';document.getElementById('propre-acc-btn-fr').style.color=l==='fr'?'#fff':'#b8962a';renderPropreAccPieces();}
+function renderMultiAcc(baseKey,activeKey){var sel=document.getElementById('propre-acc-multi');var cfg=MULTI_MESSES_ACC[baseKey];if(!cfg){sel.style.display='none';return;}sel.style.display='flex';sel.innerHTML=cfg.map(function(m){var a=m.key===activeKey;return '<button onclick="switchMesseAcc(\''+m.key+'\',\''+baseKey+'\')" style="padding:6px 12px;border:none;cursor:pointer;font-family:\'Cinzel\',serif;font-size:.62rem;letter-spacing:.06em;background:'+(a?'#8b1a1a':'transparent')+';color:'+(a?'#fff':'#8b1a1a')+';">'+m.label+'</button>';}).join('');}
+async function switchMesseAcc(newKey,baseKey){document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:40px;color:var(--ink-muted);">Chargement…</div>';renderMultiAcc(baseKey,newKey);var resp=await maConnexion.from('propers').select('part_code,part_label,reference,text_la,text_fr,display_order').eq('mass_key',newKey).order('display_order',{ascending:true});_propreAccData=resp.data&&resp.data.length?resp.data:null;var cfg=MULTI_MESSES_ACC[baseKey];var m=cfg&&cfg.find(function(x){return x.key===newKey;});if(m)document.getElementById('propre-acc-fete').textContent=document.getElementById('propre-acc-fete').textContent.split(' — ')[0]+' — '+m.label;renderPropreAccPieces();}
+async function ouvrirPropreAccueil(isoDate){
+    var parts=isoDate.split('-').map(Number);
+    var ordo=Ordo1962.getDay(parts[0],parts[1],parts[2]);
+    var massKey=(typeof Ordo1962.getProperKey==='function')?Ordo1962.getProperKey(ordo):null;
+    var d=new Date(parts[0],parts[1]-1,parts[2]);
+    document.getElementById('propre-acc-date').textContent=d.getDate()+' '+MOIS[d.getMonth()]+' '+parts[0];
+    document.getElementById('propre-acc-fete').textContent=ordo&&ordo.fete?ordo.fete:'';
+    document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:40px;color:var(--ink-muted);">Chargement…</div>';
+    document.getElementById('modal-propre-acc').style.display='flex';
+    if(!massKey){document.getElementById('propre-acc-multi').style.display='none';document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:30px;color:var(--ink-muted);font-style:italic;">Propre non disponible pour ce jour.</div>';return;}
+    renderMultiAcc(massKey,massKey);
+    if(MULTI_MESSES_ACC[massKey])document.getElementById('propre-acc-fete').textContent=((ordo&&ordo.fete)?ordo.fete:'')+' — '+MULTI_MESSES_ACC[massKey][0].label;
+    try{
+        var resp=await maConnexion.from('propers').select('part_code,part_label,reference,text_la,text_fr,display_order').eq('mass_key',massKey).order('display_order',{ascending:true});
+        if(resp.error)throw resp.error;
+        var data=resp.data&&resp.data.length?resp.data:null;
+        if(data&&ordo&&ordo.source==='sanctoral'){var codes=new Set(data.map(function(p){return p.part_code;}));var att=['introit','collecte','epitre','graduel','evangile','offertoire','secrete','communion','postcommunion'];var manq=att.filter(function(p){return!codes.has(p);});if(manq.length>0){var ck=getCommunKeyAcc(ordo);if(ck){var rc=await maConnexion.from('propers').select('part_code,part_label,reference,text_la,text_fr,display_order').eq('mass_key',ck).in('part_code',manq);if(!rc.error&&rc.data&&rc.data.length){var cp=rc.data.map(function(p){return Object.assign({},p,{_du_commun:true,part_label:p.part_label+' (commun)'});});data=data.concat(cp).sort(function(a,b){return a.display_order-b.display_order;});}}}}
+        _propreAccData=data;renderPropreAccPieces();
+    }catch(e){document.getElementById('propre-acc-pieces').innerHTML='<div style="color:#8b1a1a;padding:20px;">Erreur : '+escHA(String(e.message||e))+'</div>';}
+}
+function fermerPropreAcc(){document.getElementById('modal-propre-acc').style.display='none';_propreAccData=null;}
+document.getElementById('modal-propre-acc').addEventListener('click',function(e){if(e.target===this)fermerPropreAcc();});
+</script>
+<script>
+// ── Gestion hors ligne ──────────────────────────────────
 
 // ── Init ──────────────────────────────────────────────────
 function init() {
