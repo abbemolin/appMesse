@@ -380,6 +380,8 @@ body {
                 onclick="selectAbbe('molin')">Abbé Molin</button>
             <button type="button" class="pretre-chip" id="chip-legall"
                 onclick="selectAbbe('legall')">Abbé Le Gall</button>
+            <button type="button" class="pretre-chip" id="chip-carbonnieres"
+                onclick="selectAbbe('carbonnieres')">Abbé de Carbonières</button>
         </div>
         <input type="hidden" id="input-pretre" value="molin">
         <label>Note privée</label>
@@ -417,6 +419,7 @@ body {
 <script src="ordo1962.js"></script>
 <script src="menu.js"></script>
 <script>
+
 const GOOGLE_API_KEY  = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
 const CALENDAR_ID     = 'saintlouisenville67@gmail.com';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzA4wI1QmU4s8fVx8Nd3yeLxheo1kifLyQpuxNLvlxl4g1Q3yXAQ3pyuGKVSR40JT1/exec';
@@ -437,8 +440,9 @@ let _ordoCache   = {};
 
 // ── Utilitaires ───────────────────────────────────────────
 const PRETRES = {
-    'molin':  '✝ Abbé Molin',
-    'legall': '✝ Abbé Le Gall',
+    'molin':        '✝ Abbé Molin',
+    'legall':       '✝ Abbé Le Gall',
+    'carbonnieres': '✝ Abbé de Carbonières',
 };
 function pretreLabel(id) {
     return PRETRES[id] || (id ? '✝ ' + id : '');
@@ -741,117 +745,25 @@ function ouvrirModalModif(supaId) {
     const intent = _intentions.find(i => String(i.id) === String(supaId));
     if (!intent) { console.warn('Intention non trouvée, supaId:', supaId); return; }
 
-function fermerModal() {
-    document.getElementById('modal-saisie').classList.remove('open');
-    selectAbbe('molin');
+    document.getElementById('input-date-iso').value   = intent.date_messe;
+    document.getElementById('input-google-id').value  = intent.google_event_id || 'libre';
+    document.getElementById('input-heure').value      = intent.heure_messe || '';
+    document.getElementById('libre-date-heure').style.display = 'none';
+    document.getElementById('nom_intention').value    = intent.nom_intention || '';
+    document.getElementById('nom_donateur').value     = intent.nom_donateur || '';
+    document.getElementById('commentaire').value      = intent.commentaire || '';
+    document.getElementById('type_intention').value   = intent.type_intention || 'Défunt';
+    selectAbbe(intent.pretre_id || 'molin');
+
+    const d = new Date(intent.date_messe + 'T12:00:00');
+    const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    document.getElementById('modal-title').textContent =
+        'Modifier — ' + jours[d.getDay()] + ' ' + d.getDate() + ' ' +
+        MOIS_FR[d.getMonth()].toLowerCase();
+
+    document.getElementById('modal-saisie').classList.add('open');
+    setTimeout(() => document.getElementById('nom_intention').focus(), 300);
 }
-
-document.getElementById('modal-saisie').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal-saisie')) fermerModal();
-});
-
-function selectAbbe(id) {
-    document.getElementById('input-pretre').value = id;
-    ['molin','legall'].forEach(a => {
-        document.getElementById('chip-'+a).classList.toggle('actif', a === id);
-    });
-}
-
-async function enregistrerIntention() {
-    let date_messe        = document.getElementById('input-date-iso').value;
-    const google_event_id = document.getElementById('input-google-id').value;
-    const nom_intention   = document.getElementById('nom_intention').value.trim();
-    let heure_brute       = document.getElementById('input-heure').value.replace('h',':');
-    const pretre_id       = document.getElementById('input-pretre').value || 'molin';
-
-    if (!date_messe || google_event_id === 'libre') {
-        date_messe  = document.getElementById('libre-date').value;
-        heure_brute = document.getElementById('libre-heure').value;
-    }
-    if (!nom_intention) { alert('Veuillez indiquer une intention.'); return; }
-    if (!date_messe)    { alert('Veuillez indiquer une date.'); return; }
-
-    const { error } = await maConnexion.from('intentions').upsert([{
-        date_messe, google_event_id,
-        heure_messe:    heure_brute,
-        nom_intention,
-        type_intention: document.getElementById('type_intention').value,
-        nom_donateur:   document.getElementById('nom_donateur').value.trim() || 'Paroisse',
-        commentaire:    document.getElementById('commentaire').value.trim(),
-        statut:         'valide',
-        email_donateur: 'non@renseigne.fr',
-        mail_envoye:    true,
-        pretre_id,
-    }], { onConflict: 'google_event_id', ignoreDuplicates: false });
-
-    if (error) { alert('Erreur : ' + error.message); return; }
-    fermerModal();
-    showToast('✅ Intention enregistrée');
-    await chargerMois();
-}
-
-var _propreAccLang = 'la', _propreAccData = null;
-var PIECE_COLORS_ACC = {
-    introit:'#4a2a1a',collecte:'#5a3e1b',epitre:'#2a3a2a',
-    graduel:'#3a1a4a',trait:'#3a1a4a',alleluia:'#3a1a4a',
-    evangile:'#8b1a1a',offertoire:'#1a3a5a',secrete:'#5a3e1b',
-    preface:'#4a2a1a',communion:'#1a1108',postcommunion:'#5a3e1b'
-};
-var MULTI_MESSES_ACC = {
-    'temporal/1/0':[{key:'temporal/1/0',label:'Messe de Minuit'},{key:'temporal/1/0b',label:"Messe de l'Aurore"},{key:'temporal/1/0c',label:'Messe du Jour'}],
-    'sanctoral/11/2':[{key:'sanctoral/11/2',label:'1re Messe'},{key:'sanctoral/11/2b',label:'2e Messe'},{key:'sanctoral/11/2c',label:'3e Messe'}]
-};
-var COMMUN_KEYS_ACC = {martyr:'sanctoral/1/13',martyrs:'sanctoral/1/15',confesseur_pont:'sanctoral/1/4',confesseur:'sanctoral/1/1',vierge:'sanctoral/10/3',veuve:'sanctoral/10/8'};
-
-function getCommunKeyAcc(ordo) {
-    if (!ordo||ordo.source!=='sanctoral') return null;
-    var f=(ordo.fete||'').toLowerCase(),c=(ordo.couleur||'').toLowerCase();
-    if (c==='rouge') return f.includes('martyrs')?COMMUN_KEYS_ACC.martyrs:COMMUN_KEYS_ACC.martyr;
-    if (f.includes('pape')||f.includes('évêque')||f.includes('archevêque')) return COMMUN_KEYS_ACC.confesseur_pont;
-    if (f.includes('vierge')&&!f.includes('martyr')) return COMMUN_KEYS_ACC.vierge;
-    if (f.includes('reine')||f.includes('veuve')) return COMMUN_KEYS_ACC.veuve;
-    return COMMUN_KEYS_ACC.confesseur;
-}
-function escHA(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function renderPropreAccPieces(){
-    var c=document.getElementById('propre-acc-pieces');
-    if(!_propreAccData){c.innerHTML='<div style="text-align:center;padding:30px;color:var(--ink-muted);font-style:italic;">Propre non disponible.</div>';return;}
-    c.innerHTML=_propreAccData.map(function(p){
-        var txt=(_propreAccLang==='la'?p.text_la:p.text_fr)||(_propreAccLang==='la'?p.text_fr:p.text_la)||'';
-        var col=PIECE_COLORS_ACC[p.part_code]||'#1a1108';
-        var ref=p.reference?'<span style="font-size:.85em;color:var(--ink-muted);font-style:italic;margin-left:8px;">'+escHA(p.reference)+'</span>':'';
-        var badge=p._du_commun?'<span style="font-size:.7em;color:var(--ink-muted);font-style:italic;margin-left:8px;">du commun</span>':'';
-        return '<div><div style="font-family:\'Cinzel\',serif;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:'+col+';border-bottom:1px solid '+col+'22;padding-bottom:4px;margin-bottom:8px;display:flex;align-items:baseline;gap:4px;"><span>'+escHA(p.part_label.replace(' (commun)',''))+'</span>'+ref+badge+'</div><div style="font-size:1.05rem;line-height:1.75;color:var(--ink);white-space:pre-wrap;">'+escHA(txt)+'</div></div>';
-    }).join('');
-}
-function setPropraAccLang(l){_propreAccLang=l;document.getElementById('propre-acc-btn-la').style.background=l==='la'?'#b8962a':'transparent';document.getElementById('propre-acc-btn-la').style.color=l==='la'?'#fff':'#b8962a';document.getElementById('propre-acc-btn-fr').style.background=l==='fr'?'#b8962a':'transparent';document.getElementById('propre-acc-btn-fr').style.color=l==='fr'?'#fff':'#b8962a';renderPropreAccPieces();}
-function renderMultiAcc(baseKey,activeKey){var sel=document.getElementById('propre-acc-multi');var cfg=MULTI_MESSES_ACC[baseKey];if(!cfg){sel.style.display='none';return;}sel.style.display='flex';sel.innerHTML=cfg.map(function(m){var a=m.key===activeKey;return '<button onclick="switchMesseAcc(\''+m.key+'\',\''+baseKey+'\')" style="padding:6px 12px;border:none;cursor:pointer;font-family:\'Cinzel\',serif;font-size:.62rem;letter-spacing:.06em;background:'+(a?'#8b1a1a':'transparent')+';color:'+(a?'#fff':'#8b1a1a')+';">'+m.label+'</button>';}).join('');}
-async function switchMesseAcc(newKey,baseKey){document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:40px;color:var(--ink-muted);">Chargement…</div>';renderMultiAcc(baseKey,newKey);var resp=await maConnexion.from('propers').select('part_code,part_label,reference,text_la,text_fr,display_order').eq('mass_key',newKey).order('display_order',{ascending:true});_propreAccData=resp.data&&resp.data.length?resp.data:null;var cfg=MULTI_MESSES_ACC[baseKey];var m=cfg&&cfg.find(function(x){return x.key===newKey;});if(m)document.getElementById('propre-acc-fete').textContent=document.getElementById('propre-acc-fete').textContent.split(' — ')[0]+' — '+m.label;renderPropreAccPieces();}
-async function ouvrirPropreAccueil(isoDate){
-    var parts=isoDate.split('-').map(Number);
-    var ordo=Ordo1962.getDay(parts[0],parts[1],parts[2]);
-    var massKey=(typeof Ordo1962.getProperKey==='function')?Ordo1962.getProperKey(ordo):null;
-    var d=new Date(parts[0],parts[1]-1,parts[2]);
-    document.getElementById('propre-acc-date').textContent=d.getDate()+' '+MOIS[d.getMonth()]+' '+parts[0];
-    document.getElementById('propre-acc-fete').textContent=ordo&&ordo.fete?ordo.fete:'';
-    document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:40px;color:var(--ink-muted);">Chargement…</div>';
-    document.getElementById('modal-propre-acc').style.display='flex';
-    if(!massKey){document.getElementById('propre-acc-multi').style.display='none';document.getElementById('propre-acc-pieces').innerHTML='<div style="text-align:center;padding:30px;color:var(--ink-muted);font-style:italic;">Propre non disponible pour ce jour.</div>';return;}
-    renderMultiAcc(massKey,massKey);
-    if(MULTI_MESSES_ACC[massKey])document.getElementById('propre-acc-fete').textContent=((ordo&&ordo.fete)?ordo.fete:'')+' — '+MULTI_MESSES_ACC[massKey][0].label;
-    try{
-        var resp=await maConnexion.from('propers').select('part_code,part_label,reference,text_la,text_fr,display_order').eq('mass_key',massKey).order('display_order',{ascending:true});
-        if(resp.error)throw resp.error;
-        var data=resp.data&&resp.data.length?resp.data:null;
-        if(data&&ordo&&ordo.source==='sanctoral'){var codes=new Set(data.map(function(p){return p.part_code;}));var att=['introit','collecte','epitre','graduel','evangile','offertoire','secrete','communion','postcommunion'];var manq=att.filter(function(p){return!codes.has(p);});if(manq.length>0){var ck=getCommunKeyAcc(ordo);if(ck){var rc=await maConnexion.from('propers').select('part_code,part_label,reference,text_la,text_fr,display_order').eq('mass_key',ck).in('part_code',manq);if(!rc.error&&rc.data&&rc.data.length){var cp=rc.data.map(function(p){return Object.assign({},p,{_du_commun:true,part_label:p.part_label+' (commun)'});});data=data.concat(cp).sort(function(a,b){return a.display_order-b.display_order;});}}}}
-        _propreAccData=data;renderPropreAccPieces();
-    }catch(e){document.getElementById('propre-acc-pieces').innerHTML='<div style="color:#8b1a1a;padding:20px;">Erreur : '+escHA(String(e.message||e))+'</div>';}
-}
-function fermerPropreAcc(){document.getElementById('modal-propre-acc').style.display='none';_propreAccData=null;}
-document.getElementById('modal-propre-acc').addEventListener('click',function(e){if(e.target===this)fermerPropreAcc();});
-</script>
-<script>
-// ── Gestion hors ligne ──────────────────────────────────
 
 // ── Init ──────────────────────────────────────────────────
 function init() {
@@ -860,6 +772,8 @@ function init() {
     chargerMois();
 }
 init();
+
 </script>
+
 </body>
 </html>
