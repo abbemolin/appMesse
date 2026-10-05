@@ -715,6 +715,14 @@ async function chargerMois() {
         _gcalEvents  = gcalData.items || [];
         _intentions  = data || [];
 
+        // DEBUG — à supprimer après diagnostic
+        console.log('GCal total events:', _gcalEvents.length);
+        console.log('GCal error:', gcalData.error);
+        const messes = _gcalEvents.filter(e => /^(messe|grand.?messe)/i.test((e.summary||'').trim()));
+        console.log('Messes filtrées:', messes.length);
+        if (_gcalEvents.length > 0) console.log('Exemple event:', _gcalEvents[0].summary, _gcalEvents[0].start);
+        console.log('Supabase intentions:', _intentions.length);
+
         renderCalendrier();
         if (_jourSel) renderDetail(_jourSel);
     } catch(e) {
