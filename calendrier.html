@@ -876,8 +876,30 @@ document.getElementById('modal-propre-acc').addEventListener('click',function(e)
 // ── Init ──────────────────────────────────────────────────
 function init() {
     if (typeof maConnexion === 'undefined') { setTimeout(init, 200); return; }
+
+    // Lire les paramètres URL (venant de l'accueil)
+    const params = new URLSearchParams(window.location.search);
+    const dateParam  = params.get('date');
+    const gidParam   = params.get('gid');
+    const heureParam = params.get('heure');
+
+    if (dateParam) {
+        // Naviguer au bon mois
+        const d = new Date(dateParam + 'T12:00:00');
+        _annee = d.getFullYear();
+        _mois  = d.getMonth();
+        _jourSel = dateParam;
+    }
+
     renderCalendrier();
-    chargerMois();
+    chargerMois().then(() => {
+        // Ouvrir la modale après chargement si paramètres présents
+        if (dateParam && gidParam) {
+            ouvrirModal(dateParam, '', gidParam, heureParam || '');
+            // Nettoyer l'URL sans recharger
+            history.replaceState({}, '', 'calendrier.html');
+        }
+    });
 }
 init();
 
