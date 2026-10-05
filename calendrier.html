@@ -695,32 +695,25 @@ function changerMois(delta) {
 async function chargerMois() {
     if (typeof maConnexion === 'undefined') { setTimeout(chargerMois, 300); return; }
 
-    // Charger TOUTES les messes du calendrier (pas de filtre de date)
-    // + toutes les intentions Supabase
-    const tMin = new Date('2020-01-01').toISOString();
-    const tMax = new Date('2030-12-31').toISOString();
+    // Fenêtre : 1 an en arrière → 2 ans en avant
+    // Couvre toutes les messes passées et futures visibles dans le calendrier
+    const now  = new Date();
+    const tMin = new Date(now.getFullYear() - 1, 0, 1).toISOString();
+    const tMax = new Date(now.getFullYear() + 2, 11, 31).toISOString();
 
     try {
-        // Charger toutes les pages Google Calendar (max 2500 par page)
-        let allEvents = [];
-        let pageToken = '';
-        do {
-            const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
-                + `?key=${GOOGLE_API_KEY}&timeMin=${tMin}&timeMax=${tMax}`
-                + `&singleEvents=true&orderBy=startTime&maxResults=2500`
-                + (pageToken ? `&pageToken=${pageToken}` : '');
-            const resp = await fetch(url);
-            const data_gcal = await resp.json();
-            allEvents = allEvents.concat(data_gcal.items || []);
-            pageToken = data_gcal.nextPageToken || '';
-        } while (pageToken);
-
-        const [{ data }] = await Promise.all([
+        // Charger GCal + Supabase en parallèle
+        const [gcalResp, { data }] = await Promise.all([
+            fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
+                + `?key=${GOOGLE_API_KEY}`
+                + `&timeMin=${tMin}&timeMax=${tMax}`
+                + `&singleEvents=true&orderBy=startTime&maxResults=2500`),
             maConnexion.from('intentions').select('*').order('date_messe', { ascending: true })
         ]);
 
-        _gcalEvents = allEvents;
-        _intentions = data || [];
+        const gcalData = await gcalResp.json();
+        _gcalEvents  = gcalData.items || [];
+        _intentions  = data || [];
 
         renderCalendrier();
         if (_jourSel) renderDetail(_jourSel);
