@@ -672,8 +672,9 @@ function renderNoMesse(isoDate, massKey) {
 
 // ── Attribution ───────────────────────────────────────────
 function ouvrirAttribution(isoDate, googleId, heure) {
-    // Redirige vers le calendrier pour la date concernée
-    window.location.href = 'calendrier.html';
+    // Naviguer vers le calendrier avec les paramètres pour ouvrir la modale
+    const params = new URLSearchParams({ date: isoDate, gid: googleId, heure: heure });
+    window.location.href = 'calendrier.html?' + params.toString();
 }
 
 // ── Init ──────────────────────────────────────────────────
