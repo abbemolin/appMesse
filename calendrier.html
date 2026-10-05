@@ -637,14 +637,20 @@ function renderDetail(iso) {
                 statusDot   = '<span class="status-dot status-valide"></span>';
                 statusLabel = 'Attribuée';
                 btnHtml     = `<button class="detail-messe-btn detail-messe-btn-edit"
-                    data-googleid="${escH(e.id)}" onclick="ouvrirModalModif(this.dataset.googleid)">
+                    data-googleid="${escH(e.id)}"
+                    data-iso="${iso}"
+                    data-heure="${heure}"
+                    onclick="ouvrirModalModif(this.dataset.googleid, this.dataset.iso, this.dataset.heure)">
                     ✎ Modifier
                 </button>`;
             } else {
                 statusDot   = '<span class="status-dot status-attente"></span>';
                 statusLabel = 'En attente';
                 btnHtml     = `<button class="detail-messe-btn detail-messe-btn-edit"
-                    data-googleid="${escH(e.id)}" onclick="ouvrirModalModif(this.dataset.googleid)">
+                    data-googleid="${escH(e.id)}"
+                    data-iso="${iso}"
+                    data-heure="${heure}"
+                    onclick="ouvrirModalModif(this.dataset.googleid, this.dataset.iso, this.dataset.heure)">
                     ✎ Modifier
                 </button>`;
             }
@@ -737,14 +743,15 @@ function ouvrirModalLibre() {
 
 function ouvrirModalModif(googleId) {
     // Trouver l'intention — chercher d'abord exact, puis par préfixe (événements récurrents)
-    const baseId = googleId.split('_')[0];
-    const intent = _intentions.find(i =>
-        i.google_event_id === googleId ||
-        i.google_event_id === baseId ||
-        (i.google_event_id || '').startsWith(baseId + '_')
-    );
+    // Recherche exacte uniquement — pas de match partiel sur événements récurrents
+    // car ça pourrait trouver une occurrence différente du même événement récurrent
+    const intent = _intentions.find(i => i.google_event_id === googleId);
     if (!intent) {
-        console.warn('Intention non trouvée pour googleId:', googleId, 'baseId:', baseId);
+        // Fallback : chercher par date + heure (plus fiable que l'ID pour les récurrents)
+        const dateISO = document.querySelector(`[data-googleid="${googleId}"]`)
+            ?.closest('.detail-messe')
+            ?.querySelector('.detail-messe-heure')?.textContent;
+        console.warn('Intention non trouvée, googleId:', googleId);
         return;
     }
 
