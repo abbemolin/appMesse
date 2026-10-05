@@ -637,20 +637,16 @@ function renderDetail(iso) {
                 statusDot   = '<span class="status-dot status-valide"></span>';
                 statusLabel = 'Attribuée';
                 btnHtml     = `<button class="detail-messe-btn detail-messe-btn-edit"
-                    data-googleid="${escH(e.id)}"
-                    data-iso="${iso}"
-                    data-heure="${heure}"
-                    onclick="ouvrirModalModif(this.dataset.googleid, this.dataset.iso, this.dataset.heure)">
+                    data-supaid="${intent.id}"
+                    onclick="ouvrirModalModif(this.dataset.supaid)">
                     ✎ Modifier
                 </button>`;
             } else {
                 statusDot   = '<span class="status-dot status-attente"></span>';
                 statusLabel = 'En attente';
                 btnHtml     = `<button class="detail-messe-btn detail-messe-btn-edit"
-                    data-googleid="${escH(e.id)}"
-                    data-iso="${iso}"
-                    data-heure="${heure}"
-                    onclick="ouvrirModalModif(this.dataset.googleid, this.dataset.iso, this.dataset.heure)">
+                    data-supaid="${intent.id}"
+                    onclick="ouvrirModalModif(this.dataset.supaid)">
                     ✎ Modifier
                 </button>`;
             }
