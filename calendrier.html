@@ -695,19 +695,31 @@ function changerMois(delta) {
 async function chargerMois() {
     if (typeof maConnexion === 'undefined') { setTimeout(chargerMois, 300); return; }
 
-    const tMin = new Date(_annee, _mois - 1, 1);
-    const tMax = new Date(_annee, _mois + 2, 0);
+    // Charger TOUTES les messes du calendrier (pas de filtre de date)
+    // + toutes les intentions Supabase
+    const tMin = new Date('2020-01-01').toISOString();
+    const tMax = new Date('2030-12-31').toISOString();
 
     try {
-        const [gcalResp, { data }] = await Promise.all([
-            fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
-                + `?key=${GOOGLE_API_KEY}&timeMin=${tMin.toISOString()}`
-                + `&timeMax=${tMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=300`),
+        // Charger toutes les pages Google Calendar (max 2500 par page)
+        let allEvents = [];
+        let pageToken = '';
+        do {
+            const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
+                + `?key=${GOOGLE_API_KEY}&timeMin=${tMin}&timeMax=${tMax}`
+                + `&singleEvents=true&orderBy=startTime&maxResults=2500`
+                + (pageToken ? `&pageToken=${pageToken}` : '');
+            const resp = await fetch(url);
+            const data_gcal = await resp.json();
+            allEvents = allEvents.concat(data_gcal.items || []);
+            pageToken = data_gcal.nextPageToken || '';
+        } while (pageToken);
+
+        const [{ data }] = await Promise.all([
             maConnexion.from('intentions').select('*').order('date_messe', { ascending: true })
         ]);
 
-        const gcalData = await gcalResp.json();
-        _gcalEvents = gcalData.items || [];
+        _gcalEvents = allEvents;
         _intentions = data || [];
 
         renderCalendrier();
