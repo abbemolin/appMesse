@@ -695,33 +695,22 @@ function changerMois(delta) {
 async function chargerMois() {
     if (typeof maConnexion === 'undefined') { setTimeout(chargerMois, 300); return; }
 
-    // Fenêtre : 1 an en arrière → 2 ans en avant
-    // Couvre toutes les messes passées et futures visibles dans le calendrier
-    const now  = new Date();
-    const tMin = new Date(now.getFullYear() - 1, 0, 1).toISOString();
-    const tMax = new Date(now.getFullYear() + 2, 11, 31).toISOString();
+    // Fenêtre = mois affiché uniquement (+ 1 jour de marge de chaque côté)
+    const tMin = new Date(_annee, _mois, 1).toISOString();
+    const tMax = new Date(_annee, _mois + 1, 1).toISOString();
 
     try {
-        // Charger GCal + Supabase en parallèle
         const [gcalResp, { data }] = await Promise.all([
             fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
                 + `?key=${GOOGLE_API_KEY}`
                 + `&timeMin=${tMin}&timeMax=${tMax}`
-                + `&singleEvents=true&orderBy=startTime&maxResults=2500`),
+                + `&singleEvents=true&orderBy=startTime&maxResults=250`),
             maConnexion.from('intentions').select('*').order('date_messe', { ascending: true })
         ]);
 
         const gcalData = await gcalResp.json();
-        _gcalEvents  = gcalData.items || [];
-        _intentions  = data || [];
-
-        // DEBUG — à supprimer après diagnostic
-        console.log('GCal total events:', _gcalEvents.length);
-        console.log('GCal error:', gcalData.error);
-        const messes = _gcalEvents.filter(e => /^(messe|grand.?messe)/i.test((e.summary||'').trim()));
-        console.log('Messes filtrées:', messes.length);
-        if (_gcalEvents.length > 0) console.log('Exemple event:', _gcalEvents[0].summary, _gcalEvents[0].start);
-        console.log('Supabase intentions:', _intentions.length);
+        _gcalEvents = gcalData.items || [];
+        _intentions = data || [];
 
         renderCalendrier();
         if (_jourSel) renderDetail(_jourSel);
