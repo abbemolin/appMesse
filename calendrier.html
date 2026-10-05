@@ -107,7 +107,7 @@ body {
 
 /* ── Pastilles événements ────────────────────────────────── */
 .cal-pips {
-    display: flex; gap: 2px; flex-wrap: wrap;
+    display: flex; gap: 3px; flex-wrap: wrap;
     justify-content: center; margin-top: 3px;
     max-width: 44px;
 }
@@ -115,17 +115,10 @@ body {
     width: 6px; height: 6px; border-radius: 50%;
     flex-shrink: 0;
 }
-.cal-pip.libre   { background: #5a8055; }   /* vert = libre */
-.cal-pip.attrib  { background: #b8962a; }   /* or = attribuée */
-.cal-pip.attente { background: #8b5a2a; }   /* brun = en attente */
-
-/* Couleurs liturgiques */
-.cal-pip.Blanc  { background: #d4af37; }
-.cal-pip.Rouge  { background: #9b2020; }
-.cal-pip.Vert   { background: #3a6644; }
-.cal-pip.Violet { background: #5c2d7a; }
-.cal-pip.Rose   { background: #d4688a; }
-.cal-pip.Noir   { background: #555; }
+/* Statut intention uniquement — pas de couleur liturgique */
+.cal-pip.libre   { background: transparent; border: 1.5px solid #4a7060; } /* contour vert = libre */
+.cal-pip.attrib  { background: #b8962a; }                                   /* or plein = attribuée */
+.cal-pip.attente { background: #c07030; }                                   /* orange = en attente */
 
 /* ── Séparateur semaine ──────────────────────────────────── */
 .cal-week-sep {
@@ -152,6 +145,15 @@ body {
     color: #b8962a; padding: 12px 16px 6px;
     border-bottom: 1px solid rgba(255,255,255,.05);
 }
+.cal-legende {
+    display: flex; align-items: center; gap: 4px;
+    padding: 8px 16px 4px;
+    font-family: 'Cinzel', serif; font-size: .48rem;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: #4a4035;
+}
+.cal-legende .cal-pip { margin: 0; }
+
 .cal-detail-ordo {
     padding: 6px 16px; font-family: 'EB Garamond', serif;
     font-style: italic; font-size: .85rem; color: #9a8f7a;
@@ -185,6 +187,11 @@ body {
 .detail-messe-donateur {
     font-family: 'EB Garamond', serif; font-size: .8rem;
     font-style: italic; color: #7a7060; margin-top: 1px;
+}
+.detail-messe-pretre {
+    font-family: 'Cinzel', serif; font-size: .5rem;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: #b8962a; opacity: .75; margin-top: 3px;
 }
 .detail-messe-status {
     display: flex; align-items: center; gap: 6px; margin-top: 4px;
@@ -396,6 +403,14 @@ let _intentions  = [];
 let _ordoCache   = {};
 
 // ── Utilitaires ───────────────────────────────────────────
+const PRETRES = {
+    'molin':  '✝ Abbé Molin',
+    'legall': '✝ Abbé Le Gall',
+};
+function pretreLabel(id) {
+    return PRETRES[id] || (id ? '✝ ' + id : '');
+}
+
 function isoLocal(d) {
     return d.getFullYear() + '-'
         + String(d.getMonth()+1).padStart(2,'0') + '-'
@@ -478,14 +493,10 @@ function renderCalendrier() {
             const heure  = new Date(e.start.dateTime||e.start.date)
                 .toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
             const intent = intentionDuJour(e.id, iso, heure);
+            // Pastille = statut intention UNIQUEMENT (pas couleur liturgique)
             let cls = 'libre';
             if (intent) {
                 cls = intent.statut === 'valide' ? 'attrib' : 'attente';
-            }
-            // Couleur liturgique si pas de messe attribuée
-            if (!intent && ordo?.couleur) {
-                const valides = ['Blanc','Rouge','Vert','Violet','Rose','Noir'];
-                if (valides.includes(ordo.couleur)) cls = ordo.couleur;
             }
             pips += `<span class="cal-pip ${cls}"></span>`;
         });
@@ -552,6 +563,12 @@ function renderDetail(iso) {
     if (!messes.length) {
         html += `<div class="cal-detail-empty">Aucune messe ce jour</div>`;
     } else {
+        // Légende pastilles
+        html += `<div class="cal-legende">
+            <span class="cal-pip libre"></span><span>Libre</span>
+            <span class="cal-pip attente" style="margin-left:10px"></span><span>En attente</span>
+            <span class="cal-pip attrib"  style="margin-left:10px"></span><span>Attribuée</span>
+        </div>`;
         messes.forEach(e => {
             const dateObj = new Date(e.start.dateTime || e.start.date);
             const heure   = dateObj.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
@@ -587,6 +604,7 @@ function renderDetail(iso) {
                         ${intent ? escH(intent.nom_intention||'') : '—'}
                     </div>
                     ${intent?.nom_donateur ? `<div class="detail-messe-donateur">${escH(intent.nom_donateur)}</div>` : ''}
+                    ${intent ? `<div class="detail-messe-pretre">${pretreLabel(intent.pretre_id)}</div>` : ''}
                     <div class="detail-messe-status">
                         ${statusDot}
                         <span class="status-label">${statusLabel}</span>
