@@ -380,8 +380,6 @@ body {
                 onclick="selectAbbe('molin')">Abbé Molin</button>
             <button type="button" class="pretre-chip" id="chip-legall"
                 onclick="selectAbbe('legall')">Abbé Le Gall</button>
-            <button type="button" class="pretre-chip" id="chip-carbonnieres"
-                onclick="selectAbbe('carbonnieres')">Abbé de Carbonières</button>
         </div>
         <input type="hidden" id="input-pretre" value="molin">
         <label>Note privée</label>
@@ -440,10 +438,17 @@ let _ordoCache   = {};
 
 // ── Utilitaires ───────────────────────────────────────────
 const PRETRES = {
-    'molin':        '✝ Abbé Molin',
-    'legall':       '✝ Abbé Le Gall',
-    'carbonnieres': '✝ Abbé de Carbonières',
+    'molin':  '✝ Abbé Molin',
+    'legall': '✝ Abbé Le Gall',
 };
+
+function selectAbbe(id) {
+    document.getElementById('input-pretre').value = id;
+    ['molin','legall'].forEach(a => {
+        const btn = document.getElementById('chip-'+a);
+        if (btn) btn.classList.toggle('actif', a === id);
+    });
+}
 function pretreLabel(id) {
     return PRETRES[id] || (id ? '✝ ' + id : '');
 }
