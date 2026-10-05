@@ -737,40 +737,9 @@ function ouvrirModalLibre() {
     ouvrirModal(_jourSel || isoLocal(new Date()), '', 'libre', '');
 }
 
-function ouvrirModalModif(googleId) {
-    // Trouver l'intention — chercher d'abord exact, puis par préfixe (événements récurrents)
-    // Recherche exacte uniquement — pas de match partiel sur événements récurrents
-    // car ça pourrait trouver une occurrence différente du même événement récurrent
-    const intent = _intentions.find(i => i.google_event_id === googleId);
-    if (!intent) {
-        // Fallback : chercher par date + heure (plus fiable que l'ID pour les récurrents)
-        const dateISO = document.querySelector(`[data-googleid="${googleId}"]`)
-            ?.closest('.detail-messe')
-            ?.querySelector('.detail-messe-heure')?.textContent;
-        console.warn('Intention non trouvée, googleId:', googleId);
-        return;
-    }
-
-    document.getElementById('input-date-iso').value   = intent.date_messe;
-    document.getElementById('input-google-id').value  = googleId;
-    document.getElementById('input-heure').value      = intent.heure_messe || '';
-    document.getElementById('libre-date-heure').style.display = 'none';
-    document.getElementById('nom_intention').value    = intent.nom_intention || '';
-    document.getElementById('nom_donateur').value     = intent.nom_donateur || '';
-    document.getElementById('commentaire').value      = intent.commentaire || '';
-    document.getElementById('type_intention').value   = intent.type_intention || 'Défunt';
-    selectAbbe(intent.pretre_id || 'molin');
-
-    // Titre avec date formatée
-    const d = new Date(intent.date_messe + 'T12:00:00');
-    const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-    document.getElementById('modal-title').textContent =
-        'Modifier — ' + jours[d.getDay()] + ' ' + d.getDate() + ' ' +
-        MOIS_FR[d.getMonth()].toLowerCase();
-
-    document.getElementById('modal-saisie').classList.add('open');
-    setTimeout(() => document.getElementById('nom_intention').focus(), 300);
-}
+function ouvrirModalModif(supaId) {
+    const intent = _intentions.find(i => String(i.id) === String(supaId));
+    if (!intent) { console.warn('Intention non trouvée, supaId:', supaId); return; }
 
 function fermerModal() {
     document.getElementById('modal-saisie').classList.remove('open');
