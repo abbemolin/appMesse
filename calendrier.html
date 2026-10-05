@@ -736,11 +736,15 @@ function ouvrirModalLibre() {
 }
 
 function ouvrirModalModif(googleId) {
-    // Trouver l'intention correspondante
-    const intent = _intentions.find(i => i.google_event_id === googleId);
+    // Trouver l'intention — chercher d'abord exact, puis par préfixe (événements récurrents)
+    const baseId = googleId.split('_')[0];
+    const intent = _intentions.find(i =>
+        i.google_event_id === googleId ||
+        i.google_event_id === baseId ||
+        (i.google_event_id || '').startsWith(baseId + '_')
+    );
     if (!intent) {
-        console.warn('Intention non trouvée pour googleId:', googleId);
-        console.log('_intentions disponibles:', _intentions.map(i => i.google_event_id));
+        console.warn('Intention non trouvée pour googleId:', googleId, 'baseId:', baseId);
         return;
     }
 
