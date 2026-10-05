@@ -108,7 +108,8 @@ self.addEventListener('fetch', event => {
             caches.match(event.request)
                 .then(cached => cached || fetch(event.request)
                     .then(resp => {
-                        caches.open(CACHE_NAME).then(c => c.put(event.request, resp.clone()));
+                        const toCache = resp.clone();
+                        caches.open(CACHE_NAME).then(c => c.put(event.request, toCache));
                         return resp;
                     })
                 )
@@ -118,11 +119,11 @@ self.addEventListener('fetch', event => {
 
     // ── Fichiers de l'app : réseau en priorité, cache en fallback ──
     event.respondWith(
-        fetch(event.request)
+        fetch(event.request.clone())
             .then(resp => {
                 if (resp.ok) {
-                    const clone = resp.clone();
-                    caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+                    const toCache = resp.clone();
+                    caches.open(CACHE_NAME).then(c => c.put(event.request, toCache));
                 }
                 return resp;
             })
