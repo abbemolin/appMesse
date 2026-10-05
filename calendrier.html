@@ -637,14 +637,14 @@ function renderDetail(iso) {
                 statusDot   = '<span class="status-dot status-valide"></span>';
                 statusLabel = 'Attribuée';
                 btnHtml     = `<button class="detail-messe-btn detail-messe-btn-edit"
-                    onclick="ouvrirModalModif('${escH(e.id)}')">
+                    data-googleid="${escH(e.id)}" onclick="ouvrirModalModif(this.dataset.googleid)">
                     ✎ Modifier
                 </button>`;
             } else {
                 statusDot   = '<span class="status-dot status-attente"></span>';
                 statusLabel = 'En attente';
                 btnHtml     = `<button class="detail-messe-btn detail-messe-btn-edit"
-                    onclick="ouvrirModalModif('${escH(e.id)}')">
+                    data-googleid="${escH(e.id)}" onclick="ouvrirModalModif(this.dataset.googleid)">
                     ✎ Modifier
                 </button>`;
             }
@@ -738,7 +738,11 @@ function ouvrirModalLibre() {
 function ouvrirModalModif(googleId) {
     // Trouver l'intention correspondante
     const intent = _intentions.find(i => i.google_event_id === googleId);
-    if (!intent) return;
+    if (!intent) {
+        console.warn('Intention non trouvée pour googleId:', googleId);
+        console.log('_intentions disponibles:', _intentions.map(i => i.google_event_id));
+        return;
+    }
 
     document.getElementById('input-date-iso').value   = intent.date_messe;
     document.getElementById('input-google-id').value  = googleId;
