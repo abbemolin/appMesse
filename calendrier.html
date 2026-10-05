@@ -217,6 +217,11 @@ body {
     transition: background .15s;
 }
 .detail-messe-btn:hover { background: rgba(184,150,42,.22); }
+.detail-messe-btn-edit {
+    background: transparent; border-color: rgba(184,150,42,.35);
+    color: rgba(184,150,42,.7);
+}
+.detail-messe-btn-edit:hover { background: rgba(184,150,42,.1); color: #b8962a; }
 
 /* ── Toast ───────────────────────────────────────────────── */
 #toast {
@@ -631,9 +636,17 @@ function renderDetail(iso) {
             } else if (intent.statut === 'valide') {
                 statusDot   = '<span class="status-dot status-valide"></span>';
                 statusLabel = 'Attribuée';
+                btnHtml     = `<button class="detail-messe-btn detail-messe-btn-edit"
+                    onclick="ouvrirModalModif('${escH(e.id)}')">
+                    ✎ Modifier
+                </button>`;
             } else {
                 statusDot   = '<span class="status-dot status-attente"></span>';
                 statusLabel = 'En attente';
+                btnHtml     = `<button class="detail-messe-btn detail-messe-btn-edit"
+                    onclick="ouvrirModalModif('${escH(e.id)}')">
+                    ✎ Modifier
+                </button>`;
             }
 
             html += `<div class="detail-messe">
@@ -720,6 +733,32 @@ function ouvrirModal(dateISO, dateFr, googleId, heure) {
 
 function ouvrirModalLibre() {
     ouvrirModal(_jourSel || isoLocal(new Date()), '', 'libre', '');
+}
+
+function ouvrirModalModif(googleId) {
+    // Trouver l'intention correspondante
+    const intent = _intentions.find(i => i.google_event_id === googleId);
+    if (!intent) return;
+
+    document.getElementById('input-date-iso').value   = intent.date_messe;
+    document.getElementById('input-google-id').value  = googleId;
+    document.getElementById('input-heure').value      = intent.heure_messe || '';
+    document.getElementById('libre-date-heure').style.display = 'none';
+    document.getElementById('nom_intention').value    = intent.nom_intention || '';
+    document.getElementById('nom_donateur').value     = intent.nom_donateur || '';
+    document.getElementById('commentaire').value      = intent.commentaire || '';
+    document.getElementById('type_intention').value   = intent.type_intention || 'Défunt';
+    selectAbbe(intent.pretre_id || 'molin');
+
+    // Titre avec date formatée
+    const d = new Date(intent.date_messe + 'T12:00:00');
+    const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    document.getElementById('modal-title').textContent =
+        'Modifier — ' + jours[d.getDay()] + ' ' + d.getDate() + ' ' +
+        MOIS_FR[d.getMonth()].toLowerCase();
+
+    document.getElementById('modal-saisie').classList.add('open');
+    setTimeout(() => document.getElementById('nom_intention').focus(), 300);
 }
 
 function fermerModal() {
