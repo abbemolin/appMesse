@@ -755,7 +755,7 @@ async function chargerChapitre(chap, dir) {
     document.getElementById('chapter-select').value = _chapActif;
     actualiserBoutonsChapitre();
     document.getElementById('breadcrumb-book').textContent = _livreActif;
-    setTimeout(appliquerPolice, 50); // appliquer taille police après rendu
+    setTimeout(appliquerPolice, 100);
 
     const textWrap = document.getElementById('bible-text');
     const inner    = getInner();
@@ -1083,14 +1083,18 @@ function escH(s) {
     else { const t = setInterval(() => { if (initDB()) { clearInterval(t); ready(); }}, 200); }
 })();
 
+
 // ── Taille de police réglable ─────────────────────────────
 let _fontSize = parseInt(localStorage.getItem('bible-font-size') || '17');
 
 function appliquerPolice() {
-    document.querySelector('.bible-text-wrap') &&
-        (document.querySelector('.bible-text-wrap').style.fontSize = _fontSize + 'px');
-    const inner = getInner();
+    const inner = document.getElementById('bible-text-inner')
+                || document.querySelector('.bible-text-inner')
+                || document.querySelector('.bible-inner');
     if (inner) inner.style.fontSize = _fontSize + 'px';
+    // Fallback : appliquer sur le conteneur de texte
+    const wrap = document.getElementById('bible-text');
+    if (wrap) wrap.style.fontSize = _fontSize + 'px';
 }
 
 function changerPolice(delta) {
@@ -1099,182 +1103,122 @@ function changerPolice(delta) {
     appliquerPolice();
 }
 
-// ── Swipe vertical pour changer de chapitre ───────────────
-(function() {
-    let startY = 0, startX = 0, moving = false;
-    const SEUIL = 60; // px minimum pour déclencher
+// Appliquer après chaque chargement de chapitre
+const _origChargerChapitre = chargerChapitre;
 
-    document.addEventListener('touchstart', e => {
-        const wrap = e.target.closest('.bible-text-wrap');
-        if (!wrap) return;
-        startY = e.touches[0].clientY;
-        startX = e.touches[0].clientX;
-        moving = false;
-    }, { passive: true });
-
-    document.addEventListener('touchmove', e => {
-        if (!startY) return;
-        const dy = e.touches[0].clientY - startY;
-        const dx = e.touches[0].clientX - startX;
-        // Si swipe plus vertical qu'horizontal → on prend le contrôle
-        if (!moving && Math.abs(dy) > Math.abs(dx) * 1.5 && Math.abs(dy) > 15) {
-            moving = true;
-        }
-    }, { passive: true });
-
-    document.addEventListener('touchend', e => {
-        if (!moving || !startY) { startY = 0; return; }
-        const dy = e.changedTouches[0].clientY - startY;
-        startY = 0; moving = false;
-        if (Math.abs(dy) < SEUIL) return;
-        // Swipe vers le haut = chapitre suivant, vers le bas = précédent
-        naviguerChapitre(dy < 0 ? 1 : -1);
-    }, { passive: true });
-})();
-
-// ── Recherche par référence (Jn 3,16 / Mt 5:3 / Ps 23) ───
-const ABREVS = {
-    // Nouveau Testament
+// ── Recherche par référence ───────────────────────────────
+const ABREVS_REF = {
     'mt':'Matthieu','mat':'Matthieu','matthieu':'Matthieu',
     'mc':'Marc','mar':'Marc','marc':'Marc',
     'lc':'Luc','luc':'Luc',
-    'jn':'Jean','jean':'Jean','joh':'Jean',
+    'jn':'Jean','jean':'Jean',
     'ac':'Actes','act':'Actes','actes':'Actes',
-    'rm':'Romains','rom':'Romains','romains':'Romains',
+    'rm':'Romains','rom':'Romains',
     '1co':'1 Corinthiens','2co':'2 Corinthiens',
     '1cor':'1 Corinthiens','2cor':'2 Corinthiens',
     'ga':'Galates','gal':'Galates',
-    'ep':'Éphésiens','eph':'Éphésiens',
+    'ep':'Éphésiens','eph':'Éphésiens','ephésiens':'Éphésiens',
     'ph':'Philippiens','phil':'Philippiens',
     'col':'Colossiens',
     '1th':'1 Thessaloniciens','2th':'2 Thessaloniciens',
     '1tm':'1 Timothée','2tm':'2 Timothée',
-    '1ti':'1 Timothée','2ti':'2 Timothée',
-    'tt':'Tite','tit':'Tite',
-    'phm':'Philémon',
     'he':'Hébreux','heb':'Hébreux',
     'jc':'Jacques','jac':'Jacques',
     '1p':'1 Pierre','2p':'2 Pierre',
-    '1pe':'1 Pierre','2pe':'2 Pierre',
     '1jn':'1 Jean','2jn':'2 Jean','3jn':'3 Jean',
-    'jude':'Jude',
     'ap':'Apocalypse','apo':'Apocalypse',
-    // Ancien Testament
-    'gn':'Genèse','gen':'Genèse','genèse':'Genèse',
-    'ex':'Exode','exode':'Exode',
+    'gn':'Genèse','gen':'Genèse',
+    'ex':'Exode',
     'lv':'Lévitique','lev':'Lévitique',
     'nb':'Nombres','num':'Nombres',
-    'dt':'Deutéronome','deut':'Deutéronome',
-    'jos':'Josué',
-    'jg':'Juges','jug':'Juges',
-    'rt':'Ruth','ruth':'Ruth',
+    'dt':'Deutéronome',
+    'jos':'Josué','jg':'Juges',
+    'rt':'Ruth',
     '1s':'1 Samuel','2s':'2 Samuel',
     '1r':'1 Rois','2r':'2 Rois',
-    '1ch':'1 Chroniques','2ch':'2 Chroniques',
-    'esd':'Esdras','ne':'Néhémie',
-    'tb':'Tobie','jdt':'Judith','est':'Esther',
-    '1m':'1 Maccabées','2m':'2 Maccabées',
-    'jb':'Job','job':'Job',
-    'ps':'Psaumes','psa':'Psaumes',
+    'ps':'Psaumes','psa':'Psaumes','psaume':'Psaumes',
     'pr':'Proverbes','prov':'Proverbes',
-    'qo':'Ecclésiaste','ecc':'Ecclésiaste',
-    'ct':'Cantique','cant':'Cantique',
-    'sg':'Sagesse','sag':'Sagesse',
-    'si':'Siracide','sir':'Siracide',
     'is':'Isaïe','isa':'Isaïe',
     'jr':'Jérémie','jer':'Jérémie',
-    'lm':'Lamentations',
-    'ba':'Baruch','bar':'Baruch',
-    'ez':'Ézéchiel','eze':'Ézéchiel',
-    'dn':'Daniel','dan':'Daniel',
-    'os':'Osée','hos':'Osée',
-    'jl':'Joël',
-    'am':'Amos',
-    'ab':'Abdias',
-    'jon':'Jonas',
-    'mi':'Michée',
-    'na':'Nahoum',
-    'ha':'Habacuc',
-    'so':'Sophonie',
-    'ag':'Aggée',
-    'za':'Zacharie',
-    'ml':'Malachie',
+    'ez':'Ézéchiel',
+    'dn':'Daniel',
 };
 
 function parserReference(texte) {
-    // Formats acceptés : Jn 3,16 / Jn 3:16 / Jn3,16 / Jean 3, 16
-    const m = texte.trim().match(
-        /^(\d?\s*[a-zA-ZÀ-ÿ]+)\s*(\d+)\s*[,:\.]\s*(\d+)?/
-    );
+    const m = texte.trim().match(/^(\d?\s*[a-zA-ZÀ-ÿ]+)\s*(\d+)\s*[,:.]\s*(\d+)?/);
     if (!m) return null;
-
-    const abrev = m[1].replace(/\s/g,'').toLowerCase();
-    const livre  = ABREVS[abrev];
-    const chap   = parseInt(m[2]);
-    const verset = m[3] ? parseInt(m[3]) : null;
-
-    if (!livre || !chap) return null;
-    return { livre, chap, verset };
+    const abrev = m[1].replace(/\s/g,'').toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g,'');
+    // Chercher dans ABREVS_REF avec et sans accents
+    let livre = null;
+    for (const [k,v] of Object.entries(ABREVS_REF)) {
+        const kn = k.normalize('NFD').replace(/[̀-ͯ]/g,'');
+        if (kn === abrev) { livre = v; break; }
+    }
+    if (!livre) return null;
+    return { livre, chap: parseInt(m[2]), verset: m[3] ? parseInt(m[3]) : null };
 }
 
-// Surcharger lancerRecherche pour détecter les références
-const _lancerRechercheOrig = lancerRecherche;
-function lancerRecherche() {
-    const q = (document.getElementById('sidebar-search-input')?.value || '').trim();
-    if (q) {
-        const ref = parserReference(q);
-        if (ref) {
-            allerVersReference(ref);
-            return;
-        }
-    }
-    _lancerRechercheOrig();
+function rechercherReference() {
+    const input = document.getElementById('sidebar-search-input');
+    const q = (input?.value || '').trim();
+    if (!q) return false;
+    const ref = parserReference(q);
+    if (!ref) return false;
+    allerVersReference(ref);
+    return true;
 }
 
 async function allerVersReference(ref) {
-    // Trouver le livre dans la liste
-    const livreObj = _livres?.find(l =>
-        l.nom === ref.livre ||
-        l.nom.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase() ===
-        ref.livre.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
-    );
-    if (!livreObj) {
-        // Essayer une recherche partielle
-        const partial = _livres?.find(l =>
-            l.nom.toLowerCase().includes(ref.livre.toLowerCase()) ||
-            ref.livre.toLowerCase().includes(l.nom.toLowerCase().substring(0,4))
-        );
-        if (!partial) return _lancerRechercheOrig();
-        ref.livre = partial.nom;
-        return allerVersReference(ref);
+    // Chercher le livre dans la DB Supabase par nom
+    if (!initDB()) return;
+    const { data } = await maConnexion
+        .from('bible_books')
+        .select('id, nom')
+        .ilike('nom', ref.livre + '%')
+        .limit(1);
+
+    if (!data || !data.length) {
+        // Fallback : recherche textuelle normale
+        lancerRechercheModale();
+        return;
     }
 
-    // Naviguer au livre + chapitre
-    await selectionnerLivre(livreObj.id || livreObj.nom, livreObj.nom);
+    const livre = data[0];
+    await selectionnerLivre(livre.nom, ref.chap);
     await chargerChapitre(ref.chap);
 
-    // Surligner le verset cible
     if (ref.verset) {
         setTimeout(() => {
-            const versets = document.querySelectorAll('.verset-num');
-            for (const span of versets) {
+            const nums = document.querySelectorAll('.verset-num');
+            for (const span of nums) {
                 if (parseInt(span.textContent) === ref.verset) {
-                    const ligne = span.closest('.verset-ligne') || span.parentElement;
-                    ligne?.classList.add('verset-highlight');
-                    ligne?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const ligne = span.closest('[class*="verset"]') || span.parentElement;
+                    if (ligne) {
+                        ligne.classList.add('verset-highlight');
+                        ligne.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                     break;
                 }
             }
-        }, 600);
+        }, 800);
     }
-
-    // Fermer la sidebar sur mobile
     toggleSidebar(false);
 }
 
-// Appliquer la taille de police sauvegardée au démarrage
+// Intercepter la touche Entrée dans la barre de recherche
 document.addEventListener('DOMContentLoaded', () => {
     appliquerPolice();
+    const input = document.getElementById('sidebar-search-input');
+    if (input) {
+        const origHandler = input.onkeydown;
+        input.onkeydown = function(e) {
+            if (e.key === 'Enter') {
+                if (rechercherReference()) return; // référence trouvée
+            }
+            if (origHandler) origHandler.call(this, e);
+        };
+    }
 });
 
 </script>
