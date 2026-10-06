@@ -553,19 +553,6 @@
         0%   { background: rgba(184,150,42,.4); }
         100% { background: transparent; }
     }
-
-    /* ── Boutons taille de police ─────────────────────── */
-    .font-size-btns {
-        display: flex; gap: 4px; align-items: center;
-    }
-    .font-btn {
-        background: none; border: 1px solid rgba(255,255,255,.15);
-        border-radius: 4px; color: var(--ink-soft);
-        font-family: 'Cinzel', serif; font-size: .6rem;
-        padding: 4px 8px; cursor: pointer; line-height: 1;
-        transition: all .15s; min-width: 32px;
-    }
-    .font-btn:hover { border-color: var(--gold); color: var(--gold); }
     </style>
 </head>
 <body>
@@ -607,10 +594,6 @@
                 <div class="bible-breadcrumb-book" id="breadcrumb-book">Choisissez un livre</div>
             </div>
             <!-- Boutons taille de police -->
-            <div class="font-size-btns">
-                <button class="font-btn" onclick="changerPolice(-1)" title="Réduire">A−</button>
-                <button class="font-btn" onclick="changerPolice(1)"  title="Agrandir">A+</button>
-            </div>
             <div class="chapter-nav" id="chapter-nav" style="display:none;">
                 <button class="chapter-btn chapter-arrows" id="btn-chap-prev" onclick="naviguerChapitre(-1)" title="Chapitre précédent">‹</button>
                 <select class="chapter-select" id="chapter-select" onchange="chargerChapitre(this.value)"></select>
@@ -817,7 +800,6 @@ async function chargerChapitre(chap, dir) {
     const oldInner = document.getElementById('bible-text-inner');
     if (oldInner) oldInner.replaceWith(newInner);
     else textWrap.appendChild(newInner);
-    if (typeof appliquerPolice === 'function') appliquerPolice(newInner);
 
     textWrap.scrollTop = 0;
 
@@ -1103,18 +1085,6 @@ function escH(s) {
 // ════════════════════════════════════════════════════════
 
 // ── 1. Taille de police ──────────────────────────────────
-let _fontSize = parseInt(localStorage.getItem('bible-font-size') || '17');
-
-function appliquerPolice(el) {
-    // el optionnel : si fourni, l'utiliser directement (avant insertion DOM)
-    const target = el || document.getElementById('bible-text-inner');
-    if (target) target.style.fontSize = _fontSize + 'px';
-}
-function changerPolice(delta) {
-    _fontSize = Math.min(28, Math.max(13, _fontSize + delta));
-    localStorage.setItem('bible-font-size', _fontSize);
-    appliquerPolice();
-}
 
 // ── 2. Recherche par référence biblique ──────────────────
 const _ABREVS = {
@@ -1208,7 +1178,6 @@ async function _allerVersRef(ref) {
 
 // Intercepter la touche Entrée dans la recherche
 document.addEventListener('DOMContentLoaded', () => {
-    appliquerPolice();
 
     const input = document.getElementById('sidebar-search-input');
     if (input) {
