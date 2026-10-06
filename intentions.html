@@ -580,6 +580,17 @@
             background: #2a1e0e; border-color: rgba(255,255,255,.1); color: #f0e8d5;
         }
     }
+
+    /* ── Badge messe privée ────────────────────────────── */
+    .badge-prive {
+        display: inline-block;
+        font-family: 'Cinzel', serif; font-size: .48rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        color: #9a7040; background: rgba(184,150,42,.12);
+        border: 1px solid rgba(184,150,42,.25);
+        border-radius: 3px; padding: 1px 5px;
+        margin-left: 6px; vertical-align: middle;
+    }
     </style>
 </head>
 <body>
@@ -879,7 +890,7 @@ function buildIntentionCard(item) {
     let bodyHTML = `
         <div class="int-card-body">
             <div class="int-card-top">
-                <span class="int-date">${dateFr}${heureFr ? '<span class="int-heure"> · ' + heureFr + '</span>' : ''}</span>
+                <span class="int-date">${dateFr}${heureFr ? '<span class="int-heure"> · ' + heureFr + '</span>' : ''}${(item.google_event_id||'').startsWith('prive_') ? '<span class="badge-prive">Privée</span>' : ''}</span>
                 <span class="int-statut ${statutCls}">${statutLabel}</span>
             </div>
             <div class="int-nom">
