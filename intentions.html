@@ -558,6 +558,28 @@
         color: #7ab87a; background: rgba(60,102,68,.15);
         padding: 2px 7px; border-radius: 10px;
     }
+
+    /* ── Modale modifier tout ──────────────────────────── */
+    .mod-label {
+        font-family: 'Cinzel', serif; font-size: .52rem;
+        letter-spacing: .12em; text-transform: uppercase;
+        color: var(--ink-muted); display: block; margin: 12px 0 4px;
+    }
+    .mod-input {
+        width: 100%; padding: 10px 12px;
+        background: var(--vellum-light);
+        border: 1px solid rgba(0,0,0,.12);
+        border-radius: 6px; color: var(--ink);
+        font-family: 'EB Garamond', serif; font-size: 1rem;
+        outline: none; box-sizing: border-box;
+    }
+    .mod-input:focus { border-color: var(--gold); }
+    .mod-input select option { background: var(--vellum-light); }
+    @media (prefers-color-scheme: dark) {
+        .mod-input {
+            background: #2a1e0e; border-color: rgba(255,255,255,.1); color: #f0e8d5;
+        }
+    }
     </style>
 </head>
 <body>
@@ -904,7 +926,7 @@ function buildIntentionCard(item) {
         bodyHTML += `
         <div class="int-confirme">Confirmée : ${escH(item.reponse_pretre||'—')}</div>
         <div class="int-card-foot">
-            <button class="int-foot-btn" onclick="getIdAndCall(this,editer)">✏️ Modifier</button>
+            <button class="int-foot-btn" onclick="ouvrirModifierTout(${item.id})">✏️ Modifier</button>
             ${!item.mail_envoye ? `<button class="int-foot-btn mail" onclick="getIdAndCall(this,ouvrirModalMailById)">📧 Mail</button>` : ''}
             <button class="int-foot-btn trash" onclick="getIdAndCall(this,supprimerIntention)">🗑 Supprimer</button>
         </div>`;
@@ -1253,5 +1275,77 @@ document.addEventListener('keydown', e => {
 });
 
 </script>
+
+<!-- ── Modale Modifier tout ── -->
+<div id="modal-modifier-tout" style="display:none;position:fixed;inset:0;z-index:2000;
+    background:rgba(0,0,0,.65);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--vellum-light);border-radius:16px 16px 0 0;
+      width:100%;max-width:640px;max-height:88vh;overflow-y:auto;
+      padding:20px;border-top:2px solid rgba(184,150,42,.3);">
+    <div style="font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.1em;
+        color:var(--gold);text-align:center;margin-bottom:18px;" id="mod-title">
+      Modifier l'intention
+    </div>
+
+    <label class="mod-label">Intention pour</label>
+    <input type="text" id="mod-nom" class="mod-input" placeholder="ex : Défunts famille Dupont">
+
+    <div style="display:flex;gap:12px;">
+      <div style="flex:1">
+        <label class="mod-label">Type</label>
+        <select id="mod-type" class="mod-input">
+          <option value="Défunt">✝ Défunt</option>
+          <option value="Vivant">🙏 Vivant</option>
+          <option value="Action de grâce">✨ Action de grâce</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <label class="mod-label">Demandeur</label>
+        <input type="text" id="mod-donateur" class="mod-input" placeholder="Mme Dupont">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;">
+      <div style="flex:1">
+        <label class="mod-label">Date</label>
+        <input type="date" id="mod-date" class="mod-input">
+      </div>
+      <div style="flex:1">
+        <label class="mod-label">Heure</label>
+        <input type="time" id="mod-heure" class="mod-input">
+      </div>
+    </div>
+
+    <label class="mod-label">Abbé célébrant</label>
+    <div style="display:flex;gap:8px;margin-bottom:4px;">
+      <button type="button" class="pretre-chip" id="mod-chip-molin"
+          onclick="modSelectAbbe('molin')">Abbé Molin</button>
+      <button type="button" class="pretre-chip" id="mod-chip-legall"
+          onclick="modSelectAbbe('legall')">Abbé Le Gall</button>
+    </div>
+    <input type="hidden" id="mod-pretre" value="molin">
+
+    <label class="mod-label">Note privée</label>
+    <textarea id="mod-commentaire" class="mod-input" rows="2"></textarea>
+
+    <input type="hidden" id="mod-id">
+
+    <button onclick="sauvegarderModification()"
+        style="width:100%;margin-top:16px;padding:14px;background:var(--gold);
+        border:none;border-radius:8px;font-family:'Cinzel',serif;font-size:.7rem;
+        letter-spacing:.12em;text-transform:uppercase;color:#1a1108;
+        font-weight:700;cursor:pointer;">
+      ✅ Enregistrer
+    </button>
+    <button onclick="fermerModifierTout()"
+        style="width:100%;margin-top:8px;padding:12px;background:none;
+        border:1px solid rgba(255,255,255,.1);border-radius:8px;
+        color:var(--ink-muted);cursor:pointer;font-family:'Cinzel',serif;
+        font-size:.6rem;letter-spacing:.1em;">
+      Annuler
+    </button>
+  </div>
+</div>
+
 </body>
 </html>
