@@ -615,7 +615,16 @@ function renderDetail(iso) {
     </div>`;
 
     if (!messes.length) {
-        html += `<div class="cal-detail-empty">Aucune messe ce jour</div>`;
+        html += `<div class="cal-detail-empty">Aucune messe ce jour</div>
+        <div style="padding:10px 16px;">
+            <button onclick="ouvrirModalPrive('${iso}')"
+                style="width:100%;padding:10px;background:rgba(184,150,42,.1);
+                border:1px solid rgba(184,150,42,.2);border-radius:6px;
+                font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.12em;
+                text-transform:uppercase;color:#b8962a;cursor:pointer;">
+                + Messe privée
+            </button>
+        </div>`;
     } else {
         // Légende pastilles
         html += `<div class="cal-legende">
@@ -629,9 +638,12 @@ function renderDetail(iso) {
             const heureFr = heure.replace(':','h');
             const intent  = intentionDuJour(e.id, iso, heure);
             const summary = e.summary || '';
-            const typeLabel = /grand.?messe/i.test(summary) ? 'Grand-Messe'
-                            : /solennelle/i.test(summary)    ? 'Messe solennelle'
-                            : /chantée/i.test(summary)       ? 'Messe chantée'
+            const typeLabel = e._prive                          ? 'Messe privée'
+                            : /grand.?messe/i.test(summary)  ? 'Grand-Messe'
+                            : /solennelle/i.test(summary)     ? 'Messe solennelle'
+                            : /chantée/i.test(summary)        ? 'Messe chantée'
+                            : /paul\s*vi/i.test(summary)      ? 'Messe (Missel de Paul VI)'
+                            : /anticipée/i.test(summary)      ? 'Messe anticipée'
                             : 'Messe lue';
 
             let statusDot = '', statusLabel = '', btnHtml = '';
@@ -772,6 +784,24 @@ function ouvrirModalModif(supaId) {
     setTimeout(() => document.getElementById('nom_intention').focus(), 300);
 }
 
+
+function ouvrirModalPrive(iso) {
+    const googleId = 'prive_' + iso + '_' + Date.now();
+    document.getElementById('input-date-iso').value   = iso;
+    document.getElementById('input-google-id').value  = googleId;
+    document.getElementById('input-heure').value      = '';
+    document.getElementById('libre-date-heure').style.display = 'flex';
+    document.getElementById('libre-date').value       = iso;
+    document.getElementById('libre-heure').value      = '09:00';
+    document.getElementById('nom_intention').value    = '';
+    document.getElementById('nom_donateur').value     = '';
+    document.getElementById('commentaire').value      = '';
+    document.getElementById('type_intention').value   = 'Défunt';
+    document.getElementById('modal-title').textContent = '+ Messe privée';
+    selectAbbe('molin');
+    document.getElementById('modal-saisie').classList.add('open');
+    setTimeout(() => document.getElementById('nom_intention').focus(), 300);
+}
 
 function fermerModal() {
     document.getElementById('modal-saisie').classList.remove('open');
