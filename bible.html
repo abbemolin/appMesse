@@ -817,7 +817,7 @@ async function chargerChapitre(chap, dir) {
     const oldInner = document.getElementById('bible-text-inner');
     if (oldInner) oldInner.replaceWith(newInner);
     else textWrap.appendChild(newInner);
-    if (typeof appliquerPolice === 'function') appliquerPolice();
+    if (typeof appliquerPolice === 'function') appliquerPolice(newInner);
 
     textWrap.scrollTop = 0;
 
@@ -1105,9 +1105,10 @@ function escH(s) {
 // ── 1. Taille de police ──────────────────────────────────
 let _fontSize = parseInt(localStorage.getItem('bible-font-size') || '17');
 
-function appliquerPolice() {
-    const el = document.getElementById('bible-text-inner');
-    if (el) el.style.fontSize = _fontSize + 'px';
+function appliquerPolice(el) {
+    // el optionnel : si fourni, l'utiliser directement (avant insertion DOM)
+    const target = el || document.getElementById('bible-text-inner');
+    if (target) target.style.fontSize = _fontSize + 'px';
 }
 function changerPolice(delta) {
     _fontSize = Math.min(28, Math.max(13, _fontSize + delta));
