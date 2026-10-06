@@ -906,7 +906,7 @@ async function lancerRechercheModale() {
         .select('livre, chapitre, verset_num, texte')
         .ilike('texte', `%${q}%`)
         .order('id', { ascending: true })
-        .limit(80);
+        .limit(200);
 
     afficherResultats(data || [], q, false);
 }
@@ -1079,119 +1079,6 @@ function escH(s) {
 })();
 
 
-
-// ════════════════════════════════════════════════════════
-// AJOUTS : A+/A- et Recherche par référence
-// ════════════════════════════════════════════════════════
-
-// ── 1. Taille de police ──────────────────────────────────
-
-// ── 2. Recherche par référence biblique ──────────────────
-const _ABREVS = {
-    mt:'Matthieu', mc:'Marc', lc:'Luc', jn:'Jean',
-    ac:'Actes', rm:'Romains',
-    '1co':'1 Corinthiens', '2co':'2 Corinthiens',
-    ga:'Galates', ep:'Éphésiens', ph:'Philippiens',
-    col:'Colossiens', he:'Hébreux', jc:'Jacques', ap:'Apocalypse',
-    '1p':'1 Pierre', '2p':'2 Pierre',
-    '1jn':'1 Jean', '2jn':'2 Jean', '3jn':'3 Jean',
-    gn:'Genèse', ex:'Exode', lv:'Lévitique', nb:'Nombres',
-    dt:'Deutéronome', jos:'Josué', jg:'Juges', rt:'Ruth',
-    '1s':'1 Samuel', '2s':'2 Samuel', '1r':'1 Rois', '2r':'2 Rois',
-    ps:'Psaumes', pr:'Proverbes', qo:'Ecclésiaste',
-    ct:'Cantique', sg:'Sagesse', si:'Siracide',
-    is:'Isaïe', jr:'Jérémie', ez:'Ézéchiel', dn:'Daniel',
-    // noms complets
-    matthieu:'Matthieu', marc:'Marc', luc:'Luc', jean:'Jean',
-    actes:'Actes', romains:'Romains', galates:'Galates',
-    psaumes:'Psaumes', psaume:'Psaumes',
-    genese:'Genèse', exode:'Exode',
-    isaie:'Isaïe', jeremie:'Jérémie',
-    apocalypse:'Apocalypse', hebreux:'Hébreux',
-};
-
-function _normaliser(s) {
-    return s.toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s/g, '');
-}
-
-function _parserRef(texte) {
-    // Accepte : Jn 3,16 / Jn 3:16 / 1Co 13,4 / Ps 23
-    const m = texte.trim().match(
-        /^(\d?\s*[A-Za-zÀ-ÿ]+)\s*(\d{1,3})(?:\s*[,:.\s]\s*(\d{1,3}))?\s*$/
-    );
-    if (!m) return null;
-    const cle   = _normaliser(m[1]);
-    const livre = _ABREVS[cle];
-    if (!livre) return null;
-    return { livre, chap: parseInt(m[2]), verset: m[3] ? parseInt(m[3]) : null };
-}
-
-function _surlignerVerset(num) {
-    if (!num) return;
-    setTimeout(() => {
-        const sups = document.querySelectorAll('sup.verset-num');
-        for (const sup of sups) {
-            if (parseInt(sup.textContent) === num) {
-                // Remonter au <p> parent ou au span contenant le verset
-                let el = sup.parentElement;
-                el.classList.add('verset-highlight');
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                break;
-            }
-        }
-    }, 700);
-}
-
-async function _allerVersRef(ref) {
-    // Trouver le livre via Supabase (table bible_books ou dans le DOM)
-    // Essayer d'abord via la liste de livres dans la sidebar
-    const boutons = document.querySelectorAll('.sidebar-book');
-    let trouvé = null;
-    for (const btn of boutons) {
-        if (_normaliser(btn.textContent) === _normaliser(ref.livre)) {
-            trouvé = btn.textContent.trim();
-            break;
-        }
-    }
-    if (!trouvé) {
-        // Recherche partielle
-        for (const btn of boutons) {
-            if (_normaliser(btn.textContent).startsWith(_normaliser(ref.livre).substring(0,4))) {
-                trouvé = btn.textContent.trim();
-                break;
-            }
-        }
-    }
-    if (!trouvé) {
-        // Fallback : recherche textuelle normale
-        lancerRechercheModale();
-        return;
-    }
-    // Naviguer
-    await selectionnerLivre(trouvé);
-    await chargerChapitre(ref.chap);
-    _surlignerVerset(ref.verset);
-    toggleSidebar(false);
-}
-
-// Intercepter la touche Entrée dans la recherche
-document.addEventListener('DOMContentLoaded', () => {
-
-    const input = document.getElementById('sidebar-search-input');
-    if (input) {
-        input.addEventListener('keydown', e => {
-            if (e.key !== 'Enter') return;
-            const ref = _parserRef(input.value);
-            if (ref) {
-                e.stopImmediatePropagation();
-                _allerVersRef(ref);
-            }
-            // Sinon : comportement original (lancerRecherche)
-        });
-    }
-});
 
 </script>
 </body>
