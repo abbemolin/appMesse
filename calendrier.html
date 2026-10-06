@@ -492,7 +492,7 @@ function intentionDuJour(googleId, iso, heure) {
     return _intentions.find(i =>
         i.google_event_id === googleId ||
         (i.date_messe === iso && i.heure_messe === heure &&
-         (i.statut === 'valide' || i.en_edition))
+         (i.statut === 'valide' || i.statut === 'en_attente' || i.en_edition))
     ) || null;
 }
 
