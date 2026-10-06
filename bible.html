@@ -530,6 +530,30 @@
         .search-count       { background: var(--vellum); border-color: var(--border-soft); }
         .drag-ghost         { background: var(--vellum-light); border-color: var(--gold); }
     }
+
+    /* ── Boutons taille de police ─────────────────────── */
+    .font-size-btns {
+        display: flex; gap: 4px; align-items: center; margin-right: 4px;
+    }
+    .font-btn {
+        background: none; border: 1px solid rgba(255,255,255,.15);
+        border-radius: 4px; color: var(--ink-soft);
+        font-family: 'Cinzel', serif; font-size: .6rem;
+        padding: 4px 8px; cursor: pointer; line-height: 1;
+        transition: all .15s; min-width: 32px;
+    }
+    .font-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── Verset surligné (recherche par référence) ─────── */
+    .verset-highlight {
+        background: rgba(184,150,42,.25);
+        border-radius: 3px; padding: 2px 0;
+        animation: highlightFade 3s ease forwards;
+    }
+    @keyframes highlightFade {
+        0%   { background: rgba(184,150,42,.4); }
+        100% { background: transparent; }
+    }
     </style>
 </head>
 <body>
@@ -569,6 +593,11 @@
             </button>
             <div class="bible-breadcrumb">
                 <div class="bible-breadcrumb-book" id="breadcrumb-book">Choisissez un livre</div>
+            </div>
+            <!-- Boutons taille de police -->
+            <div class="font-size-btns" id="font-size-btns">
+                <button class="font-btn" onclick="changerPolice(-1)" title="Réduire">A−</button>
+                <button class="font-btn" onclick="changerPolice(1)"  title="Agrandir">A+</button>
             </div>
             <div class="chapter-nav" id="chapter-nav" style="display:none;">
                 <button class="chapter-btn chapter-arrows" id="btn-chap-prev" onclick="naviguerChapitre(-1)" title="Chapitre précédent">‹</button>
@@ -726,6 +755,7 @@ async function chargerChapitre(chap, dir) {
     document.getElementById('chapter-select').value = _chapActif;
     actualiserBoutonsChapitre();
     document.getElementById('breadcrumb-book').textContent = _livreActif;
+    setTimeout(appliquerPolice, 50); // appliquer taille police après rendu
 
     const textWrap = document.getElementById('bible-text');
     const inner    = getInner();
@@ -1052,6 +1082,201 @@ function escH(s) {
     if (typeof maConnexion !== 'undefined') { db = maConnexion; ready(); }
     else { const t = setInterval(() => { if (initDB()) { clearInterval(t); ready(); }}, 200); }
 })();
+
+// ── Taille de police réglable ─────────────────────────────
+let _fontSize = parseInt(localStorage.getItem('bible-font-size') || '17');
+
+function appliquerPolice() {
+    document.querySelector('.bible-text-wrap') &&
+        (document.querySelector('.bible-text-wrap').style.fontSize = _fontSize + 'px');
+    const inner = getInner();
+    if (inner) inner.style.fontSize = _fontSize + 'px';
+}
+
+function changerPolice(delta) {
+    _fontSize = Math.min(28, Math.max(13, _fontSize + delta));
+    localStorage.setItem('bible-font-size', _fontSize);
+    appliquerPolice();
+}
+
+// ── Swipe vertical pour changer de chapitre ───────────────
+(function() {
+    let startY = 0, startX = 0, moving = false;
+    const SEUIL = 60; // px minimum pour déclencher
+
+    document.addEventListener('touchstart', e => {
+        const wrap = e.target.closest('.bible-text-wrap');
+        if (!wrap) return;
+        startY = e.touches[0].clientY;
+        startX = e.touches[0].clientX;
+        moving = false;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', e => {
+        if (!startY) return;
+        const dy = e.touches[0].clientY - startY;
+        const dx = e.touches[0].clientX - startX;
+        // Si swipe plus vertical qu'horizontal → on prend le contrôle
+        if (!moving && Math.abs(dy) > Math.abs(dx) * 1.5 && Math.abs(dy) > 15) {
+            moving = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
+        if (!moving || !startY) { startY = 0; return; }
+        const dy = e.changedTouches[0].clientY - startY;
+        startY = 0; moving = false;
+        if (Math.abs(dy) < SEUIL) return;
+        // Swipe vers le haut = chapitre suivant, vers le bas = précédent
+        naviguerChapitre(dy < 0 ? 1 : -1);
+    }, { passive: true });
+})();
+
+// ── Recherche par référence (Jn 3,16 / Mt 5:3 / Ps 23) ───
+const ABREVS = {
+    // Nouveau Testament
+    'mt':'Matthieu','mat':'Matthieu','matthieu':'Matthieu',
+    'mc':'Marc','mar':'Marc','marc':'Marc',
+    'lc':'Luc','luc':'Luc',
+    'jn':'Jean','jean':'Jean','joh':'Jean',
+    'ac':'Actes','act':'Actes','actes':'Actes',
+    'rm':'Romains','rom':'Romains','romains':'Romains',
+    '1co':'1 Corinthiens','2co':'2 Corinthiens',
+    '1cor':'1 Corinthiens','2cor':'2 Corinthiens',
+    'ga':'Galates','gal':'Galates',
+    'ep':'Éphésiens','eph':'Éphésiens',
+    'ph':'Philippiens','phil':'Philippiens',
+    'col':'Colossiens',
+    '1th':'1 Thessaloniciens','2th':'2 Thessaloniciens',
+    '1tm':'1 Timothée','2tm':'2 Timothée',
+    '1ti':'1 Timothée','2ti':'2 Timothée',
+    'tt':'Tite','tit':'Tite',
+    'phm':'Philémon',
+    'he':'Hébreux','heb':'Hébreux',
+    'jc':'Jacques','jac':'Jacques',
+    '1p':'1 Pierre','2p':'2 Pierre',
+    '1pe':'1 Pierre','2pe':'2 Pierre',
+    '1jn':'1 Jean','2jn':'2 Jean','3jn':'3 Jean',
+    'jude':'Jude',
+    'ap':'Apocalypse','apo':'Apocalypse',
+    // Ancien Testament
+    'gn':'Genèse','gen':'Genèse','genèse':'Genèse',
+    'ex':'Exode','exode':'Exode',
+    'lv':'Lévitique','lev':'Lévitique',
+    'nb':'Nombres','num':'Nombres',
+    'dt':'Deutéronome','deut':'Deutéronome',
+    'jos':'Josué',
+    'jg':'Juges','jug':'Juges',
+    'rt':'Ruth','ruth':'Ruth',
+    '1s':'1 Samuel','2s':'2 Samuel',
+    '1r':'1 Rois','2r':'2 Rois',
+    '1ch':'1 Chroniques','2ch':'2 Chroniques',
+    'esd':'Esdras','ne':'Néhémie',
+    'tb':'Tobie','jdt':'Judith','est':'Esther',
+    '1m':'1 Maccabées','2m':'2 Maccabées',
+    'jb':'Job','job':'Job',
+    'ps':'Psaumes','psa':'Psaumes',
+    'pr':'Proverbes','prov':'Proverbes',
+    'qo':'Ecclésiaste','ecc':'Ecclésiaste',
+    'ct':'Cantique','cant':'Cantique',
+    'sg':'Sagesse','sag':'Sagesse',
+    'si':'Siracide','sir':'Siracide',
+    'is':'Isaïe','isa':'Isaïe',
+    'jr':'Jérémie','jer':'Jérémie',
+    'lm':'Lamentations',
+    'ba':'Baruch','bar':'Baruch',
+    'ez':'Ézéchiel','eze':'Ézéchiel',
+    'dn':'Daniel','dan':'Daniel',
+    'os':'Osée','hos':'Osée',
+    'jl':'Joël',
+    'am':'Amos',
+    'ab':'Abdias',
+    'jon':'Jonas',
+    'mi':'Michée',
+    'na':'Nahoum',
+    'ha':'Habacuc',
+    'so':'Sophonie',
+    'ag':'Aggée',
+    'za':'Zacharie',
+    'ml':'Malachie',
+};
+
+function parserReference(texte) {
+    // Formats acceptés : Jn 3,16 / Jn 3:16 / Jn3,16 / Jean 3, 16
+    const m = texte.trim().match(
+        /^(\d?\s*[a-zA-ZÀ-ÿ]+)\s*(\d+)\s*[,:\.]\s*(\d+)?/
+    );
+    if (!m) return null;
+
+    const abrev = m[1].replace(/\s/g,'').toLowerCase();
+    const livre  = ABREVS[abrev];
+    const chap   = parseInt(m[2]);
+    const verset = m[3] ? parseInt(m[3]) : null;
+
+    if (!livre || !chap) return null;
+    return { livre, chap, verset };
+}
+
+// Surcharger lancerRecherche pour détecter les références
+const _lancerRechercheOrig = lancerRecherche;
+function lancerRecherche() {
+    const q = (document.getElementById('sidebar-search-input')?.value || '').trim();
+    if (q) {
+        const ref = parserReference(q);
+        if (ref) {
+            allerVersReference(ref);
+            return;
+        }
+    }
+    _lancerRechercheOrig();
+}
+
+async function allerVersReference(ref) {
+    // Trouver le livre dans la liste
+    const livreObj = _livres?.find(l =>
+        l.nom === ref.livre ||
+        l.nom.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase() ===
+        ref.livre.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+    );
+    if (!livreObj) {
+        // Essayer une recherche partielle
+        const partial = _livres?.find(l =>
+            l.nom.toLowerCase().includes(ref.livre.toLowerCase()) ||
+            ref.livre.toLowerCase().includes(l.nom.toLowerCase().substring(0,4))
+        );
+        if (!partial) return _lancerRechercheOrig();
+        ref.livre = partial.nom;
+        return allerVersReference(ref);
+    }
+
+    // Naviguer au livre + chapitre
+    await selectionnerLivre(livreObj.id || livreObj.nom, livreObj.nom);
+    await chargerChapitre(ref.chap);
+
+    // Surligner le verset cible
+    if (ref.verset) {
+        setTimeout(() => {
+            const versets = document.querySelectorAll('.verset-num');
+            for (const span of versets) {
+                if (parseInt(span.textContent) === ref.verset) {
+                    const ligne = span.closest('.verset-ligne') || span.parentElement;
+                    ligne?.classList.add('verset-highlight');
+                    ligne?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+                }
+            }
+        }, 600);
+    }
+
+    // Fermer la sidebar sur mobile
+    toggleSidebar(false);
+}
+
+// Appliquer la taille de police sauvegardée au démarrage
+document.addEventListener('DOMContentLoaded', () => {
+    appliquerPolice();
+});
+
 </script>
 </body>
 </html>
