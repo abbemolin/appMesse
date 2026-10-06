@@ -554,6 +554,30 @@
         0%   { background: rgba(184,150,42,.4); }
         100% { background: transparent; }
     }
+
+    /* ── Verset surligné (recherche référence) ─────────── */
+    .verset-highlight {
+        background: rgba(184,150,42,.25);
+        border-radius: 3px; padding: 2px 0;
+        animation: highlightFade 3s ease forwards;
+    }
+    @keyframes highlightFade {
+        0%   { background: rgba(184,150,42,.4); }
+        100% { background: transparent; }
+    }
+
+    /* ── Boutons taille de police ─────────────────────── */
+    .font-size-btns {
+        display: flex; gap: 4px; align-items: center;
+    }
+    .font-btn {
+        background: none; border: 1px solid rgba(255,255,255,.15);
+        border-radius: 4px; color: var(--ink-soft);
+        font-family: 'Cinzel', serif; font-size: .6rem;
+        padding: 4px 8px; cursor: pointer; line-height: 1;
+        transition: all .15s; min-width: 32px;
+    }
+    .font-btn:hover { border-color: var(--gold); color: var(--gold); }
     </style>
 </head>
 <body>
@@ -596,6 +620,10 @@
             </div>
             <!-- Boutons taille de police -->
             <div class="font-size-btns" id="font-size-btns">
+                <button class="font-btn" onclick="changerPolice(-1)" title="Réduire">A−</button>
+                <button class="font-btn" onclick="changerPolice(1)"  title="Agrandir">A+</button>
+            </div>
+            <div class="font-size-btns">
                 <button class="font-btn" onclick="changerPolice(-1)" title="Réduire">A−</button>
                 <button class="font-btn" onclick="changerPolice(1)"  title="Agrandir">A+</button>
             </div>
@@ -805,6 +833,7 @@ async function chargerChapitre(chap, dir) {
     const oldInner = document.getElementById('bible-text-inner');
     if (oldInner) oldInner.replaceWith(newInner);
     else textWrap.appendChild(newInner);
+    if (typeof appliquerPolice === 'function') appliquerPolice();
 
     textWrap.scrollTop = 0;
 
@@ -1084,140 +1113,129 @@ function escH(s) {
 })();
 
 
-// ── Taille de police réglable ─────────────────────────────
+
+// ════════════════════════════════════════════════════════
+// AJOUTS : A+/A- et Recherche par référence
+// ════════════════════════════════════════════════════════
+
+// ── 1. Taille de police ──────────────────────────────────
 let _fontSize = parseInt(localStorage.getItem('bible-font-size') || '17');
 
 function appliquerPolice() {
-    const inner = document.getElementById('bible-text-inner')
-                || document.querySelector('.bible-text-inner')
-                || document.querySelector('.bible-inner');
-    if (inner) inner.style.fontSize = _fontSize + 'px';
-    // Fallback : appliquer sur le conteneur de texte
-    const wrap = document.getElementById('bible-text');
-    if (wrap) wrap.style.fontSize = _fontSize + 'px';
+    const el = document.getElementById('bible-text-inner');
+    if (el) el.style.fontSize = _fontSize + 'px';
 }
-
 function changerPolice(delta) {
     _fontSize = Math.min(28, Math.max(13, _fontSize + delta));
     localStorage.setItem('bible-font-size', _fontSize);
     appliquerPolice();
 }
 
-// Appliquer après chaque chargement de chapitre
-const _origChargerChapitre = chargerChapitre;
-
-// ── Recherche par référence ───────────────────────────────
-const ABREVS_REF = {
-    'mt':'Matthieu','mat':'Matthieu','matthieu':'Matthieu',
-    'mc':'Marc','mar':'Marc','marc':'Marc',
-    'lc':'Luc','luc':'Luc',
-    'jn':'Jean','jean':'Jean',
-    'ac':'Actes','act':'Actes','actes':'Actes',
-    'rm':'Romains','rom':'Romains',
-    '1co':'1 Corinthiens','2co':'2 Corinthiens',
-    '1cor':'1 Corinthiens','2cor':'2 Corinthiens',
-    'ga':'Galates','gal':'Galates',
-    'ep':'Éphésiens','eph':'Éphésiens','ephésiens':'Éphésiens',
-    'ph':'Philippiens','phil':'Philippiens',
-    'col':'Colossiens',
-    '1th':'1 Thessaloniciens','2th':'2 Thessaloniciens',
-    '1tm':'1 Timothée','2tm':'2 Timothée',
-    'he':'Hébreux','heb':'Hébreux',
-    'jc':'Jacques','jac':'Jacques',
-    '1p':'1 Pierre','2p':'2 Pierre',
-    '1jn':'1 Jean','2jn':'2 Jean','3jn':'3 Jean',
-    'ap':'Apocalypse','apo':'Apocalypse',
-    'gn':'Genèse','gen':'Genèse',
-    'ex':'Exode',
-    'lv':'Lévitique','lev':'Lévitique',
-    'nb':'Nombres','num':'Nombres',
-    'dt':'Deutéronome',
-    'jos':'Josué','jg':'Juges',
-    'rt':'Ruth',
-    '1s':'1 Samuel','2s':'2 Samuel',
-    '1r':'1 Rois','2r':'2 Rois',
-    'ps':'Psaumes','psa':'Psaumes','psaume':'Psaumes',
-    'pr':'Proverbes','prov':'Proverbes',
-    'is':'Isaïe','isa':'Isaïe',
-    'jr':'Jérémie','jer':'Jérémie',
-    'ez':'Ézéchiel',
-    'dn':'Daniel',
+// ── 2. Recherche par référence biblique ──────────────────
+const _ABREVS = {
+    mt:'Matthieu', mc:'Marc', lc:'Luc', jn:'Jean',
+    ac:'Actes', rm:'Romains',
+    '1co':'1 Corinthiens', '2co':'2 Corinthiens',
+    ga:'Galates', ep:'Éphésiens', ph:'Philippiens',
+    col:'Colossiens', he:'Hébreux', jc:'Jacques', ap:'Apocalypse',
+    '1p':'1 Pierre', '2p':'2 Pierre',
+    '1jn':'1 Jean', '2jn':'2 Jean', '3jn':'3 Jean',
+    gn:'Genèse', ex:'Exode', lv:'Lévitique', nb:'Nombres',
+    dt:'Deutéronome', jos:'Josué', jg:'Juges', rt:'Ruth',
+    '1s':'1 Samuel', '2s':'2 Samuel', '1r':'1 Rois', '2r':'2 Rois',
+    ps:'Psaumes', pr:'Proverbes', qo:'Ecclésiaste',
+    ct:'Cantique', sg:'Sagesse', si:'Siracide',
+    is:'Isaïe', jr:'Jérémie', ez:'Ézéchiel', dn:'Daniel',
+    // noms complets
+    matthieu:'Matthieu', marc:'Marc', luc:'Luc', jean:'Jean',
+    actes:'Actes', romains:'Romains', galates:'Galates',
+    psaumes:'Psaumes', psaume:'Psaumes',
+    genese:'Genèse', exode:'Exode',
+    isaie:'Isaïe', jeremie:'Jérémie',
+    apocalypse:'Apocalypse', hebreux:'Hébreux',
 };
 
-function parserReference(texte) {
-    const m = texte.trim().match(/^(\d?\s*[a-zA-ZÀ-ÿ]+)\s*(\d+)\s*[,:.]\s*(\d+)?/);
+function _normaliser(s) {
+    return s.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s/g, '');
+}
+
+function _parserRef(texte) {
+    // Accepte : Jn 3,16 / Jn 3:16 / 1Co 13,4 / Ps 23
+    const m = texte.trim().match(
+        /^(\d?\s*[A-Za-zÀ-ÿ]+)\s*(\d{1,3})(?:\s*[,:.\s]\s*(\d{1,3}))?\s*$/
+    );
     if (!m) return null;
-    const abrev = m[1].replace(/\s/g,'').toLowerCase()
-        .normalize('NFD').replace(/[̀-ͯ]/g,'');
-    // Chercher dans ABREVS_REF avec et sans accents
-    let livre = null;
-    for (const [k,v] of Object.entries(ABREVS_REF)) {
-        const kn = k.normalize('NFD').replace(/[̀-ͯ]/g,'');
-        if (kn === abrev) { livre = v; break; }
-    }
+    const cle   = _normaliser(m[1]);
+    const livre = _ABREVS[cle];
     if (!livre) return null;
     return { livre, chap: parseInt(m[2]), verset: m[3] ? parseInt(m[3]) : null };
 }
 
-function rechercherReference() {
-    const input = document.getElementById('sidebar-search-input');
-    const q = (input?.value || '').trim();
-    if (!q) return false;
-    const ref = parserReference(q);
-    if (!ref) return false;
-    allerVersReference(ref);
-    return true;
+function _surlignerVerset(num) {
+    if (!num) return;
+    setTimeout(() => {
+        const sups = document.querySelectorAll('sup.verset-num');
+        for (const sup of sups) {
+            if (parseInt(sup.textContent) === num) {
+                // Remonter au <p> parent ou au span contenant le verset
+                let el = sup.parentElement;
+                el.classList.add('verset-highlight');
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                break;
+            }
+        }
+    }, 700);
 }
 
-async function allerVersReference(ref) {
-    // Chercher le livre dans la DB Supabase par nom
-    if (!initDB()) return;
-    const { data } = await maConnexion
-        .from('bible_books')
-        .select('id, nom')
-        .ilike('nom', ref.livre + '%')
-        .limit(1);
-
-    if (!data || !data.length) {
+async function _allerVersRef(ref) {
+    // Trouver le livre via Supabase (table bible_books ou dans le DOM)
+    // Essayer d'abord via la liste de livres dans la sidebar
+    const boutons = document.querySelectorAll('.sidebar-book');
+    let trouvé = null;
+    for (const btn of boutons) {
+        if (_normaliser(btn.textContent) === _normaliser(ref.livre)) {
+            trouvé = btn.textContent.trim();
+            break;
+        }
+    }
+    if (!trouvé) {
+        // Recherche partielle
+        for (const btn of boutons) {
+            if (_normaliser(btn.textContent).startsWith(_normaliser(ref.livre).substring(0,4))) {
+                trouvé = btn.textContent.trim();
+                break;
+            }
+        }
+    }
+    if (!trouvé) {
         // Fallback : recherche textuelle normale
         lancerRechercheModale();
         return;
     }
-
-    const livre = data[0];
-    await selectionnerLivre(livre.nom, ref.chap);
+    // Naviguer
+    await selectionnerLivre(trouvé);
     await chargerChapitre(ref.chap);
-
-    if (ref.verset) {
-        setTimeout(() => {
-            const nums = document.querySelectorAll('.verset-num');
-            for (const span of nums) {
-                if (parseInt(span.textContent) === ref.verset) {
-                    const ligne = span.closest('[class*="verset"]') || span.parentElement;
-                    if (ligne) {
-                        ligne.classList.add('verset-highlight');
-                        ligne.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                    break;
-                }
-            }
-        }, 800);
-    }
+    _surlignerVerset(ref.verset);
     toggleSidebar(false);
 }
 
-// Intercepter la touche Entrée dans la barre de recherche
+// Intercepter la touche Entrée dans la recherche
 document.addEventListener('DOMContentLoaded', () => {
     appliquerPolice();
+
     const input = document.getElementById('sidebar-search-input');
     if (input) {
-        const origHandler = input.onkeydown;
-        input.onkeydown = function(e) {
-            if (e.key === 'Enter') {
-                if (rechercherReference()) return; // référence trouvée
+        input.addEventListener('keydown', e => {
+            if (e.key !== 'Enter') return;
+            const ref = _parserRef(input.value);
+            if (ref) {
+                e.stopImmediatePropagation();
+                _allerVersRef(ref);
             }
-            if (origHandler) origHandler.call(this, e);
-        };
+            // Sinon : comportement original (lancerRecherche)
+        });
     }
 });
 
