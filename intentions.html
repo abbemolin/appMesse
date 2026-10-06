@@ -521,6 +521,43 @@
         .mail-destinataire-pill { background: rgba(184,150,42,.08); }
         .admin-stat-pill { background: rgba(184,150,42,.1); }
     }
+
+    /* ── Heure dans la carte ─────────────────────────── */
+    .int-heure {
+        font-family: 'Cinzel', serif; font-size: .65em;
+        color: var(--gold); opacity: .8;
+    }
+
+    /* ── Abbé sur carte confirmée ────────────────────── */
+    .int-pretre {
+        font-family: 'Cinzel', serif; font-size: .52rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        color: var(--gold); opacity: .75; margin-top: 3px;
+    }
+
+    /* ── Badges mois colorés ─────────────────────────── */
+    .mois-count {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 22px; height: 22px; border-radius: 11px;
+        font-family: 'Cinzel', serif; font-size: .6rem;
+        font-weight: 700; padding: 0 6px;
+    }
+    .mois-vide   { background: rgba(255,255,255,.06); color: var(--ink-muted); }
+    .mois-alerte { background: rgba(139,26,26,.25);   color: #e07070; }
+    .mois-ok     { background: rgba(60,102,68,.25);   color: #7ab87a; }
+
+    .mois-badge-warn {
+        font-family: 'Cinzel', serif; font-size: .5rem;
+        letter-spacing: .08em; text-transform: uppercase;
+        color: #e07070; background: rgba(139,26,26,.15);
+        padding: 2px 7px; border-radius: 10px;
+    }
+    .mois-badge-ok {
+        font-family: 'Cinzel', serif; font-size: .5rem;
+        letter-spacing: .08em; text-transform: uppercase;
+        color: #7ab87a; background: rgba(60,102,68,.15);
+        padding: 2px 7px; border-radius: 10px;
+    }
     </style>
 </head>
 <body>
@@ -716,9 +753,14 @@ async function renderIntentions(filtre = '') {
         // Header mois
         const header = document.createElement('div');
         header.className = 'mois-header';
-        header.innerHTML = `<span class="mois-label">📅 ${labelMois}</span>
-            <span class="mois-badge">${items.length} intention${items.length>1?'s':''}</span>
-            ${nbAttente > 0 ? `<span class="mois-badge-warn">⏳ ${nbAttente}</span>` : ''}
+        const nbValide = items.filter(i => i.statut === 'valide' && !i.en_edition).length;
+        const moisCls  = items.length === 0 ? 'mois-vide'
+                       : nbAttente > 0      ? 'mois-alerte'
+                       :                      'mois-ok';
+        header.innerHTML = `<span class="mois-label">${labelMois}</span>
+            <span class="mois-count ${moisCls}">${items.length}</span>
+            ${nbAttente > 0 ? `<span class="mois-badge-warn">${nbAttente} en attente</span>` : ''}
+            ${items.length > 0 && nbAttente === 0 ? `<span class="mois-badge-ok">${nbValide} confirmée${nbValide>1?'s':''}</span>` : ''}
             <span id="arrow-${moisKey}" class="mois-arrow${isOpen?' open':''}">▼</span>`;
         header.onclick = () => toggleMois(moisKey);
         tbody.appendChild(header);
@@ -727,7 +769,15 @@ async function renderIntentions(filtre = '') {
         groupDiv.id = 'mois-' + moisKey;
         groupDiv.style.display = isOpen ? 'block' : 'none';
 
-        items.forEach(item => {
+        // Tri : en attente en premier, puis confirmées, puis refusées
+        const itemsTries = [...items].sort((a, b) => {
+            const ordre = { 'en_attente': 0, 'valide': 1, 'refuse': 2, 'deplace': 3 };
+            const oa = a.en_edition ? 0 : (ordre[a.statut] ?? 4);
+            const ob = b.en_edition ? 0 : (ordre[b.statut] ?? 4);
+            if (oa !== ob) return oa - ob;
+            return (a.heure_messe || '').localeCompare(b.heure_messe || '');
+        });
+        itemsTries.forEach(item => {
             groupDiv.appendChild(buildIntentionCard(item));
             mailsData[item.id] = { texte: genererTexteMail(item), email: item.email_donateur || '' };
             if (item.statut === 'en_attente' || item.en_edition) {
@@ -782,6 +832,9 @@ function buildIntentionCard(item) {
 
     const dateObj = new Date(item.date_messe + 'T00:00:00');
     const dateFr  = dateObj.toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+    const heureFr = item.heure_messe
+        ? item.heure_messe.replace(':','h').replace(/h(\d)$/,'h0$1')
+        : '';
     const statutLabel = estEnCours ? 'En attente' : (item.statut === 'valide' ? 'Confirmée' : 'Refusée');
 
     // Type
@@ -804,7 +857,7 @@ function buildIntentionCard(item) {
     let bodyHTML = `
         <div class="int-card-body">
             <div class="int-card-top">
-                <span class="int-date">${dateFr}</span>
+                <span class="int-date">${dateFr}${heureFr ? '<span class="int-heure"> · ' + heureFr + '</span>' : ''}</span>
                 <span class="int-statut ${statutCls}">${statutLabel}</span>
             </div>
             <div class="int-nom">
@@ -816,6 +869,7 @@ function buildIntentionCard(item) {
                 <span class="int-meta-dot"></span>
                 <span>${escH(item.email_donateur||'')}</span>
             </div>
+            ${!estEnCours && item.pretre_id ? `<div class="int-pretre">✝ ${escH(PRETRES[item.pretre_id] || item.pretre_id)}</div>` : ''}
             <span class="int-type ${tc}">
                 <span class="int-type-dot" style="background:${dotColor}"></span>
                 ${escH(item.type_intention)}
@@ -1174,6 +1228,30 @@ async function lancerAction(action) {
 }
 
 window.onload = chargerDemandes;
+
+// ── Raccourci / pour la recherche ────────────────────────
+document.addEventListener('keydown', e => {
+    if (e.key === '/' && !e.target.matches('input,textarea,select')) {
+        e.preventDefault();
+        const searchInput = document.getElementById('search-input') ||
+                            document.querySelector('input[type="search"]') ||
+                            document.querySelector('input[placeholder*="echerche"]');
+        if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+        }
+    }
+    if (e.key === 'Escape') {
+        const searchInput = document.getElementById('search-input') ||
+                            document.querySelector('input[placeholder*="echerche"]');
+        if (searchInput && document.activeElement === searchInput) {
+            searchInput.value = '';
+            searchInput.blur();
+            renderIntentions('');
+        }
+    }
+});
+
 </script>
 </body>
 </html>
