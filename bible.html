@@ -531,18 +531,6 @@
         .drag-ghost         { background: var(--vellum-light); border-color: var(--gold); }
     }
 
-    /* ── Boutons taille de police ─────────────────────── */
-    .font-size-btns {
-        display: flex; gap: 4px; align-items: center; margin-right: 4px;
-    }
-    .font-btn {
-        background: none; border: 1px solid rgba(255,255,255,.15);
-        border-radius: 4px; color: var(--ink-soft);
-        font-family: 'Cinzel', serif; font-size: .6rem;
-        padding: 4px 8px; cursor: pointer; line-height: 1;
-        transition: all .15s; min-width: 32px;
-    }
-    .font-btn:hover { border-color: var(--gold); color: var(--gold); }
 
     /* ── Verset surligné (recherche par référence) ─────── */
     .verset-highlight {
@@ -619,10 +607,6 @@
                 <div class="bible-breadcrumb-book" id="breadcrumb-book">Choisissez un livre</div>
             </div>
             <!-- Boutons taille de police -->
-            <div class="font-size-btns" id="font-size-btns">
-                <button class="font-btn" onclick="changerPolice(-1)" title="Réduire">A−</button>
-                <button class="font-btn" onclick="changerPolice(1)"  title="Agrandir">A+</button>
-            </div>
             <div class="font-size-btns">
                 <button class="font-btn" onclick="changerPolice(-1)" title="Réduire">A−</button>
                 <button class="font-btn" onclick="changerPolice(1)"  title="Agrandir">A+</button>
