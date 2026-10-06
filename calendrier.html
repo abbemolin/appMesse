@@ -435,6 +435,7 @@ let _jourSel  = null;
 let _gcalEvents  = [];
 let _intentions  = [];
 let _ordoCache   = {};
+let _gcalCache   = {}; // cache par mois : clé = 'YYYY-MM'
 
 // ── Utilitaires ───────────────────────────────────────────
 const PRETRES = {
@@ -503,10 +504,19 @@ function messesduJour(iso) {
 }
 
 function intentionDuJour(googleId, iso, heure) {
+    // 1. Match exact par google_event_id (le plus fiable)
+    const byId = _intentions.find(i => i.google_event_id === googleId);
+    if (byId) return byId;
+
+    // 2. Pour les messes privées : match par google_event_id préfixe 'prive_' + date
+    if (googleId && googleId.startsWith('prive_')) return null; // déjà géré par byId
+
+    // 3. Fallback par date + heure (messes récurrentes dont l'ID varie)
     return _intentions.find(i =>
-        i.google_event_id === googleId ||
-        (i.date_messe === iso && i.heure_messe === heure &&
-         (i.statut === 'valide' || i.statut === 'en_attente' || i.en_edition))
+        i.date_messe === iso &&
+        i.heure_messe === heure &&
+        !i.google_event_id?.startsWith('prive_') && // exclure les privées
+        (i.statut === 'valide' || i.statut === 'en_attente' || i.en_edition)
     ) || null;
 }
 
@@ -718,30 +728,80 @@ function changerMois(delta) {
 }
 
 // ── Chargement données ────────────────────────────────────
+function showSpinner(show) {
+    let sp = document.getElementById('cal-spinner');
+    if (!sp) {
+        sp = document.createElement('div');
+        sp.id = 'cal-spinner';
+        sp.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+            z-index:500;background:rgba(26,17,8,.85);border-radius:50%;
+            width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+            font-size:1.2rem;`;
+        sp.textContent = '⏳';
+        document.body.appendChild(sp);
+    }
+    sp.style.display = show ? 'flex' : 'none';
+}
+
 async function chargerMois() {
     if (typeof maConnexion === 'undefined') { setTimeout(chargerMois, 300); return; }
 
-    // Fenêtre = mois affiché uniquement (+ 1 jour de marge de chaque côté)
-    const tMin = new Date(_annee, _mois, 1).toISOString();
-    const tMax = new Date(_annee, _mois + 1, 1).toISOString();
+    const moisKey = `${_annee}-${String(_mois+1).padStart(2,'0')}`;
+
+    // Spinner visible
+    showSpinner(true);
 
     try {
-        const [gcalResp, { data }] = await Promise.all([
-            fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
+        // Cache GCal : ne re-requêter que si le mois n'est pas déjà chargé
+        if (!_gcalCache[moisKey]) {
+            const tMin = new Date(_annee, _mois, 1).toISOString();
+            const tMax = new Date(_annee, _mois + 1, 1).toISOString();
+            const gcalResp = await fetch(
+                `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
                 + `?key=${GOOGLE_API_KEY}`
                 + `&timeMin=${tMin}&timeMax=${tMax}`
-                + `&singleEvents=true&orderBy=startTime&maxResults=250`),
-            maConnexion.from('intentions').select('*').order('date_messe', { ascending: true })
-        ]);
+                + `&singleEvents=true&orderBy=startTime&maxResults=250`
+            );
+            const gcalData = await gcalResp.json();
+            _gcalCache[moisKey] = gcalData.items || [];
+        }
+        _gcalEvents = _gcalCache[moisKey];
 
-        const gcalData = await gcalResp.json();
-        _gcalEvents = gcalData.items || [];
+        // Supabase : toujours frais (intentions peuvent changer)
+        const { data } = await maConnexion
+            .from('intentions').select('*')
+            .order('date_messe', { ascending: true });
         _intentions = data || [];
 
         renderCalendrier();
         if (_jourSel) renderDetail(_jourSel);
     } catch(e) {
         console.error('Erreur chargement:', e);
+    } finally {
+        showSpinner(false);
+    }
+
+    // Précharger les mois adjacents en arrière-plan
+    setTimeout(() => prechargerAdjacents(), 500);
+}
+
+async function prechargerAdjacents() {
+    for (const delta of [-1, 1]) {
+        const d = new Date(_annee, _mois + delta, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        if (_gcalCache[key]) continue;
+        const tMin = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
+        const tMax = new Date(d.getFullYear(), d.getMonth() + 1, 1).toISOString();
+        try {
+            const resp = await fetch(
+                `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
+                + `?key=${GOOGLE_API_KEY}`
+                + `&timeMin=${tMin}&timeMax=${tMax}`
+                + `&singleEvents=true&orderBy=startTime&maxResults=250`
+            );
+            const data = await resp.json();
+            _gcalCache[key] = data.items || [];
+        } catch(e) { /* silencieux */ }
     }
 }
 
@@ -771,7 +831,14 @@ function ouvrirModal(dateISO, dateFr, googleId, heure) {
 }
 
 function ouvrirModalLibre() {
-    ouvrirModal(_jourSel || isoLocal(new Date()), '', 'libre', '');
+    // Utiliser le jour sélectionné, sinon aujourd'hui
+    const iso = _jourSel || isoLocal(new Date());
+    // Si pas de jour sélectionné, le sélectionner visuellement
+    if (!_jourSel) {
+        _jourSel = iso;
+        renderCalendrier();
+    }
+    ouvrirModal(iso, '', 'libre', '');
 }
 
 function ouvrirModalModif(supaId) {
