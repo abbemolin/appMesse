@@ -879,10 +879,45 @@ async function lancerRechercheModale() {
 
         // Chercher le livre correspondant (recherche floue sur le nom)
         const allLivres = [...Object.values(CANON.AT), ...Object.values(CANON.NT)].flat();
-        const livreFound = allLivres.find(l =>
-            l.toLowerCase().startsWith(livreQ.toLowerCase()) ||
-            l.toLowerCase().replace(/é/g,'e').startsWith(livreQ.toLowerCase().replace(/é/g,'e'))
-        );
+        // Table d'abréviations → noms complets du CANON
+        const ABBREV_MAP = {
+            'gn':'Genèse','ex':'Exode','lv':'Lévitique','nb':'Nombres','dt':'Deutéronome',
+            'jos':'Josué','jg':'Juges','rt':'Ruth',
+            '1s':'1 Samuel','2s':'2 Samuel','1r':'1 Rois','2r':'2 Rois',
+            '1ch':'1 Chroniques','2ch':'2 Chroniques',
+            'esd':'Esdras','ne':'Néhémie','tb':'Tobie','jdt':'Judith','est':'Esther',
+            '1m':'1 Maccabées','2m':'2 Maccabées',
+            'jb':'Job','ps':'Psaumes','pr':'Proverbes','qo':'Ecclésiaste',
+            'ct':'Cantique','sg':'Sagesse','si':'Siracide',
+            'is':'Isaïe','jr':'Jérémie','lm':'Lamentations','ba':'Baruch',
+            'ez':'Ézéchiel','dn':'Daniel','os':'Osée','jl':'Joël','am':'Amos',
+            'ab':'Abdias','jon':'Jonas','mi':'Michée','na':'Nahoum',
+            'ha':'Habacuc','so':'Sophonie','ag':'Aggée','za':'Zacharie','ml':'Malachie',
+            'mt':'Matthieu','mc':'Marc','lc':'Luc','jn':'Jean',
+            'ac':'Actes','rm':'Romains',
+            '1co':'1 Corinthiens','2co':'2 Corinthiens',
+            'ga':'Galates','ep':'Éphésiens','ph':'Philippiens','col':'Colossiens',
+            '1th':'1 Thessaloniciens','2th':'2 Thessaloniciens',
+            '1tm':'1 Timothée','2tm':'2 Timothée','tt':'Tite','phm':'Philémon',
+            'he':'Hébreux','jc':'Jacques',
+            '1p':'1 Pierre','2p':'2 Pierre',
+            '1jn':'1 Jean','2jn':'2 Jean','3jn':'3 Jean',
+            'jude':'Jude','ap':'Apocalypse',
+        };
+
+        const livreQLower = livreQ.toLowerCase().replace(/\./g,'')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+
+        // 1. Chercher via table d'abréviations
+        const fromAbbrev = ABBREV_MAP[livreQLower];
+
+        // 2. Sinon chercher par début de nom dans CANON
+        const livreFound = fromAbbrev
+            ? allLivres.find(l => l === fromAbbrev)
+            : allLivres.find(l => {
+                const ln = l.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+                return ln.startsWith(livreQLower);
+              });
 
         if (livreFound) {
             hint.textContent = `Référence : ${livreFound} ${chapQ}${versQ ? ', ' + versQ : ''}`;
