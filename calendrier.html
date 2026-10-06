@@ -482,10 +482,25 @@ function getOrdo(iso) {
 
 // ── Données pour un jour ──────────────────────────────────
 function messesduJour(iso) {
-    return _gcalEvents.filter(e => {
+    // Messes Google Calendar
+    const gcalMesses = _gcalEvents.filter(e => {
         const start = e.start.dateTime || e.start.date;
         return start.startsWith(iso) && /^(messe|grand.?messe)/i.test((e.summary||'').trim());
     });
+
+    // Messes privées enregistrées dans Supabase
+    const privees = _intentions.filter(i =>
+        i.date_messe === iso &&
+        i.google_event_id && i.google_event_id.startsWith('prive_')
+    ).map(i => ({
+        id:      i.google_event_id,
+        summary: 'Messe privée',
+        start:   { dateTime: iso + 'T' + (i.heure_messe || '09:00').replace('h',':') + ':00' },
+        _prive:  true,
+    }));
+
+    return [...gcalMesses, ...privees];
+});
 }
 
 function intentionDuJour(googleId, iso, heure) {
