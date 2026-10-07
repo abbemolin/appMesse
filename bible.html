@@ -1161,6 +1161,26 @@ function escH(s) {
 
 
 
+
+// ── Commentaires Fillion ──────────────────────────────────
+function ouvrirCommentaire(versetNum) {
+    const texte = (window._commsChap || {})[versetNum];
+    if (!texte) return;
+    document.getElementById('comm-titre').textContent =
+        `${_livreActif} ${_chapActif}, ${versetNum}`;
+    document.getElementById('comm-texte').textContent = texte;
+    document.getElementById('modal-commentaire').style.display = 'flex';
+}
+
+function fermerCommentaire() {
+    document.getElementById('modal-commentaire').style.display = 'none';
+}
+
+document.getElementById('modal-commentaire').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-commentaire'))
+        fermerCommentaire();
+});
+
 </script>
 
 <!-- ── Modale Commentaire Fillion ── -->
