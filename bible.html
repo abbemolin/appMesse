@@ -1169,7 +1169,9 @@ function init() {
     };
     if (typeof maConnexion !== 'undefined') { db = maConnexion; ready(); }
     else { const t = setInterval(() => { if (initDB()) { clearInterval(t); ready(); }}, 200); }
-})();
+}
+
+init();
 
 
 
