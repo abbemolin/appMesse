@@ -1041,8 +1041,8 @@ function escH(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── Démarrage ──────────────────────────────────────────────
-(function ouvrirCommentaire(versetNum) {
+// ── Commentaires Fillion ──────────────────────────────────
+function ouvrirCommentaire(versetNum) {
     const texte = (window._commsChap || {})[versetNum];
     if (!texte) return;
     document.getElementById('comm-titre').textContent = _livreActif + ' ' + _chapActif + ', ' + versetNum;
@@ -1052,6 +1052,8 @@ function escH(s) {
 function fermerCommentaire() {
     document.getElementById('modal-commentaire').style.display = 'none';
 }
+
+// ── Démarrage ──────────────────────────────────────────────
 function init() {
     const ready = () => {
         renderSidebarBooks();
