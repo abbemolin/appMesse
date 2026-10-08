@@ -851,26 +851,24 @@ async function chargerChapitre(chap, dir) {
 
     // Déclencher l'entrée au prochain frame
     if (dir) {
-        requestAnimationFrame// ── Commentaires Fillion (fonctions globales) ────────────
+        requestAnimationFrame(() => {
+            newInner.classList.remove('swipe-entering-left', 'swipe-entering-right');
+            newInner.classList.add('swipe-entered');
+        });
+    }
+}
+
+// ── Commentaires Fillion ──────────────────────────────────
 function ouvrirCommentaire(versetNum) {
     const texte = (window._commsChap || {})[versetNum];
     if (!texte) return;
     document.getElementById('comm-titre').textContent =
-        _livreActif + ' ' + _chapActif + ', ' + versetNum;
+        _livreActif + ' ' + _chapActif + ', ' + versetNum;
     document.getElementById('comm-texte').textContent = texte;
     document.getElementById('modal-commentaire').style.display = 'flex';
 }
 function fermerCommentaire() {
     document.getElementById('modal-commentaire').style.display = 'none';
-}
-
-(() => {
-            requestAnimationFrame(() => {
-                newInner.classList.remove('swipe-entering-left', 'swipe-entering-right');
-                newInner.classList.add('swipe-entered');
-            });
-        });
-    }
 }
 
 function actualiserBoutonsChapitre() {
