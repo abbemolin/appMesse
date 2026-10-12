@@ -361,6 +361,11 @@
         letter-spacing: .14em; color: var(--gold); display: block; margin-bottom: 6px;
         text-transform: uppercase;
     }
+    .h-chip-prive {
+        border-color: var(--gold); color: var(--gold);
+        font-style: italic; opacity: .75;
+    }
+    .h-chip-prive:hover { opacity: 1; background: rgba(201,168,64,.08); }
 
     /* Boutons d'action */
     .int-btns {
@@ -1035,8 +1040,23 @@ async function refreshTimeChoices(id, selectedHeure='') {
         if (pris) return `<div class="h-chip taken" title="Déjà réservé">🔒 ${timeStr}</div>`;
         const active = selectedHeure && selectedHeure.replace(':','h')===timeStr ? ' active' : '';
         return `<div class="h-chip${active}" onclick="selectChip(this,'${id}')">${timeStr}</div>`;
-    }).join('');
-    container.querySelectorAll('.h-chip:not(.taken)').forEach((c,i) => { if(!selectedHeure && i===0) selectChip(c,id); });
+    }).join('')
+    + `<div class="h-chip h-chip-prive" onclick="activerModePrivee('${id}')" title="Messe privée à horaire libre">+ Privée</div>`;
+    container.querySelectorAll('.h-chip:not(.taken):not(.h-chip-prive)').forEach((c,i) => { if(!selectedHeure && i===0) selectChip(c,id); });
+}
+
+function activerModePrivee(id) {
+    const container = document.getElementById(`times-${id}`);
+    const inputDate = document.getElementById(`d-${id}`).value;
+    const selectedHeure = intentionsGlobal.find(i => String(i.id)===String(id))?.heure_messe || '';
+    let h = '09:00';
+    if (selectedHeure && /^\d{2}:\d{2}$/.test(selectedHeure)) h = selectedHeure;
+    container.innerHTML = `<span class="h-chip-private-label">Messe privée — aucun créneau</span>
+        <input type="time" id="heure-privee-${id}" value="${h}"
+            style="width:auto;padding:8px 12px;border:2px solid var(--gold);border-radius:3px;
+            font-family:'Cinzel',serif;font-size:.9rem;background:var(--vellum-light);color:var(--ink);">
+        <div class="h-chip h-chip-prive" onclick="refreshTimeChoices('${id}')" title="Revenir aux créneaux">↩ Créneaux</div>`;
+    container.dataset.privee = 'true';
 }
 
 function selectChip(el, id) {
