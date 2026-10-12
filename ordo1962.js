@@ -1714,6 +1714,9 @@ if (typeof module !== 'undefined') module.exports = Ordo1962;
   "10-21": [
     "sanctoral/10/21"
   ],
+  "10-22": [
+    "sanctoral/10/22"
+  ],
   "10-23": [
     "sanctoral/10/23"
   ],
@@ -1800,6 +1803,9 @@ if (typeof module !== 'undefined') module.exports = Ordo1962;
   ],
   "11-30": [
     "sanctoral/11/30"
+  ],
+  "12-01": [
+    "sanctoral/12/1"
   ],
   "12-02": [
     "sanctoral/12/2"
