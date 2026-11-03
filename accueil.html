@@ -419,7 +419,7 @@
     </div>
 
     <!-- Bouton installer l'app -->
-    <div id="install-wrap" style="display:none;text-align:center;margin:20px 0 8px;">
+    <div id="install-wrap" style="text-align:center;margin:20px 0 8px;">
         <button id="install-btn" onclick="installerApp()"
             style="background:none;border:1px solid rgba(184,150,42,.25);border-radius:20px;
             padding:7px 18px;font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.16em;
@@ -735,9 +735,14 @@ window.addEventListener('appinstalled', () => {
     _installPrompt = null;
 });
 function installerApp() {
-    if (!_installPrompt) return;
-    _installPrompt.prompt();
-    _installPrompt.userChoice.then(() => { _installPrompt = null; });
+    if (_installPrompt) {
+        _installPrompt.prompt();
+        _installPrompt.userChoice.then(() => { _installPrompt = null; });
+    } else {
+        // Fallback : instructions manuelles Chrome
+        AppModal.alert('📲', 'Installer l\'application',
+            'Dans Chrome, appuyez sur ⋮ (menu en haut à droite) puis « Ajouter à l\'écran d\'accueil ».');
+    }
 }
 
 // ── Ajouter style pulse ───────────────────────────────────
