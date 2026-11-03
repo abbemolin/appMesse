@@ -318,6 +318,35 @@
         .section-sep-line { background: var(--border-soft); }
     }
     
+    /* ════════════════════════════════════════════════════════
+       PROCHAINES INTENTIONS — cartes compactes
+    ════════════════════════════════════════════════════════ */
+    .pi-card {
+        background: var(--vellum-light);
+        border: 1px solid var(--border-soft);
+        border-radius: 3px;
+        margin-bottom: 6px;
+        overflow: hidden;
+        box-shadow: 0 1px 4px var(--shadow);
+    }
+    .pi-card-day {
+        font-family: 'Cinzel', serif; font-size: .48rem;
+        letter-spacing: .16em; text-transform: uppercase;
+        color: var(--rubric); padding: 5px 8px 0;
+        display: block;
+    }
+    .pi-card-heure {
+        font-family: 'Cinzel', serif; font-size: .82rem; font-weight: 700;
+        color: var(--rubric); padding: 0 8px 2px;
+        display: block; line-height: 1.1;
+    }
+    .pi-card-nom {
+        font-family: 'Cinzel', serif; font-size: .72rem;
+        color: var(--ink); padding: 2px 8px 6px;
+        display: block; line-height: 1.3;
+    }
+    .pi-card-sep { height: 1px; background: var(--border-soft); }
+
     /* ── Bandeau hors ligne ────────────────────────────────── */
     #offline-banner {
         display: none; position: fixed; top: 0; left: 0; right: 0;
@@ -415,6 +444,33 @@
         <div class="no-messe-card">
             <span class="no-messe-icon">✦</span>
             <span class="no-messe-label">Chargement…</span>
+        </div>
+    </div>
+
+    <!-- Section prochaines intentions -->
+    <div class="section-sep" style="margin-top:24px;">
+        <div class="section-sep-line"></div>
+        <span class="section-sep-label">✝ Prochaines intentions</span>
+        <div class="section-sep-line"></div>
+    </div>
+
+    <div id="prochaines-intentions">
+        <!-- deux colonnes côte à côte -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+                <div style="font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;
+                    color:var(--gold);text-align:center;margin-bottom:8px;opacity:.8;">Abbé Molin</div>
+                <div id="pi-molin"><div class="no-messe-card" style="padding:16px 10px;">
+                    <span class="no-messe-label" style="font-size:.82rem;">Chargement…</span>
+                </div></div>
+            </div>
+            <div>
+                <div style="font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;
+                    color:var(--gold);text-align:center;margin-bottom:8px;opacity:.8;">Abbé Le Gall</div>
+                <div id="pi-legall"><div class="no-messe-card" style="padding:16px 10px;">
+                    <span class="no-messe-label" style="font-size:.82rem;">Chargement…</span>
+                </div></div>
+            </div>
         </div>
     </div>
 </main>
@@ -677,6 +733,45 @@ function ouvrirAttribution(isoDate, googleId, heure) {
     window.location.href = 'calendrier.html?' + params.toString();
 }
 
+// ── Prochaines intentions (7 jours glissants) ─────────────
+const JOURS_COURTS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const MOIS_COURTS  = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+
+async function chargerProchainesIntentions() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const in7   = new Date(today); in7.setDate(in7.getDate() + 7);
+
+    const { data } = await maConnexion.from('intentions')
+        .select('date_messe,heure_messe,nom_intention,pretre_id,statut')
+        .eq('statut','valide')
+        .gte('date_messe', isoLocal(today))
+        .lte('date_messe', isoLocal(in7))
+        .order('date_messe').order('heure_messe');
+
+    const intentionsMolin  = (data||[]).filter(i => i.pretre_id === 'molin');
+    const intentionsLegall = (data||[]).filter(i => i.pretre_id === 'legall');
+
+    function renderColonne(intentions) {
+        if (!intentions.length) return `<div class="no-messe-card" style="padding:16px 10px;text-align:center;">
+            <span class="no-messe-label" style="font-size:.82rem;font-style:italic;">Aucune intention</span>
+        </div>`;
+        return intentions.map(i => {
+            const d = new Date(i.date_messe + 'T12:00:00');
+            const jourLabel = JOURS_COURTS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS_COURTS[d.getMonth()];
+            const heure = (i.heure_messe||'').replace(':','h').substring(0,5) || '—';
+            return `<div class="pi-card">
+                <span class="pi-card-day">${jourLabel}</span>
+                <span class="pi-card-heure">${heure}</span>
+                <div class="pi-card-sep"></div>
+                <span class="pi-card-nom">${escH(i.nom_intention||'')}</span>
+            </div>`;
+        }).join('');
+    }
+
+    document.getElementById('pi-molin').innerHTML  = renderColonne(intentionsMolin);
+    document.getElementById('pi-legall').innerHTML = renderColonne(intentionsLegall);
+}
+
 // ── Init ──────────────────────────────────────────────────
 async function initDashboard() {
     if (typeof maConnexion === 'undefined') { setTimeout(initDashboard, 300); return; }
@@ -686,6 +781,7 @@ async function initDashboard() {
         document.getElementById('conn-error').classList.remove('visible');
         countPendingIntentions();
         chargerJour();
+        chargerProchainesIntentions();
     } catch {
         document.getElementById('conn-error').classList.add('visible');
         document.getElementById('pending-text').textContent = 'Erreur de connexion';
@@ -706,7 +802,7 @@ window.onload = () => {
     afficherDateHero(dateNaviguee());
     initDashboard();
     demanderPermissionNotification();
-    setInterval(() => { countPendingIntentions(); chargerJour(); }, 5*60*1000);
+    setInterval(() => { countPendingIntentions(); chargerJour(); chargerProchainesIntentions(); }, 5*60*1000);
 };
 
 // ── Ajouter style pulse ───────────────────────────────────
