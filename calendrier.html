@@ -946,27 +946,33 @@ async function enregistrerIntention() {
     if (!nom_intention) { alert('Veuillez indiquer une intention.'); return; }
     if (!date_messe)    { alert('Veuillez indiquer une date.'); return; }
 
-    const payload = {
-        date_messe, google_event_id,
-        heure_messe:    heure_brute,
-        nom_intention,
-        type_intention: document.getElementById('type_intention').value,
-        nom_donateur:   document.getElementById('nom_donateur').value.trim() || 'Paroisse',
-        commentaire:    document.getElementById('commentaire').value.trim(),
-        statut:         'valide',
-        email_donateur: 'non@renseigne.fr',
-        mail_envoye:    true,
-        pretre_id,
-    };
-
     let error;
     if (supaId) {
-        // Modification : UPDATE direct par id
-        ({ error } = await maConnexion.from('intentions').update(payload).eq('id', supaId));
+        // Modification : UPDATE direct par id — ne pas toucher google_event_id
+        ({ error } = await maConnexion.from('intentions').update({
+            date_messe,
+            heure_messe:    heure_brute,
+            nom_intention,
+            type_intention: document.getElementById('type_intention').value,
+            nom_donateur:   document.getElementById('nom_donateur').value.trim() || 'Paroisse',
+            commentaire:    document.getElementById('commentaire').value.trim(),
+            statut:         'valide',
+            pretre_id,
+        }).eq('id', supaId));
     } else {
         // Création : upsert sur google_event_id
-        ({ error } = await maConnexion.from('intentions').upsert([payload],
-            { onConflict: 'google_event_id', ignoreDuplicates: false }));
+        ({ error } = await maConnexion.from('intentions').upsert([{
+            date_messe, google_event_id,
+            heure_messe:    heure_brute,
+            nom_intention,
+            type_intention: document.getElementById('type_intention').value,
+            nom_donateur:   document.getElementById('nom_donateur').value.trim() || 'Paroisse',
+            commentaire:    document.getElementById('commentaire').value.trim(),
+            statut:         'valide',
+            email_donateur: 'non@renseigne.fr',
+            mail_envoye:    true,
+            pretre_id,
+        }], { onConflict: 'google_event_id', ignoreDuplicates: false }));
     }
 
     if (error) { alert('Erreur : ' + error.message); return; }
