@@ -418,6 +418,19 @@
         </div>
     </div>
 
+    <!-- Bouton installer l'app -->
+    <div id="install-wrap" style="display:none;text-align:center;margin:20px 0 8px;">
+        <button id="install-btn" onclick="installerApp()"
+            style="background:none;border:1px solid rgba(184,150,42,.25);border-radius:20px;
+            padding:7px 18px;font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.16em;
+            text-transform:uppercase;color:rgba(184,150,42,.55);cursor:pointer;
+            transition:all .2s;"
+            onmouseover="this.style.borderColor='rgba(184,150,42,.6)';this.style.color='rgba(184,150,42,.9)'"
+            onmouseout="this.style.borderColor='rgba(184,150,42,.25)';this.style.color='rgba(184,150,42,.55)'">
+            ⬇ Installer l'application
+        </button>
+    </div>
+
 </main>
 
 <div id="toast" class="toast"></div>
@@ -709,6 +722,23 @@ window.onload = () => {
     demanderPermissionNotification();
     setInterval(() => { countPendingIntentions(); chargerJour(); }, 5*60*1000);
 };
+
+// ── Installer l'app (PWA) ─────────────────────────────────
+let _installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _installPrompt = e;
+    document.getElementById('install-wrap').style.display = 'block';
+});
+window.addEventListener('appinstalled', () => {
+    document.getElementById('install-wrap').style.display = 'none';
+    _installPrompt = null;
+});
+function installerApp() {
+    if (!_installPrompt) return;
+    _installPrompt.prompt();
+    _installPrompt.userChoice.then(() => { _installPrompt = null; });
+}
 
 // ── Ajouter style pulse ───────────────────────────────────
 const st = document.createElement('style');
