@@ -738,11 +738,28 @@ function installerApp() {
     if (_installPrompt) {
         _installPrompt.prompt();
         _installPrompt.userChoice.then(() => { _installPrompt = null; });
-    } else {
-        // Fallback : instructions manuelles Chrome
-        AppModal.alert('📲', 'Installer l\'application',
-            'Dans Chrome, appuyez sur ⋮ (menu en haut à droite) puis « Ajouter à l\'écran d\'accueil ».');
+        return;
     }
+    // Détection navigateur/OS pour instructions adaptées
+    const ua = navigator.userAgent;
+    const isIOS     = /iphone|ipad|ipod/i.test(ua);
+    const isSafari  = /safari/i.test(ua) && !/chrome/i.test(ua);
+    const isFirefox = /firefox/i.test(ua);
+    const isSamsungBrowser = /samsungbrowser/i.test(ua);
+
+    let msg;
+    if (isIOS && isSafari) {
+        msg = 'Sur Safari iOS : appuyez sur le bouton Partager ⬆ en bas, puis « Sur l\'écran d\'accueil ».';
+    } else if (isIOS) {
+        msg = 'Sur iOS : ouvrez cette page dans Safari, appuyez sur ⬆ Partager, puis « Sur l\'écran d\'accueil ».';
+    } else if (isFirefox) {
+        msg = 'Sur Firefox : appuyez sur ⋮ (menu), puis « Installer » ou « Ajouter à l\'écran d\'accueil ».';
+    } else if (isSamsungBrowser) {
+        msg = 'Sur Samsung Internet : appuyez sur ☰ (menu), puis « Ajouter page à » → « Écran d\'accueil ».';
+    } else {
+        msg = 'Appuyez sur le menu de votre navigateur (⋮ ou ☰), puis « Ajouter à l\'écran d\'accueil » ou « Installer ».';
+    }
+    AppModal.alert('📲', 'Installer l\'application', msg);
 }
 
 // ── Ajouter style pulse ───────────────────────────────────
