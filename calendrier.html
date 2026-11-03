@@ -443,12 +443,29 @@ const PRETRES = {
     'legall': '✝ Abbé Le Gall',
 };
 
+// Horaires habituels par abbé : [heure par jour 0=dim..6=sam]
+const HORAIRES_ABBE = {
+    molin:  { 2: '18:30', 3: '18:30', 5: '12:15', 6: '17:00' }, // mar, mer, ven, sam
+    legall: { 3: '12:15', 4: '18:30', 5: '18:30', 6: '09:00' }, // mer, jeu, ven, sam
+};
 function selectAbbe(id) {
     document.getElementById('input-pretre').value = id;
     ['molin','legall'].forEach(a => {
         const btn = document.getElementById('chip-'+a);
         if (btn) btn.classList.toggle('actif', a === id);
     });
+    // Pré-remplir l'heure selon l'abbé et le jour si le champ est visible
+    const libreHeure = document.getElementById('libre-heure');
+    const libreDate  = document.getElementById('libre-date');
+    const dateHeurDiv = document.getElementById('libre-date-heure');
+    if (libreHeure && libreDate && dateHeurDiv && dateHeurDiv.style.display !== 'none') {
+        const iso = libreDate.value || document.getElementById('input-date-iso').value;
+        if (iso) {
+            const jour = new Date(iso + 'T12:00:00').getDay();
+            const heure = (HORAIRES_ABBE[id] || {})[jour];
+            if (heure) libreHeure.value = heure;
+        }
+    }
 }
 function pretreLabel(id) {
     return PRETRES[id] || (id ? '✝ ' + id : '');
@@ -859,9 +876,12 @@ function ouvrirModalModif(supaId) {
     if (!intent) { console.warn('Intention non trouvée, supaId:', supaId); return; }
 
     document.getElementById('input-date-iso').value   = intent.date_messe;
-    document.getElementById('input-google-id').value  = intent.google_event_id || 'libre';
-    document.getElementById('input-heure').value      = intent.heure_messe || '';
-    document.getElementById('libre-date-heure').style.display = 'none';
+    document.getElementById('input-google-id').value  = intent.google_event_id || '';
+    document.getElementById('input-heure').value      = '';
+    // Toujours afficher date + heure pour permettre la modification
+    document.getElementById('libre-date-heure').style.display = 'flex';
+    document.getElementById('libre-date').value       = intent.date_messe;
+    document.getElementById('libre-heure').value      = (intent.heure_messe || '09:00').replace('h',':');
     document.getElementById('nom_intention').value    = intent.nom_intention || '';
     document.getElementById('nom_donateur').value     = intent.nom_donateur || '';
     document.getElementById('commentaire').value      = intent.commentaire || '';
@@ -913,10 +933,11 @@ async function enregistrerIntention() {
     let heure_brute       = document.getElementById('input-heure').value.replace('h',':');
     const pretre_id       = document.getElementById('input-pretre').value || 'molin';
 
-    if (!date_messe || google_event_id === 'libre') {
-        date_messe  = document.getElementById('libre-date').value;
-        heure_brute = document.getElementById('libre-heure').value;
-    }
+    // Toujours prendre date et heure depuis les champs visibles si disponibles
+    const libreDate  = document.getElementById('libre-date').value;
+    const libreHeure = document.getElementById('libre-heure').value;
+    if (libreDate)  date_messe  = libreDate;
+    if (libreHeure) heure_brute = libreHeure;
     if (!nom_intention) { alert('Veuillez indiquer une intention.'); return; }
     if (!date_messe)    { alert('Veuillez indiquer une date.'); return; }
 
