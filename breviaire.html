@@ -706,15 +706,15 @@ function jouer(evts, decalage, bouton) {
     const ctx = _audio = new Ctx();
     _boutonSon = bouton;
     bouton.textContent = '■ Arrêter';
-    // Son d'orgue doux : jeu de flûte (fondamentale et quelques harmoniques), filtré
-    const reel = new Float32Array(7);
-    const imag = new Float32Array([0, 1, .42, .2, .1, .05, .025]);
+    // Son d'orgue très doux : presque uniquement la fondamentale, filtrée, attaque lente
+    const reel = new Float32Array(4);
+    const imag = new Float32Array([0, 1, .12, .03]);
     const onde = ctx.createPeriodicWave(reel, imag);
     const filtre = ctx.createBiquadFilter();
     filtre.type = 'lowpass';
-    filtre.frequency.value = 2200;
+    filtre.frequency.value = 1000;
     filtre.connect(ctx.destination);
-    const VOLUME = .13, ATTAQUE = .05, RELACHE = .09;
+    const VOLUME = .1, ATTAQUE = .1, RELACHE = .18;
     let t = ctx.currentTime + .08;
     for (const e of evts) {
         const frequence = 440 * Math.pow(2, (e.hauteur + decalage - 69) / 12);
@@ -757,10 +757,10 @@ function plusProche(valeur, cibles) {
 // La teneur sonne toujours sur sol4 (392 Hz)
 const decalageTeneur = t => 67 - t;
 
-// Sans teneur (hymne, antienne sans psaume noté) : la note la plus haute vers ré5 ou mi5
+// Sans teneur (hymne, antienne sans psaume noté) : la note la plus haute vers si bémol4 ou do5
 function decalageTessiture(evts) {
     const haut = Math.max(...evts.map(e => e.hauteur));
-    return plusProche(haut + 48, [74, 76]) - haut;
+    return plusProche(haut + 48, [70, 72]) - haut;
 }
 
 function typePiece(el) {
