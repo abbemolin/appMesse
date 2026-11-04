@@ -1,0 +1,643 @@
+{
+ "lignes_csv": 20807,
+ "pieces": {
+  "pentecote-1": {
+   "cherche": "cum complerentur",
+   "trouves": [
+    {
+     "id": "17813",
+     "incipit": "Cum complerentur",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 319
+    },
+    {
+     "id": "19943",
+     "incipit": "Cum complerentur",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 0
+    }
+   ]
+  },
+  "pentecote-2": {
+   "cherche": "spiritus domini",
+   "trouves": [
+    {
+     "id": "3330",
+     "incipit": "Spiritus Domini",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 0
+    },
+    {
+     "id": "7284",
+     "incipit": "Spiritus Domini",
+     "sources": [],
+     "version": "Solesmes 2000",
+     "gabc_octets": 266
+    },
+    {
+     "id": "17814",
+     "incipit": "Spiritus Domini",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 263
+    },
+    {
+     "id": "20108",
+     "incipit": "Spiritus Domini (Ss. Rosarii)",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 239
+    },
+    {
+     "id": "12623",
+     "incipit": "Spiritus Domini replevit",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 0
+    },
+    {
+     "id": "14931",
+     "incipit": "Spiritus Domini replevit",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 609
+    },
+    {
+     "id": "2393",
+     "incipit": "Spiritus Domini replevit",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 0
+    },
+    {
+     "id": "12938",
+     "incipit": "Spiritus Domini replevit",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 0
+    },
+    {
+     "id": "3246",
+     "incipit": "Spiritus Domini replevit (Ant)"
+    },
+    {
+     "id": "4983",
+     "incipit": "Spiritus Domini replevit (I)"
+    },
+    {
+     "id": "6621",
+     "incipit": "Spiritus Domini replevit (II)"
+    },
+    {
+     "id": "11529",
+     "incipit": "Spiritus Domini super"
+    },
+    {
+     "id": "11659",
+     "incipit": "Spiritus Domini super"
+    },
+    {
+     "id": "4381",
+     "incipit": "Spiritus Domini super me"
+    },
+    {
+     "id": "7459",
+     "incipit": "Spiritus Domini super me"
+    },
+    {
+     "id": "4747",
+     "incipit": "Spiritus Domini super me"
+    },
+    {
+     "id": "11753",
+     "incipit": "Spiritus Domini super me"
+    }
+   ]
+  },
+  "pentecote-3": {
+   "cherche": "repleti sunt",
+   "trouves": [
+    {
+     "id": "17815",
+     "incipit": "Repleti sunt",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 277
+    },
+    {
+     "id": "3247",
+     "incipit": "Repleti sunt",
+     "sources": [],
+     "version": "Solesmes 1934",
+     "gabc_octets": 357
+    },
+    {
+     "id": "5332",
+     "incipit": "Repleti sunt",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 292
+    },
+    {
+     "id": "12054",
+     "incipit": "Repleti sunt omnes",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 0
+    },
+    {
+     "id": "14918",
+     "incipit": "Repleti sunt omnes",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 89
+    },
+    {
+     "id": "14961",
+     "incipit": "Repleti sunt omnes",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 624
+    },
+    {
+     "id": "7286",
+     "incipit": "Repleti sunt omnes",
+     "sources": [],
+     "version": "Solesmes 2000",
+     "gabc_octets": 306
+    },
+    {
+     "id": "2527",
+     "incipit": "Repleti sunt omnes",
+     "sources": [],
+     "version": "Solesmes 1961",
+     "gabc_octets": 0
+    }
+   ]
+  },
+  "pentecote-4": {
+   "cherche": "fontes et omnia",
+   "trouves": [
+    {
+     "id": "7004",
+     "incipit": "Fontes et omnia",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 302
+    },
+    {
+     "id": "3264",
+     "incipit": "Fontes et omnia",
+     "sources": [],
+     "version": "Solesmes 1934",
+     "gabc_octets": 369
+    },
+    {
+     "id": "14830",
+     "incipit": "Fontes et omnia",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 613
+    },
+    {
+     "id": "2550",
+     "incipit": "Fontes et omnia",
+     "sources": [],
+     "version": "Solesmes 1961",
+     "gabc_octets": 0
+    },
+    {
+     "id": "13306",
+     "incipit": "Fontes et omnia",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 0
+    }
+   ]
+  },
+  "pentecote-5": {
+   "cherche": "loquebantur",
+   "trouves": [
+    {
+     "id": "14850",
+     "incipit": "Loquebantur",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 677
+    },
+    {
+     "id": "6699",
+     "incipit": "Loquebantur",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 359
+    },
+    {
+     "id": "17816",
+     "incipit": "Loquebantur",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 349
+    },
+    {
+     "id": "2311",
+     "incipit": "Loquebantur (Ant.)",
+     "sources": [],
+     "version": "Solesmes 1961",
+     "gabc_octets": 0
+    },
+    {
+     "id": "3265",
+     "incipit": "Loquebantur (Ant.)",
+     "sources": [],
+     "version": "Solesmes 1934",
+     "gabc_octets": 461
+    },
+    {
+     "id": "12181",
+     "incipit": "Loquebantur variis",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 0
+    }
+   ]
+  },
+  "assomption-1": {
+   "cherche": "assumpta est maria",
+   "trouves": [
+    {
+     "id": "2561",
+     "incipit": "Assumpta est Maria",
+     "sources": [],
+     "version": "Solesmes 1961",
+     "gabc_octets": 0
+    },
+    {
+     "id": "3331",
+     "incipit": "Assumpta est Maria",
+     "sources": [],
+     "version": "Solesmes 1957",
+     "gabc_octets": 0
+    },
+    {
+     "id": "10565",
+     "incipit": "Assumpta est Maria",
+     "sources": [],
+     "version": "Solesmes 2000",
+     "gabc_octets": 399
+    },
+    {
+     "id": "3290",
+     "incipit": "Assumpta est Maria",
+     "sources": [],
+     "version": "Vatican, 1912",
+     "gabc_octets": 314
+    },
+    {
+     "id": "8931",
+     "incipit": "Assumpta est Maria",
+     "sources": [],
+     "version": "Solesmes 1934",
+     "gabc_octets": 367
+    },
+    {
+     "id": "11751",
+     "incipit": "Assumpta est Maria",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 313
+    },
+    {
+     "id": "13000",
+     "incipit": "Assumpta est Maria ... allel.",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 396
+    }
+   ]
+  },
+  "assomption-2": {
+   "cherche": "maria virgo assumpta",
+   "trouves": [
+    {
+     "id": "12535",
+     "incipit": "Maria Virgo assumpta",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 358
+    },
+    {
+     "id": "10566",
+     "incipit": "Maria Virgo assumpta est",
+     "sources": [],
+     "version": "Solesmes 2000",
+     "gabc_octets": 402
+    },
+    {
+     "id": "2912",
+     "incipit": "Maria Virgo assumpta est",
+     "sources": [],
+     "version": "Solesmes 1961",
+     "gabc_octets": 0
+    },
+    {
+     "id": "3294",
+     "incipit": "Maria Virgo assumpta est",
+     "sources": [],
+     "version": "Vatican, 1912",
+     "gabc_octets": 357
+    },
+    {
+     "id": "8932",
+     "incipit": "Maria Virgo assumpta est",
+     "sources": [],
+     "version": "Solesmes 1934",
+     "gabc_octets": 374
+    }
+   ]
+  },
+  "assomption-3": {
+   "cherche": "in odorem",
+   "trouves": [
+    {
+     "id": "2963",
+     "incipit": "In odorem",
+     "sources": [],
+     "version": "Solesmes 1961",
+     "gabc_octets": 0
+    },
+    {
+     "id": "5018",
+     "incipit": "In odorem",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 312
+    },
+    {
+     "id": "3295",
+     "incipit": "In odorem",
+     "sources": [],
+     "version": "Vatican, 1912",
+     "gabc_octets": 310
+    },
+    {
+     "id": "8933",
+     "incipit": "In odorem",
+     "sources": [],
+     "version": "Solesmes 1934",
+     "gabc_octets": 364
+    },
+    {
+     "id": "12490",
+     "incipit": "In odorem unguentorum",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 368
+    }
+   ]
+  },
+  "assomption-4": {
+   "cherche": "benedicta",
+   "trouves": [
+    {
+     "id": "19496",
+     "incipit": "Benedicta es tu",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 369
+    },
+    {
+     "id": "2370",
+     "incipit": "Benedicta es tu",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 0
+    },
+    {
+     "id": "4111",
+     "incipit": "Benedicta es tu (Ant)",
+     "sources": [],
+     "version": "Solesmes 1934",
+     "gabc_octets": 440
+    },
+    {
+     "id": "9992",
+     "incipit": "Benedicta es tu (II)",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 366
+    },
+    {
+     "id": "16158",
+     "incipit": "Benedicta es tu Virgo ",
+     "sources": [],
+     "version": "Solesmes 2020",
+     "gabc_octets": 330
+    },
+    {
+     "id": "13010",
+     "incipit": "Benedicta es tu Virgo",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 400
+    },
+    {
+     "id": "11760",
+     "incipit": "Benedicta es tu Virgo",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 400
+    },
+    {
+     "id": "18351",
+     "incipit": "Benedicta es tu...alleluia",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 408
+    },
+    {
+     "id": "10568",
+     "incipit": "Benedicta filia"
+    },
+    {
+     "id": "5488",
+     "incipit": "Benedicta filia"
+    },
+    {
+     "id": "2947",
+     "incipit": "Benedicta filia"
+    },
+    {
+     "id": "11181",
+     "incipit": "Benedicta filia"
+    },
+    {
+     "id": "3296",
+     "incipit": "Benedicta filia"
+    },
+    {
+     "id": "8934",
+     "incipit": "Benedicta filia"
+    },
+    {
+     "id": "12192",
+     "incipit": "Benedicta filia tu"
+    },
+    {
+     "id": "13289",
+     "incipit": "Benedicta filia tu"
+    },
+    {
+     "id": "16443",
+     "incipit": "Benedicta gloria Domini"
+    },
+    {
+     "id": "8715",
+     "incipit": "Benedicta sit creatrix"
+    },
+    {
+     "id": "12637",
+     "incipit": "Benedicta sit creatrix"
+    },
+    {
+     "id": "2403",
+     "incipit": "Benedicta sit creatrix"
+    },
+    {
+     "id": "15480",
+     "incipit": "Benedicta sit creatrix"
+    },
+    {
+     "id": "6349",
+     "incipit": "Benedicta sit creatrix"
+    },
+    {
+     "id": "19972",
+     "incipit": "Benedicta sit sancta"
+    },
+    {
+     "id": "8268",
+     "incipit": "Benedicta sit sancta"
+    },
+    {
+     "id": "15470",
+     "incipit": "Benedicta sit sancta"
+    },
+    {
+     "id": "15507",
+     "incipit": "Benedicta sit sancta"
+    },
+    {
+     "id": "1964",
+     "incipit": "Benedicta sit sancta"
+    },
+    {
+     "id": "16227",
+     "incipit": "Benedicta tu a Deo"
+    },
+    {
+     "id": "11554",
+     "incipit": "Benedicta tu in"
+    },
+    {
+     "id": "12807",
+     "incipit": "Benedicta tu in mulieribus"
+    },
+    {
+     "id": "7963",
+     "incipit": "Benedicta tu in mulieribus"
+    },
+    {
+     "id": "17709",
+     "incipit": "Benedicta tu in mulieribus"
+    },
+    {
+     "id": "14126",
+     "incipit": "Benedicta tu in mulieribus"
+    },
+    {
+     "id": "4405",
+     "incipit": "Benedicta tu in mulieribus"
+    },
+    {
+     "id": "7134",
+     "incipit": "Benedicta tu in mulieribus"
+    },
+    {
+     "id": "1840",
+     "incipit": "Benedicta tu inter mulieres"
+    },
+    {
+     "id": "13115",
+     "incipit": "Benedicta tu inter mulieres"
+    },
+    {
+     "id": "17298",
+     "incipit": "Benedicta tu inter mulieres"
+    },
+    {
+     "id": "9139",
+     "incipit": "Benedicta tu inter mulieres"
+    },
+    {
+     "id": "18106",
+     "incipit": "Benedicta tu... Rosa"
+    },
+    {
+     "id": "5844",
+     "incipit": "Benedicta tu... Rosa"
+    }
+   ]
+  },
+  "assomption-5": {
+   "cherche": "pulchra es",
+   "trouves": [
+    {
+     "id": "12319",
+     "incipit": "Pulchra es et decora",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 347
+    },
+    {
+     "id": "2861",
+     "incipit": "Pulchra es et decora",
+     "sources": [],
+     "version": "Solesmes 1961",
+     "gabc_octets": 0
+    },
+    {
+     "id": "10569",
+     "incipit": "Pulchra es et decora",
+     "sources": [],
+     "version": "Solesmes 2000",
+     "gabc_octets": 403
+    },
+    {
+     "id": "7052",
+     "incipit": "Pulchra es et decora",
+     "sources": [],
+     "version": "",
+     "gabc_octets": 341
+    },
+    {
+     "id": "3297",
+     "incipit": "Pulchra es et decora",
+     "sources": [],
+     "version": "Vatican, 1912",
+     "gabc_octets": 341
+    },
+    {
+     "id": "8935",
+     "incipit": "Pulchra es et decora",
+     "sources": [],
+     "version": "Solesmes 1934",
+     "gabc_octets": 353
+    }
+   ]
+  }
+ }
+}
