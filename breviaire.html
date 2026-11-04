@@ -220,6 +220,19 @@
     .gregorien-versets .verset { display: block; margin-bottom: 4px; }
     .gregorien-versets b { font-weight: 700; }
     .gregorien-versets i { font-style: italic; color: var(--rubric); }
+    .greg-options { display: flex; justify-content: flex-end; padding: 10px 16px 0; max-width: 720px; margin: 0 auto; }
+    .greg-options[hidden] { display: none; }
+    .greg-btn {
+        font-family: 'Cinzel', serif; font-size: .54rem; letter-spacing: .08em;
+        padding: 7px 10px; cursor: pointer; color: var(--ink-muted);
+        background: none; border: 1px solid var(--border-soft); border-radius: 3px;
+    }
+    .greg-btn.active { color: var(--gold); border-color: var(--gold); }
+    .greg-audio { display: flex; gap: 6px; margin: 0 0 10px; }
+    .greg-trad {
+        margin: 2px 0 12px; padding-left: 10px; border-left: 2px solid var(--border-soft);
+        font-size: .92em; line-height: 1.55; opacity: .85;
+    }
     .do-initiale { color: var(--rubric); font-weight: 700; }
     .do-partie {
         display: block; margin: 18px 0 6px;
@@ -332,6 +345,10 @@
     <button class="taille-btn" id="btn-plus"  onclick="changerTaille(1)"  aria-label="Agrandir le texte">A+</button>
 </div>
 
+<div class="greg-options" id="greg-options" hidden>
+    <button class="greg-btn" id="btn-trad" onclick="basculerTraduction()">Traduction française</button>
+</div>
+
 <!-- ════════════ CONTENU ════════════ -->
 <div class="brev-content" id="brev-content">
     <div class="brev-loading">Chargement de l'office…</div>
@@ -355,6 +372,8 @@ let _offset = 0;
 let _heure  = 'Laudes';
 let _lang   = 'Latin';
 let _gregorien = false;
+let _traduction = false;
+let _dessin = 0;
 let _requete = 0;
 const _cache = {};
 
@@ -362,6 +381,7 @@ try {
     const l = localStorage.getItem('breviaire-langue');
     if (LANGUES.includes(l)) _lang = l;
     _gregorien = localStorage.getItem('breviaire-gregorien') === '1';
+    _traduction = localStorage.getItem('breviaire-traduction') === '1';
 } catch (e) {}
 
 function dateNav() {
@@ -393,7 +413,27 @@ function majBoutonsLangue() {
     const g = document.getElementById('btn-Gregorien');
     g.hidden = _heure !== 'Vespera';
     g.classList.toggle('active', enGregorien());
+    document.getElementById('greg-options').hidden = !enGregorien();
+    document.getElementById('btn-trad').classList.toggle('active', _traduction);
+    majEveil();
 }
+
+// ── Écran allumé pendant les Vêpres en grégorien ──────────
+let _eveil = null;
+async function majEveil() {
+    try {
+        if (enGregorien() && document.visibilityState === 'visible') {
+            if (!_eveil && navigator.wakeLock) {
+                _eveil = await navigator.wakeLock.request('screen');
+                _eveil.addEventListener('release', () => { _eveil = null; });
+            }
+        } else if (_eveil) {
+            await _eveil.release();
+            _eveil = null;
+        }
+    } catch (e) { _eveil = null; }
+}
+document.addEventListener('visibilitychange', majEveil);
 
 function memoriserGregorien() {
     try { localStorage.setItem('breviaire-gregorien', _gregorien ? '1' : '0'); } catch (e) {}
@@ -401,6 +441,7 @@ function memoriserGregorien() {
 
 function setGregorien() {
     _gregorien = true;
+    arreterSon();
     memoriserGregorien();
     majBoutonsLangue();
     chargerOffice();
@@ -413,6 +454,7 @@ function setLang(lang) {
     try { localStorage.setItem('breviaire-langue', lang); } catch (e) {}
     majBoutonsLangue();
     const o = _cache[cleOffice()];
+    arreterSon();
     if (o) afficher(o); else chargerOffice();
 }
 
@@ -423,6 +465,7 @@ function cleOffice() {
 }
 
 async function chargerOffice() {
+    arreterSon();
     const d = dateNav();
     const cle = cleOffice();
     const requete = ++_requete;
@@ -492,6 +535,27 @@ function separerParties(html) {
         .replace(/<br><br>(<span class="do-partie">)/g, '$1');
 }
 
+// « Psalmus 127; Tonus: 1g2 » → « Psaume 127 · 1er ton (g2) »
+function nomTon(ton) {
+    const altere = /\balteratus\b/.test(ton);
+    ton = ton.replace(/\s*alteratus/, '').trim();
+    if (/^peregrinus$/i.test(ton)) return 'ton pérégrin';
+    if (/^solemn/i.test(ton)) return 'ton solennel';
+    const m = ton.match(/^(\d)(.*)$/);
+    if (!m) return 'ton ' + ton;
+    const rang = m[1] === '1' ? '1er' : m[1] + 'e';
+    return `${rang} ton${m[2] ? ` (${m[2].replace(/^\./, '')})` : ''}${altere ? ' altéré' : ''}`;
+}
+
+function titreClair(t) {
+    const ton = (t.match(/;\s*Tonus:\s*([^;]+)/) || [])[1];
+    const base = t.split(';')[0].trim();
+    const m = base.match(/^Psalmus\s+(\d+)\s*(\([^)]*\))?/);
+    const nom = m ? `Psaume ${m[1]}${m[2] ? ' ' + m[2] : ''}`
+              : /Mari/.test(base) ? 'Magnificat' : base;
+    return ton ? `${nom} · ${nomTon(ton)}` : nom;
+}
+
 function mettreEnForme(cellule) {
     return cellule.split(/(<div class="gabc">[^]*?<\/div>)/)
         .map(p => p.startsWith('<div class="gabc">') ? p : mettreEnFormeTexte(p)).join('');
@@ -507,7 +571,7 @@ function mettreEnFormeTexte(html) {
         // Psaumes : numéro de verset discret, titre détaché, sans le rang [1]
         .replace(/<span class="do-petit">\d+:(\w+)<\/span>\s*/g, '<sup class="vnum">$1</sup>')
         .replace(/<span class="do-rubr"><i>((?:Psalmus|Psaume|Canticum|Cantique)\b[^<]*)<\/i><\/span>(?:\s*\[\d+\])?\s*(?:<br>\s*)?/g,
-                 '<span class="do-psaume">$1</span>')
+                 (_, t) => `<span class="do-psaume">${enGregorien() ? titreClair(t) : t}</span>`)
         .replace(/<br>\s*(<span class="do-psaume">)/g, '$1');
 }
 
@@ -526,9 +590,10 @@ function afficher(office) {
     document.getElementById('brev-fete').textContent = office.titre || 'Bréviaire';
     document.getElementById('brev-sous').textContent = office.sous || '';
     // Les rubriques « omittitur » signalent une partie qui n'est pas dite : on ne les affiche pas
-    const lignes = office.lignes.filter(l => !/\{omittitur\}\s*(<[^>]+>\s*)*$/.test(typeof l === 'string' ? l : l[0]));
-    document.getElementById('brev-content').innerHTML = lignes.map(buildLigne).join('');
-    dessinerPartitions();
+    const garde = l => !/\{omittitur\}\s*(<[^>]+>\s*)*$/.test(typeof l === 'string' ? l : l[0]);
+    document.getElementById('brev-content').innerHTML = office.lignes
+        .map((l, i) => garde(l) ? buildLigne(l).replace('class="brev-ligne', `data-i="${i}" class="brev-ligne`) : '').join('');
+    dessinerPartitions(office);
     window.scrollTo(0, 0);
 }
 
@@ -550,6 +615,7 @@ function dessinerScore(source, boite) {
     const mapping = exsurge.Gabc.createMappingsFromSource(ctxt, source);
     const score = new exsurge.ChantScore(ctxt, mapping, lettrine);
     if (lettrine && tete) score.annotation = new exsurge.Annotation(ctxt, tete);
+    boite._mapping = mapping;
     return new Promise(fin => score.performLayoutAsync(ctxt, () =>
         score.layoutChantLines(ctxt, boite.clientWidth, () => {
             boite.innerHTML = score.createSvg(ctxt);
@@ -589,27 +655,169 @@ function decouperPsaume(source) {
     return { ton, html };
 }
 
-async function dessinerPartitions() {
-    const requete = _requete;
-    for (const el of document.querySelectorAll('#brev-content .gabc')) {
-        el.style.display = 'none';
-        const source = el.textContent;
-        const boite = document.createElement('div');
-        boite.className = 'gregorien-score';
-        el.after(boite);
-        const psaume = decouperPsaume(source);
-        try {
-            if (requete !== _requete) return;
-            await dessinerScore(psaume ? psaume.ton : source, boite);
-        } catch (e) {
-            console.error(e);
-            boite.textContent = 'Partition indisponible.';
+// ── Écoute : mélodie reconstituée à partir des notes ──────
+function evenementsDe(mapping) {
+    const evts = [];
+    let bemols = new Set();
+    for (const mp of mapping) for (const n of mp.notations) {
+        const nom = n.constructor.name;
+        if (n.notes) {
+            n.notes.forEach((x, i) => {
+                let hauteur = x.pitch.toInt();
+                if (bemols.has(x.staffPosition)) hauteur -= 1;
+                let duree = .3;
+                if (x.morae && x.morae.length) duree *= 2;
+                if (x.epismata && x.epismata.length) duree *= 1.4;
+                evts.push({ hauteur, duree });
+            });
+        } else if (nom === 'Accidental') {
+            if (n.accidentalType === -1) bemols.add(n.staffPosition);
+            else bemols.delete(n.staffPosition);
+        } else if (n.isDivider) {
+            bemols = new Set();
+            if (evts.length) {
+                const pause = /Quarter|Virgula/.test(nom) ? .12 : /Half/.test(nom) ? .3 : .5;
+                evts[evts.length - 1].pause = pause;
+                if (!/Quarter|Virgula/.test(nom)) evts[evts.length - 1].duree *= 1.5;
+            }
         }
-        if (psaume) {
-            const v = document.createElement('div');
-            v.className = 'gregorien-versets';
-            v.innerHTML = psaume.html;
-            boite.after(v);
+    }
+    return evts;
+}
+
+let _audio = null;
+let _boutonSon = null;
+
+function arreterSon() {
+    if (_audio) { try { _audio.close(); } catch (e) {} _audio = null; }
+    if (_boutonSon) { _boutonSon.textContent = _boutonSon.dataset.libelle; _boutonSon = null; }
+}
+
+function jouer(evts, bouton) {
+    const memeBouton = _boutonSon === bouton;
+    arreterSon();
+    if (memeBouton || !evts.length) return;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = _audio = new Ctx();
+    _boutonSon = bouton;
+    bouton.textContent = '■ Arrêter';
+    let t = ctx.currentTime + .08;
+    for (const e of evts) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        // la hauteur écrite est transposée vers un registre de voix grave
+        osc.frequency.value = 440 * Math.pow(2, (e.hauteur + 36 - 69) / 12);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(.28, t + .025);
+        gain.gain.setValueAtTime(.28, t + Math.max(.03, e.duree - .05));
+        gain.gain.linearRampToValueAtTime(0, t + e.duree);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + e.duree + .01);
+        t += e.duree + (e.pause || 0);
+    }
+    const fin = (t - ctx.currentTime + .1) * 1000;
+    setTimeout(() => { if (_audio === ctx) arreterSon(); }, fin);
+}
+
+function boutonsAudio(boite) {
+    const evts = evenementsDe(boite._mapping || []);
+    if (!evts.length) return null;
+    const barre = document.createElement('div');
+    barre.className = 'greg-audio';
+    [['♪ Note de départ', () => [{ hauteur: evts[0].hauteur, duree: 1.6 }]],
+     ['▶ Écouter', () => evts]].forEach(([libelle, liste]) => {
+        const b = document.createElement('button');
+        b.className = 'greg-btn';
+        b.textContent = b.dataset.libelle = libelle;
+        b.onclick = () => jouer(liste(), b);
+        barre.appendChild(b);
+    });
+    return barre;
+}
+
+// ── Traduction française sous les pièces ──────────────────
+function basculerTraduction() {
+    _traduction = !_traduction;
+    try { localStorage.setItem('breviaire-traduction', _traduction ? '1' : '0'); } catch (e) {}
+    majBoutonsLangue();
+    arreterSon();
+    const o = _cache[cleOffice()];
+    if (o) afficher(o);
+}
+
+async function chargerFrancais(office) {
+    if (office._francais) return office._francais;
+    const d = office.date.split('-');
+    const rep = await fetch(`data/breviaire/${d[0]}/${d[1]}-${d[2]}/Vespera.json`);
+    if (!rep.ok) throw new Error('HTTP ' + rep.status);
+    office._francais = (await rep.json()).lignes.map(r => r[1]);
+    return office._francais;
+}
+
+// Découpe une cellule française en morceaux correspondant aux pièces chantées
+function morceauxFrancais(cellule) {
+    const html = mettreEnForme(separerParties(cellule));
+    return html.split(/(?=<span class="do-partie">|<span class="do-rubr"><i>Ant\.|<span class="do-psaume">)/)
+        .map(m => m
+            .replace(/<span class="do-(?:partie|psaume|titre)">[^]*?<\/span>/g, '')
+            .replace(/^(?:\s*<br>\s*)+|(?:\s*<br>\s*)+$/g, '').trim())
+        .filter(m => m.replace(/<[^>]+>/g, '').trim());
+}
+
+function blocTraduction(html) {
+    const d = document.createElement('div');
+    d.className = 'greg-trad';
+    d.lang = 'fr';
+    d.innerHTML = html;
+    return d;
+}
+
+async function dessinerPartitions(office) {
+    const dessin = ++_dessin;
+    let francais = null;
+    if (enGregorien() && _traduction && office) {
+        try { francais = await chargerFrancais(office); } catch (e) { console.error(e); }
+        if (dessin !== _dessin) return;
+    }
+
+    for (const ligne of document.querySelectorAll('#brev-content .brev-ligne')) {
+        const pieces = [...ligne.querySelectorAll('.gabc')];
+        const fr = francais ? morceauxFrancais(francais[+ligne.dataset.i] || '') : [];
+        const parPiece = fr.length === pieces.length;
+
+        for (let i = 0; i < pieces.length; i++) {
+            const el = pieces[i];
+            el.style.display = 'none';
+            const source = el.textContent;
+            const boite = document.createElement('div');
+            boite.className = 'gregorien-score';
+            el.after(boite);
+            const psaume = decouperPsaume(source);
+            try {
+                await dessinerScore(psaume ? psaume.ton : source, boite);
+            } catch (e) {
+                console.error(e);
+                boite.textContent = 'Partition indisponible.';
+            }
+            if (dessin !== _dessin) return;
+            let dernier = boite;
+            const audio = boutonsAudio(boite);
+            if (audio) { dernier.after(audio); dernier = audio; }
+            if (psaume) {
+                const v = document.createElement('div');
+                v.className = 'gregorien-versets';
+                v.innerHTML = psaume.html;
+                dernier.after(v);
+                dernier = v;
+            }
+            if (parPiece && fr[i]) dernier.after(blocTraduction(fr[i]));
+        }
+        if (francais && !parPiece && fr.length) {
+            const zone = ligne.querySelector('.brev-text') || ligne;
+            zone.appendChild(blocTraduction(fr.join('<br>')));
         }
     }
 }
