@@ -27,6 +27,14 @@ class ParseTest(unittest.TestCase):
         self.assertNotIn("script", fr)
         self.assertEqual(la.count("<span"), la.count("</span>"))
 
+    def test_partition(self):
+        page = ("<TABLE><TR><TD VALIGN='TOP'><DIV ID=\"GABCx\" class=\"GABC\">name: 109-8G;\n%%\n(c4)Di(g)xit &lt;b&gt;me&lt;/b&gt;(k) (::)</DIV>"
+                "<DIV ID=\"GCHANTx\" class=\"GCHANT\" width=\"100%\"></DIV></TD></TR></TABLE>")
+        cell = g.parse_office(page)["lignes"][0][0]
+        self.assertIn('<div class="gabc">name: 109-8G;', cell)
+        self.assertIn("(c4)Di(g)xit &lt;b&gt;me&lt;/b&gt;(k) (::)</div>", cell)
+        self.assertNotIn("GCHANT", cell)
+
     def test_controles(self):
         self.assertEqual(g.check_office(self.o), [])
         self.assertEqual(g.latin_only(self.o), 1)

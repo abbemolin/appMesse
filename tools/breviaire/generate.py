@@ -37,6 +37,8 @@ class OfficeParser(HTMLParser):
         self.seen_table = False
         self.skip = 0          # profondeur d'un élément à ignorer (H2, liens Top/Next, script…)
         self.spans = []        # balises ouvertes dans la cellule : classe CSS ou None
+        self.gabc = None       # source d'une partition en cours de lecture
+        self.gabc_depth = 0
 
     def out(self, text):
         if self.cell is not None:
@@ -44,6 +46,13 @@ class OfficeParser(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         a = {k.lower(): (v or "") for k, v in attrs}
+        if self.gabc is not None:
+            self.gabc_depth += tag == "div"
+            self.gabc.append(self.get_starttag_text() or "")
+            return
+        if tag == "div" and a.get("class") == "GABC" and self.cell is not None and not self.skip:
+            self.gabc, self.gabc_depth = [], 0
+            return
         if tag in ("script", "style", "h2", "input"):
             if tag != "input":
                 self.skip += 1
@@ -75,6 +84,15 @@ class OfficeParser(HTMLParser):
             self.head.append("\n")
 
     def handle_endtag(self, tag):
+        if self.gabc is not None:
+            if tag == "div" and self.gabc_depth == 0:
+                source = html.escape("".join(self.gabc).strip(), quote=False)
+                self.out(f'<div class="gabc">{source}</div>')
+                self.gabc = None
+            else:
+                self.gabc_depth -= tag == "div"
+                self.gabc.append(f"</{tag}>")
+            return
         if self.skip:
             if tag in ("div", "h2", "script", "style"):
                 self.skip -= 1
@@ -99,6 +117,9 @@ class OfficeParser(HTMLParser):
                     self.out("</span>")
 
     def handle_data(self, data):
+        if self.gabc is not None:
+            self.gabc.append(data)
+            return
         if self.skip:
             return
         if self.cell is not None:
@@ -149,13 +170,13 @@ def parse_office(page):
     return {"titre": head[0] if head else "", "sous": " · ".join(head[1:]), "lignes": rows}
 
 
-def run_perl(do_root, date, hour):
+def run_perl(do_root, date, hour, chant=False):
     params = {
         "command": "pray" + hour,
         "date": date.strftime("%m-%d-%Y"),
         "version": VERSION,
-        "lang1": "Latin",
-        "lang2": "Francais",
+        "lang1": "Latin-gabc" if chant else "Latin",
+        "lang2": "Latin-gabc" if chant else "Francais",
         "langfb": "Latin",
         "expand": "tota",
         "content": "1",
@@ -190,6 +211,20 @@ def latin_only(office):
     return sum(1 for la, fr in office["lignes"] if la == fr and len(plain(la)) > 40)
 
 
+def build_chant(args, date):
+    """Vêpres en grégorien : colonne unique ; les pièces sans partition restent en latin."""
+    office = parse_office(run_perl(args.do_root, date, "Vespera", chant=True))
+    lignes = [row[0] for row in office["lignes"]]
+    if len(lignes) < MIN_ROWS or not any('class="gabc"' in c for c in lignes):
+        raise RuntimeError(f"grégorien : {len(lignes)} lignes, aucune partition")
+    office = {"date": date.isoformat(), "heure": "Vespera", "titre": office["titre"],
+              "sous": office["sous"], "lignes": lignes}
+    path = pathlib.Path(args.out) / date.strftime("%Y") / date.strftime("%m-%d") / "Vespera-gregorien.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(office, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    return 0
+
+
 def build_one(args, date, hour):
     office = parse_office(run_perl(args.do_root, date, hour))
     problems = check_office(office)
@@ -221,6 +256,7 @@ def main():
     failures, fallback, done = [], {}, 0
     with futures.ThreadPoolExecutor(args.jobs) as pool:
         jobs = {pool.submit(build_one, args, d, h): (d, h) for d in dates for h in HOURS}
+        jobs.update({pool.submit(build_chant, args, d): (d, "Vespera-gregorien") for d in dates})
         for job in futures.as_completed(jobs):
             d, h = jobs[job]
             try:
