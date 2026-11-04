@@ -428,7 +428,9 @@ function buildLigne([la, fr]) {
 function afficher(office) {
     document.getElementById('brev-fete').textContent = office.titre || 'Bréviaire';
     document.getElementById('brev-sous').textContent = office.sous || '';
-    document.getElementById('brev-content').innerHTML = office.lignes.map(buildLigne).join('');
+    // Les rubriques « omittitur » signalent une partie qui n'est pas dite : on ne les affiche pas
+    const lignes = office.lignes.filter(([la]) => !/\{omittitur\}\s*(<[^>]+>\s*)*$/.test(la));
+    document.getElementById('brev-content').innerHTML = lignes.map(buildLigne).join('');
     window.scrollTo(0, 0);
 }
 
