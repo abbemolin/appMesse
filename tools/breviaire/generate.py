@@ -171,12 +171,12 @@ def parse_office(page):
     return {"titre": head[0] if head else "", "sous": " · ".join(head[1:]), "lignes": rows}
 
 
-def run_perl(do_root, date, hour, chant=False):
+def run_perl(do_root, date, hour, chant=False, title_fr=False):
     params = {
         "command": "pray" + hour,
         "date": date.strftime("%m-%d-%Y"),
         "version": VERSION,
-        "lang1": "Latin-gabc" if chant else "Latin",
+        "lang1": "Francais" if title_fr else "Latin-gabc" if chant else "Latin",
         "lang2": "Latin-gabc" if chant else "Francais",
         "langfb": "Latin",
         "expand": "tota",
@@ -212,13 +212,20 @@ def latin_only(office):
     return sum(1 for la, fr in office["lignes"] if la == fr and len(plain(la)) > 40)
 
 
+def french_title(args, date, hour):
+    """Nom de l'office en français, sans la classe ; vide si Divinum Officium ne l'a pas."""
+    page = run_perl(args.do_root, date, hour, title_fr=True)
+    title = parse_office(page)["titre"]
+    return re.split(r"\s+~\s+", title)[0].strip()
+
+
 def build_chant(args, date):
     """Vêpres en grégorien : colonne unique ; les pièces sans partition restent en latin."""
     office = parse_office(run_perl(args.do_root, date, "Vespera", chant=True))
     lignes = [row[0] for row in office["lignes"]]
     if len(lignes) < MIN_ROWS or not any('class="gabc"' in c for c in lignes):
         raise RuntimeError(f"grégorien : {len(lignes)} lignes, aucune partition")
-    office = {"date": date.isoformat(), "heure": "Vespera", "titre": office["titre"],
+    office = {"date": date.isoformat(), "heure": "Vespera", "titre_fr": french_title(args, date, "Vespera"), "titre": office["titre"],
               "sous": office["sous"], "lignes": lignes}
     path = pathlib.Path(args.out) / date.strftime("%Y") / date.strftime("%m-%d") / "Vespera-gregorien.json"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -231,7 +238,7 @@ def build_one(args, date, hour):
     problems = check_office(office)
     if problems:
         raise RuntimeError("; ".join(problems))
-    office = {"date": date.isoformat(), "heure": hour, **office}
+    office = {"date": date.isoformat(), "heure": hour, "titre_fr": french_title(args, date, hour), **office}
     path = pathlib.Path(args.out) / date.strftime("%Y") / date.strftime("%m-%d") / f"{hour}.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(office, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")

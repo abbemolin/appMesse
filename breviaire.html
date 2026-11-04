@@ -20,7 +20,7 @@
     /* ── Hero ────────────────────────────────────────────── */
     .brev-hero {
         background: #1a1108;
-        padding: calc(env(safe-area-inset-top,0px) + 16px) 0 0;
+        padding: calc(env(safe-area-inset-top,0px) + 8px) 0 0;
         position: relative; overflow: hidden;
     }
     .brev-hero-cross {
@@ -30,21 +30,21 @@
     }
     .brev-hero-body {
         position: relative; z-index: 2;
-        text-align: center; padding: 0 20px 16px;
+        text-align: center; padding: 0 44px 8px;
     }
     .brev-hero-label {
         font-family: 'Cinzel', serif; font-size: .46rem;
         letter-spacing: .32em; text-transform: uppercase;
-        color: rgba(184,150,42,.5); display: block; margin-bottom: 6px;
+        color: rgba(184,150,42,.5); display: block; margin-bottom: 3px;
     }
     .brev-hero-fete {
-        font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700;
-        color: #f0e8d5; letter-spacing: .04em; line-height: 1.25;
-        display: block; margin-bottom: 4px;
+        font-family: 'Cinzel', serif; font-size: .82rem; font-weight: 600;
+        color: #f0e8d5; letter-spacing: .03em; line-height: 1.25;
+        display: block; margin-bottom: 2px;
     }
     .brev-hero-date {
         font-family: 'EB Garamond', serif; font-style: italic;
-        font-size: .9rem; color: rgba(240,232,213,.5);
+        font-size: .82rem; color: rgba(240,232,213,.5);
     }
 
     /* Navigation ±jour */
@@ -267,10 +267,6 @@
     .brev-ligne { padding: 10px 0; border-bottom: 1px solid var(--border-soft); }
     .brev-ligne:last-child { border-bottom: none; }
     .brev-ligne .brev-text { white-space: normal; }
-    .brev-hero-sous {
-        display: block; margin-top: 3px; font-family: 'EB Garamond', serif;
-        font-style: italic; font-size: .8rem; color: rgba(240,232,213,.45);
-    }
 
     /* Référence biblique */
     .brev-ref {
@@ -325,7 +321,6 @@
         <span class="brev-hero-label">Officium Divinum · Rubriques 1960</span>
         <span class="brev-hero-fete" id="brev-fete">Chargement…</span>
         <span class="brev-hero-date" id="brev-date"></span>
-        <span class="brev-hero-sous" id="brev-sous"></span>
     </div>
     <div class="brev-hero-bar"></div>
 </div>
@@ -514,7 +509,6 @@ async function chargerOffice() {
 
 function afficherVide(message) {
     document.getElementById('brev-fete').textContent = 'Bréviaire';
-    document.getElementById('brev-sous').textContent = '';
     const box = document.getElementById('brev-content');
     box.innerHTML = '<div class="brev-empty"></div>';
     box.firstChild.textContent = message;
@@ -605,8 +599,8 @@ function buildLigne(ligne) {
 }
 
 function afficher(office) {
-    document.getElementById('brev-fete').textContent = office.titre || 'Bréviaire';
-    document.getElementById('brev-sous').textContent = office.sous || '';
+    document.getElementById('brev-fete').textContent =
+        office.titre_fr || (office.titre || 'Bréviaire').split(' ~ ')[0];
     // Les rubriques « omittitur » signalent une partie qui n'est pas dite : on ne les affiche pas
     const garde = l => !/\{omittitur\}\s*(<[^>]+>\s*)*$/.test(typeof l === 'string' ? l : l[0]);
     document.getElementById('brev-content').innerHTML = office.lignes
