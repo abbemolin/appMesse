@@ -417,6 +417,7 @@ body {
 
 <script src="ordo1962.js"></script>
 <script src="menu.js"></script>
+<script src="modal.js"></script>
 <script>
 
 const GOOGLE_API_KEY  = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
@@ -943,8 +944,8 @@ async function enregistrerIntention() {
     const libreHeure = document.getElementById('libre-heure').value;
     if (libreDate)  date_messe  = libreDate;
     if (libreHeure) heure_brute = libreHeure;
-    if (!nom_intention) { alert('Veuillez indiquer une intention.'); return; }
-    if (!date_messe)    { alert('Veuillez indiquer une date.'); return; }
+    if (!nom_intention) { AppModal.alert('⚠️','Intention manquante','Veuillez indiquer une intention.'); return; }
+    if (!date_messe)    { AppModal.alert('⚠️','Date manquante','Veuillez indiquer une date.'); return; }
 
     let error;
     if (supaId) {
@@ -975,7 +976,7 @@ async function enregistrerIntention() {
         }], { onConflict: 'google_event_id', ignoreDuplicates: false }));
     }
 
-    if (error) { alert('Erreur : ' + error.message); return; }
+    if (error) { AppModal.alert('❌','Erreur',error.message); return; }
     fermerModal();
     showToast('✅ Intention enregistrée');
     await chargerMois();

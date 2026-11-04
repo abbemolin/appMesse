@@ -7,23 +7,29 @@
 (function() {
     const html = `
     <style>
-        .app-modal-overlay { display:none; position:fixed; inset:0; z-index:9900; background:rgba(15,23,42,0.55); align-items:flex-end; justify-content:center; padding:0 0 env(safe-area-inset-bottom); }
-        .app-modal-overlay.visible { display:flex; animation: fadeIn 0.2s ease; }
-        .app-modal-box { background:white; border-radius:20px 20px 0 0; padding:26px 20px 32px; width:100%; max-width:520px; animation:slideUp 0.25s ease-out; }
-        .app-modal-icon { font-size:2.2rem; margin-bottom:10px; }
-        .app-modal-title { font-size:1.1rem; font-weight:800; color:#0f172a; margin-bottom:8px; }
-        .app-modal-msg { font-size:0.92rem; color:#475569; line-height:1.55; margin-bottom:22px; white-space:pre-wrap; }
-        .app-modal-btn { display:block; width:100%; padding:15px; border:none; border-radius:12px; font-size:1rem; font-weight:700; cursor:pointer; margin-bottom:8px; transition:opacity 0.15s; }
-        .app-modal-btn:active { opacity:0.85; }
-        .app-modal-btn-primary { background:#4f46e5; color:white; }
-        .app-modal-btn-danger  { background:#ef4444; color:white; }
-        .app-modal-btn-success { background:#16a34a; color:white; }
-        .app-modal-btn-ghost   { background:transparent; color:#94a3b8; }
-        @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
-        @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+        .app-modal-overlay { display:none; position:fixed; inset:0; z-index:9900; background:rgba(10,7,3,.6); align-items:flex-end; justify-content:center; }
+        .app-modal-overlay.visible { display:flex; animation: appModalFade .18s ease; }
+        .app-modal-box {
+            background:var(--vellum-light,#faf7ef); color:var(--ink,#1a1108);
+            border-top:3px solid var(--gold,#b8962a); border-radius:6px 6px 0 0;
+            padding:24px 20px calc(24px + env(safe-area-inset-bottom,0px)); width:100%; max-width:480px; text-align:center;
+            box-shadow:0 -8px 32px rgba(0,0,0,.3); animation: appModalUp .22s ease;
+        }
+        .app-modal-icon { font-size:1.7rem; margin-bottom:8px; }
+        .app-modal-title { font-family:'Cinzel',serif; font-size:.82rem; font-weight:700; letter-spacing:.08em; color:var(--ink,#1a1108); margin-bottom:8px; }
+        .app-modal-msg { font-family:'EB Garamond',serif; font-size:1.02rem; color:var(--ink-soft,#3a2d1a); line-height:1.5; margin-bottom:20px; white-space:pre-line; }
+        .app-modal-btn { display:block; width:100%; min-height:44px; padding:12px; border:none; border-radius:3px; font-family:'Cinzel',serif; font-size:.68rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; margin-bottom:8px; }
+        .app-modal-btn:active { opacity:.85; }
+        .app-modal-btn-primary { background:#1a1108; color:#e8cf80; }
+        .app-modal-btn-danger  { background:#8b1a1a; color:#fff; }
+        .app-modal-btn-success { background:#2a5e3a; color:#fff; }
+        .app-modal-btn-ghost   { background:transparent; color:var(--ink-muted,#7a6f5a); margin-bottom:0; }
+        @keyframes appModalUp { from { transform:translateY(24px); opacity:.4; } to { transform:none; opacity:1; } }
+        @keyframes appModalFade { from { opacity:0; } to { opacity:1; } }
+        @media (prefers-color-scheme: dark) { .app-modal-btn-primary { background:#c9a840; color:#1a1108; } }
         @media (min-width:600px) {
             .app-modal-overlay { align-items:center; padding:20px; }
-            .app-modal-box { border-radius:20px; max-height:90vh; overflow-y:auto; }
+            .app-modal-box { border-radius:6px; max-height:90vh; overflow-y:auto; }
         }
     </style>
     <div id="app-modal-overlay" class="app-modal-overlay">

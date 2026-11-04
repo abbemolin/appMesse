@@ -652,6 +652,7 @@
 </div>
 
 <!-- FAB supprimé : recherche accessible via la sidebar sur mobile -->
+<div id="bible-horsligne" hidden style="position:fixed;left:0;right:0;bottom:calc(68px + env(safe-area-inset-bottom,0px));text-align:center;font-family:'EB Garamond',serif;font-style:italic;font-size:.74rem;color:var(--ink-muted);opacity:.7;pointer-events:none;z-index:5"></div>
 <div id="menu-container"></div>
 <script src="menu.js"></script>
 
@@ -722,6 +723,146 @@ function renderSidebarBooks() {
 }
 
 // ── Sélection d'un livre ───────────────────────────────────
+// ── Bible hors ligne : toute la Bible et les commentaires dans IndexedDB ──
+const BibleLocale = {
+    _db: null,
+    ouvrir() {
+        if (this._db) return this._db;
+        this._db = new Promise((ok, ko) => {
+            const r = indexedDB.open('bible-hors-ligne', 1);
+            r.onupgradeneeded = () => {
+                const d = r.result;
+                d.createObjectStore('versets', { keyPath: ['livre', 'chapitre', 'verset_num'] });
+                d.createObjectStore('commentaires', { keyPath: ['abrege', 'chapitre', 'verset'] });
+                d.createObjectStore('meta');
+            };
+            r.onsuccess = () => ok(r.result);
+            r.onerror = () => ko(r.error);
+        });
+        return this._db;
+    },
+    async meta(cle, valeur) {
+        const d = await this.ouvrir();
+        return new Promise((ok, ko) => {
+            const t = d.transaction('meta', valeur === undefined ? 'readonly' : 'readwrite');
+            const s = t.objectStore('meta');
+            const r = valeur === undefined ? s.get(cle) : s.put(valeur, cle);
+            r.onsuccess = () => ok(r.result);
+            r.onerror = () => ko(r.error);
+        });
+    },
+    async ecrire(magasin, lignes) {
+        const d = await this.ouvrir();
+        return new Promise((ok, ko) => {
+            const t = d.transaction(magasin, 'readwrite');
+            lignes.forEach(l => t.objectStore(magasin).put(l));
+            t.oncomplete = ok;
+            t.onerror = () => ko(t.error);
+        });
+    },
+    async plage(magasin, debut, fin) {
+        const d = await this.ouvrir();
+        return new Promise((ok, ko) => {
+            const r = d.transaction(magasin).objectStore(magasin).getAll(IDBKeyRange.bound(debut, fin));
+            r.onsuccess = () => ok(r.result);
+            r.onerror = () => ko(r.error);
+        });
+    },
+    async versets(livre, chap) {
+        return this.plage('versets', [livre, +chap, -Infinity], [livre, +chap, []]);
+    },
+    async chapitres(livre) {
+        const l = await this.plage('versets', [livre, -Infinity, -Infinity], [livre, [], []]);
+        return l.map(v => ({ chapitre: v.chapitre }));
+    },
+    async commentaires(abrege, chap) {
+        return this.plage('commentaires', [abrege, +chap, -Infinity], [abrege, +chap, []]);
+    },
+    async reference(livre, chap, verset) {
+        const l = await this.versets(livre, chap);
+        return verset ? l.filter(v => v.verset_num === +verset) : l;
+    },
+    async recherche(q) {
+        const d = await this.ouvrir();
+        const sansAccent = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const cible = sansAccent(q);
+        return new Promise((ok, ko) => {
+            const res = [];
+            const r = d.transaction('versets').objectStore('versets').openCursor();
+            r.onsuccess = () => {
+                const c = r.result;
+                if (!c || res.length >= 200) return ok(res);
+                if (sansAccent(c.value.texte || '').includes(cible)) res.push(c.value);
+                c.continue();
+            };
+            r.onerror = () => ko(r.error);
+        });
+    },
+};
+
+// Bible complète téléchargée : lecture locale. Sinon réseau, puis ce qui existe en local.
+async function lireHorsLigneOuReseau(local, reseau) {
+    let complet = false;
+    try { complet = (await BibleLocale.meta('complet')) === true; } catch (e) {}
+    if (complet) {
+        try { return { data: await local(), error: null }; } catch (e) { console.error(e); }
+    }
+    try {
+        const r = await reseau();
+        if (!r.error && navigator.onLine !== false) return r;
+    } catch (e) { console.error(e); }
+    try { return { data: await local(), error: null }; }
+    catch (e) { return { data: [], error: e }; }
+}
+
+function etatBible(texte) {
+    const el = document.getElementById('bible-horsligne');
+    if (el) { el.textContent = texte || ''; el.hidden = !texte; }
+}
+
+// Une clé doit être un nombre ou un texte, jamais vide
+const cleNum = v => (v === null || v === undefined || v === '') ? '' : (isNaN(+v) ? String(v) : +v);
+
+let _telechargementBible = false;
+async function telechargerBible() {
+    if (_telechargementBible || !('indexedDB' in window) || !db) return;
+    _telechargementBible = true;
+    try {
+        if (await BibleLocale.meta('complet') === true) { etatBible('Hors ligne : Bible prête'); return; }
+        if (navigator.onLine === false) { etatBible('Sans connexion : Bible non encore téléchargée'); return; }
+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+        const PAGE = 1000;
+        const tout = async (table, colonnes, magasin, ordre, convertir, debut) => {
+            let de = debut;
+            for (;;) {
+                let q = db.from(table).select(colonnes);
+                ordre.forEach(o => { q = q.order(o, { ascending: true }); });
+                const { data, error } = await q.range(de, de + PAGE - 1);
+                if (error) throw error;
+                if (!data.length) return de;
+                await BibleLocale.ecrire(magasin, data.map(convertir));
+                de += data.length;
+                await BibleLocale.meta('reprise_' + magasin, de);
+                if (table === 'bible_crampon') etatBible(`Hors ligne : téléchargement de la Bible… ${de.toLocaleString('fr-FR')} versets`);
+                if (data.length < PAGE) return de;
+            }
+        };
+        const n1 = (await BibleLocale.meta('reprise_versets')) || 0;
+        await tout('bible_crampon', 'id,livre,chapitre,verset_num,texte', 'versets', ['id'],
+            l => ({ livre: l.livre, chapitre: cleNum(l.chapitre), verset_num: cleNum(l.verset_num), texte: l.texte }), n1);
+        const n2 = (await BibleLocale.meta('reprise_commentaires')) || 0;
+        await tout('commentaires_bible', 'abrege,chapitre,verset,texte', 'commentaires', ['abrege', 'chapitre', 'verset'],
+            l => ({ abrege: l.abrege || '', chapitre: cleNum(l.chapitre), verset: cleNum(l.verset), texte: l.texte }), n2);
+        await BibleLocale.meta('complet', true);
+        etatBible('Hors ligne : Bible prête');
+    } catch (e) {
+        console.error(e);
+        etatBible('Hors ligne : téléchargement incomplet, reprise à la prochaine ouverture');
+    } finally {
+        _telechargementBible = false;
+    }
+}
+
 async function selectionnerLivre(livre, chapitre) {
     _livreActif = livre;
     _chapActif  = chapitre || 1;
@@ -730,10 +871,10 @@ async function selectionnerLivre(livre, chapitre) {
 
     // Compter les chapitres
     if (!initDB()) return;
-    const { data } = await db.from('bible_crampon')
-        .select('chapitre')
-        .eq('livre', livre)
-        .order('chapitre', { ascending: true });
+    const { data } = await lireHorsLigneOuReseau(
+        () => BibleLocale.chapitres(livre),
+        () => db.from('bible_crampon').select('chapitre').eq('livre', livre).order('chapitre', { ascending: true })
+    );
 
     const chaps = [...new Set((data||[]).map(r => parseInt(r.chapitre)))].sort((a,b)=>a-b);
     _chapMax = chaps[chaps.length - 1] || 1;
@@ -784,20 +925,26 @@ async function chargerChapitre(chap, dir) {
 
     // Charger versets + commentaires en parallèle (commentaires seulement pour les évangiles)
     const queries = [
-        db.from('bible_crampon')
-            .select('verset_num, texte')
-            .eq('livre', _livreActif)
-            .eq('chapitre', _chapActif)
-            .order('verset_num', { ascending: true })
+        lireHorsLigneOuReseau(
+            () => BibleLocale.versets(_livreActif, _chapActif),
+            () => db.from('bible_crampon')
+                .select('verset_num, texte')
+                .eq('livre', _livreActif)
+                .eq('chapitre', _chapActif)
+                .order('verset_num', { ascending: true })
+        )
     ];
 
     if (estEvangile) {
         queries.push(
-            db.from('commentaires_bible')
-                .select('verset, texte')
-                .eq('abrege', LIVRE_TO_ABREG[_livreActif])
-                .eq('chapitre', _chapActif)
-                .order('verset', { ascending: true })
+            lireHorsLigneOuReseau(
+                () => BibleLocale.commentaires(LIVRE_TO_ABREG[_livreActif], _chapActif),
+                () => db.from('commentaires_bible')
+                    .select('verset, texte')
+                    .eq('abrege', LIVRE_TO_ABREG[_livreActif])
+                    .eq('chapitre', _chapActif)
+                    .order('verset', { ascending: true })
+            )
         );
     }
 
@@ -979,14 +1126,16 @@ async function lancerRechercheModale() {
 
         if (livreFound) {
             hint.textContent = `Référence : ${livreFound} ${chapQ}${versQ ? ', ' + versQ : ''}`;
-            let qb = db.from('bible_crampon')
-                .select('livre, chapitre, verset_num, texte')
-                .eq('livre', livreFound)
-                .eq('chapitre', chapQ);
-            if (versQ) qb = qb.eq('verset_num', versQ);
-            else qb = qb.order('verset_num', { ascending: true });
-
-            const { data } = await qb;
+            const { data } = await lireHorsLigneOuReseau(
+                () => BibleLocale.reference(livreFound, chapQ, versQ),
+                () => {
+                    let qb = db.from('bible_crampon')
+                        .select('livre, chapitre, verset_num, texte')
+                        .eq('livre', livreFound)
+                        .eq('chapitre', chapQ);
+                    return versQ ? qb.eq('verset_num', versQ) : qb.order('verset_num', { ascending: true });
+                }
+            );
             afficherResultats(data || [], q, true);
             return;
         }
@@ -994,11 +1143,14 @@ async function lancerRechercheModale() {
 
     // Plein texte
     hint.textContent = `Recherche plein texte : « ${q} »`;
-    const { data } = await db.from('bible_crampon')
-        .select('livre, chapitre, verset_num, texte')
-        .ilike('texte', `%${q}%`)
-        .order('id', { ascending: true })
-        .limit(200);
+    const { data } = await lireHorsLigneOuReseau(
+        () => BibleLocale.recherche(q),
+        () => db.from('bible_crampon')
+            .select('livre, chapitre, verset_num, texte')
+            .ilike('texte', `%${q}%`)
+            .order('id', { ascending: true })
+            .limit(200)
+    );
 
     afficherResultats(data || [], q, false);
 }
@@ -1167,8 +1319,9 @@ function init() {
             if (e.key === 'ArrowRight' && _livreActif) naviguerChapitre(1);
         });
     };
-    if (typeof maConnexion !== 'undefined') { db = maConnexion; ready(); }
-    else { const t = setInterval(() => { if (initDB()) { clearInterval(t); ready(); }}, 200); }
+    const pret = () => { ready(); telechargerBible(); };
+    if (typeof maConnexion !== 'undefined') { db = maConnexion; pret(); }
+    else { const t = setInterval(() => { if (initDB()) { clearInterval(t); pret(); }}, 200); }
 }
 
 init();
