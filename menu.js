@@ -24,6 +24,8 @@
         }
         .nav-item.active { color:var(--gold-light, #d4af37); }
         .nav-icon { font-size:1.2rem; }
+        .nav-icon-brev { display:flex; line-height:0; color:#c9a840; }
+        .nav-item.active .nav-icon-brev { color:#f0cf5a; }
         .nav-label {
             font-family:'Cinzel',serif; font-size:.5rem; font-weight:600;
             text-transform:uppercase; letter-spacing:.1em;
@@ -57,7 +59,7 @@
             <span class="nav-label">Bible</span>
         </a>
         <a href="breviaire.html" class="nav-item ${isBreviaire ? 'active' : ''}">
-            <span class="nav-icon">📿</span>
+            <span class="nav-icon nav-icon-brev" aria-hidden="true"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5C10 7 7 6.6 3 7v12c4-.4 7 0 9 1.5 2-1.5 5-1.9 9-1.5V7c-4-.4-7 0-9 1.5z"/><path d="M12 8.5v12"/><path d="M12 1.5v5M9.8 3.4h4.4"/></svg></span>
             <span class="nav-label">Bréviaire</span>
         </a>
         <a href="intentions.html" class="nav-item ${isIntentions ? 'active' : ''}">

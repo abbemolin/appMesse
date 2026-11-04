@@ -207,8 +207,15 @@
     .do-titre b, .do-titre i { font-style: normal; font-weight: 600; }
     .do-petit { color: var(--rubric); font-size: .82em; }
     .lang-btn[hidden] { display: none; }
-    .gregorien-score { margin: 8px 0 10px; overflow: hidden; }
-    .gregorien-score svg { display: block; max-width: 100%; height: auto; }
+    .brev-content { --brev-encre: var(--ink); }
+    @media (prefers-color-scheme: dark) { .brev-content { --brev-encre: #fff; } }
+    .brev-content .brev-text { color: var(--brev-encre); }
+    .brev-text sup.vnum { color: var(--brev-encre) !important; opacity: .7; }
+    .gregorien-score { margin: 8px 0 10px; overflow: hidden; color: var(--brev-encre); }
+    .gregorien-score svg { display: block; max-width: 100%; height: auto; fill: currentColor; }
+    .gregorien-score svg [stroke="#000"] { stroke: currentColor; }
+    .gregorien-score svg [fill="#000"], .gregorien-score svg text { fill: currentColor; }
+    .gregorien-score svg text.dropCap { fill: var(--rubric); }
     .gregorien-versets { margin: 4px 0 8px; }
     .gregorien-versets .verset { display: block; margin-bottom: 4px; }
     .gregorien-versets b { font-weight: 700; }
@@ -506,7 +513,7 @@ function mettreEnFormeTexte(html) {
 
 function buildLigne(ligne) {
     if (typeof ligne === 'string') {
-        return `<div class="brev-ligne"><div class="brev-text latin" lang="la">${mettreEnForme(separerParties(ligne))}</div></div>`;
+        return `<div class="brev-ligne"><div class="brev-text latin">${mettreEnForme(separerParties(ligne))}</div></div>`;
     }
     let [la, fr] = ligne;
     la = mettreEnForme(separerParties(la)); fr = mettreEnForme(separerParties(fr));
