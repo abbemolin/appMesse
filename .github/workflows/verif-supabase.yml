@@ -1,0 +1,21 @@
+name: Vérifier la lecture publique (ponctuel)
+on:
+  push:
+    branches: ["claude/verif-supabase"]
+permissions:
+  contents: read
+jobs:
+  verif:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tester sans afficher aucune donnée
+        run: |
+          U=$(grep -oE "https://[a-z]+\.supabase\.co" config.js)
+          K=$(grep -oE "_supabaseKey = '[^']+" config.js | cut -d"'" -f2)
+          for c in "intentions:id" "intentions:nom_intention" "commentaires_bible:texte" "bible_crampon:texte" "propers:id"; do
+            t=${c%%:*}; col=${c##*:}
+            code=$(curl -s -o /tmp/r -w '%{http_code}' -H "apikey: $K" -H "Authorization: Bearer $K" "$U/rest/v1/$t?select=$col&limit=1")
+            if python3 -c "import json;d=json.load(open('/tmp/r'));exit(0 if isinstance(d,list) and d else 1)" 2>/dev/null; then r=lisible; else r=rien; fi
+            echo "RESULTAT $t.$col http=$code $r"
+          done
