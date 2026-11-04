@@ -237,6 +237,11 @@
         margin: 2px 0 12px; padding-left: 10px; border-left: 2px solid var(--border-soft);
         font-size: .92em; line-height: 1.55; opacity: .85;
     }
+    .brev-horsligne {
+        display: block; margin: 0 auto; padding: 0 16px 24px; text-align: center;
+        font-family: 'EB Garamond', serif; font-style: italic; font-size: .8rem;
+        color: var(--ink-muted); opacity: .7; background: none; border: none;
+    }
     .do-initiale { color: var(--rubric); font-weight: 700; }
     .do-partie {
         display: block; margin: 18px 0 6px;
@@ -357,6 +362,8 @@
 <div class="brev-content" id="brev-content">
     <div class="brev-loading">Chargement de l'office…</div>
 </div>
+
+<button class="brev-horsligne" id="brev-horsligne" onclick="prechargerOffices()" hidden></button>
 
 <script src="menu.js"></script>
 <script src="exsurge.js"></script>
@@ -483,7 +490,14 @@ async function chargerOffice() {
         '<div class="brev-loading">Chargement de l\'office…</div>';
 
     try {
-        const rep = await fetch(`data/breviaire/${cle}.json`);
+        let rep;
+        try {
+            rep = await fetch(`data/breviaire/${cle}.json`);
+        } catch (e) {
+            // Sans service worker actif : on cherche quand même dans les offices préchargés
+            rep = 'caches' in window && await caches.match(new URL(`data/breviaire/${cle}.json`, location.href).href);
+            if (!rep) throw e;
+        }
         if (requete !== _requete) return;
         if (rep.status === 404) { afficherVide('Office non disponible pour ce jour.'); return; }
         if (!rep.ok) throw new Error('HTTP ' + rep.status);
@@ -494,7 +508,7 @@ async function chargerOffice() {
     } catch (e) {
         if (requete !== _requete) return;
         console.error(e);
-        afficherVide('Impossible de charger cet office. Vérifiez la connexion : hors ligne, seuls les offices déjà ouverts sont disponibles.');
+        afficherVide('Impossible de charger cet office. Vérifiez la connexion : hors ligne, seuls les offices déjà téléchargés sont disponibles.');
     }
 }
 
@@ -797,7 +811,9 @@ function basculerTraduction() {
 async function chargerFrancais(office) {
     if (office._francais) return office._francais;
     const d = office.date.split('-');
-    const rep = await fetch(`data/breviaire/${d[0]}/${d[1]}-${d[2]}/Vespera.json`);
+    const chemin = `data/breviaire/${d[0]}/${d[1]}-${d[2]}/Vespera.json`;
+    const rep = await fetch(chemin).catch(() => caches.match(new URL(chemin, location.href).href));
+    if (!rep) throw new Error('Traduction indisponible hors ligne');
     if (!rep.ok) throw new Error('HTTP ' + rep.status);
     office._francais = (await rep.json()).lignes.map(r => r[1]);
     return office._francais;
@@ -918,9 +934,94 @@ document.querySelectorAll('.heure-tab').forEach(b => {
     if (actif) b.parentElement.scrollLeft = b.offsetLeft - (b.parentElement.clientWidth - b.offsetWidth) / 2;
 });
 
+// ── Hors ligne : les 30 prochains jours, téléchargés automatiquement ──
+const JOURS_HORS_LIGNE = 30;
+const CACHE_OFFICES = 'breviaire-offices-v1';
+const FICHIERS_JOUR = ['Matutinum','Laudes','Prima','Tertia','Sexta','Nona','Vespera','Vespera-gregorien','Completorium'];
+let _prechargement = false;
+
+function etatHorsLigne(texte) {
+    const b = document.getElementById('brev-horsligne');
+    b.hidden = !texte;
+    b.textContent = texte || '';
+}
+
+function urlOffice(date, fichier) {
+    const chemin = `data/breviaire/${date.getFullYear()}/${deux(date.getMonth()+1)}-${deux(date.getDate())}/${fichier}.json`;
+    return new URL(chemin, location.href).href;
+}
+
+async function prechargerOffices() {
+    if (_prechargement || !('caches' in window)) return;
+    _prechargement = true;
+    try {
+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+        const cache = await caches.open(CACHE_OFFICES);
+        const auj = new Date();
+        auj.setHours(0,0,0,0);
+
+        // Retire les jours passés
+        const hier = new Date(auj); hier.setDate(hier.getDate() - 1);
+        const limite = `${hier.getFullYear()}/${deux(hier.getMonth()+1)}-${deux(hier.getDate())}`;
+        for (const req of await cache.keys()) {
+            const m = req.url.match(/data\/breviaire\/(\d{4}\/\d{2}-\d{2})\//);
+            if (m && m[1] < limite) await cache.delete(req);
+        }
+
+        // Liste de ce qui manque ; un jour non encore généré n'est pas une erreur
+        const manquants = [];
+        const jours = [];
+        for (let i = 0; i < JOURS_HORS_LIGNE; i++) {
+            const d = new Date(auj); d.setDate(auj.getDate() + i);
+            jours.push(d);
+            for (const f of FICHIERS_JOUR) {
+                const u = urlOffice(d, f);
+                if (!(await cache.match(u))) manquants.push(u);
+            }
+        }
+
+        let enEchec = 0, faits = 0;
+        const total = manquants.length;
+        if (total) etatHorsLigne(`Hors ligne : téléchargement… 0 sur ${total}`);
+        const ouvrier = async () => {
+            while (manquants.length) {
+                const u = manquants.shift();
+                try {
+                    const r = await fetch(u, { cache: 'no-cache' });
+                    if (r.ok) await cache.put(u, r.clone());
+                    else if (r.status !== 404) enEchec++;
+                } catch (e) { enEchec++; }
+                faits++;
+                if (faits % 10 === 0 || faits === total) etatHorsLigne(`Hors ligne : téléchargement… ${faits} sur ${total}`);
+            }
+        };
+        await Promise.all([ouvrier(), ouvrier(), ouvrier()]);
+
+        // Compte les jours réellement complets
+        let prets = 0;
+        for (const d of jours) {
+            const ok = await Promise.all(FICHIERS_JOUR.map(f => cache.match(urlOffice(d, f))));
+            if (ok.every(Boolean)) prets++; else break;
+        }
+        etatHorsLigne(enEchec || prets < JOURS_HORS_LIGNE
+            ? `Hors ligne : ${prets} jour${prets > 1 ? 's' : ''} prêt${prets > 1 ? 's' : ''} · toucher pour réessayer`
+            : `Hors ligne : ${prets} jours prêts`);
+    } catch (e) {
+        console.error(e);
+        etatHorsLigne('Hors ligne : téléchargement impossible · toucher pour réessayer');
+    } finally {
+        _prechargement = false;
+    }
+}
+
 appliquerTaille();
 majBoutonsLangue();
 chargerOffice();
+if (navigator.onLine !== false) prechargerOffices();
+else etatHorsLigne('Sans connexion : offices déjà téléchargés disponibles');
+
+// Le service worker garde aussi cette page, même si elle est ouverte directement
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
 </html>

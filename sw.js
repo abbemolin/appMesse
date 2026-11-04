@@ -1,9 +1,9 @@
-const CACHE_NAME  = 'messes-v10';
+const CACHE_NAME  = 'messes-v11';
+const CACHE_OFFICES = 'breviaire-offices-v1';   // conservé entre les mises à jour de l'app
 const SYNC_TAG    = 'sync-intentions';
 const QUEUE_KEY   = 'offline-queue';
 
 const ASSETS_TO_CACHE = [
-    './',
     './accueil.html',
     './calendrier.html',
     './calendrier_semaine.html',
@@ -28,7 +28,8 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(ASSETS_TO_CACHE))
+            // Un fichier manquant ne doit pas empêcher l'installation hors ligne
+            .then(cache => Promise.allSettled(ASSETS_TO_CACHE.map(u => cache.add(u))))
             .then(() => self.skipWaiting())
     );
 });
@@ -40,7 +41,7 @@ self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys()
             .then(keys => Promise.all(
-                keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+                keys.filter(k => k !== CACHE_NAME && k !== CACHE_OFFICES).map(k => caches.delete(k))
             ))
             .then(() => self.clients.claim())
     );
@@ -117,6 +118,23 @@ self.addEventListener('fetch', event => {
                     })
                 )
         );
+        return;
+    }
+
+    // ── Offices du bréviaire : cache d'abord, actualisé en arrière-plan ──
+    if (url.pathname.includes('/data/breviaire/') && event.request.method === 'GET') {
+        event.respondWith(caches.open(CACHE_OFFICES).then(async cache => {
+            const enCache = await cache.match(event.request);
+            const reseau = fetch(event.request).then(resp => {
+                if (resp.ok) cache.put(event.request, resp.clone());
+                return resp;
+            });
+            if (enCache) {
+                reseau.catch(() => {});
+                return enCache;
+            }
+            return reseau;
+        }));
         return;
     }
 
