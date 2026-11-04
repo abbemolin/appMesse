@@ -1,46 +1,42 @@
 #!/usr/bin/env python3
-"""Récupère depuis GregoBase les candidats pour les antiennes de Vêpres sans notes (essai)."""
-import csv, html, io, json, pathlib, re, time, unicodedata, urllib.request
+"""Deuxième passe : pièces à fichier vide et « Benedicta filia » (essai)."""
+import csv, io, json, pathlib, re, time, urllib.parse, urllib.request, unicodedata
 
 BASE = "https://gregobase.selapa.net/"
-PIECES = {
-    "pentecote-1": "cum complerentur", "pentecote-2": "spiritus domini", "pentecote-3": "repleti sunt",
-    "pentecote-4": "fontes et omnia", "pentecote-5": "loquebantur",
-    "assomption-1": "assumpta est maria", "assomption-2": "maria virgo assumpta",
-    "assomption-3": "in odorem", "assomption-4": "benedicta", "assomption-5": "pulchra es",
-}
 OUT = pathlib.Path("tools/breviaire/candidats")
+IDS = {"pentecote-1": [19943], "pentecote-2": [2393, 12623, 12938, 3330], "pentecote-3": [2527, 12054],
+       "pentecote-4": [2550, 13306], "pentecote-5": [2311, 12181],
+       "assomption-1": [2561, 3331], "assomption-2": [2912], "assomption-3": [2963], "assomption-5": [2861]}
 
 def get(path):
     req = urllib.request.Request(BASE + path, headers={"User-Agent": "appMesse-breviaire"})
     with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read().decode("utf-8", "replace")
+        return r.status, r.headers.get("Content-Type"), r.read().decode("utf-8", "replace")
 
 def norm(t):
-    t = unicodedata.normalize("NFD", t.lower()).encode("ascii", "ignore").decode()
-    return re.sub(r"\s+", " ", t.replace("j", "i").replace("(ant.)", "")).strip()
+    return unicodedata.normalize("NFD", t.lower()).encode("ascii", "ignore").decode()
 
-rows = list(csv.reader(io.StringIO(get("csv.php"))))
-OUT.mkdir(parents=True, exist_ok=True)
-index = {"lignes_csv": len(rows), "pieces": {}}
-for cle, incipit in PIECES.items():
-    trouves = []
-    for row in rows:
-        if len(row) >= 3 and "ntiphon" in row[0] and norm(row[1]).startswith(incipit.replace("j", "i")):
-            trouves.append({"id": row[2], "incipit": row[1]})
-    for t in trouves[:8]:
+_, _, data = get("csv.php")
+for row in csv.reader(io.StringIO(data)):
+    if len(row) >= 3 and "ntiphon" in row[0] and norm(row[1]).startswith("benedicta filia"):
+        IDS.setdefault("assomption-4", []).append(int(row[2]))
+
+journal = {}
+for cle, ids in IDS.items():
+    for i in ids:
         time.sleep(1)
-        try:
-            page = get(f"chant.php?id={t['id']}")
-            texte = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style).*?</\1>", " ", page, flags=re.S))))
-            t["sources"] = sorted(set(re.findall(r"[A-Z][\w' .-]{3,40}, (?:Solesmes|[A-Z][a-z]+)?,? ?\d{4}, p\. ?\[?\d+\]?", texte)))[:6]
-            t["version"] = (re.search(r"Solesmes \d{4}|Vatican[^ ]* \d{4}", texte) or [""])[0]
-            time.sleep(1)
-            gabc = get(f"download.php?id={t['id']}&format=gabc")
-            (OUT / f"{cle}--{t['id']}.gabc").write_text(gabc, encoding="utf-8")
-            t["gabc_octets"] = len(gabc)
-        except Exception as err:
-            t["erreur"] = str(err)[:200]
-    index["pieces"][cle] = {"cherche": incipit, "trouves": trouves}
-(OUT / "index.json").write_text(json.dumps(index, ensure_ascii=False, indent=1), encoding="utf-8")
-print({k: len(v["trouves"]) for k, v in index["pieces"].items()})
+        info = {}
+        st, ct, gabc = get(f"download.php?id={i}&format=gabc")
+        info.update(statut=st, type=ct, octets=len(gabc))
+        time.sleep(1)
+        _, _, page = get(f"chant.php?id={i}")
+        liens = re.findall(r'href="([^"]*(?:sourceandsummit|scrib\.io)[^"]*)"', page)
+        info["liens"] = len(liens)
+        if liens:
+            info["extrait_lien"] = urllib.parse.unquote(liens[0])[:1500]
+        info["extrait_page"] = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", page))[:300]
+        if gabc.strip():
+            (OUT / f"{cle}--{i}.gabc").write_text(gabc, encoding="utf-8")
+        journal[f"{cle}--{i}"] = info
+(OUT / "passe2.json").write_text(json.dumps(journal, ensure_ascii=False, indent=1), encoding="utf-8")
+print(len(journal))
