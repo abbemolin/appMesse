@@ -5,6 +5,7 @@
     const isIntentions = href.includes('intentions');
     const isSemaine    = href.includes('calendrier_semaine');
     const isBible      = href.includes('bible.html');
+    const isBreviaire  = href.includes('breviaire.html');
 
     const menuHTML = `
     <style>
@@ -37,6 +38,7 @@
         .nav-refresh .nav-icon { transition:transform .4s ease; }
         .nav-refresh.spinning .nav-icon { animation:spin-refresh .6s linear infinite; }
         @keyframes spin-refresh { to { transform:rotate(360deg); } }
+        @media(max-width:420px){ .nav-label{font-size:.44rem;letter-spacing:.04em} }
         @media(min-width:1024px){
             .mobile-nav{max-width:400px;left:50%;transform:translateX(-50%);border-radius:3px 3px 0 0}
         }
@@ -53,6 +55,10 @@
         <a href="bible.html" class="nav-item ${isBible ? 'active' : ''}">
             <span class="nav-icon">📖</span>
             <span class="nav-label">Bible</span>
+        </a>
+        <a href="breviaire.html" class="nav-item ${isBreviaire ? 'active' : ''}">
+            <span class="nav-icon">📿</span>
+            <span class="nav-label">Bréviaire</span>
         </a>
         <a href="intentions.html" class="nav-item ${isIntentions ? 'active' : ''}">
             <span class="nav-icon">✍️</span>

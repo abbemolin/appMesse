@@ -1,4 +1,4 @@
-const CACHE_NAME  = 'messes-v8';
+const CACHE_NAME  = 'messes-v9';
 const SYNC_TAG    = 'sync-intentions';
 const QUEUE_KEY   = 'offline-queue';
 

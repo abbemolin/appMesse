@@ -1,0 +1,69 @@
+name: Générer le bréviaire
+
+# Produit data/breviaire/AAAA/MM-JJ/<Heure>.json (latin + français, rubriques 1960)
+# à partir de Divinum Officium, à une version figée du projet.
+on:
+  workflow_dispatch:
+    inputs:
+      debut:
+        description: "Premier jour (AAAA-MM-JJ) — vide : aujourd'hui"
+        required: false
+      fin:
+        description: "Dernier jour (AAAA-MM-JJ) — vide : 31 décembre de l'an prochain"
+        required: false
+  schedule:
+    - cron: "17 3 1 12 *"   # chaque 1er décembre : prolonge jusqu'à fin de l'an prochain
+  push:
+    branches: ["claude/breviaire*"]   # essai : quelques jours représentatifs
+
+permissions:
+  contents: write
+
+concurrency:
+  group: breviaire
+  cancel-in-progress: false
+
+env:
+  DO_REF: a7b3f34e142c9760087c3e5342501e231fccce5b
+
+jobs:
+  generer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: DivinumOfficium/divinum-officium
+          ref: ${{ env.DO_REF }}
+          path: _do
+      - name: Installer Perl
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libcgi-pm-perl libcgi-session-perl libdate-calc-perl \
+            libtimedate-perl liburi-perl libalgorithm-diff-perl cpanminus
+          sudo cpanm -q --notest URL::Encode
+      - name: Tester l'extraction
+        run: python3 tools/breviaire/test_generate.py
+      - name: Générer
+        env:
+          DEBUT: ${{ github.event.inputs.debut }}
+          FIN: ${{ github.event.inputs.fin }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            python3 tools/breviaire/generate.py --do-root _do/web --out data/breviaire \
+              --dates 2026-11-02,2026-11-04,2026-12-25,2027-02-10,2027-03-26,2027-03-28,2027-05-16,2027-08-15
+          else
+            python3 tools/breviaire/generate.py --do-root _do/web --out data/breviaire \
+              --from "${DEBUT:-$(date +%F)}" --to "${FIN:-$(( $(date +%Y) + 1 ))-12-31}"
+          fi
+      - name: Publier
+        if: always()
+        run: |
+          rm -rf _do
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/breviaire
+          git diff --cached --quiet || git commit -qm "Bréviaire : offices générés"
+          git pull -q --rebase origin "$GITHUB_REF_NAME"
+          git push -q origin "HEAD:$GITHUB_REF_NAME"

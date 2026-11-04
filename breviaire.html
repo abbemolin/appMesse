@@ -12,8 +12,6 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <meta name="theme-color" content="#1a1108">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
     <style>
     /* ════════════════════════════════════════════════════════
        BRÉVIAIRE
@@ -56,6 +54,7 @@
         cursor: pointer; opacity: 0; transition: opacity .2s; z-index: 10;
     }
     .brev-nav-jour:hover, .brev-nav-jour:active { opacity: 1; }
+    @media (hover: none) { .brev-nav-jour { opacity: .6; } }
     .brev-nav-jour-left  { left: 0; }
     .brev-nav-jour-right { right: 0; }
     .brev-nav-arrow { color: #c9a840; font-family: 'Cinzel',serif; font-size: 1.3rem; }
@@ -103,12 +102,6 @@
     }
     .lang-btn.active { background: #1a1108; color: #c9a840; }
     .brev-toolbar-filler { flex: 1; }
-    .brev-search-btn {
-        background: none; border: 1px solid var(--border-soft);
-        border-radius: 3px; padding: 6px 10px; cursor: pointer;
-        color: var(--ink-muted); font-size: .85rem; transition: all .15s;
-    }
-    .brev-search-btn:hover { border-color: var(--gold); color: var(--gold); }
 
     /* ── Corps du texte ──────────────────────────────────── */
     .brev-content {
@@ -155,9 +148,8 @@
         color: var(--ink-muted); display: block; margin-bottom: 6px;
     }
     @media (max-width: 600px) {
-        .brev-bilingue { grid-template-columns: 1fr; gap: 10px; }
-        .brev-bilingue-col-la { border-right: none; padding-right: 0;
-            border-bottom: 1px solid var(--border-soft); padding-bottom: 10px; }
+        .brev-bilingue { grid-template-columns: 1fr; gap: 6px; }
+        .brev-bilingue-col-la { border-right: none; padding-right: 0; }
     }
 
     /* ── Antienne ────────────────────────────────────────── */
@@ -224,9 +216,19 @@
     /* Texte muted (latin affiché en fallback) */
     .brev-text.muted, .brev-psaume.muted { opacity: .6; }
     .no-fr-txt { color: var(--ink-muted); font-size: .88rem; }
-        font-family: 'Cinzel', serif; font-size: .58rem;
-        color: var(--gold); vertical-align: super; margin-right: 2px;
-        opacity: .7; user-select: none;
+
+    /* Textes générés depuis Divinum Officium */
+    .do-rubr  { color: var(--rubric); }
+    .do-titre { color: var(--rubric); font-family: 'Cinzel', serif; font-size: .72rem;
+                letter-spacing: .12em; text-transform: uppercase; font-style: normal; }
+    .do-titre b, .do-titre i { font-style: normal; font-weight: 600; }
+    .do-petit { color: var(--rubric); font-size: .82em; }
+    .brev-ligne { padding: 10px 0; border-bottom: 1px solid var(--border-soft); }
+    .brev-ligne:last-child { border-bottom: none; }
+    .brev-ligne .brev-text { white-space: normal; }
+    .brev-hero-sous {
+        display: block; margin-top: 3px; font-family: 'EB Garamond', serif;
+        font-style: italic; font-size: .8rem; color: rgba(240,232,213,.45);
     }
 
     /* Référence biblique */
@@ -255,74 +257,11 @@
         font-family: 'EB Garamond', serif;
     }
 
-    /* ── Modale de recherche ─────────────────────────────── */
-    .brev-modal-bg {
-        display: none; position: fixed; inset: 0; z-index: 3000;
-        background: rgba(0,0,0,.6);
-        align-items: flex-start; justify-content: center;
-        padding: 60px 16px 20px;
-    }
-    .brev-modal-bg.open { display: flex; }
-    .brev-modal {
-        background: var(--vellum-light); border-radius: 4px;
-        width: 100%; max-width: 600px;
-        box-shadow: 0 12px 48px rgba(0,0,0,.3);
-        max-height: calc(100vh - 100px);
-        display: flex; flex-direction: column;
-        border-top: 3px solid var(--gold);
-    }
-    .brev-modal-head {
-        padding: 14px 18px; border-bottom: 1px solid var(--border-soft);
-        display: flex; gap: 10px; align-items: center;
-    }
-    .brev-modal-input {
-        flex: 1; padding: 9px 12px;
-        font-family: 'EB Garamond', serif; font-size: 1rem;
-        border: 1px solid var(--border-soft); border-radius: 2px;
-        background: var(--vellum); color: var(--ink);
-    }
-    .brev-modal-input:focus { outline: none; border-color: var(--gold); }
-    .brev-modal-close {
-        background: none; border: none; color: var(--ink-muted);
-        font-size: 1.2rem; cursor: pointer; padding: 4px 8px;
-    }
-    .brev-modal-results {
-        flex: 1; overflow-y: auto; padding: 0;
-    }
-    .brev-result {
-        padding: 12px 18px; border-bottom: 1px solid var(--border-soft);
-        cursor: pointer; transition: background .15s;
-    }
-    .brev-result:hover { background: var(--vellum); }
-    .brev-result-ref {
-        font-family: 'Cinzel', serif; font-size: .54rem;
-        letter-spacing: .12em; color: var(--rubric);
-        text-transform: uppercase; display: block; margin-bottom: 3px;
-    }
-    .brev-result-text {
-        font-family: 'EB Garamond', serif; font-size: .92rem;
-        color: var(--ink); line-height: 1.5;
-    }
-    .brev-result-text mark {
-        background: var(--gold-pale); color: var(--ink); border-radius: 1px;
-    }
-    .brev-modal-count {
-        font-family: 'Cinzel', serif; font-size: .52rem;
-        letter-spacing: .12em; color: var(--ink-muted);
-        text-transform: uppercase; padding: 8px 18px;
-        border-bottom: 1px solid var(--border-soft);
-        background: var(--vellum);
-    }
-
     /* ── Mode sombre ─────────────────────────────────────── */
     @media (prefers-color-scheme: dark) {
         .heures-tabs { background: var(--vellum-light); border-color: var(--border-soft); }
         .brev-toolbar { background: var(--vellum); border-color: var(--border-soft); }
         .lang-btn.active { background: #0e0c08; }
-        .brev-modal { background: var(--vellum-light); }
-        .brev-modal-input { background: var(--vellum); color: var(--ink); border-color: var(--border-soft); }
-        .brev-result:hover { background: var(--vellum); }
-        .brev-modal-count { background: var(--vellum); }
         .brev-bilingue-col-la { border-color: var(--border-soft); }
     }
     </style>
@@ -343,34 +282,33 @@
         <span class="brev-nav-arrow">›</span>
     </div>
     <div class="brev-hero-body">
-        <span class="brev-hero-label">Officium Divinum · 1962</span>
+        <span class="brev-hero-label">Officium Divinum · Rubriques 1960</span>
         <span class="brev-hero-fete" id="brev-fete">Chargement…</span>
         <span class="brev-hero-date" id="brev-date"></span>
+        <span class="brev-hero-sous" id="brev-sous"></span>
     </div>
     <div class="brev-hero-bar"></div>
 </div>
 
 <!-- ════════════ ONGLETS HEURES ════════════ -->
 <div class="heures-tabs" id="heures-tabs">
-    <button class="heure-tab active" data-heure="Matines"   onclick="setHeure(this)">Matines</button>
-    <button class="heure-tab"        data-heure="Laudes"    onclick="setHeure(this)">Laudes</button>
-    <button class="heure-tab"        data-heure="Prime"     onclick="setHeure(this)">Prime</button>
-    <button class="heure-tab"        data-heure="Tierce"    onclick="setHeure(this)">Tierce</button>
-    <button class="heure-tab"        data-heure="Sexte"     onclick="setHeure(this)">Sexte</button>
-    <button class="heure-tab"        data-heure="None"      onclick="setHeure(this)">None</button>
-    <button class="heure-tab"        data-heure="Vêpres"    onclick="setHeure(this)">Vêpres</button>
-    <button class="heure-tab"        data-heure="Complies"  onclick="setHeure(this)">Complies</button>
+    <button class="heure-tab" data-heure="Matutinum" onclick="setHeure(this)">Matines</button>
+    <button class="heure-tab active" data-heure="Laudes" onclick="setHeure(this)">Laudes</button>
+    <button class="heure-tab"        data-heure="Prima" onclick="setHeure(this)">Prime</button>
+    <button class="heure-tab"        data-heure="Tertia" onclick="setHeure(this)">Tierce</button>
+    <button class="heure-tab"        data-heure="Sexta" onclick="setHeure(this)">Sexte</button>
+    <button class="heure-tab"        data-heure="Nona" onclick="setHeure(this)">None</button>
+    <button class="heure-tab"        data-heure="Vespera" onclick="setHeure(this)">Vêpres</button>
+    <button class="heure-tab"        data-heure="Completorium" onclick="setHeure(this)">Complies</button>
 </div>
 
 <!-- ════════════ TOOLBAR ════════════ -->
 <div class="brev-toolbar">
     <div class="lang-toggle">
-        <button class="lang-btn active" id="btn-la" onclick="setLang('Latin')">Latin</button>
-        <button class="lang-btn"        id="btn-fr" onclick="setLang('Francais')">Français</button>
-        <button class="lang-btn"        id="btn-bi" onclick="setLang('Bilingue')">Bilingue</button>
+        <button class="lang-btn" id="btn-Latin" onclick="setLang('Latin')">Latin</button>
+        <button class="lang-btn"        id="btn-Francais" onclick="setLang('Francais')">Français</button>
+        <button class="lang-btn active" id="btn-Bilingue" onclick="setLang('Bilingue')">Bilingue</button>
     </div>
-    <div class="brev-toolbar-filler"></div>
-    <button class="brev-search-btn" onclick="ouvrirRecherche()" title="Rechercher (/)">⌕</button>
 </div>
 
 <!-- ════════════ CONTENU ════════════ -->
@@ -378,65 +316,39 @@
     <div class="brev-loading">Chargement de l'office…</div>
 </div>
 
-<!-- ════════════ MODALE RECHERCHE ════════════ -->
-<div class="brev-modal-bg" id="brev-modal-bg" onclick="if(event.target===this)fermerRecherche()">
-    <div class="brev-modal">
-        <div class="brev-modal-head">
-            <input class="brev-modal-input" id="brev-search-input" type="text"
-                placeholder="Rechercher dans le bréviaire…"
-                oninput="debounceSearch()" autocomplete="off"
-                onkeydown="if(event.key==='Escape')fermerRecherche()">
-            <button class="brev-modal-close" onclick="fermerRecherche()">✕</button>
-        </div>
-        <div class="brev-modal-results" id="brev-search-results">
-            <div class="brev-empty">Entrez un mot ou une référence liturgique</div>
-        </div>
-    </div>
-</div>
-
-<script src="ordo1962.js"></script>
 <script src="menu.js"></script>
 <script>
 
 // ══════════════════════════════════════════════════════════
-// BRÉVIAIRE — utilise la table breviaire_offices
+// BRÉVIAIRE — lit data/breviaire/AAAA/MM-JJ/<Heure>.json
+// (généré par .github/workflows/breviaire.yml)
 // ══════════════════════════════════════════════════════════
 
 const MOIS = ['janvier','février','mars','avril','mai','juin',
               'juillet','août','septembre','octobre','novembre','décembre'];
 const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const LANGUES = ['Latin','Francais','Bilingue'];
 
-const SECTION_LABELS = {
-    'hymne':       'Hymne',
-    'antienne':    'Antienne',
-    'psaume':      'Psaumes',
-    'capitule':    'Capitule',
-    'lecture':     'Leçon',
-    'repons':      'Répons',
-    'verset':      'Verset',
-    'oraison':     'Oraison',
-    'cantique':    'Cantique',
-    'invitatoire': 'Invitatoire',
-    'preces':      'Prières',
-    'titre':       '',
-    'autre':       '',
-};
-
-// ── État ──────────────────────────────────────────────────
 let _offset = 0;
 let _heure  = 'Laudes';
-let _lang   = 'Latin';
-let _cache  = {};
-let _searchTimer = null;
+let _lang   = 'Bilingue';
+let _requete = 0;
+const _cache = {};
+
+try {
+    const l = localStorage.getItem('breviaire-langue');
+    if (LANGUES.includes(l)) _lang = l;
+} catch (e) {}
 
 function dateNav() {
     const d = new Date();
-    d.setDate(d.getDate() + _offset);
     d.setHours(0,0,0,0);
+    d.setDate(d.getDate() + _offset);
     return d;
 }
 
-// ── Navigation ────────────────────────────────────────────
+const deux = n => String(n).padStart(2, '0');
+
 function naviguerJour(delta) {
     _offset += delta;
     chargerOffice();
@@ -449,283 +361,84 @@ function setHeure(btn) {
     chargerOffice();
 }
 
-function setLang(lang) {
-    _lang = lang;
-    ['Latin','Francais','Bilingue'].forEach(l => {
-        const b = document.getElementById('btn-' + l);
-        if (b) b.classList.toggle('active', l === lang);
-    });
-    chargerOffice();
+function majBoutonsLangue() {
+    LANGUES.forEach(l => document.getElementById('btn-' + l).classList.toggle('active', l === _lang));
 }
 
-// ── Chargement depuis breviaire_offices ───────────────────
-async function chargerOffice() {
-    if (typeof maConnexion === 'undefined') { setTimeout(chargerOffice, 300); return; }
+function setLang(lang) {
+    _lang = lang;
+    try { localStorage.setItem('breviaire-langue', lang); } catch (e) {}
+    majBoutonsLangue();
+    const o = _cache[cleOffice()];
+    if (o) afficher(o); else chargerOffice();
+}
 
+function cleOffice() {
     const d = dateNav();
-    const dateStr = d.toISOString().split('T')[0];
+    return `${d.getFullYear()}/${deux(d.getMonth()+1)}-${deux(d.getDate())}/${_heure}`;
+}
+
+async function chargerOffice() {
+    const d = dateNav();
+    const cle = cleOffice();
+    const requete = ++_requete;
 
     document.getElementById('brev-date').textContent =
         JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()] + ' ' + d.getFullYear();
 
-    // Nom de la fête depuis ordo1962
-    const ordo = (typeof Ordo1962 !== 'undefined')
-        ? Ordo1962.getDay(d.getFullYear(), d.getMonth()+1, d.getDate()) : null;
-    document.getElementById('brev-fete').textContent =
-        ordo && ordo.fete ? ordo.fete : dateStr;
+    if (_cache[cle]) { afficher(_cache[cle]); return; }
 
     document.getElementById('brev-content').innerHTML =
         '<div class="brev-loading">Chargement de l\'office…</div>';
 
-    const cacheKey = `${dateStr}|${_heure}|${_lang}`;
-    if (_cache[cacheKey]) { afficher(_cache[cacheKey]); return; }
-
     try {
-        let sections = [];
-
-        if (_lang === 'Bilingue') {
-            // Charger latin + français en parallèle
-            const [resLA, resFR] = await Promise.all([
-                maConnexion.from('breviaire_offices')
-                    .select('section_ord,section_type,section_ref,texte')
-                    .eq('date', dateStr).eq('hora', _heure).eq('langue', 'Latin')
-                    .order('section_ord'),
-                maConnexion.from('breviaire_offices')
-                    .select('section_ord,section_type,section_ref,texte')
-                    .eq('date', dateStr).eq('hora', _heure).eq('langue', 'Francais')
-                    .order('section_ord'),
-            ]);
-            // Fusionner par section_ord
-            const frMap = {};
-            (resFR.data || []).forEach(r => frMap[r.section_ord] = r.texte);
-            sections = (resLA.data || []).map(r => ({
-                ...r,
-                texte_fr: frMap[r.section_ord] || '',
-            }));
-        } else {
-            const { data, error } = await maConnexion.from('breviaire_offices')
-                .select('section_ord,section_type,section_ref,texte')
-                .eq('date', dateStr)
-                .eq('hora', _heure)
-                .eq('langue', _lang)
-                .order('section_ord');
-            if (error) throw error;
-            sections = data || [];
-        }
-
-        _cache[cacheKey] = sections;
-        afficher(sections);
-
-    } catch(e) {
+        const rep = await fetch(`data/breviaire/${cle}.json`);
+        if (requete !== _requete) return;
+        if (rep.status === 404) { afficherVide('Office non disponible pour ce jour.'); return; }
+        if (!rep.ok) throw new Error('HTTP ' + rep.status);
+        const office = await rep.json();
+        if (requete !== _requete) return;
+        _cache[cle] = office;
+        afficher(office);
+    } catch (e) {
+        if (requete !== _requete) return;
         console.error(e);
-        document.getElementById('brev-content').innerHTML =
-            '<div class="brev-empty">Erreur de chargement — ' + e.message + '</div>';
+        afficherVide('Impossible de charger cet office. Vérifiez la connexion : hors ligne, seuls les offices déjà ouverts sont disponibles.');
     }
 }
 
-// ── Affichage ─────────────────────────────────────────────
-function escH(t) {
-    return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function afficherVide(message) {
+    document.getElementById('brev-fete').textContent = 'Bréviaire';
+    document.getElementById('brev-sous').textContent = '';
+    const box = document.getElementById('brev-content');
+    box.innerHTML = '<div class="brev-empty"></div>';
+    box.firstChild.textContent = message;
 }
 
-function formaterTexte(raw) {
-    if (!raw) return '';
-    const lines = raw.split('\n');
-    let html = '';
-    let inPsaume = false;
-
-    for (const line of lines) {
-        const t = line.trim();
-        if (!t) { html += ''; continue; }
-
-        // Titre de psaume : "Psalmus 95 [1]" ou "Canticum Zachariæ"
-        if (/^(Psalmus|Psalm|Canticum|Hymnus)\s/i.test(t)) {
-            inPsaume = true;
-            html += `<span class="brev-ps-titre">${escH(t)}</span>`;
-            continue;
-        }
-
-        // Verset numéroté : "95:1 Cantáte..." ou "1:68 Benedíctus..."
-        const mVerset = t.match(/^\d+:(\w+)\s+(.*)/);
-        if (mVerset) {
-            inPsaume = true;
-            html += `<span class="brev-ps-verset"><sup class="vnum">${escH(mVerset[1])}</sup>${escH(mVerset[2])}</span>`;
-            continue;
-        }
-
-        // Antienne : "Ant. texte *" — encadré en or
-        if (/^Ant\.\s/i.test(t)) {
-            inPsaume = false;
-            html += `<span class="brev-ant-inline">${escH(t)}</span>`;
-            continue;
-        }
-
-        // Répons et versicules ℣ ℟ R. V.
-        if (/^[℣℟✠]|^[RV]\.\s/.test(t)) {
-            html += `<span class="brev-resp">${escH(t)}</span>`;
-            continue;
-        }
-
-        // Référence biblique seule (ex: "Sir 44:16-17", "Luc. 1:68-79")
-        if (/^[A-Z][a-z]+\.?\s+\d+:\d+/.test(t)) {
-            html += `<span class="brev-bible-ref">📖 ${escH(t)}</span>`;
-            continue;
-        }
-
-        // Ligne d'hymne (commence par majuscule, contient *)
-        if (t.includes('*') && !t.startsWith('Ant.')) {
-            html += `<span class="brev-hymne-line">${escH(t)}</span>`;
-            continue;
-        }
-
-        // Ligne normale
-        html += `<span class="brev-line">${escH(t)}</span>`;
-    }
-    return html;
-}
-
-function buildSection(s, idx) {
-    const type  = s.section_type || 'autre';
-    const label = SECTION_LABELS[type] || type;
-    const isMajeur = ['lecture','oraison','cantique','invitatoire'].includes(type);
-    const isEmpty  = !s.texte || !s.texte.trim();
-
-    // Ne pas afficher les sections sans label et sans texte utile (titre de page)
-    if (type === 'titre' && isEmpty) return '';
-
-    const titleHtml = label ? `<div class="brev-section-title${isMajeur?' majeur':''}">
-        ${escH(label)}
-        ${s.section_ref && s.section_ref !== label ? `<span class="brev-sec-ref">${escH(s.section_ref)}</span>` : ''}
-    </div>` : '';
-
-    // Mode bilingue
-    if (_lang === 'Bilingue') {
-        const la = formaterTexte(s.texte);
-        const fr = formaterTexte(s.texte_fr);
-        const textHtml = `<div class="brev-bilingue">
-            <div class="brev-bilingue-col-la">
-                <span class="brev-bilingue-label">Latin</span>
-                <div class="brev-text latin">${la}</div>
-            </div>
-            <div class="brev-bilingue-col-fr">
-                <span class="brev-bilingue-label">Français</span>
-                <div class="brev-text francais">${fr || '<em class="no-fr-txt">—</em>'}</div>
-            </div>
-        </div>`;
-        return `<div class="brev-section" style="animation-delay:${idx*40}ms">${titleHtml}${textHtml}</div>`;
-    }
-
-    // Mode mono-langue
-    const isLatin = _lang === 'Latin';
-    const texte   = formaterTexte(s.texte);
-    const cls     = isLatin ? 'brev-text latin' : 'brev-text francais';
-    return `<div class="brev-section" style="animation-delay:${idx*40}ms">
-        ${titleHtml}
-        <div class="${cls}">${texte}</div>
+// Les cellules sont du HTML déjà nettoyé par tools/breviaire/generate.py
+function buildLigne([la, fr]) {
+    if (_lang === 'Latin')    return `<div class="brev-ligne"><div class="brev-text latin">${la}</div></div>`;
+    if (_lang === 'Francais') return `<div class="brev-ligne"><div class="brev-text francais">${fr}</div></div>`;
+    return `<div class="brev-ligne brev-bilingue">
+        <div class="brev-bilingue-col-la brev-text latin" lang="la">${la}</div>
+        <div class="brev-bilingue-col-fr brev-text francais" lang="fr">${fr}</div>
     </div>`;
 }
 
-function afficher(sections) {
-    const content = document.getElementById('brev-content');
-
-    if (!sections || !sections.length) {
-        content.innerHTML = `<div class="brev-empty">
-            <div style="color:var(--gold);font-size:1.4rem;opacity:.35;margin-bottom:12px">✦</div>
-            Office non disponible pour ce jour.<br>
-            <span style="font-size:.85rem;color:var(--ink-muted)">
-                Générez les offices avec generate_breviaire.py
-            </span>
-        </div>`;
-        return;
-    }
-
-    content.innerHTML = sections
-        .map((s, i) => buildSection(s, i))
-        .filter(Boolean)
-        .join('');
+function afficher(office) {
+    document.getElementById('brev-fete').textContent = office.titre || 'Bréviaire';
+    document.getElementById('brev-sous').textContent = office.sous || '';
+    document.getElementById('brev-content').innerHTML = office.lignes.map(buildLigne).join('');
+    window.scrollTo(0, 0);
 }
 
-// ── Recherche ─────────────────────────────────────────────
-function ouvrirRecherche() {
-    document.getElementById('brev-modal-bg').classList.add('open');
-    setTimeout(() => document.getElementById('brev-search-input').focus(), 100);
-}
-function fermerRecherche() {
-    document.getElementById('brev-modal-bg').classList.remove('open');
-}
-function debounceSearch() {
-    clearTimeout(_searchTimer);
-    _searchTimer = setTimeout(lancerRecherche, 350);
-}
-
-async function lancerRecherche() {
-    if (typeof maConnexion === 'undefined') return;
-    const q = document.getElementById('brev-search-input').value.trim();
-    const results = document.getElementById('brev-search-results');
-    if (q.length < 3) {
-        results.innerHTML = '<div class="brev-empty">Entrez au moins 3 caractères</div>';
-        return;
-    }
-    results.innerHTML = '<div class="brev-empty">Recherche…</div>';
-
-    const langue = _lang === 'Francais' ? 'Francais' : 'Latin';
-    const { data } = await maConnexion.from('breviaire_offices')
-        .select('date,hora,langue,section_type,section_ref,texte')
-        .eq('langue', langue)
-        .ilike('texte', `%${q}%`)
-        .order('date', { ascending: false })
-        .limit(50);
-
-    if (!data || !data.length) {
-        results.innerHTML = '<div class="brev-empty">Aucun résultat.</div>';
-        return;
-    }
-
-    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    const hi  = (t, q) => t ? t.replace(new RegExp(esc(q),'gi'), m => `<mark>${m}</mark>`) : '';
-
-    results.innerHTML =
-        `<div class="brev-modal-count">${data.length} résultat${data.length>1?'s':''}</div>` +
-        data.map(s => {
-            const label = SECTION_LABELS[s.section_type] || s.section_type;
-            const preview = (s.texte||'').replace(/^\d+:\w+\s+/gm,'').trim().substring(0,120);
-            return `<div class="brev-result" onclick="allerVers('${s.date}','${s.hora}')">
-                <span class="brev-result-ref">${escH(s.date)} · ${escH(s.hora)} · ${escH(label)}</span>
-                <span class="brev-result-text">${hi(escH(preview), escH(q))}…</span>
-            </div>`;
-        }).join('');
-}
-
-function allerVers(dateStr, hora) {
-    fermerRecherche();
-    // Naviguer à la date
-    const d = new Date(dateStr);
-    const today = new Date(); today.setHours(0,0,0,0);
-    _offset = Math.round((d - today) / 86400000);
-    // Sélectionner l'heure
-    document.querySelectorAll('.heure-tab').forEach(b => {
-        b.classList.toggle('active', b.dataset.heure === hora);
-    });
-    _heure = hora;
-    chargerOffice();
-}
-
-// ── Raccourcis clavier ────────────────────────────────────
 document.addEventListener('keydown', e => {
-    if (e.key === '/' && !e.target.matches('input,textarea')) {
-        e.preventDefault(); ouvrirRecherche();
-    }
-    if (e.key === 'Escape') fermerRecherche();
-    if (e.key === 'ArrowLeft'  && !e.target.matches('input')) naviguerJour(-1);
-    if (e.key === 'ArrowRight' && !e.target.matches('input')) naviguerJour(1);
+    if (e.key === 'ArrowLeft')  naviguerJour(-1);
+    if (e.key === 'ArrowRight') naviguerJour(1);
 });
 
-// ── Démarrage ─────────────────────────────────────────────
-function init() {
-    if (typeof maConnexion === 'undefined') { setTimeout(init, 200); return; }
-    chargerOffice();
-}
-init();
+majBoutonsLangue();
+chargerOffice();
 </script>
 </body>
 </html>
