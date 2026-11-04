@@ -237,6 +237,9 @@
         font-family: 'EB Garamond', serif; font-style: italic; font-size: .8rem;
         color: var(--ink-muted); opacity: .7; background: none; border: none;
     }
+    #brev-content { transition: opacity .16s ease; }
+    #brev-content.brev-fondu { opacity: 0; }
+    @media (prefers-reduced-motion: reduce) { #brev-content { transition: none; } }
     .do-initiale { color: var(--rubric); font-weight: 700; }
     .do-partie {
         display: block; margin: 18px 0 6px;
@@ -439,6 +442,41 @@ function memoriserGregorien() {
     try { localStorage.setItem('breviaire-gregorien', _gregorien ? '1' : '0'); } catch (e) {}
 }
 
+// Mémorise la partie lue, pour la retrouver après le changement de langue
+function positionLecture() {
+    const haut = document.querySelector('.brev-toolbar').getBoundingClientRect().bottom;
+    for (const l of document.querySelectorAll('#brev-content .brev-ligne')) {
+        const r = l.getBoundingClientRect();
+        if (r.bottom > haut) {
+            return { i: l.dataset.i, part: r.height ? Math.max(0, (haut - r.top) / r.height) : 0 };
+        }
+    }
+    return null;
+}
+
+function restaurerLecture(pos) {
+    if (!pos) return;
+    const l = document.querySelector(`#brev-content .brev-ligne[data-i="${pos.i}"]`);
+    if (!l) return;
+    const haut = document.querySelector('.brev-toolbar').getBoundingClientRect().bottom;
+    const r = l.getBoundingClientRect();
+    window.scrollTo({ top: window.scrollY + r.top + r.height * pos.part - haut, behavior: 'instant' });
+}
+
+function changerLangueEnFondu(office) {
+    const box = document.getElementById('brev-content');
+    const pos = positionLecture();
+    const requete = ++_requete;
+    const sansEffet = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    box.classList.add('brev-fondu');
+    setTimeout(() => {
+        if (requete !== _requete) { box.classList.remove('brev-fondu'); return; }
+        afficher(office, true);
+        restaurerLecture(pos);
+        box.classList.remove('brev-fondu');
+    }, sansEffet ? 0 : 160);
+}
+
 function setGregorien() {
     _gregorien = true;
     arreterSon();
@@ -455,7 +493,7 @@ function setLang(lang) {
     majBoutonsLangue();
     const o = _cache[cleOffice()];
     arreterSon();
-    if (o) afficher(o); else chargerOffice();
+    if (o) changerLangueEnFondu(o); else chargerOffice();
 }
 
 function cleOffice() {
@@ -475,6 +513,7 @@ async function chargerOffice() {
 
     if (_cache[cle]) { afficher(_cache[cle]); return; }
 
+    document.getElementById('brev-content').classList.remove('brev-fondu');
     document.getElementById('brev-content').innerHTML =
         '<div class="brev-loading">Chargement de l\'office…</div>';
 
@@ -657,7 +696,7 @@ function titreFrancais(t) {
     return t;
 }
 
-function afficher(office) {
+function afficher(office, garderPosition = false) {
     document.getElementById('brev-fete').textContent =
         titreFrancais(office.titre_fr || (office.titre || 'Bréviaire').split(' ~ ')[0]);
     // Les rubriques « omittitur » signalent une partie qui n'est pas dite : on ne les affiche pas
@@ -665,7 +704,7 @@ function afficher(office) {
     document.getElementById('brev-content').innerHTML = office.lignes
         .map((l, i) => garde(l) ? buildLigne(l).replace('class="brev-ligne', `data-i="${i}" class="brev-ligne`) : '').join('');
     dessinerPartitions(office);
-    window.scrollTo(0, 0);
+    if (!garderPosition) window.scrollTo(0, 0);
 }
 
 document.addEventListener('keydown', e => {
