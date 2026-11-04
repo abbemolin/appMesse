@@ -228,7 +228,11 @@
         background: none; border: 1px solid var(--border-soft); border-radius: 3px;
     }
     .greg-btn.active { color: var(--gold); border-color: var(--gold); }
-    .greg-audio { display: flex; gap: 6px; margin: 0 0 10px; }
+    .greg-ecoute {
+        display: block; margin: 6px 0 -2px auto; padding: 2px 0;
+        font-family: 'Cinzel', serif; font-size: .5rem; letter-spacing: .08em;
+        color: var(--ink-muted); opacity: .6; background: none; border: none; cursor: pointer;
+    }
     .greg-trad {
         margin: 2px 0 12px; padding-left: 10px; border-left: 2px solid var(--border-soft);
         font-size: .92em; line-height: 1.55; opacity: .85;
@@ -693,7 +697,7 @@ function arreterSon() {
     if (_boutonSon) { _boutonSon.textContent = _boutonSon.dataset.libelle; _boutonSon = null; }
 }
 
-function jouer(evts, bouton) {
+function jouer(evts, decalage, bouton) {
     const memeBouton = _boutonSon === bouton;
     arreterSon();
     if (memeBouton || !evts.length) return;
@@ -707,8 +711,7 @@ function jouer(evts, bouton) {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'triangle';
-        // la hauteur écrite est transposée vers un registre de voix grave
-        osc.frequency.value = 440 * Math.pow(2, (e.hauteur + 36 - 69) / 12);
+        osc.frequency.value = 440 * Math.pow(2, (e.hauteur + decalage - 69) / 12);
         gain.gain.setValueAtTime(0, t);
         gain.gain.linearRampToValueAtTime(.28, t + .025);
         gain.gain.setValueAtTime(.28, t + Math.max(.03, e.duree - .05));
@@ -722,20 +725,50 @@ function jouer(evts, bouton) {
     setTimeout(() => { if (_audio === ctx) arreterSon(); }, fin);
 }
 
-function boutonsAudio(boite) {
+// Hauteur de la teneur : la note la plus fréquente du psaume
+function teneurDe(source) {
+    const compte = new Map();
+    const mapping = exsurge.Gabc.createMappingsFromSource(new exsurge.ChantContext(), source);
+    for (const e of evenementsDe(mapping)) compte.set(e.hauteur, (compte.get(e.hauteur) || 0) + 1);
+    return [...compte].sort((a, b) => b[1] - a[1])[0][0];
+}
+
+// MIDI sonnant = hauteur écrite + 48 + décalage. Cibles : sol4 (67), la4 (69)
+function plusProche(valeur, cibles) {
+    return cibles.reduce((m, c) => Math.abs(c - valeur) <= Math.abs(m - valeur) ? c : m);
+}
+
+// La teneur écrite va vers le sol ou le la le plus proche, quelle que soit son octave
+function decalageTeneur(t) {
+    const ecart = c => { const d = ((t - c) % 12 + 12) % 12; return Math.min(d, 12 - d); };
+    return (ecart(67) < ecart(69) ? 67 : 69) - t;
+}
+
+// Sans teneur (hymne, antienne sans psaume noté) : la note la plus haute vers ré5 ou mi5
+function decalageTessiture(evts) {
+    const haut = Math.max(...evts.map(e => e.hauteur));
+    return plusProche(haut + 48, [74, 76]) - haut;
+}
+
+function typePiece(el) {
+    let n = el.previousSibling;
+    while (n && (n.nodeName === 'BR' || (n.nodeType === 3 && !n.textContent.trim()))) n = n.previousSibling;
+    if (!n || n.nodeType !== 1) return null;
+    const t = n.textContent.trim();
+    if (/^Ant\./.test(t)) return 'antienne';
+    if (/^Hymn/i.test(t)) return 'hymne';
+    return null;
+}
+
+function boutonEcouter(boite, type, teneur) {
     const evts = evenementsDe(boite._mapping || []);
     if (!evts.length) return null;
-    const barre = document.createElement('div');
-    barre.className = 'greg-audio';
-    [['♪ Note de départ', () => [{ hauteur: evts[0].hauteur, duree: 1.6 }]],
-     ['▶ Écouter', () => evts]].forEach(([libelle, liste]) => {
-        const b = document.createElement('button');
-        b.className = 'greg-btn';
-        b.textContent = b.dataset.libelle = libelle;
-        b.onclick = () => jouer(liste(), b);
-        barre.appendChild(b);
-    });
-    return barre;
+    const decalage = type === 'antienne' && teneur !== null ? decalageTeneur(teneur) : decalageTessiture(evts);
+    const b = document.createElement('button');
+    b.className = 'greg-ecoute';
+    b.textContent = b.dataset.libelle = '▶ Écouter';
+    b.onclick = () => jouer(evts, decalage, b);
+    return b;
 }
 
 // ── Traduction française sous les pièces ──────────────────
@@ -787,6 +820,7 @@ async function dessinerPartitions(office) {
         const pieces = [...ligne.querySelectorAll('.gabc')];
         const fr = francais ? morceauxFrancais(francais[+ligne.dataset.i] || '') : [];
         const parPiece = fr.length === pieces.length;
+        const psaumes = pieces.map(p => decouperPsaume(p.textContent) ? p.textContent : null);
 
         for (let i = 0; i < pieces.length; i++) {
             const el = pieces[i];
@@ -804,8 +838,17 @@ async function dessinerPartitions(office) {
             }
             if (dessin !== _dessin) return;
             let dernier = boite;
-            const audio = boutonsAudio(boite);
-            if (audio) { dernier.after(audio); dernier = audio; }
+            const type = typePiece(el);
+            if (type) {
+                let suivant = psaumes.slice(i + 1).find(Boolean);
+                if (!suivant) suivant = psaumes.slice(0, i).reverse().find(Boolean);
+                let teneur = null;
+                if (type === 'antienne' && suivant) {
+                    try { teneur = teneurDe(suivant); } catch (e) { console.error(e); }
+                }
+                const bouton = boutonEcouter(boite, type, teneur);
+                if (bouton) boite.before(bouton);
+            }
             if (psaume) {
                 const v = document.createElement('div');
                 v.className = 'gregorien-versets';
