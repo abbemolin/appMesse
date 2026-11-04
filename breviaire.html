@@ -136,22 +136,6 @@
     .brev-text.latin { font-style: italic; color: var(--ink-soft); }
     .brev-text.francais { color: var(--ink); }
 
-    /* Mode bilingue côte à côte (desktop) */
-    .brev-bilingue {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-    }
-    .brev-bilingue-col-la { border-right: 1px solid var(--border-soft); padding-right: 20px; }
-    .brev-bilingue-col-fr { padding-left: 0; }
-    .brev-bilingue-label {
-        font-family: 'Cinzel', serif; font-size: .48rem;
-        letter-spacing: .18em; text-transform: uppercase;
-        color: var(--ink-muted); display: block; margin-bottom: 6px;
-    }
-    @media (max-width: 600px) {
-        .brev-bilingue { grid-template-columns: 1fr; gap: 6px; }
-        .brev-bilingue-col-la { border-right: none; padding-right: 0; }
-    }
-
     /* ── Antienne ────────────────────────────────────────── */
     .brev-antienne {
         margin-bottom: 6px;
@@ -262,7 +246,6 @@
         .heures-tabs { background: var(--vellum-light); border-color: var(--border-soft); }
         .brev-toolbar { background: var(--vellum); border-color: var(--border-soft); }
         .lang-btn.active { background: #0e0c08; }
-        .brev-bilingue-col-la { border-color: var(--border-soft); }
     }
     </style>
 </head>
@@ -305,9 +288,8 @@
 <!-- ════════════ TOOLBAR ════════════ -->
 <div class="brev-toolbar">
     <div class="lang-toggle">
-        <button class="lang-btn" id="btn-Latin" onclick="setLang('Latin')">Latin</button>
+        <button class="lang-btn active" id="btn-Latin" onclick="setLang('Latin')">Latin</button>
         <button class="lang-btn"        id="btn-Francais" onclick="setLang('Francais')">Français</button>
-        <button class="lang-btn active" id="btn-Bilingue" onclick="setLang('Bilingue')">Bilingue</button>
     </div>
 </div>
 
@@ -327,11 +309,11 @@
 const MOIS = ['janvier','février','mars','avril','mai','juin',
               'juillet','août','septembre','octobre','novembre','décembre'];
 const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-const LANGUES = ['Latin','Francais','Bilingue'];
+const LANGUES = ['Latin','Francais'];
 
 let _offset = 0;
 let _heure  = 'Laudes';
-let _lang   = 'Bilingue';
+let _lang   = 'Latin';
 let _requete = 0;
 const _cache = {};
 
@@ -417,12 +399,9 @@ function afficherVide(message) {
 
 // Les cellules sont du HTML déjà nettoyé par tools/breviaire/generate.py
 function buildLigne([la, fr]) {
-    if (_lang === 'Latin')    return `<div class="brev-ligne"><div class="brev-text latin">${la}</div></div>`;
-    if (_lang === 'Francais') return `<div class="brev-ligne"><div class="brev-text francais">${fr}</div></div>`;
-    return `<div class="brev-ligne brev-bilingue">
-        <div class="brev-bilingue-col-la brev-text latin" lang="la">${la}</div>
-        <div class="brev-bilingue-col-fr brev-text francais" lang="fr">${fr}</div>
-    </div>`;
+    return _lang === 'Francais'
+        ? `<div class="brev-ligne"><div class="brev-text francais">${fr}</div></div>`
+        : `<div class="brev-ligne"><div class="brev-text latin">${la}</div></div>`;
 }
 
 function afficher(office) {
