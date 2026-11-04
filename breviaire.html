@@ -559,7 +559,7 @@ function dessinerScore(source, boite) {
 
 // Psaume ou cantique : le ton sur le premier verset, puis le texte avec ses repères
 function decouperPsaume(source) {
-    if (!/^name:\s*\d+[-,]/m.test(source)) return null;
+    if (!/^name:\s*(?:\d+[-,]|Magnificat-)/m.test(source)) return null;
     const pos = source.search(/%%/);
     const corps = source.slice(pos + 2);
     const debut = corps.search(/\s*(?:\^?\d+\.\^?|V\/\.|R\/\.)\s*\(::\)/);
