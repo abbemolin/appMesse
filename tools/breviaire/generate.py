@@ -146,9 +146,10 @@ def css_class(attrs):
 def clean_cell(text):
     text = re.sub(r"(?:\s*<br>\s*)+$", "", text.strip())
     text = re.sub(r"^(?:\s*<br>\s*)+", "", text)
-    text = re.sub(r"[ \t]*\n[ \t]*", " ", text)
-    return text.replace(" ", " ").strip()
-
+    # Les retours à la ligne structurent les partitions : on ne les retire qu'ailleurs
+    parts = re.split(r'(<div class="gabc">.*?</div>)', text, flags=re.S)
+    parts = [p if p.startswith('<div class="gabc">') else re.sub(r"[ \t]*\n[ \t]*", " ", p) for p in parts]
+    return "".join(parts).replace("\u00a0", " ").strip()
 
 def plain(text):
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", text)).strip()
