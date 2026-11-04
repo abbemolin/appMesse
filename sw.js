@@ -1,4 +1,4 @@
-const CACHE_NAME  = 'messes-v9';
+const CACHE_NAME  = 'messes-v10';
 const SYNC_TAG    = 'sync-intentions';
 const QUEUE_KEY   = 'offline-queue';
 
@@ -15,6 +15,7 @@ const ASSETS_TO_CACHE = [
     './menu.js',
     './modal.js',
     './ordo1962.js',
+    './exsurge.js',
     './manifest.json',
     './propers_db.json',
     './icons/icon-192x192.png',
