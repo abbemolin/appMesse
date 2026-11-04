@@ -706,19 +706,35 @@ function jouer(evts, decalage, bouton) {
     const ctx = _audio = new Ctx();
     _boutonSon = bouton;
     bouton.textContent = '■ Arrêter';
+    // Son d'orgue doux : jeu de flûte (fondamentale et quelques harmoniques), filtré
+    const reel = new Float32Array(7);
+    const imag = new Float32Array([0, 1, .42, .2, .1, .05, .025]);
+    const onde = ctx.createPeriodicWave(reel, imag);
+    const filtre = ctx.createBiquadFilter();
+    filtre.type = 'lowpass';
+    filtre.frequency.value = 2200;
+    filtre.connect(ctx.destination);
+    const VOLUME = .13, ATTAQUE = .05, RELACHE = .09;
     let t = ctx.currentTime + .08;
     for (const e of evts) {
-        const osc = ctx.createOscillator();
+        const frequence = 440 * Math.pow(2, (e.hauteur + decalage - 69) / 12);
         const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.value = 440 * Math.pow(2, (e.hauteur + decalage - 69) / 12);
+        const fin = t + e.duree + (e.pause ? 0 : RELACHE * .6);   // notes légèrement liées
         gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(.28, t + .025);
-        gain.gain.setValueAtTime(.28, t + Math.max(.03, e.duree - .05));
-        gain.gain.linearRampToValueAtTime(0, t + e.duree);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(t);
-        osc.stop(t + e.duree + .01);
+        gain.gain.linearRampToValueAtTime(VOLUME, t + ATTAQUE);
+        gain.gain.setValueAtTime(VOLUME, Math.max(t + ATTAQUE, fin - RELACHE));
+        gain.gain.linearRampToValueAtTime(0, fin);
+        gain.connect(filtre);
+        // deux tuyaux très légèrement désaccordés pour un son plus ample
+        for (const desaccord of [-2, 2]) {
+            const osc = ctx.createOscillator();
+            osc.setPeriodicWave(onde);
+            osc.frequency.value = frequence;
+            osc.detune.value = desaccord;
+            osc.connect(gain);
+            osc.start(t);
+            osc.stop(fin + .01);
+        }
         t += e.duree + (e.pause || 0);
     }
     const fin = (t - ctx.currentTime + .1) * 1000;
@@ -738,11 +754,8 @@ function plusProche(valeur, cibles) {
     return cibles.reduce((m, c) => Math.abs(c - valeur) <= Math.abs(m - valeur) ? c : m);
 }
 
-// La teneur écrite va vers le sol ou le la le plus proche, quelle que soit son octave
-function decalageTeneur(t) {
-    const ecart = c => { const d = ((t - c) % 12 + 12) % 12; return Math.min(d, 12 - d); };
-    return (ecart(67) < ecart(69) ? 67 : 69) - t;
-}
+// La teneur sonne toujours sur sol4 (392 Hz)
+const decalageTeneur = t => 67 - t;
 
 // Sans teneur (hymne, antienne sans psaume noté) : la note la plus haute vers ré5 ou mi5
 function decalageTessiture(evts) {
