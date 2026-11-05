@@ -52,7 +52,7 @@ def jour(args, d):
         if tete is None:
             tete = (o, page)
     o, page = tete
-    rang = (re.search(r"~ ([IV]+)\. classis", o["titre"]) or [None, None])[1]
+    rang = (re.search(r"~ (?:.*\s)?([IV]+)\. classis", o["titre"]) or [None, None])[1]
     principal = 0
     if re.search(r"chrismatis", messes[0]["titre"]) and len(messes) > 1:
         principal = 1   # Jeudi saint : la Messe du soir d'abord

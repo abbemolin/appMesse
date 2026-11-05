@@ -1,4 +1,4 @@
-const CACHE_NAME  = 'messes-v11';
+const CACHE_NAME  = 'messes-v12';
 const CACHE_OFFICES = 'breviaire-offices-v1';   // conservé entre les mises à jour de l'app
 const SYNC_TAG    = 'sync-intentions';
 const QUEUE_KEY   = 'offline-queue';
@@ -15,6 +15,9 @@ const ASSETS_TO_CACHE = [
     './menu.js',
     './modal.js',
     './ordo1962.js',
+    './titres.js',
+    './messe.js',
+    './data/messe/calendrier.js',
     './exsurge.js',
     './manifest.json',
     './propers_db.json',
@@ -122,7 +125,7 @@ self.addEventListener('fetch', event => {
     }
 
     // ── Offices du bréviaire : cache d'abord, actualisé en arrière-plan ──
-    if (url.pathname.includes('/data/breviaire/') && event.request.method === 'GET') {
+    if ((url.pathname.includes('/data/breviaire/') || (url.pathname.includes('/data/messe/') && url.pathname.endsWith('.json'))) && event.request.method === 'GET') {
         event.respondWith(caches.open(CACHE_OFFICES).then(async cache => {
             const enCache = await cache.match(event.request);
             const reseau = fetch(event.request).then(resp => {
