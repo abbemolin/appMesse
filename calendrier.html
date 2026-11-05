@@ -508,19 +508,37 @@ function messesduJour(iso) {
     return [...gcalMesses, ...privees];
 }
 
+// Extrait la base d'un google_event_id récurrent (avant le suffixe _YYYYMMDDTHHMMSSZ)
+function baseGoogleId(gid) {
+    if (!gid) return '';
+    return gid.replace(/_\d{8}T\d{6}Z$/, '');
+}
+
 function intentionDuJour(googleId, iso, heure) {
-    // 1. Match exact par google_event_id (le plus fiable)
+    // 1. Match exact par google_event_id
     const byId = _intentions.find(i => i.google_event_id === googleId);
     if (byId) return byId;
 
-    // 2. Pour les messes privées : match par google_event_id préfixe 'prive_' + date
-    if (googleId && googleId.startsWith('prive_')) return null; // déjà géré par byId
+    // 2. Match par base d'ID récurrent (même série, occurrence différente)
+    if (googleId && !googleId.startsWith('prive_')) {
+        const base = baseGoogleId(googleId);
+        if (base) {
+            const byBase = _intentions.find(i =>
+                i.google_event_id && baseGoogleId(i.google_event_id) === base
+            );
+            if (byBase) return byBase;
+        }
+    }
 
-    // 3. Fallback par date + heure (messes récurrentes dont l'ID varie)
+    // 3. Pour les messes privées : pas de fallback
+    if (googleId && googleId.startsWith('prive_')) return null;
+
+    // 4. Fallback par date + heure — uniquement pour intentions sans google_event_id
+    //    (jamais croiser deux intentions qui ont chacune leur propre ID)
     return _intentions.find(i =>
         i.date_messe === iso &&
         i.heure_messe === heure &&
-        !i.google_event_id?.startsWith('prive_') && // exclure les privées
+        !i.google_event_id &&
         (i.statut === 'valide' || i.statut === 'en_attente' || i.en_edition)
     ) || null;
 }
