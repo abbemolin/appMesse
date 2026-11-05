@@ -1,4 +1,4 @@
-const CACHE_NAME  = 'messes-v12';
+const CACHE_NAME  = 'messes-v13';
 const CACHE_OFFICES = 'breviaire-offices-v1';   // conservé entre les mises à jour de l'app
 const SYNC_TAG    = 'sync-intentions';
 const QUEUE_KEY   = 'offline-queue';
@@ -18,6 +18,7 @@ const ASSETS_TO_CACHE = [
     './titres.js',
     './messe.js',
     './data/messe/calendrier.js',
+    './data/messe/smmd.json',
     './exsurge.js',
     './manifest.json',
     './propers_db.json',

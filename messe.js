@@ -6,17 +6,41 @@
     const pad = n => String(n).padStart(2, '0');
     const iso = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
     const ancienGetDay = Ordo1962.getDay;
+
+    // Propre de la communauté (SMMD), à côté du calendrier romain
+    const SMMD = {
+        '12-01': { fete: 'S. Charles de Foucauld', classe: '3e classe', rang: 3 },
+        '02-15': { fete: 'B. Michel Sopocko', classe: '3e classe', rang: 3 },
+        '10-05': { fete: 'Ste Faustine', classe: '1re classe', rang: 1 },
+        '10-22': { fete: 'S. Jean-Paul II', classe: '3e classe', rang: 3 },
+        '11-16': { fete: 'Notre-Dame de la Miséricorde', classe: '3e classe', rang: 3 },
+    };
+
+    // 1re classe : remplace tout sauf une 1re classe. 3e classe : cède aux 1re et 2e classes et aux féries de Carême.
+    function smmdRemplace(f, c) {
+        if (!f) return false;
+        if (!c) return true;
+        if (f.rang === 1) return c.rang !== 1;
+        if (c.rang < 3) return false;
+        return !/^Feria.*(Quadragesim|Passion|Cinerum)/.test(c.titre || '');
+    }
+    window.Smmd = { fete: (m, d) => SMMD[`${pad(m)}-${pad(d)}`] || null, remplace: smmdRemplace };
     const ancienneCle = Ordo1962.getProperKey;
 
     // Mêmes champs qu'avant pour les pages ; hors calendrier généré, l'ancien calcul sert de repli
     Ordo1962.getDay = function (y, m, d) {
         const base = ancienGetDay(y, m, d);
         const c = (window.CALENDRIER_MESSE || {})[iso(y, m, d)];
-        if (!c) return base;
-        return Object.assign({}, base, {
+        const f = Smmd.fete(m, d);
+        const r = c ? Object.assign({}, base, {
             date: iso(y, m, d), fete: titreFrancais(c.titre_fr || c.titre), classe: c.classe, rang: c.rang,
             couleur: c.couleur, commemoration: c.comm || null, autres: [], source: 'divinum',
-        });
+        }) : base;
+        if (f && smmdRemplace(f, c)) {
+            return Object.assign({}, r, { date: iso(y, m, d), fete: f.fete, classe: f.classe, rang: f.rang,
+                couleur: 'Blanc', commemoration: null, autres: [], source: 'smmd', romain: r.fete });
+        }
+        return r;
     };
     Ordo1962.getWeek = function (y, m, d) {
         return Array.from({ length: 7 }, (_, i) => {
@@ -25,7 +49,7 @@
         });
     };
     Ordo1962.getProperKey = o =>
-        o && o.date && (window.CALENDRIER_MESSE || {})[o.date] ? o.date : (ancienneCle ? ancienneCle(o) : null);
+        o && o.date && ((window.CALENDRIER_MESSE || {})[o.date] || o.source === 'smmd') ? o.date : (ancienneCle ? ancienneCle(o) : null);
 
     const css = document.createElement('style');
     css.textContent = `
@@ -57,6 +81,8 @@
     const omise = cellule => /^\s*<span class="do-titre">[^]*?<\/span>\s*(?:<br>\s*)*(?:<[^>]+>\s*)*omit\.?\s*(?:<[^>]+>\s*)*$/i.test(cellule);
 
     window.nomMesse = function (messes, i) {
+        if (messes[i].smmd) return 'Communauté';
+        if (messes.some(m => m.smmd) && messes.filter(m => !m.smmd).length === 1) return 'Calendrier romain';
         const noms = messes.map(m => titreFrancais(m.titre_fr || m.titre));
         const tous = new Set(noms).size === noms.length;
         if (/chrism/i.test(messes[i].titre)) return 'Messe chrismale';
@@ -124,22 +150,44 @@
         document.getElementById('propre-acc-date').textContent = `${d} ${MOIS_MESSE[m - 1]} ${y}`;
         document.getElementById('propre-acc-fete').textContent = (o && o.fete) || '';
         document.getElementById('propre-acc-multi').style.display = 'none';
+        document.getElementById('propre-acc-multi').innerHTML = '';
         const box = document.getElementById('propre-acc-pieces');
         box.innerHTML = '<div style="text-align:center;padding:40px;color:var(--ink-muted);">Chargement…</div>';
         document.getElementById('modal-propre-acc').style.display = 'flex';
         _messe = null;
+        let hs = false;
         try {
             const rep = await fetch(`data/messe/${y}/${pad(m)}-${pad(d)}.json`);
             if (rep.ok) {
                 _messe = await rep.json();
+                _active = _messe.principal || 0;
                 // Jeudi saint : la Messe chrismale et la Messe du soir (la 3e entrée n'est pas de 1960)
                 if (/chrism/i.test(_messe.messes[0].titre)) _messe.messes = _messe.messes.slice(0, 2);
-                _active = _messe.principal || 0;
-                afficherChoixMesse();
-                majTitre();
             }
-        } catch (e) {
-            console.error(e);
+        } catch (e) { console.error(e); hs = true; }
+        const f = Smmd.fete(m, d);
+        if (f) {
+            try {
+                const rep = await fetch('data/messe/smmd.json');
+                const toutes = rep.ok ? await rep.json() : null;
+                const pm = toutes && toutes[`${pad(m)}-${pad(d)}`];
+                if (pm) {
+                    const c = (window.CALENDRIER_MESSE || {})[date];
+                    const lignes = pm.lignes.slice();
+                    // Depuis la Septuagésime : le Trait remplace le Graduel et l'Alléluia
+                    if (pm.trait && c && /gesim|Quadragesim/i.test(c.titre || '')) {
+                        const i = lignes.findIndex(l => />Graduale</.test(l[0]));
+                        if (i >= 0) lignes[i] = pm.trait;
+                    }
+                    const propre = { titre: pm.titre, titre_fr: pm.titre_fr, lignes, smmd: true };
+                    _messe = _messe || { messes: [], principal: 0 };
+                    _messe.messes.unshift(propre);
+                    _active = smmdRemplace(f, c) ? 0 : (_messe.principal || 0) + 1;
+                }
+            } catch (e) { console.error(e); hs = hs && !_messe; }
+        }
+        if (_messe) { afficherChoixMesse(); majTitre(); }
+        else if (hs) {
             box.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink-muted);font-style:italic;">Propre indisponible sans connexion pour ce jour.</div>';
             return;
         }
