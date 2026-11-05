@@ -460,15 +460,19 @@ function selectAbbe(id) {
         if (btn) btn.classList.toggle('actif', a === id);
     });
     // Pré-remplir l'heure selon l'abbé et le jour si le champ est visible
-    const libreHeure = document.getElementById('libre-heure');
-    const libreDate  = document.getElementById('libre-date');
-    const dateHeurDiv = document.getElementById('libre-date-heure');
-    if (libreHeure && libreDate && dateHeurDiv && dateHeurDiv.style.display !== 'none') {
-        const iso = libreDate.value || document.getElementById('input-date-iso').value;
-        if (iso) {
-            const jour = new Date(iso + 'T12:00:00').getDay();
-            const heure = (HORAIRES_ABBE[id] || {})[jour];
-            if (heure) libreHeure.value = heure;
+    // MAIS seulement en création (pas en modification, pour ne pas écraser l'heure enregistrée)
+    const supaIdVal = document.getElementById('input-supa-id')?.value;
+    if (!supaIdVal) {
+        const libreHeure = document.getElementById('libre-heure');
+        const libreDate  = document.getElementById('libre-date');
+        const dateHeurDiv = document.getElementById('libre-date-heure');
+        if (libreHeure && libreDate && dateHeurDiv && dateHeurDiv.style.display !== 'none') {
+            const iso = libreDate.value || document.getElementById('input-date-iso').value;
+            if (iso) {
+                const jour = new Date(iso + 'T12:00:00').getDay();
+                const heure = (HORAIRES_ABBE[id] || {})[jour];
+                if (heure) libreHeure.value = heure;
+            }
         }
     }
 }
@@ -885,15 +889,17 @@ function ouvrirModalModif(supaId) {
     document.getElementById('input-google-id').value  = intent.google_event_id || '';
     document.getElementById('input-heure').value      = '';
     document.getElementById('input-supa-id').value    = intent.id || '';
-    // Toujours afficher date + heure pour permettre la modification
-    document.getElementById('libre-date-heure').style.display = 'flex';
-    document.getElementById('libre-date').value       = intent.date_messe;
-    document.getElementById('libre-heure').value      = (intent.heure_messe || '09:00').replace('h',':');
     document.getElementById('nom_intention').value    = intent.nom_intention || '';
     document.getElementById('nom_donateur').value     = intent.nom_donateur || '';
     document.getElementById('commentaire').value      = intent.commentaire || '';
     document.getElementById('type_intention').value   = intent.type_intention || 'Défunt';
+    // Sélectionner l'abbé AVANT d'afficher/remplir libre-date-heure
+    // (selectAbbe ne pré-remplira pas l'heure car input-supa-id est déjà rempli)
     selectAbbe(intent.pretre_id || 'molin');
+    // Toujours afficher date + heure pour permettre la modification
+    document.getElementById('libre-date-heure').style.display = 'flex';
+    document.getElementById('libre-date').value       = intent.date_messe;
+    document.getElementById('libre-heure').value      = (intent.heure_messe || '09:00').replace('h',':');
 
     const d = new Date(intent.date_messe + 'T12:00:00');
     const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
