@@ -448,33 +448,12 @@ const PRETRES = {
     'legall': '✝ Abbé Le Gall',
 };
 
-// Horaires habituels par abbé : [heure par jour 0=dim..6=sam]
-const HORAIRES_ABBE = {
-    molin:  { 2: '18:30', 3: '18:30', 5: '12:15', 6: '17:00' }, // mar, mer, ven, sam
-    legall: { 3: '12:15', 4: '18:30', 5: '18:30', 6: '09:00' }, // mer, jeu, ven, sam
-};
 function selectAbbe(id) {
     document.getElementById('input-pretre').value = id;
     ['molin','legall'].forEach(a => {
         const btn = document.getElementById('chip-'+a);
         if (btn) btn.classList.toggle('actif', a === id);
     });
-    // Pré-remplir l'heure selon l'abbé et le jour si le champ est visible
-    // MAIS seulement en création (pas en modification, pour ne pas écraser l'heure enregistrée)
-    const supaIdVal = document.getElementById('input-supa-id')?.value;
-    if (!supaIdVal) {
-        const libreHeure = document.getElementById('libre-heure');
-        const libreDate  = document.getElementById('libre-date');
-        const dateHeurDiv = document.getElementById('libre-date-heure');
-        if (libreHeure && libreDate && dateHeurDiv && dateHeurDiv.style.display !== 'none') {
-            const iso = libreDate.value || document.getElementById('input-date-iso').value;
-            if (iso) {
-                const jour = new Date(iso + 'T12:00:00').getDay();
-                const heure = (HORAIRES_ABBE[id] || {})[jour];
-                if (heure) libreHeure.value = heure;
-            }
-        }
-    }
 }
 function pretreLabel(id) {
     return PRETRES[id] || (id ? '✝ ' + id : '');
