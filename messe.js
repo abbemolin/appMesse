@@ -16,6 +16,30 @@
         '11-16': { fete: 'Notre-Dame de la Miséricorde', classe: '3e classe', rang: 3 },
     };
 
+    // Propre de Strasbourg, calendrier seul : le propre de la Messe reste celui du jour.
+    // Fête = 2e classe, mémoire = 3e classe, mémoire facultative = simple mention.
+    // La communauté passe avant : Foucauld (1er déc.) et Jean-Paul II (22 oct.) gardent sa date et sa Messe.
+    const DIOCESE = {
+        '04-19': ['S. Léon IX, pape', 2], '07-21': ['S. Arbogast, évêque, patron du diocèse', 2],
+        '09-07': ['Dédicace de la Cathédrale', 2], '12-13': ['Ste Odile, abbesse, patronne de l’Alsace', 2],
+        '07-07': ['Translation des reliques de Ste Odile', 3], '09-12': ['S. Materne et les premiers apôtres de l’Alsace', 3],
+        '09-25': ['Stes Eugénie et Attale, vierges', 3], '10-26': ['S. Amand, premier évêque de Strasbourg', 3],
+        '11-07': ['S. Florent, évêque', 3], '12-15': ['Ste Lucie, vierge et martyre', 3],
+        '01-27': ['S. Amarin, abbé', 0], '02-01': ['Ste Brigide, abbesse', 0], '02-12': ['S. Ludan, pèlerin', 0],
+        '02-13': ['S. Benoît d’Aniane, abbé', 0], '03-06': ['S. Fridolin, moine missionnaire', 0],
+        '05-25': ['S. Urbain Ier, pape', 0],
+        '06-04': ['S. Morand, moine', 0], '06-19': ['Ss. Modeste Andlauer et André Bauer, martyrs', 0],
+        '07-04': ['S. Ulrich, évêque', 0], '07-20': ['S. Apollinaire, évêque et martyr', 0],
+        '08-12': ['B. Jean-Georges Rehm, prêtre et martyr', 0], '08-30': ['S. Adelphe, évêque', 0],
+        '09-09': ['Bse Mère Alphonse-Marie', 0], '09-11': ['Saint Nom de Marie', 0],
+        '09-17': ['S. Lambert, évêque et martyr', 0], '09-18': ['Ste Richarde, impératrice', 0],
+        '09-22': ['S. Maurice et ses compagnons, martyrs', 0], '10-05': ['S. Léger, évêque et martyr', 0],
+        '10-13': ['Ste Aurélie, vierge', 0], '10-16': ['S. Gall, missionnaire', 0],
+        '11-03': ['S. Pirmin, évêque', 0], '12-16': ['Ste Adélaïde, impératrice', 0],
+    };
+    const CLASSE_DIOCESE = { 2: '2e classe', 3: '3e classe' };
+    const ROUGE_DIOCESE = new Set(['12-15']);   // Ste Lucie, martyre ; les autres fêtes sont en blanc
+
     // 1re classe : remplace tout sauf une 1re classe. 3e classe : cède aux 1re et 2e classes et aux féries de Carême.
     function smmdRemplace(f, c) {
         if (!f) return false;
@@ -36,11 +60,21 @@
             date: iso(y, m, d), fete: titreFrancais(c.titre_fr || c.titre), classe: c.classe, rang: c.rang,
             couleur: c.couleur, commemoration: c.comm || null, autres: [], source: 'divinum',
         }) : base;
+        const dio = DIOCESE[`${pad(m)}-${pad(d)}`];
+        const mention = n => `${n} (facultatif)`;
         if (f && smmdRemplace(f, c)) {
-            return Object.assign({}, r, { date: iso(y, m, d), fete: f.fete, classe: f.classe, rang: f.rang,
-                couleur: 'Blanc', commemoration: null, autres: [], source: 'smmd', romain: r.fete });
+            return Object.assign({}, r, { date: iso(y, m, d), fete: dio ? `${f.fete} · ${mention(dio[0])}` : f.fete,
+                classe: f.classe, rang: f.rang, couleur: 'Blanc', commemoration: null, autres: [], source: 'smmd', romain: r.fete });
         }
-        return r;
+        if (!c || !dio) return r;
+        const [nom, rang] = dio;
+        if (rang) {
+            const peut = rang === 2 ? c.rang >= 3 : smmdRemplace({ rang }, c);
+            if (peut) return Object.assign({}, r, { fete: nom, classe: CLASSE_DIOCESE[rang], rang,
+                couleur: ROUGE_DIOCESE.has(`${pad(m)}-${pad(d)}`) ? 'Rouge' : 'Blanc', source: 'diocese', romain: r.fete });
+            return r;
+        }
+        return c.rang >= 3 ? Object.assign({}, r, { fete: `${r.fete} · ${mention(nom)}`, mention: nom }) : r;
     };
     Ordo1962.getWeek = function (y, m, d) {
         return Array.from({ length: 7 }, (_, i) => {
