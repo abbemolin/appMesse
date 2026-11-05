@@ -1,0 +1,3378 @@
+{
+"2026-11-05": {
+"titre": "Feria Quinta infra Hebdomadam XXIII post Octavam Pentecostes I. Novembris",
+"titre_fr": "Jeudi de la 23e semaine après l’Octave de la Pentecôte 1er de novembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2026-11-06": {
+"titre": "Feria Sexta infra Hebdomadam XXIII post Octavam Pentecostes I. Novembris",
+"titre_fr": "Vendredi de la 23e semaine après l’Octave de la Pentecôte 1er de novembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2026-11-07": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Sabbato infra Hebdomadam XXIII post Octavam Pentecostes I. Novembris"
+},
+"2026-11-08": {
+"titre": "Dominica V quæ superfuit Post Epiphaniam III. Novembris",
+"titre_fr": "5e dimanche après l’Épiphanie (reporté) 3e de novembre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2026-11-09": {
+"titre": "In Dedicatione Basilicæ Ss. Salvatoris",
+"titre_fr": "Dédicace de la Basilique du Très Saint Sauveur",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio ad Laudes tantum: S. Theodori Martyris"
+},
+"2026-11-10": {
+"titre": "S. Andreæ Avellini Confessoris",
+"titre_fr": "St. André Avellin Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Tryphonis, Respicii, et Nymphæ Virg., Martyrum"
+},
+"2026-11-11": {
+"titre": "S. Martini Episcopi et Confessoris",
+"titre_fr": "St Martin, Evêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Mennæ Martyris"
+},
+"2026-11-12": {
+"titre": "S. Martini Papæ et Martyris",
+"titre_fr": "S. Martin Ier, Pape et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria V infra Hebdomadam V quæ superfuit post Epiphaniam III. Novembris"
+},
+"2026-11-13": {
+"titre": "S. Didaci Confessoris",
+"titre_fr": "S. Didace Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria VI infra Hebdomadam V quæ superfuit post Epiphaniam III. Novembris"
+},
+"2026-11-14": {
+"titre": "S. Josaphat Episcopi et Martyris",
+"titre_fr": "St. Josaphat Evêque et Martyrs",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam V quæ superfuit post Epiphaniam III. Novembris"
+},
+"2026-11-15": {
+"titre": "Dominica VI quæ superfuit Post Epiphaniam IV. Novembris",
+"titre_fr": "6e dimanche après l’Épiphanie (reporté) 4e de novembre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2026-11-16": {
+"titre": "S. Gertrudis Virginis",
+"titre_fr": "Ste Gertrude Vierge",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria II infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+},
+"2026-11-17": {
+"titre": "S. Gregorii Thaumaturgi Episcopi et Confessoris",
+"titre_fr": "St. Grégoire Thaumaturge Evêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria III infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+},
+"2026-11-18": {
+"titre": "In Dedicatione Basilicarum Ss. Apostolorum Petri et Pauli",
+"titre_fr": "Dédicace des Basiliques des Sts Apôtres Pierre et Paul",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria IV infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+},
+"2026-11-19": {
+"titre": "S. Elisabeth Viduæ",
+"titre_fr": "Ste. Elisabeth Veuve",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Pontiani Papæ et Martyris"
+},
+"2026-11-20": {
+"titre": "S. Felicis de Valois Confessoris",
+"titre_fr": "St. Félix de Valois Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria VI infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+},
+"2026-11-21": {
+"titre": "In Presentatione Beatæ Mariæ Virginis",
+"titre_fr": "Présentation de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+},
+"2026-11-22": {
+"titre": "Dominica XXIV et ultima Post Pentecosten V. Novembris",
+"titre_fr": "24e et dernier dimanche après la Pentecôte 5e de novembre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2026-11-23": {
+"titre": "S. Clementis Papæ et Martyris",
+"titre_fr": "St Clément Ier Pape et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Felicitatis Martyris"
+},
+"2026-11-24": {
+"titre": "S. Joannis a Cruce Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St. Jean de la Croix Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Chrysogoni Martyris"
+},
+"2026-11-25": {
+"titre": "S. Catharinæ Virginis et Martyris",
+"titre_fr": "Ste Catherine Vierge et Martyre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quarta infra Hebdomadam XXIV post Octavam Pentecostes V. Novembris"
+},
+"2026-11-26": {
+"titre": "S. Silvestri Abbatis",
+"titre_fr": "St Silvestre Abbé",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Petri Alexandrini Martyris"
+},
+"2026-11-27": {
+"titre": "Feria Sexta infra Hebdomadam XXIV post Octavam Pentecostes V. Novembris",
+"titre_fr": "Vendredi de la 24e semaine après l’Octave de la Pentecôte 5e de novembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2026-11-28": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Sabbato infra Hebdomadam XXIV post Octavam Pentecostes V. Novembris"
+},
+"2026-11-29": {
+"titre": "Dominica I Adventus",
+"titre_fr": "1er dimanche de l’Avent",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2026-11-30": {
+"titre": "S. Andreæ Apostoli",
+"titre_fr": "St André Apôtre",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: Feria II infra Hebdomadam I Adventus"
+},
+"2026-12-01": {
+"titre": "Feria III infra Hebdomadam I Adventus",
+"titre_fr": "Mardi de la première semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2026-12-02": {
+"titre": "S. Bibianæ Virginis et Martyris",
+"titre_fr": "Ste Bibiane Vierge et Martyre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria IV infra Hebdomadam I Adventus"
+},
+"2026-12-03": {
+"titre": "S. Francisci Xaverii Confessoris",
+"titre_fr": "S. François Xavier Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria V infra Hebdomadam I Adventus"
+},
+"2026-12-04": {
+"titre": "S. Petri Chrysologi Episcopi Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Pierre Chrysologue Evêque Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria VI infra Hebdomadam I Adventus"
+},
+"2026-12-05": {
+"titre": "Sabbato infra Hebdomadam I Adventus",
+"titre_fr": "Samedi de la première semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Sabbæ Abbatis"
+},
+"2026-12-06": {
+"titre": "Dominica II Adventus",
+"titre_fr": "2e dimanche de l’Avent",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2026-12-07": {
+"titre": "S. Ambrosii Episcopi Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Ambroise Evêque Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria II infra Hebdomadam II Adventus"
+},
+"2026-12-08": {
+"titre": "In Conceptione Immaculata Beatæ Mariæ Virginis",
+"titre_fr": "Immaculée Conception de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": "Commemoratio: Feria III infra Hebdomadam II Adventus"
+},
+"2026-12-09": {
+"titre": "Feria IV infra Hebdomadam II Adventus",
+"titre_fr": "Mercredi de la deuxième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2026-12-10": {
+"titre": "Feria V infra Hebdomadam II Adventus",
+"titre_fr": "Jeudi de la deuxième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Melchiadis Papæ et Martyris"
+},
+"2026-12-11": {
+"titre": "S. Damasi Papæ et Confessoris",
+"titre_fr": "St Damase Ier, pape et confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria VI infra Hebdomadam II Adventus"
+},
+"2026-12-12": {
+"titre": "Sabbato infra Hebdomadam II Adventus",
+"titre_fr": "Samedi de la deuxième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2026-12-13": {
+"titre": "Dominica III Adventus",
+"titre_fr": "3e dimanche de l’Avent",
+"couleur": "Rose",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2026-12-14": {
+"titre": "Feria II infra Hebdomadam III Adventus",
+"titre_fr": "Lundi de la troisième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2026-12-15": {
+"titre": "Feria III infra Hebdomadam III Adventus",
+"titre_fr": "Mardi de la troisième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2026-12-16": {
+"titre": "Feria IV Quattuor Temporum in Adventu",
+"titre_fr": "Mercredi des Quatre-Temps de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio : S. Eusebii Episcopi et Martyris"
+},
+"2026-12-17": {
+"titre": "Feria V infra Hebdomadam III Adventus",
+"titre_fr": "Jeudi de la troisième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2026-12-18": {
+"titre": "Feria VI Quattuor Temporum in Adventu",
+"titre_fr": "Vendredi des Quatre-Temps de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2026-12-19": {
+"titre": "Sabbato Quattuor Temporum in Adventu",
+"titre_fr": "Samedi des Quatre-Temps de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2026-12-20": {
+"titre": "Dominica IV Adventus",
+"titre_fr": "4e dimanche de l’Avent",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2026-12-21": {
+"titre": "S. Thomæ Apostoli",
+"titre_fr": "St Thomas, Apôtre",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: Feria II infra Hebdomadam IV Adventus"
+},
+"2026-12-22": {
+"titre": "Feria III infra Hebdomadam IV Adventus",
+"titre_fr": "Mardi de la quatrième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2026-12-23": {
+"titre": "Feria IV infra Hebdomadam IV Adventus",
+"titre_fr": "Mercredi de la quatrième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2026-12-24": {
+"titre": "In Vigilia Nativitatis Domini",
+"titre_fr": "Vigile de la Nativité du Seigneur",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2026-12-25": {
+"titre": "In Nativitate Domini in nocte",
+"titre_fr": "Nativité du Seigneur, pendant la nuit",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2026-12-26": {
+"titre": "S. Stephani Protomartyris",
+"titre_fr": "St Etienne Protomartyr",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: Diei II infra Octavam Nativitatis"
+},
+"2026-12-27": {
+"titre": "Dominica Infra Octavam Nativitatis",
+"titre_fr": "Dimanche dans l’octave de la Nativité",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: S. Joannis Apostoli et Evangelistæ"
+},
+"2026-12-28": {
+"titre": "Diei IV infra Octavam Nativitatis",
+"titre_fr": "IVème jour de l'octave de la Nativité",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio : Ss. Innocentium"
+},
+"2026-12-29": {
+"titre": "Die V infra Octavam Nativitatis",
+"titre_fr": "5e jour dans l’octave de la Nativité",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio : S. Thomæ Cantuariensis Episcopi et Martyris"
+},
+"2026-12-30": {
+"titre": "Die VI infra Octavam Nativitatis",
+"titre_fr": "VIème jour de l'octave de la Nativité",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2026-12-31": {
+"titre": "Die VII infra Octavam Nativitatis",
+"titre_fr": "7e jour dans l’octave de la Nativité",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio : S. Silvestri Papæ et Confessoris"
+},
+"2027-01-01": {
+"titre": "In Circumcisione Domini",
+"titre_fr": "Circoncision de Notre-Seigneur",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-01-02": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-01-03": {
+"titre": "Sanctissimi Nominis Jesu",
+"titre_fr": "Très Saint Nom de Jésus",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-01-04": {
+"titre": "Die Quarta Januarii",
+"titre_fr": "Die Quarta Januarii",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-01-05": {
+"titre": "Die Quinta Januarii",
+"titre_fr": "Die Quinta Januarii",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Telesphori Papæ et Martyris"
+},
+"2027-01-06": {
+"titre": "In Epiphania Domini",
+"titre_fr": "Épiphanie de Notre-Seigneur",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-01-07": {
+"titre": "Die Septima Januarii",
+"titre_fr": "7 janvier",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Ad Romános, cap. 9"
+},
+"2027-01-08": {
+"titre": "Die Octava Januarii",
+"titre_fr": "8 janvier",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Ad Romános, cap. 12"
+},
+"2027-01-09": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Ad Romános, cap. 13"
+},
+"2027-01-10": {
+"titre": "Sanctæ Familiæ Jesu Mariæ Joseph",
+"titre_fr": "Sainte Famille de Jésus, Marie et Joseph",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-01-11": {
+"titre": "Die Undecima Januarii",
+"titre_fr": "11 janvier",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio ad Laudes tantum: S. Hygini Papæ et Martyris"
+},
+"2027-01-12": {
+"titre": "Die Duodecima Januarii",
+"titre_fr": "12 janvier",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Feria III infra Hebdomadam I post Epiphaniam"
+},
+"2027-01-13": {
+"titre": "Commemoratio Baptismatis Domini Nostri Jesu Christi",
+"titre_fr": "Commémoraison du Baptême de Notre-Seigneur Jésus-Christ",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria IV infra Hebdomadam I post Epiphaniam"
+},
+"2027-01-14": {
+"titre": "S. Hilarii Episcopi Confessoris Ecclesiæ Doctoris",
+"titre_fr": "S. Hilaire Evêque et Confesseur Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Felicis Presbyteri et Martyris"
+},
+"2027-01-15": {
+"titre": "S. Pauli Primi Eremitæ et Confessoris",
+"titre_fr": "St Paul, Premier Ermite et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Mauri Abbatis"
+},
+"2027-01-16": {
+"titre": "S. Marcelli Papæ et Martyris",
+"titre_fr": "S. Marcel, Pape et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam I post Epiphaniam"
+},
+"2027-01-17": {
+"titre": "Dominica II post Epiphaniam",
+"titre_fr": "2e dimanche après l’Épiphanie",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-01-18": {
+"titre": "Feria II infra Hebdomadam II post Epiphaniam",
+"titre_fr": "Lundi de la deuxième semaine après l’Épiphanie",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Priscæ Virginis"
+},
+"2027-01-19": {
+"titre": "Feria III infra Hebdomadam II post Epiphaniam",
+"titre_fr": "Mardi de la deuxième semaine après l’Épiphanie",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Marii, Marthæ, Audifacis, et Abachum Martyrum"
+},
+"2027-01-20": {
+"titre": "Ss. Fabiani et Sebastiani Martyrum",
+"titre_fr": "Sts Fabien et Sébastien, Martyrs",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria IV infra Hebdomadam II post Epiphaniam"
+},
+"2027-01-21": {
+"titre": "S. Agnetis Virginis et Martyris",
+"titre_fr": "Ste Agnès, Vierge et Martyre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria V infra Hebdomadam II post Epiphaniam"
+},
+"2027-01-22": {
+"titre": "Ss. Vincentii et Anastasii Martyrum",
+"titre_fr": "Sts Vincent et Anastase, Martyrs",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria VI infra Hebdomadam II post Epiphaniam"
+},
+"2027-01-23": {
+"titre": "S. Raymundi de Peñafort Confessoris",
+"titre_fr": "St Raymond de Peñafort, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Emerentianæ Virginis et Martyris"
+},
+"2027-01-24": {
+"titre": "Dominica in Septuagesima",
+"titre_fr": "Dimanche de la Septuagésime",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-01-25": {
+"titre": "In Conversione S. Pauli Apostoli",
+"titre_fr": "Conversion de St Paul, Apôtre",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria II infra Hebdomadam Septuagesimæ"
+},
+"2027-01-26": {
+"titre": "S. Polycarpi Episcopi et Martyris",
+"titre_fr": "St Polycarpe, Évêque et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria III infra Hebdomadam Septuagesimæ"
+},
+"2027-01-27": {
+"titre": "S. Joannis Chrysostomi Episcopi Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Jean Chrysostome, Évêque, Confesseur et Docteur de l’Église",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria IV infra Hebdomadam Septuagesimæ"
+},
+"2027-01-28": {
+"titre": "S. Petri Nolasci Confessoris",
+"titre_fr": "St Pierre Nolasque, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Agnetis Virginis et Martyris secundo"
+},
+"2027-01-29": {
+"titre": "S. Francisci Salesii Episcopi Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St François de Sales, Évêque, Confesseur et Docteur de l’Église",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria VI infra Hebdomadam Septuagesimæ"
+},
+"2027-01-30": {
+"titre": "S. Martinæ Virginis et Martyris",
+"titre_fr": "Ste Martine, Vierge et Martyre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam Septuagesimæ"
+},
+"2027-01-31": {
+"titre": "Dominica in Sexagesima",
+"titre_fr": "Dimanche de la Sexagésime",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-02-01": {
+"titre": "S. Ignatii Episcopi et Martyris",
+"titre_fr": "St Ignace, Évêque et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria II infra Hebdomadam Sexagesimæ"
+},
+"2027-02-02": {
+"titre": "In Purificatione Beatæ Mariæ Virginis",
+"titre_fr": "Purification de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria III infra Hebdomadam Sexagesimæ"
+},
+"2027-02-03": {
+"titre": "Feria IV infra Hebdomadam Sexagesimæ",
+"titre_fr": "Mercredi de la semaine de la Sexagésime",
+"couleur": "Violet",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Blasii Episcopi et Martyris"
+},
+"2027-02-04": {
+"titre": "S. Andreæ Corsini Episcopi et Confessoris",
+"titre_fr": "St André Corsini, Évêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria V infra Hebdomadam Sexagesimæ"
+},
+"2027-02-05": {
+"titre": "S. Agathæ Virginis et Martyris",
+"titre_fr": "Ste Agathe, Vierge et Martyre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria VI infra Hebdomadam Sexagesimæ"
+},
+"2027-02-06": {
+"titre": "S. Titi Episcopi et Confessoris",
+"titre_fr": "St Tite, Évêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Dorothæ Virginis et Martyris"
+},
+"2027-02-07": {
+"titre": "Dominica in Quinquagesima",
+"titre_fr": "Dimanche de la Quinquagésime",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-02-08": {
+"titre": "S. Joannis de Matha Confessoris",
+"titre_fr": "St Jean de Matha, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria II infra Hebdomadam Quinquagesimæ"
+},
+"2027-02-09": {
+"titre": "S. Cyrilli Episc. Alexandrini Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Cyrille, Évêque d’Alexandrie, Confesseur et Docteur de l’Église",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Appolloniæ Virginis et Martyris"
+},
+"2027-02-10": {
+"titre": "Feria IV Cinerum",
+"titre_fr": "Mercredi des Cendres",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-02-11": {
+"titre": "Feria V post Cineres",
+"titre_fr": "Jeudi après les Cendres",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : In Apparitione Beatæ Mariæ Virginis"
+},
+"2027-02-12": {
+"titre": "Feria VI post Cineres",
+"titre_fr": "Vendredi après les Cendres",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : Ss. Septem Fundatorum Ordinis Servorum B. M. V."
+},
+"2027-02-13": {
+"titre": "Sabbato post Cineres",
+"titre_fr": "Samedi après les Cendres",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-02-14": {
+"titre": "Dominica I in Quadragesima",
+"titre_fr": "1er dimanche de Carême",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-02-15": {
+"titre": "Feria Secunda infra Hebdomadam I in Quadragesima",
+"titre_fr": "Lundi de la première semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : SS. Faustini et Jovitæ"
+},
+"2027-02-16": {
+"titre": "Feria Tertia infra Hebdomadam I in Quadragesima",
+"titre_fr": "Mardi de la première semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-02-17": {
+"titre": "Feria Quarta Quatuor Temporum Quadragesimæ",
+"titre_fr": "Mercredi des Quatre-Temps de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-02-18": {
+"titre": "Feria Quinta infra Hebdomadam I in Quadragesima",
+"titre_fr": "Jeudi de la première semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Simeonis Episcopi et Martyris"
+},
+"2027-02-19": {
+"titre": "Feria Sexta Quattuor Temporum",
+"titre_fr": "Vendredi des Quatre-Temps de Carême",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-02-20": {
+"titre": "Sabbato Quattuor Temporum Quadrageismæ",
+"titre_fr": "Samedi des Quatre-Temps de Carême",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-02-21": {
+"titre": "Dominica II in Quadragesima",
+"titre_fr": "2e dimanche de Carême",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-02-22": {
+"titre": "In Cathedra S. Petri Apostoli",
+"titre_fr": "Chaire de saint Pierre, Apôtre",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: Feria Secunda infra Hebdomadam II in Quadragesima"
+},
+"2027-02-23": {
+"titre": "Feria Tertia infra Hebdomadam II in Quadragesima",
+"titre_fr": "Mardi de la deuxième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Petri Damiani Episcopi Confessoris et Ecclesiæ Doctoris"
+},
+"2027-02-24": {
+"titre": "S. Matthiæ Apostoli",
+"titre_fr": "St Matthias, Apôtre",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: Feria Quarta infra Hebdomadam II in Quadragesima"
+},
+"2027-02-25": {
+"titre": "Feria Quinta infra Hebdomadam II in Quadragesima",
+"titre_fr": "Jeudi de la deuxième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-02-26": {
+"titre": "Feria Sexta infra Hebdomadam II in Quadragesima",
+"titre_fr": "Vendredi de la deuxième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-02-27": {
+"titre": "Sabbato infra Hebdomadam II in Quadragesima",
+"titre_fr": "Samedi de la deuxième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Gabrielis a Virgine Perdolente Confessoris"
+},
+"2027-02-28": {
+"titre": "Dominica III in Quadragesima",
+"titre_fr": "3e dimanche de Carême",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-03-01": {
+"titre": "Feria Secunda infra Hebdomadam III in Quadragesima",
+"titre_fr": "Lundi de la troisième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-03-02": {
+"titre": "Feria Tertia infra Hebdomadam III in Quadragesima",
+"titre_fr": "Mardi de la troisième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-03-03": {
+"titre": "Feria Quarta infra Hebdomadam III in Quadragesima",
+"titre_fr": "Mercredi de la troisième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-03-04": {
+"titre": "Feria Quinta infra Hebdomadam III in Quadragesima",
+"titre_fr": "Jeudi de la troisième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Casimiri Confessoris"
+},
+"2027-03-05": {
+"titre": "Feria Sexta infra Hebdomadam III in Quadragesima",
+"titre_fr": "Vendredi de la troisième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-03-06": {
+"titre": "Sabbato infra Hebdomadam III in Quadragesima",
+"titre_fr": "Samedi de la troisième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : Ss. Perpetuæ et Felicitatis Martyrum"
+},
+"2027-03-07": {
+"titre": "Dominica IV in Quadragesima",
+"titre_fr": "4e dimanche de Carême",
+"couleur": "Rose",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-03-08": {
+"titre": "Feria Secunda infra Hebdomadam IV in Quadragesima",
+"titre_fr": "Lundi de la quatrième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Joannis de Deo Confessoris"
+},
+"2027-03-09": {
+"titre": "Feria Tertia infra Hebdomadam IV in Quadragesima",
+"titre_fr": "Mardi de la quatrième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Franciscæ Romanæ Viduæ"
+},
+"2027-03-10": {
+"titre": "Feria Quarta infra Hebdomadam IV in Quadragesima",
+"titre_fr": "Mercredi de la quatrième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : Ss. Quadraginta Martyrum"
+},
+"2027-03-11": {
+"titre": "Feria Quinta infra Hebdomadam IV in Quadragesima",
+"titre_fr": "Jeudi de la quatrième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-03-12": {
+"titre": "Feria Sexta infra Hebdomadam IV in Quadragesima",
+"titre_fr": "Vendredi de la quatrième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Gregorii Papæ Confessoris et Ecclesiæ Doctoris"
+},
+"2027-03-13": {
+"titre": "Sabbato infra Hebdomadam IV in Quadragesima",
+"titre_fr": "Samedi de la quatrième semaine de Carême",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-03-14": {
+"titre": "Dominica de Passione",
+"titre_fr": "Dimanche de la Passion",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-03-15": {
+"titre": "Feria Secunda infra Hebdomadam Passionis",
+"titre_fr": "Lundi de la semaine de la Passion",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-03-16": {
+"titre": "Feria Tertia infra Hebdomadam Passionis",
+"titre_fr": "Mardi de la semaine de la Passion",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-03-17": {
+"titre": "Feria Quarta infra Hebdomadam Passionis",
+"titre_fr": "Mercredi de la semaine de la Passion",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Patricii Episcopi et Confessoris"
+},
+"2027-03-18": {
+"titre": "Feria Quinta infra Hebdomadam Passionis",
+"titre_fr": "Jeudi de la semaine de la Passion",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Cyrilli Episcopi Hierosolymitani Confessoris et Ecclesiæ Doctoris"
+},
+"2027-03-19": {
+"titre": "S. Joseph Sponsi B.M.V. Confessoris",
+"titre_fr": "St Joseph, Époux de la Bienheureuse Vierge Marie, Confesseur",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": "Commemoratio: Feria Sexta infra Hebdomadam Passionis"
+},
+"2027-03-20": {
+"titre": "Sabbato infra Hebdomadam Passionis",
+"titre_fr": "Samedi de la semaine de la Passion",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-03-21": {
+"titre": "Dominica II Passionis seu in Palmis",
+"titre_fr": "2e dimanche de la Passion ou des Rameaux",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-03-22": {
+"titre": "Feria Secunda Hebdomadæ Sanctæ",
+"titre_fr": "Lundi saint",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-03-23": {
+"titre": "Feria Tertia Hebdomadæ Sanctæ",
+"titre_fr": "Mardi saint",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-03-24": {
+"titre": "Feria Quarta Hebdomadæ Sanctæ",
+"titre_fr": "Mercredi saint",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-03-25": {
+"titre": "De missa chrismatis",
+"titre_fr": "Jeudi saint de la Cène du Seigneur",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": "Transfer: In Annuntiatione Beatæ Mariæ Virginis"
+},
+"2027-03-26": {
+"titre": "Feria Sexta in Passione et Morte Domini",
+"titre_fr": "Vendredi saint de la Passion et de la Mort du Seigneur",
+"couleur": "Noir",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-03-27": {
+"titre": "Sabbato Sancto",
+"titre_fr": "Samedi saint",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-03-28": {
+"titre": "Dominica Resurrectionis",
+"titre_fr": "Dimanche de Pâques",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-03-29": {
+"titre": "Die II infra octavam Paschæ",
+"titre_fr": "Lundi de Pâques",
+"couleur": "Blanc",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-03-30": {
+"titre": "Die III infra octavam Paschæ",
+"titre_fr": "Mardi de Pâques",
+"couleur": "Blanc",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-03-31": {
+"titre": "Die IV infra octavam Paschæ",
+"titre_fr": "Mercredi de Pâques",
+"couleur": "Blanc",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-04-01": {
+"titre": "Die V infra octavam Paschæ",
+"titre_fr": "Jeudi de Pâques",
+"couleur": "Blanc",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-04-02": {
+"titre": "Die VI infra octavam Paschæ",
+"titre_fr": "Vendredi de Pâques",
+"couleur": "Blanc",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-04-03": {
+"titre": "Sabbato in Albis",
+"titre_fr": "Samedi in Albis",
+"couleur": "Blanc",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-04-04": {
+"titre": "Dominica in Albis in Octava Paschæ",
+"titre_fr": "Dimanche in Albis, octave de Pâques",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-04-05": {
+"titre": "In Annuntiatione Beatæ Mariæ Virginis",
+"titre_fr": "Annonciation de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": "Commemoratio ad Laudes tantum: S. Vincentii Ferrerii Confessoris"
+},
+"2027-04-06": {
+"titre": "Feria Tertia infra Hebdomadam I post Octavam Paschæ",
+"titre_fr": "Mardi de la première semaine après l’Octave de Pâques",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-04-07": {
+"titre": "Feria Quarta infra Hebdomadam I post Octavam Paschæ",
+"titre_fr": "Mercredi de la première semaine après l’Octave de Pâques",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-04-08": {
+"titre": "Feria Quinta infra Hebdomadam I post Octavam Paschæ",
+"titre_fr": "Jeudi de la première semaine après l’Octave de Pâques",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-04-09": {
+"titre": "Feria Sexta infra Hebdomadam I post Octavam Paschae",
+"titre_fr": "Vendredi de la première semaine après l’Octave de Pâques",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-04-10": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Sabbato infra Hebdomadam I post Octavam Paschæ"
+},
+"2027-04-11": {
+"titre": "Dominica II Post Pascha",
+"titre_fr": "2e dimanche après Pâques",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-04-12": {
+"titre": "Feria Secunda infra Hebdomadam II post Octavam Paschæ",
+"titre_fr": "Lundi de la deuxième semaine après l’Octave de Pâques",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-04-13": {
+"titre": "S. Hermenegildi Martyris",
+"titre_fr": "St Herménégilde, Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam II post Octavam Paschæ"
+},
+"2027-04-14": {
+"titre": "S. Justini Martyris",
+"titre_fr": "St Justin, Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Tiburtii, Valeriani, et Maximi Martyrum"
+},
+"2027-04-15": {
+"titre": "Feria Quinta infra Hebdomadam II post Octavam Paschæ",
+"titre_fr": "Jeudi de la deuxième semaine après l’Octave de Pâques",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-04-16": {
+"titre": "Feria Sexta infra Hebdomadam II post Octavam Paschæ",
+"titre_fr": "Vendredi de la deuxième semaine après l’Octave de Pâques",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-04-17": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Aniceti Papæ et Martyris"
+},
+"2027-04-18": {
+"titre": "Dominica III Post Pascha",
+"titre_fr": "3e dimanche après Pâques",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-04-19": {
+"titre": "Feria Secunda infra Hebdomadam III post Octavam Paschæ",
+"titre_fr": "Lundi de la troisième semaine après l’Octave de Pâques",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-04-20": {
+"titre": "Feria Tertia infra Hebdomadam III post Octavam Paschæ",
+"titre_fr": "Mardi de la troisième semaine après l’Octave de Pâques",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-04-21": {
+"titre": "S. Anselmi Episcopi Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Anselme, Évêque, Confesseur et Docteur de l’Église",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quarta infra Hebdomadam III post Octavam Paschæ"
+},
+"2027-04-22": {
+"titre": "SS. Soteris et Caji Summorum Pontificum et Martyrum",
+"titre_fr": "Saints Soter et Caius, Souverains Pontifs et Martyrs",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quinta infra Hebdomadam III post Octavam Paschæ"
+},
+"2027-04-23": {
+"titre": "Feria Sexta infra Hebdomadam III post Octavam Paschæ",
+"titre_fr": "Vendredi de la troisième semaine après l’Octave de Pâques",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Georgii Martyris"
+},
+"2027-04-24": {
+"titre": "S. Fidelis de Sigmaringa Martyris",
+"titre_fr": "St Fidèle de Sigmaringen, Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam III post Octavam Paschæ"
+},
+"2027-04-25": {
+"titre": "Dominica IV Post Pascha",
+"titre_fr": "4e dimanche après Pâques",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: S. Marci Evangelistæ"
+},
+"2027-04-26": {
+"titre": "SS. Cleti et Marcellini Summorum Pontificum et Martyrum",
+"titre_fr": "Sts Clet et Marcellin Souverin Pontifes et Martyrs",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Secunda infra Hebdomadam IV post Octavam Paschæ"
+},
+"2027-04-27": {
+"titre": "S. Petri Canisii Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "S. Pierre Canisius Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam IV post Octavam Paschæ"
+},
+"2027-04-28": {
+"titre": "S. Pauli a Cruce Confessoris",
+"titre_fr": "St Paul de la Croix, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quarta infra Hebdomadam IV post Octavam Paschæ"
+},
+"2027-04-29": {
+"titre": "S. Petri Martyris",
+"titre_fr": "S. Pierre Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quinta infra Hebdomadam IV post Octavam Paschæ"
+},
+"2027-04-30": {
+"titre": "S. Catharinæ Senensis Virginis",
+"titre_fr": "Ste Catherine de Sienne, Vierge",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Sexta infra Hebdomadam IV post Octavam Paschæ"
+},
+"2027-05-01": {
+"titre": "S. Joseph Opificis",
+"titre_fr": "St Joseph, Artisan",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-05-02": {
+"titre": "Dominica V Post Pascha",
+"titre_fr": "5e dimanche après Pâques",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-05-03": {
+"titre": "Feria Secunda in Rogationibus",
+"titre_fr": "Lundi des Rogations",
+"couleur": "Violet",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Alexandri I Papæ, Eventii et Theoduli Mm. ac Juvenalis Ep. et Conf."
+},
+"2027-05-04": {
+"titre": "S. Monicæ Viduæ",
+"titre_fr": "S. Monique Veuve",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Tertia in Rogationibus"
+},
+"2027-05-05": {
+"titre": "In Vigilia Ascensionis",
+"titre_fr": "Vigile de l’Ascension",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio : S. Pii V Papæ et Confessoris"
+},
+"2027-05-06": {
+"titre": "In Ascensione Domini",
+"titre_fr": "Ascension du Seigneur",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-05-07": {
+"titre": "S. Stanislai Episcopi et Martyris",
+"titre_fr": "St Stanislas, Évêque et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria VI post Ascensionem"
+},
+"2027-05-08": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Sabbato post Ascensionem"
+},
+"2027-05-09": {
+"titre": "Dominica post Ascensionem",
+"titre_fr": "Dimanche après l'Ascension",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-05-10": {
+"titre": "S. Antonini Episcopi et Confessoris",
+"titre_fr": "S. Atonin Evêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Gordiani et Epimachi Martyrum"
+},
+"2027-05-11": {
+"titre": "Ss. Philippi et Jacobi Apostolorum",
+"titre_fr": "Sts Philippe et Jacques",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria III post Ascensionem"
+},
+"2027-05-12": {
+"titre": "Ss. Nerei, Achillei et Domitillæ Virg. atque Pancratii Martyrum",
+"titre_fr": "SS. NÉRÉE, ACHILLÉE, LA VIERGE DOMITILLE, ET PANCRACE, Martyrs",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria IV post Ascensionem"
+},
+"2027-05-13": {
+"titre": "S. Roberti Bellarmino Episcopi Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "SAINT ROBERT BELLARMIN, ÉVÊQUE, CONFESSEUR ET DOCTEUR DE L’ÉGLISE",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria V infra Hebdomadam post Ascensionem"
+},
+"2027-05-14": {
+"titre": "Feria VI infra Hebdomadam post Ascensionem",
+"titre_fr": "Vendredi après l’Ascension",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Bonifatii Martyris"
+},
+"2027-05-15": {
+"titre": "Sabbato in Vigilia Pentecostes",
+"titre_fr": "Samedi, vigile de la Pentecôte",
+"couleur": "Rouge",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-05-16": {
+"titre": "Dominica Pentecostes",
+"titre_fr": "Dimanche de la Pentecôte",
+"couleur": "Rouge",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-05-17": {
+"titre": "Die II infra octavam Pentecostes",
+"titre_fr": "Lundi de la Pentecôte",
+"couleur": "Rouge",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-05-18": {
+"titre": "Die III infra octavam Pentecostes",
+"titre_fr": "Mardi de la Pentecôte",
+"couleur": "Rouge",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-05-19": {
+"titre": "Feria Quarta Quattuor Temporum Pentecostes",
+"titre_fr": "Mercredi des Quatre-Temps de la Pentecôte",
+"couleur": "Rouge",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-05-20": {
+"titre": "Die Quinta infra octavam Pentecostes",
+"titre_fr": "Jeudi de la Pentecôte",
+"couleur": "Rouge",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-05-21": {
+"titre": "Feria Sexta Quattuor temporum Pentecostes",
+"titre_fr": "Vendredi des Quatre-Temps de la Pentecôte",
+"couleur": "Rouge",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-05-22": {
+"titre": "Sabbato Quattuor Temporum Pentecostes",
+"titre_fr": "Samedi des Quatre-Temps de la Pentecôte",
+"couleur": "Rouge",
+"classe": "",
+"rang": 4,
+"comm": ""
+},
+"2027-05-23": {
+"titre": "Dominica Sanctissimæ Trinitatis",
+"titre_fr": "Dimanche de la Très Sainte Trinité",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-05-24": {
+"titre": "Feria Secunda infra Hebdomadam I post Octavam Pentecostes",
+"titre_fr": "Lundi de la 1re semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-05-25": {
+"titre": "S. Gregorii VII Papæ et Confessoris",
+"titre_fr": "S. Gregoire VII Pape et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Urbanis Papæ et Martyris"
+},
+"2027-05-26": {
+"titre": "S. Philippi Neri Confessoris",
+"titre_fr": "S. Philippe Neri Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Eleutherii Papæ et Martyris"
+},
+"2027-05-27": {
+"titre": "Festum Sanctissimi Corporis Christi",
+"titre_fr": "Fête du Très Saint-Sacrement",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-05-28": {
+"titre": "S. Augustini Episcopi et Confessoris",
+"titre_fr": "St Augustin de Cantorbéry, évêque et confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria VI infra Hebdomadam I post Octavam Pentecostes"
+},
+"2027-05-29": {
+"titre": "S. Mariæ Magdalenæ de Pazzis Virginis",
+"titre_fr": "Ste Marie-Madeleine de Pazzi, Vierge",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam I post Octavam Pentecostes"
+},
+"2027-05-30": {
+"titre": "Dominica II Post Pentecosten",
+"titre_fr": "Dominica II. Post Pentecosten",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-05-31": {
+"titre": "Beatæ Mariæ Virginis Reginæ",
+"titre_fr": "Bienheureuse Vierge Marie Reine",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio ad Laudes tantum: S. Petronillæ Virginis"
+},
+"2027-06-01": {
+"titre": "S. Angelæ Mericiæ Virginis",
+"titre_fr": "S. Angèle Mérici, Vierge",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria III infra Hebdomadam II post Octavam Pentecostes"
+},
+"2027-06-02": {
+"titre": "Feria IV infra Hebdomadam II post Octavam Pentecostes",
+"titre_fr": "Mercredi de la 2e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Marcellini, Petri, atque Erasmi, Episcopi, Martyrum"
+},
+"2027-06-03": {
+"titre": "Feria V infra Hebdomadam II post Octavam Pentecostes",
+"titre_fr": "Jeudi de la 2e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-06-04": {
+"titre": "Sacratissimi Cordis Domini Nostri Jesu Christi",
+"titre_fr": "Très Sacré-Cœur de Notre-Seigneur Jésus-Christ",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-06-05": {
+"titre": "S. Bonifatii Episcopi et Martyris",
+"titre_fr": "S. Boniface Evêque et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam II post Octavam Pentecostes"
+},
+"2027-06-06": {
+"titre": "Dominica III Post Pentecosten",
+"titre_fr": "3e dimanche après la Pentecôte",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-06-07": {
+"titre": "Feria secunda infra Hebdomadam III post Octavam Pentecostes",
+"titre_fr": "Lundi de la 3e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-06-08": {
+"titre": "Feria tertia infra Hebdomadam III post Octavam Pentecostes",
+"titre_fr": "Mardi de la 3e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-06-09": {
+"titre": "Feria quarta infra Hebdomadam III post Octavam Pentecostes",
+"titre_fr": "Mercredi de la 3e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Primi et Feliciani Martyrum"
+},
+"2027-06-10": {
+"titre": "S. Margaritæ Reginæ Viduæ",
+"titre_fr": "Ste Margarite Reine et Veuve",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quinta infra Hebdomadam III post Octavam Pentecostes"
+},
+"2027-06-11": {
+"titre": "S. Barnabæ Apostoli",
+"titre_fr": "S. Barnabé Apôtre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria sexta infra Hebdomadam III post Octavam Pentecostes"
+},
+"2027-06-12": {
+"titre": "S. Joannis a S. Facundo Confessoris",
+"titre_fr": "St Jean de S. Facond Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Basilidis, Cyrini, Naboris and Nazarii Martyrum"
+},
+"2027-06-13": {
+"titre": "Dominica IV Post Pentecosten",
+"titre_fr": "4e dimanche après la Pentecôte",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-06-14": {
+"titre": "S. Basilii Magni Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Basile le Grand, Confesseur et Docteur de l’Église",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria secunda infra Hebdomadam IV post Octavam Pentecostes"
+},
+"2027-06-15": {
+"titre": "Feria tertia infra Hebdomadam IV post Octavam Pentecostes",
+"titre_fr": "Mardi de la 4e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Viti, Modesti atque Crescentiæ Martyrum"
+},
+"2027-06-16": {
+"titre": "Feria quarta infra Hebdomadam IV post Octavam Pentecostes",
+"titre_fr": "Mercredi de la 4e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-06-17": {
+"titre": "S. Gregorii Barbadici Episcopi et Confessoris",
+"titre_fr": "S. Grégoire Barbarigo, Évêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quinta infra Hebdomadam IV post Octavam Pentecostes"
+},
+"2027-06-18": {
+"titre": "S. Ephræm Syri Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "SAINT ÉPHREM LE SYRIEN Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: SS. Marci et Marcelliani Martyrum"
+},
+"2027-06-19": {
+"titre": "S. Julianæ de Falconeriis Virginis",
+"titre_fr": "S. Julienne de Falconieri, Vierge",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Gervasii et Protasii Martyrum"
+},
+"2027-06-20": {
+"titre": "Dominica V Post Pentecosten",
+"titre_fr": "5e dimanche après la Pentecôte",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-06-21": {
+"titre": "S. Aloisii Gonzagæ Confessoris",
+"titre_fr": "S. Louis de Gonzague Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria secunda infra Hebdomadam V post Octavam Pentecostes"
+},
+"2027-06-22": {
+"titre": "S. Paulini Episcopi et Confessoris",
+"titre_fr": "S. Pauli de Nole, Evêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria tertia infra Hebdomadam V post Octavam Pentecostes"
+},
+"2027-06-23": {
+"titre": "In Vigilia S. Joannis Baptistæ",
+"titre_fr": "Vigile de la Nativité de St Jean Baptiste",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria quarta infra Hebdomadam V post Octavam Pentecostes"
+},
+"2027-06-24": {
+"titre": "In Nativitate S. Joannis Baptistæ",
+"titre_fr": "Nativité de Saint Jean Baptiste",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-06-25": {
+"titre": "S. Gulielmi Abbatis",
+"titre_fr": "S. Guillaume, Abbé",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria sexta infra Hebdomadam V post Octavam Pentecostes"
+},
+"2027-06-26": {
+"titre": "Ss. Joannis et Pauli Martyrum",
+"titre_fr": "Sts. Jean et Paul Martyrs",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam V post Octavam Pentecostes"
+},
+"2027-06-27": {
+"titre": "Dominica VI Post Pentecosten",
+"titre_fr": "6e dimanche après la Pentecôte",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-06-28": {
+"titre": "In Vigilia Ss. Petri et Pauli Apostolorum",
+"titre_fr": "Vigile des Ss Pierre et Paul, Apôtres",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria secunda infra Hebdomadam VI post Octavam Pentecostes"
+},
+"2027-06-29": {
+"titre": "SS. Apostolorum Petri et Pauli",
+"titre_fr": "Les Ss. Apôtres Pierre et Paul",
+"couleur": "Rouge",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-06-30": {
+"titre": "In Commemoratione S. Pauli Apostoli",
+"titre_fr": "En la Commération du l'apôtre St. Paul",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quarta infra Hebdomadam VI post Octavam Pentecostes"
+},
+"2027-07-01": {
+"titre": "Pretiosissimi Sanguinis Domini Nostri Jesu Christi",
+"titre_fr": "Le Très Précieux Sang de Notre Seigneur Jésus-Christ",
+"couleur": "Rouge",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-07-02": {
+"titre": "In Visitatione B. Mariæ Virginis",
+"titre_fr": "Visitation de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio ad Laudes tantum: Ss. Processi et Martiniani Martyrum"
+},
+"2027-07-03": {
+"titre": "S. Irenæi Episcopi et Martyris",
+"titre_fr": "St Irénée, Évêque et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam VI post Octavam Pentecostes"
+},
+"2027-07-04": {
+"titre": "Dominica VII Post Pentecosten",
+"titre_fr": "7e dimanche après la Pentecôte",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-07-05": {
+"titre": "S. Antonii Mariæ Zaccaria Confessoris",
+"titre_fr": "St Antoine Marie Zaccaria Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria secunda infra Hebdomadam VII post Octavam Pentecostes"
+},
+"2027-07-06": {
+"titre": "Feria tertia infra Hebdomadam VII post Octavam Pentecostes",
+"titre_fr": "Mardi de la 7e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-07-07": {
+"titre": "Ss. Cyrilli et Methodii Pont. et Conf.",
+"titre_fr": "Ss Cyrille et Méthode, Évêques et Confesseurs",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quarta infra Hebdomadam VII post Octavam Pentecostes"
+},
+"2027-07-08": {
+"titre": "S. Elisabeth Reg. Portugaliæ Viduæ",
+"titre_fr": "Ste. Elisabeth Reine du Portugal veuve",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quinta infra Hebdomadam VII post Octavam Pentecostes"
+},
+"2027-07-09": {
+"titre": "Feria sexta infra Hebdomadam VII post Octavam Pentecostes",
+"titre_fr": "Vendredi de la 7e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-07-10": {
+"titre": "Ss. Septem Fratrum Martyrum, ac Rufinæ et Secundæ Virginum et Martyrum",
+"titre_fr": "Les saints Sept Frères Martys, et les saintes Rufine et Seconde, Vierges et Martyres",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato II infra Hebdomadam VII post Octavam Pentecostes"
+},
+"2027-07-11": {
+"titre": "Dominica VIII Post Pentecosten",
+"titre_fr": "8e dimanche après la Pentecôte",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-07-12": {
+"titre": "S. Joannis Gualberti Abbatis",
+"titre_fr": "St. Jean Gualbert Abbé",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Naboris et Felicis Martyrum"
+},
+"2027-07-13": {
+"titre": "Feria tertia infra Hebdomadam VIII post Octavam Pentecostes",
+"titre_fr": "Mardi de la 8e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-07-14": {
+"titre": "S. Bonaventuræ Episcopi Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St. Bonaventure Evêque Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quarta infra Hebdomadam VIII post Octavam Pentecostes"
+},
+"2027-07-15": {
+"titre": "S. Henrici Imperatoris Confessoris",
+"titre_fr": "St Henri, empereur et confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quinta infra Hebdomadam VIII post Octavam Pentecostes"
+},
+"2027-07-16": {
+"titre": "Beatæ Mariæ Virginis de Monte Carmelo",
+"titre_fr": "Commémoraison de la Bienheureuse Vierge Marie du Mont-Carmel",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria sexta infra Hebdomadam VIII post Octavam Pentecostes"
+},
+"2027-07-17": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Alexii Confessoris"
+},
+"2027-07-18": {
+"titre": "Dominica IX Post Pentecosten",
+"titre_fr": "9e dimanche après la Pentecôte",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-07-19": {
+"titre": "S. Vincentii a Paulo Confessoris",
+"titre_fr": "St Vincent de Paul Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria secunda infra Hebdomadam IX post Octavam Pentecostes"
+},
+"2027-07-20": {
+"titre": "S. Hieronymi Æmiliani Confessoris",
+"titre_fr": "St Jérôme Emilien confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Margaritæ, Virg. et Mart."
+},
+"2027-07-21": {
+"titre": "S. Laurentii a Brundusio Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Laurent de Brindes confesseur et docteur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Praxedis Virginis"
+},
+"2027-07-22": {
+"titre": "S. Mariæ Magdalenæ Pœnitentis",
+"titre_fr": "Ste Marie-Madeleine pénitente",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quinta infra Hebdomadam IX post Octavam Pentecostes"
+},
+"2027-07-23": {
+"titre": "S. Apollinaris Episcopi et Martyris",
+"titre_fr": "St Apollinaire Evêque et martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Liborii Episcopi et Confessoris"
+},
+"2027-07-24": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Christinæ Virginis et Martyris"
+},
+"2027-07-25": {
+"titre": "Dominica X Post Pentecosten",
+"titre_fr": "10e dimanche après la Pentecôte",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: S. Jacobi Apostoli"
+},
+"2027-07-26": {
+"titre": "S. Annæ Matris B.M.V.",
+"titre_fr": "Ste Anne, mère de la T.S. Vierge Marie",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria secunda infra Hebdomadam X post Octavam Pentecostes"
+},
+"2027-07-27": {
+"titre": "Feria tertia infra Hebdomadam X post Octavam Pentecostes",
+"titre_fr": "Mardi de la 10e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Pantaleonis Martyris"
+},
+"2027-07-28": {
+"titre": "Ss. Nazarii et Celsi Martyrum, Victoris I Papæ et Martyris ac Innocentii I Papæ et Confessoris",
+"titre_fr": "Sts Nazaire & Celse, martyrs, Victor, pape et martyr et Innocent Ier, pape et Confesseur",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quarta infra Hebdomadam X post Octavam Pentecostes"
+},
+"2027-07-29": {
+"titre": "S. Marthæ Virginis",
+"titre_fr": "Ste Marthe Vierge",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Felicis, Simplicii, Faustini et Beatricis Martyrum"
+},
+"2027-07-30": {
+"titre": "Feria sexta infra Hebdomadam X post Octavam Pentecostes",
+"titre_fr": "Vendredi de la 10e semaine après l’Octave de la Pentecôte",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Abdon et Sennen Martyrum"
+},
+"2027-07-31": {
+"titre": "S. Ignatii Confessoris",
+"titre_fr": "St Ignace Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam X post Octavam Pentecostes"
+},
+"2027-08-01": {
+"titre": "Dominica XI Post Pentecosten I. Augusti",
+"titre_fr": "11e dimanche après la Pentecôte 1er d’août",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-08-02": {
+"titre": "S. Alfonsi Mariæ de Ligorio Episc. Conf. et Eccles. Doct.",
+"titre_fr": "St Alphonse Marie, Evêque, Confesseur et Docteur.",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Stephani Papæ Martyris"
+},
+"2027-08-03": {
+"titre": "Feria tertia infra Hebdomadam XI post Octavam Pentecostes I. Augusti",
+"titre_fr": "Mardi de la 11e semaine après l’Octave de la Pentecôte 1er d’août",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-08-04": {
+"titre": "S. Dominici Confessoris",
+"titre_fr": "St Dominique Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quarta infra Hebdomadam XI post Octavam Pentecostes I. Augusti"
+},
+"2027-08-05": {
+"titre": "S. Mariæ ad Nives",
+"titre_fr": "Ste Marie aux Neiges",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria quinta infra Hebdomadam XI post Octavam Pentecostes I. Augusti"
+},
+"2027-08-06": {
+"titre": "In Transfiguratione Domini Nostri Jesu Christi",
+"titre_fr": "Transfiguration de Notre-Seigneur Jésus-Christ",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio ad Laudes tantum: Ss. Xysti II Papæ, Felicissimi et Agapiti Martyrum"
+},
+"2027-08-07": {
+"titre": "S. Cajetani Confessoris",
+"titre_fr": "St Gaétan de Thienne Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Donati Episcopi et Martyris"
+},
+"2027-08-08": {
+"titre": "Dominica XII Post Pentecosten II. Augusti",
+"titre_fr": "12e dimanche après la Pentecôte 2e d’août",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-08-09": {
+"titre": "In Vigilia S. Laurentii Mart.",
+"titre_fr": "Vigile de St Laurent, Martyr",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Romani Martyris"
+},
+"2027-08-10": {
+"titre": "S. Laurentii Martyris",
+"titre_fr": "St Laurent, Martyr",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam XII post Octavam Pentecostes II. Augusti"
+},
+"2027-08-11": {
+"titre": "Feria Quarta infra Hebdomadam XII post Octavam Pentecostes II. Augusti",
+"titre_fr": "Mercredi de la 12e semaine après l’Octave de la Pentecôte 2e d’août",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Tiburtii et Susannæ Virginis, Martyrum"
+},
+"2027-08-12": {
+"titre": "S. Claræ Virginis",
+"titre_fr": "Ste Claire, Vierge",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quinta infra Hebdomadam XII post Octavam Pentecostes II. Augusti"
+},
+"2027-08-13": {
+"titre": "Feria Sexta infra Hebdomadam XII post Octavam Pentecostes II. Augusti",
+"titre_fr": "Vendredi de la 12e semaine après l’Octave de la Pentecôte 2e d’août",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Hippolyti et Cassiani Martyrum"
+},
+"2027-08-14": {
+"titre": "In Vigilia Assumptionis B.M.V.",
+"titre_fr": "Vigile de l’Assomption de la Bienheureuse Vierge Marie",
+"couleur": "Violet",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio ad Laudes tantum: S. Eusebii Confessoris"
+},
+"2027-08-15": {
+"titre": "In Assumptione Beatæ Mariæ Virginis",
+"titre_fr": "Assomption de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": "Commemoratio: Dominica XIII Post Pentecosten III. Augusti"
+},
+"2027-08-16": {
+"titre": "S. Joachim Confessoris, Patris B. M. V.",
+"titre_fr": "St Joachim, père de la B. M. V.",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria Secunda infra Hebdomadam XIII post Octavam Pentecostes III. Augusti"
+},
+"2027-08-17": {
+"titre": "S. Hyacinthi Confessoris",
+"titre_fr": "St Hyacinte, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam XIII post Octavam Pentecostes III. Augusti"
+},
+"2027-08-18": {
+"titre": "Feria Quarta infra Hebdomadam XIII post Octavam Pentecostes III. Augusti",
+"titre_fr": "Mercredi de la 13e semaine après l’Octave de la Pentecôte 3e d’août",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Agapiti Martyris"
+},
+"2027-08-19": {
+"titre": "S. Joannis Eudes Confessoris",
+"titre_fr": "St Jean Eudes, confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quinta infra Hebdomadam XIII post Octavam Pentecostes III. Augusti"
+},
+"2027-08-20": {
+"titre": "S. Bernardi Abbatis et Ecclesiæ Doctoris",
+"titre_fr": "St Bernard, abbé et docteur de l’Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Sexta infra Hebdomadam XIII post Octavam Pentecostes III. Augusti"
+},
+"2027-08-21": {
+"titre": "S. Joannæ Franciscæ Frémiot de Chantal Viduæ",
+"titre_fr": "Ste Jeanne-Françoise Frémiot de Chantal Veuve",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam XIII post Octavam Pentecostes III. Augusti"
+},
+"2027-08-22": {
+"titre": "Immaculati Cordis Beatæ Mariæ Virginis",
+"titre_fr": "Cœur Immaculé de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: Dominica XIV Post Pentecosten IV. Augusti"
+},
+"2027-08-23": {
+"titre": "S. Philippi Benitii Confessoris",
+"titre_fr": "St Philippe Béniti Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Secunda infra Hebdomadam XIV post Octavam Pentecostes IV. Augusti"
+},
+"2027-08-24": {
+"titre": "S. Bartholomæi Apostoli",
+"titre_fr": "St Barthélemy Apôtre",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam XIV post Octavam Pentecostes IV. Augusti"
+},
+"2027-08-25": {
+"titre": "S. Ludovici Regis Franciæ Confessoris",
+"titre_fr": "St Louis Roi et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quarta infra Hebdomadam XIV post Octavam Pentecostes IV. Augusti"
+},
+"2027-08-26": {
+"titre": "Feria Quinta infra Hebdomadam XIV post Octavam Pentecostes IV. Augusti",
+"titre_fr": "Jeudi de la 14e semaine après l’Octave de la Pentecôte 4e d’août",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Zephyrini Papæ et Martyris"
+},
+"2027-08-27": {
+"titre": "S. Josephi Calasanctii Confessoris",
+"titre_fr": "St Joseph Calasance Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Sexta infra Hebdomadam XIV post Octavam Pentecostes IV. Augusti"
+},
+"2027-08-28": {
+"titre": "S. Augustini Episcopi et Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Augustin, Evêque, Confesseur et Docteur de l’Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Hermetis Martyris"
+},
+"2027-08-29": {
+"titre": "Dominica XV Post Pentecosten V. Augusti",
+"titre_fr": "15e dimanche après la Pentecôte 5e d’août",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-08-30": {
+"titre": "S. Rosæ a Sancta Maria Limange Virginis",
+"titre_fr": "Ste Rose de Lima Vierge",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Felicis et Adaucti Martyrum"
+},
+"2027-08-31": {
+"titre": "S. Raymundi Nonnati Confessoris",
+"titre_fr": "St Raymond Nonnat Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam XV post Octavam Pentecostes V. Augusti"
+},
+"2027-09-01": {
+"titre": "Feria Quarta infra Hebdomadam XV post Octavam Pentecostes V. Augusti",
+"titre_fr": "Mercredi de la 15e semaine après l’Octave de la Pentecôte 5e d’août",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Ægidii Abbatis"
+},
+"2027-09-02": {
+"titre": "S. Stephani Hungariæ Regis Confessoris",
+"titre_fr": "St Etienne Roi et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quinta infra Hebdomadam XV post Octavam Pentecostes V. Augusti"
+},
+"2027-09-03": {
+"titre": "S. Pii X Papæ Confessoris",
+"titre_fr": "St Pie X Pape et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Sexta infra Hebdomadam XV post Octavam Pentecostes V. Augusti"
+},
+"2027-09-04": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Sabbato infra Hebdomadam XV post Octavam Pentecostes V. Augusti"
+},
+"2027-09-05": {
+"titre": "Dominica XVI Post Pentecosten I. Septembris",
+"titre_fr": "16e dimanche après la Pentecôte 1er de septembre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-09-06": {
+"titre": "Feria Secunda infra Hebdomadam XVI post Octavam Pentecostes I. Septembris",
+"titre_fr": "Lundi de la 16e semaine après l’Octave de la Pentecôte 1er de septembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-09-07": {
+"titre": "Feria Tertia infra Hebdomadam XVI post Octavam Pentecostes I. Septembris",
+"titre_fr": "Mardi de la 16e semaine après l’Octave de la Pentecôte 1er de septembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-09-08": {
+"titre": "Nativitate Beatæ Mariæ Virginis",
+"titre_fr": "Nativité de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio ad Laudes tantum: S. Hadriani Martyris"
+},
+"2027-09-09": {
+"titre": "Feria Quinta infra Hebdomadam XVI post Octavam Pentecostes I. Septembris",
+"titre_fr": "Jeudi de la 16e semaine après l’Octave de la Pentecôte 1er de septembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Gorgonii Martyris"
+},
+"2027-09-10": {
+"titre": "S. Nicolai de Tolentino Confessoris",
+"titre_fr": "St Nicolas de Tolentino Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Sexta infra Hebdomadam XVI post Octavam Pentecostes I. Septembris"
+},
+"2027-09-11": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Proti et Hyacinthi Martyrum"
+},
+"2027-09-12": {
+"titre": "Dominica XVII Post Pentecosten II. Septembris",
+"titre_fr": "17e dimanche après la Pentecôte 2e de septembre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-09-13": {
+"titre": "Feria Secunda infra Hebdomadam XVII post Octavam Pentecostes II. Septembris",
+"titre_fr": "Lundi de la 17e semaine après l’Octave de la Pentecôte 2e de septembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-09-14": {
+"titre": "In Exaltatione Sanctæ Crucis",
+"titre_fr": "Exaltation de la Sainte Croix",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam XVII post Octavam Pentecostes II. Septembris"
+},
+"2027-09-15": {
+"titre": "Septem Dolorum Beatæ Mariæ Virginis",
+"titre_fr": "Sept Douleurs de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio ad Laudes tantum: S. Nicomedis Martyris"
+},
+"2027-09-16": {
+"titre": "Ss. Cornelii Papæ et Cypriani Episcopi, Martyrum",
+"titre_fr": "Sts Corneille, Pape, et Cyprien, Evêque, martyrs",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Euphemiæ, Luciæ et Geminiani Martyrum"
+},
+"2027-09-17": {
+"titre": "Feria Sexta infra Hebdomadam XVII post Octavam Pentecostes II. Septembris",
+"titre_fr": "Vendredi de la 17e semaine après l’Octave de la Pentecôte 2e de septembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Impressionis Stigmatum S. Francisci"
+},
+"2027-09-18": {
+"titre": "S. Josephi de Cupertino Confessoris",
+"titre_fr": "St Joseph de Cupertino, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam XVII post Octavam Pentecostes II. Septembris"
+},
+"2027-09-19": {
+"titre": "Dominica XVIII Post Pentecosten III. Septembris",
+"titre_fr": "18e dimanche après la Pentecôte 3e de septembre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-09-20": {
+"titre": "Feria Secunda infra Hebdomadam XVIII post Octavam Pentecostes III. Septembris",
+"titre_fr": "Lundi de la 18e semaine après l’Octave de la Pentecôte 3e de septembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Eustachii et Sociorum Martyrum"
+},
+"2027-09-21": {
+"titre": "S. Matthæi Apostoli et Evangelistæ",
+"titre_fr": "St Matthieu, Apôtre et Evangéliste",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam XVIII post Octavam Pentecostes III. Septembris"
+},
+"2027-09-22": {
+"titre": "Feria Quarta Quattuor Temporum Septembris",
+"titre_fr": "Mercredi des Quatre-Temps de septembre",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio : S. Thomæ de Villanova Episcopi et Confessoris"
+},
+"2027-09-23": {
+"titre": "S. Lini Papæ et Martyris",
+"titre_fr": "St Lin, Pape et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Theclæ Virginis et Martyris"
+},
+"2027-09-24": {
+"titre": "Feria Sexta Quattuor Temporum Septembris",
+"titre_fr": "Vendredi des Quatre-Temps de septembre",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio : Beatæ Mariæ Virginis de Mercede"
+},
+"2027-09-25": {
+"titre": "Sabbato Quattuor Temporum Septembris",
+"titre_fr": "Samedi des Quatre-Temps de septembre",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-09-26": {
+"titre": "Dominica XIX Post Pentecosten IV. Septembris",
+"titre_fr": "19e dimanche après la Pentecôte 4e de septembre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-09-27": {
+"titre": "Ss. Cosmæ et Damiani Martyrum",
+"titre_fr": "Sts Côme et Damien, Martyrs",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Secunda infra Hebdomadam XIX post Octavam Pentecostes IV. Septembris"
+},
+"2027-09-28": {
+"titre": "S. Wenceslai Ducis et Martyris",
+"titre_fr": "St Wenceslas, Duc et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam XIX post Octavam Pentecostes IV. Septembris"
+},
+"2027-09-29": {
+"titre": "In Dedicatione S. Michaëlis Archangelis",
+"titre_fr": "Dédicace de St Michel, Archange",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-09-30": {
+"titre": "S. Hieronymi Presbyteris Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Jérôme, Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quinta infra Hebdomadam XIX post Octavam Pentecostes IV. Septembris"
+},
+"2027-10-01": {
+"titre": "Feria Sexta infra Hebdomadam XIX post Octavam Pentecostes IV. Septembris",
+"titre_fr": "Vendredi de la 19e semaine après l’Octave de la Pentecôte 4e de septembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Remigii Episcopi et Confessoris"
+},
+"2027-10-02": {
+"titre": "Ss. Angelorum Custodum",
+"titre_fr": "Sts Anges Gardiens",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam XIX post Octavam Pentecostes IV. Septembris"
+},
+"2027-10-03": {
+"titre": "Dominica XX Post Pentecosten I. Octobris",
+"titre_fr": "20e dimanche après la Pentecôte 1er d'octobre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-10-04": {
+"titre": "S. Francisci Confessoris",
+"titre_fr": "St François d’Assise, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Secunda infra Hebdomadam XX post Octavam Pentecostes I. Octobris"
+},
+"2027-10-05": {
+"titre": "Feria Tertia infra Hebdomadam XX post Octavam Pentecostes I. Octobris",
+"titre_fr": "Mardi de la 20e semaine après l’Octave de la Pentecôte 1er d'octobre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Placidi et Sociorum Martyrum"
+},
+"2027-10-06": {
+"titre": "S. Brunonis Confessoris",
+"titre_fr": "St Bruno, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quarta infra Hebdomadam XX post Octavam Pentecostes I. Octobris"
+},
+"2027-10-07": {
+"titre": "Sanctissimi Rosarii Beatæ Mariæ Virginis",
+"titre_fr": "Très Saint Rosaire de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio ad Laudes tantum: S. Marci Papæ Confessoris"
+},
+"2027-10-08": {
+"titre": "S. Birgittæ Viduæ",
+"titre_fr": "Ste Brigitte, Veuve",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Sergii, Bacchi, Marcelli et Apuleji Martyrum"
+},
+"2027-10-09": {
+"titre": "S. Joannis Leonardi Confessoris",
+"titre_fr": "St Jean Léonardi, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Dionysii Epíscopi, Rustici et Eleutherii Martyrum"
+},
+"2027-10-10": {
+"titre": "Dominica XXI Post Pentecosten II. Octobris",
+"titre_fr": "21e dimanche après la Pentecôte 2e d'octobre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-10-11": {
+"titre": "Maternitatis Beatæ Mariæ Virginis",
+"titre_fr": "Maternité de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria Secunda infra Hebdomadam XXI post Octavam Pentecostes II. Octobris"
+},
+"2027-10-12": {
+"titre": "Feria Tertia infra Hebdomadam XXI post Octavam Pentecostes II. Octobris",
+"titre_fr": "Mardi de la 21e semaine après l’Octave de la Pentecôte 2e d'octobre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-10-13": {
+"titre": "S. Eduardi Regis Confessoris",
+"titre_fr": "St Edouard, Roi et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quarta infra Hebdomadam XXI post Octavam Pentecostes II. Octobris"
+},
+"2027-10-14": {
+"titre": "S. Callisti Papæ et Martyris",
+"titre_fr": "St Calixte Ier, Pape et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quinta infra Hebdomadam XXI post Octavam Pentecostes II. Octobris"
+},
+"2027-10-15": {
+"titre": "S. Teresiæ Virginis",
+"titre_fr": "Ste Thérèse, Vierge",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Sexta infra Hebdomadam XXI post Octavam Pentecostes II. Octobris"
+},
+"2027-10-16": {
+"titre": "S. Hedwigis Viduæ",
+"titre_fr": "Ste Hedwige, Veuve",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam XXI post Octavam Pentecostes II. Octobris"
+},
+"2027-10-17": {
+"titre": "Dominica XXII Post Pentecosten III. Octobris",
+"titre_fr": "22e dimanche après la Pentecôte 3e d'octobre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-10-18": {
+"titre": "S. Lucæ Evangelistæ",
+"titre_fr": "St Luc, Evangéliste",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria Secunda infra Hebdomadam XXII post Octavam Pentecostes III. Octobris"
+},
+"2027-10-19": {
+"titre": "S. Petri de Alcantara Confessoris",
+"titre_fr": "St Pierre d’Alcantara, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam XXII post Octavam Pentecostes III. Octobris"
+},
+"2027-10-20": {
+"titre": "S. Joannis Cantii Confessoris",
+"titre_fr": "St Jean de Kenty, Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quarta infra Hebdomadam XXII post Octavam Pentecostes III. Octobris"
+},
+"2027-10-21": {
+"titre": "Feria Quinta infra Hebdomadam XXII post Octavam Pentecostes III. Octobris",
+"titre_fr": "Jeudi de la 22e semaine après l’Octave de la Pentecôte 3e d'octobre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Hilarionis Abbatis"
+},
+"2027-10-22": {
+"titre": "Feria Sexta infra Hebdomadam XXII post Octavam Pentecostes III. Octobris",
+"titre_fr": "Vendredi de la 22e semaine après l’Octave de la Pentecôte 3e d'octobre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-10-23": {
+"titre": "S. Antonii Mariæ Claret Episcopi et Confessoris",
+"titre_fr": "St Antoine-Marie Claret, Evêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam XXII post Octavam Pentecostes III. Octobris"
+},
+"2027-10-24": {
+"titre": "Dominica XXIII Post Pentecosten IV. Octobris",
+"titre_fr": "23e dimanche après la Pentecôte 4e d'octobre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-10-25": {
+"titre": "Feria Secunda infra Hebdomadam XXIII post Octavam Pentecostes IV. Octobris",
+"titre_fr": "Lundi de la 23e semaine après l’Octave de la Pentecôte 4e d'octobre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Chrysanthi et Dariæ Martyrum"
+},
+"2027-10-26": {
+"titre": "Feria Tertia infra Hebdomadam XXIII post Octavam Pentecostes IV. Octobris",
+"titre_fr": "Mardi de la 23e semaine après l’Octave de la Pentecôte 4e d'octobre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : S. Evaristi Papæ et Martyris"
+},
+"2027-10-27": {
+"titre": "Feria Quarta infra Hebdomadam XXIII post Octavam Pentecostes IV. Octobris",
+"titre_fr": "Mercredi de la 23e semaine après l’Octave de la Pentecôte 4e d'octobre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-10-28": {
+"titre": "Ss. Simonis et Judæ Apostolorum",
+"titre_fr": "Sts Simon et Jude, Apôtres",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria Quinta infra Hebdomadam XXIII post Octavam Pentecostes IV. Octobris"
+},
+"2027-10-29": {
+"titre": "Feria Sexta infra Hebdomadam XXIII post Octavam Pentecostes IV. Octobris",
+"titre_fr": "Vendredi de la 23e semaine après l’Octave de la Pentecôte 4e d'octobre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-10-30": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Sabbato infra Hebdomadam XXIII post Octavam Pentecostes IV. Octobris"
+},
+"2027-10-31": {
+"titre": "In festo Domini Nostri Jesu Christi Regis",
+"titre_fr": "Fête de Notre-Seigneur Jésus-Christ Roi",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-11-01": {
+"titre": "Omnium Sanctorum",
+"titre_fr": "Tous les Saints",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-11-02": {
+"titre": "In Commemoratione Omnium Fidelium Defunctorum Ad primam Missam",
+"titre_fr": "Commémoraison de tous les fidèles défunts, à la première messe",
+"couleur": "Noir",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-11-03": {
+"titre": "Feria IV infra Hebdomadam IV quæ superfuit post Epiphaniam V. Octobris",
+"titre_fr": "Mercredi de la quatrième semaine après l’Épiphanie (reportée) 5e d'octobre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-11-04": {
+"titre": "S. Caroli Episcopi et Confessoris",
+"titre_fr": "St Charles Evêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Mart. Vitalis et Agricolæ"
+},
+"2027-11-05": {
+"titre": "Feria VI infra Hebdomadam IV quæ superfuit post Epiphaniam V. Octobris",
+"titre_fr": "Vendredi de la quatrième semaine après l’Épiphanie (reportée) 5e d'octobre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": ""
+},
+"2027-11-06": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Sabbato infra Hebdomadam IV quæ superfuit post Epiphaniam V. Octobris"
+},
+"2027-11-07": {
+"titre": "Dominica V quæ superfuit Post Epiphaniam III. Novembris",
+"titre_fr": "5e dimanche après l’Épiphanie (reporté) 3e de novembre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-11-08": {
+"titre": "Feria II infra Hebdomadam V quæ superfuit post Epiphaniam III. Novembris",
+"titre_fr": "Lundi de la cinquième semaine après l’Épiphanie (reportée) 3e de novembre",
+"couleur": "Vert",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Commemoratio : Ss. Quatuor Coronatorum Martyrum"
+},
+"2027-11-09": {
+"titre": "In Dedicatione Basilicæ Ss. Salvatoris",
+"titre_fr": "Dédicace de la Basilique du Très Saint Sauveur",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio ad Laudes tantum: S. Theodori Martyris"
+},
+"2027-11-10": {
+"titre": "S. Andreæ Avellini Confessoris",
+"titre_fr": "St. André Avellin Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: Ss. Tryphonis, Respicii, et Nymphæ Virg., Martyrum"
+},
+"2027-11-11": {
+"titre": "S. Martini Episcopi et Confessoris",
+"titre_fr": "St Martin, Evêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Mennæ Martyris"
+},
+"2027-11-12": {
+"titre": "S. Martini Papæ et Martyris",
+"titre_fr": "S. Martin Ier, Pape et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria VI infra Hebdomadam V quæ superfuit post Epiphaniam III. Novembris"
+},
+"2027-11-13": {
+"titre": "S. Didaci Confessoris",
+"titre_fr": "S. Didace Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam V quæ superfuit post Epiphaniam III. Novembris"
+},
+"2027-11-14": {
+"titre": "Dominica VI quæ superfuit Post Epiphaniam IV. Novembris",
+"titre_fr": "6e dimanche après l’Épiphanie (reporté) 4e de novembre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-11-15": {
+"titre": "S. Alberti Magni Episcopi Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St. Albert le Grand, Evêque Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria II infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+},
+"2027-11-16": {
+"titre": "S. Gertrudis Virginis",
+"titre_fr": "Ste Gertrude Vierge",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria III infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+},
+"2027-11-17": {
+"titre": "S. Gregorii Thaumaturgi Episcopi et Confessoris",
+"titre_fr": "St. Grégoire Thaumaturge Evêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria IV infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+},
+"2027-11-18": {
+"titre": "In Dedicatione Basilicarum Ss. Apostolorum Petri et Pauli",
+"titre_fr": "Dédicace des Basiliques des Sts Apôtres Pierre et Paul",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria V infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+},
+"2027-11-19": {
+"titre": "S. Elisabeth Viduæ",
+"titre_fr": "Ste. Elisabeth Veuve",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Pontiani Papæ et Martyris"
+},
+"2027-11-20": {
+"titre": "S. Felicis de Valois Confessoris",
+"titre_fr": "St. Félix de Valois Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Sabbato infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+},
+"2027-11-21": {
+"titre": "Dominica XXIV et ultima Post Pentecosten V. Novembris",
+"titre_fr": "24e et dernier dimanche après la Pentecôte 5e de novembre",
+"couleur": "Vert",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-11-22": {
+"titre": "S. Cæciliæ Virginis et Martyris",
+"titre_fr": "Ste Cécile Vierge et Martyre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Secunda infra Hebdomadam XXIV post Octavam Pentecostes V. Novembris"
+},
+"2027-11-23": {
+"titre": "S. Clementis Papæ et Martyris",
+"titre_fr": "St Clément Ier Pape et Martyr",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Felicitatis Martyris"
+},
+"2027-11-24": {
+"titre": "S. Joannis a Cruce Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St. Jean de la Croix Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Chrysogoni Martyris"
+},
+"2027-11-25": {
+"titre": "S. Catharinæ Virginis et Martyris",
+"titre_fr": "Ste Catherine Vierge et Martyre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Quinta infra Hebdomadam XXIV post Octavam Pentecostes V. Novembris"
+},
+"2027-11-26": {
+"titre": "S. Silvestri Abbatis",
+"titre_fr": "St Silvestre Abbé",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Petri Alexandrini Martyris"
+},
+"2027-11-27": {
+"titre": "Sanctæ Mariæ Sabbato",
+"titre_fr": "Sanctæ Mariæ Sabbato",
+"couleur": "Blanc",
+"classe": "4e classe",
+"rang": 4,
+"comm": "Scriptura: Sabbato infra Hebdomadam XXIV post Octavam Pentecostes V. Novembris"
+},
+"2027-11-28": {
+"titre": "Dominica I Adventus",
+"titre_fr": "1er dimanche de l’Avent",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-11-29": {
+"titre": "Feria II infra Hebdomadam I Adventus",
+"titre_fr": "Lundi de la première semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Saturnini Martyris"
+},
+"2027-11-30": {
+"titre": "S. Andreæ Apostoli",
+"titre_fr": "St André Apôtre",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: Feria III infra Hebdomadam I Adventus"
+},
+"2027-12-01": {
+"titre": "Feria IV infra Hebdomadam I Adventus",
+"titre_fr": "Mercredi de la première semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-12-02": {
+"titre": "S. Bibianæ Virginis et Martyris",
+"titre_fr": "Ste Bibiane Vierge et Martyre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria V infra Hebdomadam I Adventus"
+},
+"2027-12-03": {
+"titre": "S. Francisci Xaverii Confessoris",
+"titre_fr": "S. François Xavier Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria VI infra Hebdomadam I Adventus"
+},
+"2027-12-04": {
+"titre": "S. Petri Chrysologi Episcopi Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Pierre Chrysologue Evêque Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Sabbato infra Hebdomadam I Adventus"
+},
+"2027-12-05": {
+"titre": "Dominica II Adventus",
+"titre_fr": "2e dimanche de l’Avent",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-12-06": {
+"titre": "S. Nicolai Episcopi et Confessoris",
+"titre_fr": "St Nicolas Evêque et Confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria II infra Hebdomadam II Adventus"
+},
+"2027-12-07": {
+"titre": "S. Ambrosii Episcopi Confessoris et Ecclesiæ Doctoris",
+"titre_fr": "St Ambroise Evêque Confesseur et Docteur de l'Eglise",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria III infra Hebdomadam II Adventus"
+},
+"2027-12-08": {
+"titre": "In Conceptione Immaculata Beatæ Mariæ Virginis",
+"titre_fr": "Immaculée Conception de la Bienheureuse Vierge Marie",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": "Commemoratio: Feria IV infra Hebdomadam II Adventus"
+},
+"2027-12-09": {
+"titre": "Feria V infra Hebdomadam II Adventus",
+"titre_fr": "Jeudi de la deuxième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-12-10": {
+"titre": "Feria VI infra Hebdomadam II Adventus",
+"titre_fr": "Vendredi de la deuxième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio : S. Melchiadis Papæ et Martyris"
+},
+"2027-12-11": {
+"titre": "S. Damasi Papæ et Confessoris",
+"titre_fr": "St Damase Ier, pape et confesseur",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Sabbato infra Hebdomadam II Adventus"
+},
+"2027-12-12": {
+"titre": "Dominica III Adventus",
+"titre_fr": "3e dimanche de l’Avent",
+"couleur": "Rose",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-12-13": {
+"titre": "S. Luciæ Virginis et Martyris",
+"titre_fr": "Ste Lucie Vierge et Martyre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria II infra Hebdomadam III Adventus"
+},
+"2027-12-14": {
+"titre": "Feria III infra Hebdomadam III Adventus",
+"titre_fr": "Mardi de la troisième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "3e classe",
+"rang": 3,
+"comm": ""
+},
+"2027-12-15": {
+"titre": "Feria IV Quattuor Temporum in Adventu",
+"titre_fr": "Mercredi des Quatre-Temps de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-12-16": {
+"titre": "S. Eusebii Episcopi et Martyris",
+"titre_fr": "Ste Eusebe Evêque et Martyre",
+"couleur": "Rouge",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio: Feria V infra Hebdomadam III Adventus"
+},
+"2027-12-17": {
+"titre": "Feria VI Quattuor Temporum in Adventu",
+"titre_fr": "Vendredi des Quatre-Temps de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-12-18": {
+"titre": "Sabbato Quattuor Temporum in Adventu",
+"titre_fr": "Samedi des Quatre-Temps de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-12-19": {
+"titre": "Dominica IV Adventus",
+"titre_fr": "4e dimanche de l’Avent",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-12-20": {
+"titre": "Feria II infra Hebdomadam IV Adventus",
+"titre_fr": "Lundi de la quatrième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-12-21": {
+"titre": "S. Thomæ Apostoli",
+"titre_fr": "St Thomas, Apôtre",
+"couleur": "Rouge",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: Feria III infra Hebdomadam IV Adventus"
+},
+"2027-12-22": {
+"titre": "Feria IV infra Hebdomadam IV Adventus",
+"titre_fr": "Mercredi de la quatrième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-12-23": {
+"titre": "Feria V infra Hebdomadam IV Adventus",
+"titre_fr": "Jeudi de la quatrième semaine de l’Avent",
+"couleur": "Violet",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-12-24": {
+"titre": "In Vigilia Nativitatis Domini",
+"titre_fr": "Vigile de la Nativité du Seigneur",
+"couleur": "Violet",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-12-25": {
+"titre": "In Nativitate Domini in nocte",
+"titre_fr": "Nativité du Seigneur, pendant la nuit",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": ""
+},
+"2027-12-26": {
+"titre": "Dominica Infra Octavam Nativitatis",
+"titre_fr": "Dimanche dans l’octave de la Nativité",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: S. Stephani Protomartyris"
+},
+"2027-12-27": {
+"titre": "S. Joannis Apostoli et Evangelistæ",
+"titre_fr": "St Jean Apôtre et Evangéliste",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio: Diei III infra Octavam Nativitatis"
+},
+"2027-12-28": {
+"titre": "Diei IV infra Octavam Nativitatis",
+"titre_fr": "IVème jour de l'octave de la Nativité",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio : Ss. Innocentium"
+},
+"2027-12-29": {
+"titre": "Die V infra Octavam Nativitatis",
+"titre_fr": "5e jour dans l’octave de la Nativité",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio : S. Thomæ Cantuariensis Episcopi et Martyris"
+},
+"2027-12-30": {
+"titre": "Die VI infra Octavam Nativitatis",
+"titre_fr": "VIème jour de l'octave de la Nativité",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": ""
+},
+"2027-12-31": {
+"titre": "Die VII infra Octavam Nativitatis",
+"titre_fr": "7e jour dans l’octave de la Nativité",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio : S. Silvestri Papæ et Confessoris"
+}
+}
