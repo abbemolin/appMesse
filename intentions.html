@@ -1346,23 +1346,63 @@ async function lancerAction(action) {
     const icon = document.getElementById('icon-'+action);
     btn.disabled = true;
     icon.textContent = '⏳';
-    showToast('⏳ Script lancé — patientez 10-15 secondes…');
+    showToast('⏳ Script lancé — patientez 15 secondes…');
+
+    // Snapshot Supabase AVANT pour comparer après
+    // importer  → on compte les en_attente
+    // envoyer   → on compte les mails approuvés non encore envoyés
+    let avantCount = 0;
     try {
-        const resp = await fetch(APPS_SCRIPT_URL+'?action='+action);
-        const data = await resp.json();
-        if (data.status === 'ok' || data.success === true) {
-            icon.textContent = '✅';
-            const msg = data.message || 'Terminé';
-            showToast('✅ ' + msg + ' — rechargement…');
-            setTimeout(() => { chargerDemandes(); icon.textContent = action==='importer'?'📥':'📤'; btn.disabled=false; }, 3000);
+        if (action === 'importer') {
+            const { count } = await maConnexion.from('intentions')
+                .select('id', { count:'exact', head:true }).eq('statut','en_attente');
+            avantCount = count || 0;
         } else {
-            throw new Error(data.message || 'Le script a retourné une erreur');
+            const { count } = await maConnexion.from('intentions')
+                .select('id', { count:'exact', head:true })
+                .eq('mail_approuve', true).eq('mail_envoye', false)
+                .in('statut', ['valide','refuse']);
+            avantCount = count || 0;
         }
-    } catch(e) {
-        icon.textContent = '❌';
-        showToast('❌ ' + (e.message || 'Erreur — vérifiez l\'URL du script'));
-        btn.disabled = false;
+    } catch(_) {}
+
+    // Apps Script redirige via une URL intermédiaire → le header CORS disparaît
+    // sur la réponse finale. On utilise no-cors pour déclencher, puis on vérifie
+    // le résultat dans Supabase après le délai d'exécution du script (~12 s).
+    try {
+        await fetch(APPS_SCRIPT_URL + '?action=' + action, { mode: 'no-cors' });
+    } catch(_) {}
+
+    // Attendre que le script ait eu le temps de tourner
+    await new Promise(r => setTimeout(r, 13000));
+
+    // Vérification dans Supabase
+    let apresCount = 0;
+    try {
+        if (action === 'importer') {
+            const { count } = await maConnexion.from('intentions')
+                .select('id', { count:'exact', head:true }).eq('statut','en_attente');
+            apresCount = count || 0;
+        } else {
+            const { count } = await maConnexion.from('intentions')
+                .select('id', { count:'exact', head:true })
+                .eq('mail_approuve', true).eq('mail_envoye', false)
+                .in('statut', ['valide','refuse']);
+            apresCount = count || 0;
+        }
+    } catch(_) {}
+
+    const diff = apresCount - avantCount;
+    icon.textContent = '✅';
+    if (action === 'importer') {
+        const msg = diff > 0 ? `${diff} nouvelle${diff>1?'s':''} demande${diff>1?'s':''} importée${diff>1?'s':''}` : 'Aucune nouvelle demande';
+        showToast('✅ ' + msg);
+    } else {
+        const envoyés = avantCount - apresCount;
+        const msg = envoyés > 0 ? `${envoyés} réponse${envoyés>1?'s':''} envoyée${envoyés>1?'s':''}` : 'Aucun mail à envoyer';
+        showToast('✅ ' + msg);
     }
+    setTimeout(() => { chargerDemandes(); icon.textContent = action==='importer'?'📥':'📤'; btn.disabled=false; }, 2000);
 }
 
 window.onload = function() {
