@@ -949,6 +949,20 @@ async function enregistrerIntention() {
             pretre_id,
         }).eq('id', supaId));
     } else {
+        // Doublon check pour les intentions sans google_event_id (messes privées)
+        // L'upsert gère seul les conflits quand google_event_id est présent.
+        if (!google_event_id) {
+            const { data: doublon } = await maConnexion.from('intentions')
+                .select('id')
+                .eq('date_messe', date_messe)
+                .eq('heure_messe', heure_brute)
+                .eq('statut', 'valide')
+                .maybeSingle();
+            if (doublon) {
+                AppModal.alert('⛔','Créneau indisponible','Une intention validée existe déjà à cette date et cette heure.');
+                return;
+            }
+        }
         // Création : upsert sur google_event_id
         ({ error } = await maConnexion.from('intentions').upsert([{
             date_messe, google_event_id,
