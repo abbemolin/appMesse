@@ -440,7 +440,8 @@ let _jourSel  = null;
 let _gcalEvents  = [];
 let _intentions  = [];
 let _ordoCache   = {};
-let _gcalCache   = {}; // cache par mois : clé = 'YYYY-MM'
+let _gcalCache   = {}; // cache par mois : clé = 'YYYY-MM' → { items, ts }
+const GCAL_TTL   = 5 * 60 * 1000; // 5 minutes
 
 // ── Utilitaires ───────────────────────────────────────────
 const PRETRES = {
@@ -776,8 +777,9 @@ async function chargerMois() {
     showSpinner(true);
 
     try {
-        // Cache GCal : ne re-requêter que si le mois n'est pas déjà chargé
-        if (!_gcalCache[moisKey]) {
+        // Cache GCal : re-requêter si absent ou expiré (TTL 5 min)
+        const cached = _gcalCache[moisKey];
+        if (!cached || (Date.now() - cached.ts) > GCAL_TTL) {
             const tMin = new Date(_annee, _mois, 1).toISOString();
             const tMax = new Date(_annee, _mois + 1, 1).toISOString();
             const gcalResp = await fetch(
@@ -787,9 +789,9 @@ async function chargerMois() {
                 + `&singleEvents=true&orderBy=startTime&maxResults=250`
             );
             const gcalData = await gcalResp.json();
-            _gcalCache[moisKey] = gcalData.items || [];
+            _gcalCache[moisKey] = { items: gcalData.items || [], ts: Date.now() };
         }
-        _gcalEvents = _gcalCache[moisKey];
+        _gcalEvents = _gcalCache[moisKey].items;
 
         // Supabase : toujours frais (intentions peuvent changer)
         const { data } = await maConnexion
@@ -813,7 +815,8 @@ async function prechargerAdjacents() {
     for (const delta of [-1, 1]) {
         const d = new Date(_annee, _mois + delta, 1);
         const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-        if (_gcalCache[key]) continue;
+        const c = _gcalCache[key];
+        if (c && (Date.now() - c.ts) <= GCAL_TTL) continue;
         const tMin = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
         const tMax = new Date(d.getFullYear(), d.getMonth() + 1, 1).toISOString();
         try {
@@ -824,7 +827,7 @@ async function prechargerAdjacents() {
                 + `&singleEvents=true&orderBy=startTime&maxResults=250`
             );
             const data = await resp.json();
-            _gcalCache[key] = data.items || [];
+            _gcalCache[key] = { items: data.items || [], ts: Date.now() };
         } catch(e) { /* silencieux */ }
     }
 }
