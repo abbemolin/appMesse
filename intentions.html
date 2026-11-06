@@ -1351,13 +1351,19 @@ async function lancerAction(action) {
     icon.textContent = '⏳';
     showToast('⏳ Script lancé — patientez 10-15 secondes…');
     try {
-        await fetch(APPS_SCRIPT_URL+'?action='+action, {mode:'no-cors'});
-        icon.textContent = '✅';
-        showToast('✅ Terminé — rechargement…');
-        setTimeout(() => { chargerDemandes(); icon.textContent = action==='importer'?'📥':'📤'; btn.disabled=false; }, 3000);
+        const resp = await fetch(APPS_SCRIPT_URL+'?action='+action);
+        const data = await resp.json();
+        if (data.status === 'ok' || data.success === true) {
+            icon.textContent = '✅';
+            const msg = data.message || 'Terminé';
+            showToast('✅ ' + msg + ' — rechargement…');
+            setTimeout(() => { chargerDemandes(); icon.textContent = action==='importer'?'📥':'📤'; btn.disabled=false; }, 3000);
+        } else {
+            throw new Error(data.message || 'Le script a retourné une erreur');
+        }
     } catch(e) {
         icon.textContent = '❌';
-        showToast('❌ Erreur — vérifiez l\'URL du script');
+        showToast('❌ ' + (e.message || 'Erreur — vérifiez l\'URL du script'));
         btn.disabled = false;
     }
 }
