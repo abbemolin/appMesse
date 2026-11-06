@@ -861,13 +861,15 @@ async function renderIntentions(filtre = '') {
         groupDiv.id = 'mois-' + moisKey;
         groupDiv.style.display = isOpen ? 'block' : 'none';
 
-        // Tri : en attente en premier, puis confirmées, puis refusées
+        // Tri : par date puis heure, avec en_attente en tête à date+heure égales
         const itemsTries = [...items].sort((a, b) => {
+            const dateA = (a.date_messe || '') + 'T' + (a.heure_messe || '00:00');
+            const dateB = (b.date_messe || '') + 'T' + (b.heure_messe || '00:00');
+            if (dateA !== dateB) return dateA.localeCompare(dateB);
             const ordre = { 'en_attente': 0, 'valide': 1, 'refuse': 2, 'deplace': 3 };
             const oa = a.en_edition ? 0 : (ordre[a.statut] ?? 4);
             const ob = b.en_edition ? 0 : (ordre[b.statut] ?? 4);
-            if (oa !== ob) return oa - ob;
-            return (a.heure_messe || '').localeCompare(b.heure_messe || '');
+            return oa - ob;
         });
         itemsTries.forEach(item => {
             groupDiv.appendChild(buildIntentionCard(item));
