@@ -1182,6 +1182,88 @@ function getIdAndCall(btn, fn) {
     fn(id);
 }
 
+// ── Modifier une intention validée (modale complète) ──────
+function modSelectAbbe(id) {
+    document.getElementById('mod-pretre').value = id;
+    ['molin','legall'].forEach(a => {
+        const btn = document.getElementById('mod-chip-'+a);
+        if (btn) btn.classList.toggle('actif', a === id);
+    });
+}
+
+function ouvrirModifierTout(id) {
+    const intent = intentionsGlobal.find(i => String(i.id) === String(id));
+    if (!intent) { AppModal.alert('⚠️','Introuvable','Rechargez et réessayez.'); return; }
+
+    document.getElementById('mod-id').value          = intent.id;
+    document.getElementById('mod-nom').value          = intent.nom_intention || '';
+    document.getElementById('mod-donateur').value     = intent.nom_donateur || '';
+    document.getElementById('mod-type').value         = intent.type_intention || 'Défunt';
+    document.getElementById('mod-commentaire').value  = intent.commentaire || '';
+    document.getElementById('mod-date').value         = intent.date_messe || '';
+    document.getElementById('mod-heure').value        = (intent.heure_messe || '09:00').replace('h',':');
+    modSelectAbbe(intent.pretre_id || 'molin');
+
+    const d = new Date((intent.date_messe||'') + 'T12:00:00');
+    const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    document.getElementById('mod-title').textContent =
+        'Modifier — ' + jours[d.getDay()] + ' ' + d.getDate() + ' ' +
+        MOIS_FR[d.getMonth()].toLowerCase();
+
+    const modal = document.getElementById('modal-modifier-tout');
+    modal.style.display = 'flex';
+}
+
+function fermerModifierTout() {
+    document.getElementById('modal-modifier-tout').style.display = 'none';
+}
+
+async function sauvegarderModification() {
+    const id          = document.getElementById('mod-id').value;
+    const nom         = document.getElementById('mod-nom').value.trim();
+    const donateur    = document.getElementById('mod-donateur').value.trim();
+    const type        = document.getElementById('mod-type').value;
+    const commentaire = document.getElementById('mod-commentaire').value.trim();
+    const date        = document.getElementById('mod-date').value;
+    const heure       = document.getElementById('mod-heure').value; // HH:MM
+    const pretre_id   = document.getElementById('mod-pretre').value || 'molin';
+
+    if (!nom)   { AppModal.alert('⚠️','Champ manquant','Veuillez indiquer une intention.'); return; }
+    if (!date)  { AppModal.alert('⚠️','Champ manquant','Veuillez indiquer une date.'); return; }
+
+    // Vérifier doublon si date ou heure a changé
+    const intent = intentionsGlobal.find(i => String(i.id) === String(id));
+    if (intent && (date !== intent.date_messe || heure !== (intent.heure_messe||'').replace('h',':'))) {
+        const { data: doublon } = await maConnexion.from('intentions')
+            .select('id').eq('date_messe', date).eq('heure_messe', heure)
+            .eq('statut','valide').neq('id', id).maybeSingle();
+        if (doublon) { AppModal.alert('⛔','Créneau indisponible','Ce créneau est déjà pris.'); return; }
+    }
+
+    const { error } = await maConnexion.from('intentions').update({
+        nom_intention:  nom,
+        nom_donateur:   donateur || 'Paroisse',
+        type_intention: type,
+        commentaire,
+        date_messe:     date,
+        heure_messe:    heure,
+        pretre_id,
+        mail_approuve:  false,
+        mail_envoye:    false,
+    }).eq('id', id);
+
+    if (error) { AppModal.alert('❌','Erreur',error.message); return; }
+
+    fermerModifierTout();
+    showToast('✅ Intention modifiée');
+    chargerDemandes();
+}
+
+// Fermer en cliquant le fond
+document.getElementById('modal-modifier-tout').addEventListener('click', function(e) {
+    if (e.target === this) fermerModifierTout();
+});
+
 // ── Accordéon ─────────────────────────────────────────────
 function toggleMois(moisKey) {
     const div   = document.getElementById('mois-'+moisKey);
