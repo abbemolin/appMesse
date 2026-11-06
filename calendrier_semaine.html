@@ -270,6 +270,37 @@
     }
     .drop-indicator.visible { display: block; }
 
+    /* ── Toolbar de formatage flottant ──────────────────── */
+    #fmt-toolbar {
+        position: fixed;
+        display: none;
+        gap: 2px;
+        background: #2a1f0e;
+        border: 1px solid #b8962a;
+        border-radius: 4px;
+        padding: 3px 4px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.45);
+        z-index: 10000;
+        pointer-events: auto;
+    }
+    #fmt-toolbar.visible { display: flex; }
+    #fmt-toolbar button {
+        background: none;
+        border: none;
+        color: #e8d9b0;
+        font-size: .78rem;
+        font-family: 'Cinzel', serif;
+        font-weight: 700;
+        padding: 4px 7px;
+        border-radius: 3px;
+        cursor: pointer;
+        line-height: 1;
+        transition: background .15s, color .15s;
+        min-width: 26px;
+    }
+    #fmt-toolbar button:hover { background: rgba(184,150,42,.3); color: #fff; }
+    #fmt-toolbar button.active { background: rgba(184,150,42,.5); color: #fff; }
+
     /* ── Mode sombre — semaine ───────────────────────────── */
     @media (prefers-color-scheme: dark) {
         .preview-week       { background: var(--vellum-light); border-color: var(--border-soft); }
@@ -338,6 +369,14 @@
             <p class="generate-hint">Les fichiers seront téléchargés automatiquement</p>
         </div>
     </main>
+
+    <!-- Toolbar de formatage flottant -->
+    <div id="fmt-toolbar">
+        <button id="fmt-caps"   title="Majuscules">AA</button>
+        <button id="fmt-italic" title="Italique"><em>I</em></button>
+        <button id="fmt-under"  title="Souligné"><u>U</u></button>
+        <button id="fmt-center" title="Centrer">≡</button>
+    </div>
 
     <div id="toast" class="toast"></div>
 
@@ -515,7 +554,7 @@
                             label += ' (' + intention.nom_intention + croix + ')';
                         }
                     }
-                    return { heure, label, bold: isMesse, underline: false, extra1: '', extra2: '' };
+                    return { heure, label, labelHtml: escHtml(label), bold: isMesse };
                 });
 
                 semaineData.push({
@@ -547,7 +586,7 @@
 
     // ── Ajouter un événement ─────────────────────────────────────────────
     function ajouterLigne(jourIdx) {
-        semaineData[jourIdx].horaires.push({ heure: '', label: 'Nouvel événement', bold: false });
+        semaineData[jourIdx].horaires.push({ heure: '', label: 'Nouvel événement', labelHtml: 'Nouvel événement', bold: false });
         renderPreview();
         // Focus automatique sur le libellé de la nouvelle ligne
         const container = document.getElementById('preview-container');
@@ -564,7 +603,7 @@
 
     // ── Ajouter une note ─────────────────────────────────────────────────
     function ajouterNote(jourIdx) {
-        semaineData[jourIdx].notes.push('Note…');
+        semaineData[jourIdx].notes.push({ html: 'Note…', textAlign: '' });
         renderPreview();
         const container = document.getElementById('preview-container');
         const notes = container.querySelectorAll(`[data-jour="${jourIdx}"][data-field="note"]`);
@@ -611,7 +650,7 @@
                     <span class="drag-handle" title="Glisser vers un autre jour">⠿</span>
                     <span style="color:var(--rubric);">✦</span>
                     <span contenteditable="true" data-jour="${jourIdx}" data-field="note" data-note="${ni}"
-                        style="${editStyle};flex:1;" title="Modifier">${escHtml(n)}</span>
+                        style="${editStyle};flex:1;text-align:${noteAlign(n)||'left'};" title="Modifier">${noteHtml(n)}</span>
                     <button style="${btnStyle}" title="Supprimer cette note"
                         onmousedown="event.preventDefault();supprimerNote(${jourIdx},${ni})">✕</button>
                 </div>`;
@@ -630,7 +669,7 @@
                         <span contenteditable="true" class="preview-evt-heure" data-jour="${jourIdx}" data-evt="${evtIdx}" data-field="heure"
                             style="${editStyle}" title="Modifier">${escHtml(evt.heure || '')}</span>
                         <span style="flex:1;align-items:baseline;">${isMesse ? '<strong>' : ''}<span contenteditable="true" data-jour="${jourIdx}" data-evt="${evtIdx}" data-field="label"
-                            style="${editStyle};width:100%;" title="Modifier">${escHtml(evt.label)}</span>${isMesse ? '</strong>' : ''}</span>
+                            style="${editStyle};width:100%;text-align:${evt.textAlign||'left'};" title="Modifier">${evt.labelHtml || escHtml(evt.label)}</span>${isMesse ? '</strong>' : ''}</span>
                         <button style="${btnStyle}" title="Supprimer cette ligne"
                             onmousedown="event.preventDefault();supprimerLigne(${jourIdx},${evtIdx})">✕</button>
                     </div>`;
@@ -651,32 +690,213 @@
 
         // Focus → surligner, blur → sync vers semaineData
         container.querySelectorAll('[contenteditable]').forEach(el => {
-            el.addEventListener('focus', () => { el.style.background = 'var(--gold-pale)'; el.style.borderBottomColor = '#b8962a'; });
+            el.addEventListener('focus', () => {
+                el.style.background = 'var(--gold-pale)';
+                el.style.borderBottomColor = '#b8962a';
+            });
             el.addEventListener('blur', () => {
                 el.style.background = '';
                 el.style.borderBottomColor = 'transparent';
-                // Ignorer si l'élément a été supprimé du DOM entre-temps
                 if (!document.contains(el)) return;
-                const j     = parseInt(el.dataset.jour);
-                const field = el.dataset.field;
-                const val   = el.innerText.trim();
-                const jour  = semaineData[j];
-                if (!jour) return;
-                if (field === 'dateFr')    jour.dateFr = val;
-                if (field === 'sousTitre') jour.sousTitre = val === '—' ? '' : val;
-                if (field === 'note') {
-                    const ni = parseInt(el.dataset.note);
-                    if (jour.notes[ni] !== undefined) jour.notes[ni] = val;
-                }
-                if (field === 'heure' || field === 'label') {
-                    const ei = parseInt(el.dataset.evt);
-                    if (jour.horaires[ei]) {
-                        if (field === 'heure') jour.horaires[ei].heure = val;
-                        if (field === 'label') jour.horaires[ei].label = val;
-                    }
-                }
+                syncElToData(el);
             });
         });
+    }
+
+    // ── Sync un élément contenteditable → semaineData ───────────────────
+    function syncElToData(el) {
+        const j     = parseInt(el.dataset.jour);
+        const field = el.dataset.field;
+        const jour  = semaineData[j];
+        if (!jour) return;
+
+        // Pour les champs texte pur (dateFr, sousTitre, heure) → innerText
+        // Pour label et note → innerHTML pour préserver les spans de formatage
+        if (field === 'dateFr')    { jour.dateFr    = el.innerText.trim(); return; }
+        if (field === 'sousTitre') { jour.sousTitre  = el.innerText.trim() === '—' ? '' : el.innerText.trim(); return; }
+        if (field === 'heure') {
+            const ei = parseInt(el.dataset.evt);
+            if (jour.horaires[ei]) jour.horaires[ei].heure = el.innerText.trim();
+            return;
+        }
+        if (field === 'label') {
+            const ei = parseInt(el.dataset.evt);
+            if (jour.horaires[ei]) {
+                jour.horaires[ei].labelHtml  = el.innerHTML;
+                jour.horaires[ei].textAlign  = el.style.textAlign || '';
+            }
+            return;
+        }
+        if (field === 'note') {
+            const ni = parseInt(el.dataset.note);
+            if (jour.notes[ni] !== undefined) {
+                // On stocke un objet { html, textAlign } ou juste la string pour compat
+                jour.notes[ni] = { html: el.innerHTML, textAlign: el.style.textAlign || '' };
+            }
+            return;
+        }
+    }
+
+    // ── Toolbar de formatage ─────────────────────────────────────────────
+    (function() {
+        const toolbar = document.getElementById('fmt-toolbar');
+        let activeEl  = null; // élément contenteditable qui a le focus
+        let savedRange = null; // sélection sauvegardée avant le clic bouton
+
+        function saveSelection() {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0) savedRange = sel.getRangeAt(0).cloneRange();
+        }
+
+        function restoreSelection() {
+            if (!savedRange) return;
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(savedRange);
+        }
+
+        function hideToolbar() {
+            toolbar.classList.remove('visible');
+            savedRange = null;
+        }
+
+        function showToolbar(x, y) {
+            toolbar.classList.add('visible');
+            // Positionnement : au-dessus de la sélection, centré
+            const tw = toolbar.offsetWidth  || 140;
+            const th = toolbar.offsetHeight || 32;
+            const vw = window.innerWidth;
+            let left = x - tw / 2;
+            let top  = y - th - 10;
+            if (left < 4) left = 4;
+            if (left + tw > vw - 4) left = vw - tw - 4;
+            if (top < 4) top = y + 24; // si trop haut, afficher en dessous
+            toolbar.style.left = left + 'px';
+            toolbar.style.top  = top  + 'px';
+        }
+
+        // Écouter les sélections dans les éléments contenteditable
+        document.addEventListener('selectionchange', () => {
+            const sel = window.getSelection();
+            if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+                // Pas de sélection — masquer sauf si on est en train de cliquer le toolbar
+                // (le mousedown du toolbar sauvegarde la sélection avant que selectionchange tire)
+                if (!toolbar.matches(':focus-within') && !toolbar.contains(document.activeElement)) {
+                    hideToolbar();
+                }
+                return;
+            }
+            // Vérifier que la sélection est dans un contenteditable de la preview
+            const anchor = sel.anchorNode;
+            const ce = anchor && anchor.nodeType === Node.TEXT_NODE
+                ? anchor.parentElement.closest('[contenteditable]')
+                : anchor && anchor.closest && anchor.closest('[contenteditable]');
+            if (!ce || !document.getElementById('preview-container').contains(ce)) {
+                hideToolbar();
+                return;
+            }
+            activeEl = ce;
+            // Position du toolbar = milieu haut du rect de sélection
+            const rect = sel.getRangeAt(0).getBoundingClientRect();
+            showToolbar(rect.left + rect.width / 2, rect.top + window.scrollY);
+        });
+
+        // Chaque bouton : mousedown (pas click) pour conserver la sélection
+        toolbar.addEventListener('mousedown', e => {
+            e.preventDefault(); // ← empêche la perte de focus ET de sélection
+            saveSelection();
+        });
+
+        document.getElementById('fmt-caps').addEventListener('mousedown', e => {
+            e.preventDefault();
+            saveSelection();
+            restoreSelection();
+            const sel = window.getSelection();
+            if (!sel || sel.isCollapsed) return;
+            const range = sel.getRangeAt(0);
+            const selectedText = range.toString();
+            const isAllCaps = selectedText === selectedText.toUpperCase();
+            const newText = isAllCaps ? selectedText.toLowerCase() : selectedText.toUpperCase();
+            // Supprimer la sélection et insérer le nouveau texte dans un span si déjà stylisé
+            // → on utilise insertHTML pour préserver les spans existants
+            document.execCommand('insertText', false, newText);
+            if (activeEl) syncElToData(activeEl);
+        });
+
+        document.getElementById('fmt-italic').addEventListener('mousedown', e => {
+            e.preventDefault();
+            saveSelection();
+            restoreSelection();
+            document.execCommand('italic', false, null);
+            if (activeEl) syncElToData(activeEl);
+        });
+
+        document.getElementById('fmt-under').addEventListener('mousedown', e => {
+            e.preventDefault();
+            saveSelection();
+            restoreSelection();
+            document.execCommand('underline', false, null);
+            if (activeEl) syncElToData(activeEl);
+        });
+
+        document.getElementById('fmt-center').addEventListener('mousedown', e => {
+            e.preventDefault();
+            saveSelection();
+            restoreSelection();
+            // Centrer = ajouter/retirer un style sur l'élément entier
+            if (!activeEl) return;
+            const isCentered = activeEl.style.textAlign === 'center';
+            activeEl.style.textAlign = isCentered ? '' : 'center';
+            if (activeEl) syncElToData(activeEl);
+        });
+
+        // Masquer le toolbar quand on clique ailleurs
+        document.addEventListener('mousedown', e => {
+            if (!toolbar.contains(e.target)) hideToolbar();
+        });
+    })();
+
+    // ── Parse HTML inline → tableau de TextRun Word ──────────────────────
+    // baseOpts : options de base appliquées à tous les runs (ex: { bold: true })
+    function htmlToRuns(html, baseOpts = {}) {
+        if (!html) return [window.docx ? new window.docx.TextRun({ text: '', ...baseOpts, font: 'Calibri', size: 24, color: '000000' }) : ''];
+        const { TextRun } = window.docx;
+        const r = (text, opts = {}) => new TextRun({ text, font: 'Calibri', size: 24, color: '000000', ...baseOpts, ...opts });
+
+        // Transformer le HTML en texte segmenté avec styles
+        // On parse via un div temporaire
+        const div = document.createElement('div');
+        div.innerHTML = html;
+
+        const runs = [];
+        function walk(node, inherited = {}) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent;
+                if (text) runs.push(r(text, { ...inherited }));
+                return;
+            }
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+            const tag = node.tagName.toLowerCase();
+            const style = node.getAttribute('style') || '';
+            const opts = { ...inherited };
+
+            if (tag === 'strong' || tag === 'b') opts.bold = true;
+            if (tag === 'em'     || tag === 'i') opts.italics = true;
+            if (tag === 'u') opts.underline = { type: 'single', color: '000000' };
+            if (tag === 'span') {
+                if (/font-weight\s*:\s*bold/i.test(style)) opts.bold = true;
+                if (/font-style\s*:\s*italic/i.test(style)) opts.italics = true;
+                if (/text-decoration[^;]*underline/i.test(style)) opts.underline = { type: 'single', color: '000000' };
+                // text-transform: uppercase → allCaps dans Word
+                if (/text-transform\s*:\s*uppercase/i.test(style)) opts.allCaps = true;
+            }
+
+            node.childNodes.forEach(child => walk(child, opts));
+        }
+
+        div.childNodes.forEach(child => walk(child, {}));
+        return runs.length ? runs : [r('')];
     }
 
     // ── Construit l'objet Document docx à partir de semaineData ─────────────
@@ -717,26 +937,23 @@
             ]}));
 
             jour.notes.forEach(note => {
+                const nRuns  = htmlToRuns(noteHtml(note), { italics: true });
+                const nAlign = noteAlign(note) === 'center' ? AlignmentType.CENTER : AlignmentType.LEFT;
+                const nPara  = new Paragraph({ alignment: nAlign, spacing: { after: 0, line: 240 }, children: nRuns });
                 tableRows.push(new TableRow({ height: { value: 20, rule: 'auto' }, children: [
-                    cell([para([r(note, { italics: true })])], 5), cell([para([])], 1), cell([para([])], 1)
+                    cell([nPara], 5), cell([para([])], 1), cell([para([])], 1)
                 ]}));
             });
 
             jour.horaires.forEach(evt => {
                 const heureRuns = [r(evt.heure, { bold: evt.bold })];
-                let labelRuns;
-                if (evt.bold) {
-                    const m = evt.label.match(/^([^(]+?)(\s*\(.+\))?$/);
-                    labelRuns = (m && m[2])
-                        ? [r(m[1].trim(), { bold: true }), r(' ' + m[2].trim())]
-                        : [r(evt.label, { bold: true })];
-                } else {
-                    labelRuns = [r(evt.label)];
-                }
+                const labelRuns = htmlToRuns(evt.labelHtml || escHtml(evt.label || ''), { bold: evt.bold });
+                const lAlign = (evt.textAlign === 'center') ? AlignmentType.CENTER : AlignmentType.LEFT;
+                const lPara  = new Paragraph({ alignment: lAlign, spacing: { after: 0, line: 240 }, children: labelRuns });
                 tableRows.push(new TableRow({ height: { value: 20, rule: 'auto' }, children: [
                     cell([para([])], 1),
                     cell([para(heureRuns)], 1),
-                    cell([para(labelRuns)], 4),
+                    cell([lPara], 4),
                     cell([para([])], 1),
                 ]}));
             });
@@ -831,19 +1048,14 @@
                     ? ' <span style="font-style:italic">– ' + escHtml(jour.sousTitre) + '</span>'
                     : '';
                 lines.push('<tr class="row-head"><td colspan="2"><strong>' + escHtml(jour.dateFr) + '</strong>' + sousTitreHtml + '</td></tr>');
+                jour.notes.forEach(n => {
+                    lines.push('<tr><td colspan="2" style="color:#8b1a1a;font-style:italic;padding-left:4px;">' + noteHtml(n) + '</td></tr>');
+                });
                 jour.horaires.forEach(evt => {
                     const heure = escHtml(evt.heure);
-                    let labelHtml;
-                    if (evt.bold) {
-                        const m = evt.label.match(/^([^(]+?)(\s*\(.+\))?$/);
-                        labelHtml = m && m[2]
-                            ? '<strong>' + escHtml(m[1].trim()) + '</strong> ' + escHtml(m[2].trim())
-                            : '<strong>' + escHtml(evt.label) + '</strong>';
-                    } else {
-                        labelHtml = escHtml(evt.label);
-                    }
+                    const lHtml = evt.labelHtml || escHtml(evt.label || '');
                     const hClass = evt.bold ? ' class="bold"' : '';
-                    lines.push('<tr><td' + hClass + '>' + heure + '</td><td>' + labelHtml + '</td></tr>');
+                    lines.push('<tr><td' + hClass + '>' + heure + '</td><td>' + lHtml + '</td></tr>');
                 });
                 lines.push('<tr class="row-sep"><td colspan="2"></td></tr>');
                 return lines;
@@ -933,6 +1145,11 @@
         return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    // Note peut être string (texte brut) ou { html, textAlign }
+    function noteHtml(n)      { return typeof n === 'object' ? (n.html || '') : (typeof n === 'string' && n.includes('<') ? n : escHtml(n||'')); }
+    function noteAlign(n)     { return typeof n === 'object' ? (n.textAlign || '') : ''; }
+    function noteText(n)      { const d = document.createElement('div'); d.innerHTML = noteHtml(n); return d.innerText || ''; }
+
     async function copierHTML() {
         if (!semaineData || semaineData.length === 0) {
             showToast('⚠️ Aucune donnée à copier');
@@ -962,24 +1179,29 @@
             const fete      = jour.sousTitre || '';
 
             html += `  <tr>\n    <td style="padding:6px 0 2px 0;">\n`;
-            html += `      <span style="font-weight:bold;color:${C_TITRE};font-size:15px;">${escHtml(jourNom)} ${escHtml(jourDate)}</span>`;
+            html += `      <span style="font-weight:bold;color:${C_TITRE};font-size:1.1em;">${escHtml(jourNom)} ${escHtml(jourDate)}</span>`;
             if (fete) {
-                html += ` <span style="color:${C_FETE};font-size:13px;font-style:italic;">— ${escHtml(fete)}</span>`;
+                html += ` <span style="color:${C_FETE};font-size:0.9em;font-style:italic;">— ${escHtml(fete)}</span>`;
             }
             html += `\n    </td>\n  </tr>\n`;
 
             // Notes (rubrique) — affichées avant les horaires
             (jour.notes || []).forEach(note => {
-                html += `  <tr>\n    <td style="padding:1px 0 1px 16px;color:${C_NOTE};font-size:13px;font-style:italic;">${escHtml(note)}</td>\n  </tr>\n`;
+                const nHtml  = noteHtml(note);
+                const nAlign = noteAlign(note);
+                const alignStyle = nAlign ? `text-align:${nAlign};` : '';
+                html += `  <tr>\n    <td style="padding:1px 0 1px 16px;color:${C_NOTE};font-size:1em;font-style:italic;${alignStyle}">${nHtml}</td>\n  </tr>\n`;
             });
 
             // Horaires
             (jour.horaires || []).forEach(h => {
-                const heureStr  = h.heure  ? `<span style="color:${C_HEURE};font-size:13px;min-width:36px;display:inline-block;">${escHtml(h.heure)}</span> ` : '';
+                const heureStr  = h.heure  ? `<span style="color:${C_HEURE};font-size:0.9em;min-width:36px;display:inline-block;">${escHtml(h.heure)}</span> ` : '';
+                // labelHtml peut contenir des spans de formatage (gras, italique, souligné...)
+                const labelContent = h.labelHtml || escHtml(h.label || '');
                 const labelStyle = h.bold
-                    ? `font-weight:bold;color:${C_TEXTE};font-size:13px;`
-                    : `color:${C_TEXTE};font-size:13px;`;
-                html += `  <tr>\n    <td style="padding:1px 0 1px 16px;">${heureStr}<span style="${labelStyle}">${escHtml(h.label)}</span></td>\n  </tr>\n`;
+                    ? `font-weight:bold;color:${C_TEXTE};font-size:1em;`
+                    : `color:${C_TEXTE};font-size:1em;`;
+                html += `  <tr>\n    <td style="padding:1px 0 1px 16px;">${heureStr}<span style="${labelStyle}">${labelContent}</span></td>\n  </tr>\n`;
             });
         });
 
