@@ -329,6 +329,12 @@
                     Générer le .jpg
                 </button>
             </div>
+            <div style="display:flex;gap:10px;margin-bottom:10px;">
+                <button class="btn-generate" id="btn-html" onclick="copierHTML()" disabled style="flex:1;background:#2c4a2c;">
+                    <span class="icon">📋</span>
+                    Copier HTML (mail)
+                </button>
+            </div>
             <p class="generate-hint">Les fichiers seront téléchargés automatiquement</p>
         </div>
     </main>
@@ -433,6 +439,7 @@
         loading.classList.add('visible');
         document.getElementById('btn-generate').disabled = true;
         document.getElementById('btn-jpeg').disabled = true;
+        document.getElementById('btn-html').disabled = true;
 
         try {
             const lundi  = new Date(lundiCourant + 'T12:00:00');
@@ -526,6 +533,7 @@
             loading.classList.remove('visible');
             document.getElementById('btn-generate').disabled = false;
             document.getElementById('btn-jpeg').disabled = false;
+            document.getElementById('btn-html').disabled = false;
 
         } catch(err) {
             loading.classList.remove('visible');
@@ -923,6 +931,75 @@
     }
     function escHtml(s) {
         return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function copierHTML() {
+        if (!semaineData || semaineData.length === 0) {
+            showToast('⚠️ Aucune donnée à copier');
+            return;
+        }
+
+        const C_TITRE   = '#1a1a1a';
+        const C_FETE    = '#555555';
+        const C_HEURE   = '#888888';
+        const C_TEXTE   = '#1a1a1a';
+        const C_NOTE    = '#8b2020';
+        const C_SEP     = '#dddddd';
+
+        let html = '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Georgia,serif;max-width:600px;">\n';
+
+        semaineData.forEach((jour, idx) => {
+            if (idx > 0) {
+                // séparateur entre jours
+                html += `  <tr><td style="padding:4px 0;border-bottom:1px solid ${C_SEP};font-size:1px;">&nbsp;</td></tr>\n`;
+                html += `  <tr><td style="padding:4px 0;font-size:1px;">&nbsp;</td></tr>\n`;
+            }
+
+            // Entête du jour
+            const dateParts = (jour.dateFr || '').split(' ');
+            const jourNom   = dateParts[0] || '';
+            const jourDate  = dateParts.slice(1).join(' ');
+            const fete      = jour.sousTitre || '';
+
+            html += `  <tr>\n    <td style="padding:6px 0 2px 0;">\n`;
+            html += `      <span style="font-weight:bold;color:${C_TITRE};font-size:15px;">${escHtml(jourNom)} ${escHtml(jourDate)}</span>`;
+            if (fete) {
+                html += ` <span style="color:${C_FETE};font-size:13px;font-style:italic;">— ${escHtml(fete)}</span>`;
+            }
+            html += `\n    </td>\n  </tr>\n`;
+
+            // Notes (rubrique) — affichées avant les horaires
+            (jour.notes || []).forEach(note => {
+                html += `  <tr>\n    <td style="padding:1px 0 1px 16px;color:${C_NOTE};font-size:13px;font-style:italic;">${escHtml(note)}</td>\n  </tr>\n`;
+            });
+
+            // Horaires
+            (jour.horaires || []).forEach(h => {
+                const heureStr  = h.heure  ? `<span style="color:${C_HEURE};font-size:13px;min-width:36px;display:inline-block;">${escHtml(h.heure)}</span> ` : '';
+                const labelStyle = h.bold
+                    ? `font-weight:bold;color:${C_TEXTE};font-size:13px;`
+                    : `color:${C_TEXTE};font-size:13px;`;
+                html += `  <tr>\n    <td style="padding:1px 0 1px 16px;">${heureStr}<span style="${labelStyle}">${escHtml(h.label)}</span></td>\n  </tr>\n`;
+            });
+        });
+
+        html += '</table>';
+
+        try {
+            await navigator.clipboard.writeText(html);
+            showToast('✅ HTML copié dans le presse-papier');
+        } catch(e) {
+            // Fallback : textarea temporaire
+            const ta = document.createElement('textarea');
+            ta.value = html;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('✅ HTML copié dans le presse-papier');
+        }
     }
 
     function showToast(msg) {
