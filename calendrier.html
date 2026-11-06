@@ -508,21 +508,25 @@ function messesduJour(iso) {
     return [...gcalMesses, ...privees];
 }
 
-function intentionDuJour(googleId, iso, heure) {
+function intentionDuJour(googleId, iso, heure, _deja = null) {
     // 1. Match exact par google_event_id (le plus fiable)
     const byId = _intentions.find(i => i.google_event_id === googleId);
-    if (byId) return byId;
+    if (byId) { if (_deja) _deja.add(byId.id); return byId; }
 
     // 2. Pour les messes privées : match par google_event_id préfixe 'prive_' + date
     if (googleId && googleId.startsWith('prive_')) return null; // déjà géré par byId
 
     // 3. Fallback par date + heure (messes récurrentes dont l'ID varie)
-    return _intentions.find(i =>
+    // _deja évite qu'une même intention soit rattachée à deux messes distinctes
+    const candidat = _intentions.find(i =>
         i.date_messe === iso &&
         i.heure_messe === heure &&
-        !i.google_event_id?.startsWith('prive_') && // exclure les privées
-        (i.statut === 'valide' || i.statut === 'en_attente' || i.en_edition)
+        !i.google_event_id?.startsWith('prive_') &&
+        (i.statut === 'valide' || i.statut === 'en_attente' || i.en_edition) &&
+        (!_deja || !_deja.has(i.id))
     ) || null;
+    if (candidat && _deja) _deja.add(candidat.id);
+    return candidat;
 }
 
 // ── Rendu du calendrier ───────────────────────────────────
@@ -560,10 +564,11 @@ function renderCalendrier() {
 
         // Pastilles
         let pips = '';
+        const _dejaJour = new Set();
         messes.forEach(e => {
             const heure  = new Date(e.start.dateTime||e.start.date)
                 .toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-            const intent = intentionDuJour(e.id, iso, heure);
+            const intent = intentionDuJour(e.id, iso, heure, _dejaJour);
             // Pastille = statut intention UNIQUEMENT (pas couleur liturgique)
             let cls = 'libre';
             if (intent) {
@@ -661,11 +666,12 @@ function renderDetail(iso) {
             <span class="cal-pip attente" style="margin-left:10px"></span><span>En attente</span>
             <span class="cal-pip attrib"  style="margin-left:10px"></span><span>Attribuée</span>
         </div>`;
+        const _dejaDetail = new Set();
         messes.forEach(e => {
             const dateObj = new Date(e.start.dateTime || e.start.date);
             const heure   = dateObj.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
             const heureFr = heure.replace(':','h');
-            const intent  = intentionDuJour(e.id, iso, heure);
+            const intent  = intentionDuJour(e.id, iso, heure, _dejaDetail);
             const summary = e.summary || '';
             const typeLabel = e._prive                          ? 'Messe privée'
                             : /grand.?messe/i.test(summary)  ? 'Grand-Messe'
