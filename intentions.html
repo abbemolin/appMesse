@@ -730,7 +730,7 @@ async function chargerDemandes() {
 
         const [gcalResp, { data }] = await Promise.all([
             fetch(urlGcal),
-            maConnexion.from('intentions').select('*').order('date_messe', { ascending: true })
+            maConnexion.from('intentions').select('*').neq('statut','annule').order('date_messe', { ascending: true })
         ]);
         const gcalData = await gcalResp.json();
         googleEventsGlobal = gcalData.items || [];
@@ -1144,19 +1144,46 @@ async function finaliser(id) {
     } catch(e) { AppModal.alert('❌','Erreur',e.message||'Veuillez réessayer.'); }
 }
 
-async function refuser(id) {
-    const ok = await AppModal.confirm('✖️','Refuser la demande ?','Un mail de refus sera préparé.','Refuser','app-modal-btn-danger');
-    if (!ok) return;
+function ouvrirModalRefus(id) {
+    document.getElementById('refus-id').value = id;
+    document.getElementById('refus-date').value = '';
+    document.getElementById('refus-heure').value = '';
+    document.getElementById('modal-refus').style.display = 'flex';
+}
+
+function fermerModalRefus() {
+    document.getElementById('modal-refus').style.display = 'none';
+}
+
+async function confirmerRefus() {
+    const id              = document.getElementById('refus-id').value;
+    const dateAlt         = document.getElementById('refus-date').value;
+    const heureAlt        = document.getElementById('refus-heure').value;
+    const avecProposition = !!dateAlt;
+
+    const reponse = avecProposition
+        ? `Nous ne pouvons pas honorer votre demande pour cette date. Nous vous proposons le ${new Date(dateAlt+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}${heureAlt ? ' à ' + heureAlt.replace(':','h') : ''}.`
+        : `Nous sommes désolés de ne pouvoir honorer votre demande pour cette date. N'hésitez pas à nous recontacter pour une autre date.`;
+
     try {
         const { error } = await maConnexion.from('intentions').update({
-            statut:'refuse', en_edition:false,
-            reponse_pretre:'Désolé, nous ne pouvons pas honorer cette demande pour la date demandée. N\'hésitez pas à nous recontacter pour une autre date.',
-            mail_approuve:true, mail_envoye:false
-        }).eq('id',id);
+            statut:           'refuse',
+            en_edition:       false,
+            reponse_pretre:   reponse,
+            date_alternative: dateAlt  || null,
+            heure_alternative:heureAlt || null,
+            mail_approuve:    true,
+            mail_envoye:      false,
+        }).eq('id', id);
         if (error) throw error;
-        showToast('✖️ Demande refusée'); chargerDemandes();
+        fermerModalRefus();
+        showToast('✖️ Demande refusée — mail préparé');
+        chargerDemandes();
     } catch(e) { AppModal.alert('❌','Erreur',e.message||'Impossible de refuser.'); }
 }
+
+// Ancien alias conservé pour compatibilité boutons existants
+async function refuser(id) { ouvrirModalRefus(id); }
 
 async function editer(id) {
     try {
@@ -1166,13 +1193,13 @@ async function editer(id) {
 }
 
 async function supprimerIntention(id) {
-    const ok = await AppModal.confirm('🗑️','Supprimer l\'intention ?','Cette action est irréversible.','Supprimer','app-modal-btn-danger');
+    const ok = await AppModal.confirm('🗑️','Annuler l\'intention ?','L\'intention sera masquée (statut annulé).','Annuler','app-modal-btn-danger');
     if (!ok) return;
     try {
-        const { error } = await maConnexion.from('intentions').delete().eq('id',id);
+        const { error } = await maConnexion.from('intentions').update({ statut:'annule', en_edition:false }).eq('id',id);
         if (error) throw error;
-        showToast('🗑️ Intention supprimée'); chargerDemandes();
-    } catch(e) { AppModal.alert('❌','Erreur',e.message||'Impossible de supprimer.'); }
+        showToast('🗑️ Intention annulée'); chargerDemandes();
+    } catch(e) { AppModal.alert('❌','Erreur',e.message||'Impossible d\'annuler.'); }
 }
 
 function getIdAndCall(btn, fn) {
@@ -1413,6 +1440,12 @@ window.onload = function() {
             if (e.target === this) fermerModifierTout();
         });
     }
+    const modalRefus = document.getElementById('modal-refus');
+    if (modalRefus) {
+        modalRefus.addEventListener('click', function(e) {
+            if (e.target === this) fermerModalRefus();
+        });
+    }
 };
 
 // ── Raccourci / pour la recherche ────────────────────────
@@ -1439,6 +1472,47 @@ document.addEventListener('keydown', e => {
 });
 
 </script>
+
+<!-- ── Modale Refus ── -->
+<div id="modal-refus" style="display:none;position:fixed;inset:0;z-index:2000;
+    background:rgba(0,0,0,.65);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--vellum-light);border-radius:16px 16px 0 0;
+      width:100%;max-width:640px;max-height:88vh;overflow-y:auto;padding:24px 20px 36px;">
+    <input type="hidden" id="refus-id">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <h2 style="margin:0;font-size:1.1rem;font-family:var(--font-title);">✖️ Refuser la demande</h2>
+      <button onclick="fermerModalRefus()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--ink-muted);">✕</button>
+    </div>
+    <p style="font-size:.9rem;color:var(--ink-muted);margin:0 0 20px;">
+      Optionnel : proposez une date alternative à inclure dans le mail de refus.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <label style="font-size:.88rem;font-weight:600;color:var(--ink);">
+        Date alternative
+        <input type="date" id="refus-date" style="display:block;width:100%;margin-top:5px;
+          padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+          background:var(--vellum);color:var(--ink);font-size:.95rem;">
+      </label>
+      <label style="font-size:.88rem;font-weight:600;color:var(--ink);">
+        Heure alternative
+        <input type="time" id="refus-heure" style="display:block;width:100%;margin-top:5px;
+          padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+          background:var(--vellum);color:var(--ink);font-size:.95rem;">
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:24px;">
+      <button onclick="fermerModalRefus()" style="flex:1;padding:12px;border:1px solid var(--border);
+        border-radius:10px;background:var(--vellum);color:var(--ink);font-size:.95rem;cursor:pointer;">
+        Annuler
+      </button>
+      <button onclick="confirmerRefus()" style="flex:1;padding:12px;border:none;
+        border-radius:10px;background:var(--rubric,#c0392b);color:#fff;font-size:.95rem;
+        font-weight:600;cursor:pointer;">
+        ✖️ Confirmer le refus
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Modale Modifier tout ── -->
 <div id="modal-modifier-tout" style="display:none;position:fixed;inset:0;z-index:2000;
