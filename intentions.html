@@ -1259,10 +1259,7 @@ async function sauvegarderModification() {
     chargerDemandes();
 }
 
-// Fermer en cliquant le fond
-document.getElementById('modal-modifier-tout').addEventListener('click', function(e) {
-    if (e.target === this) fermerModifierTout();
-});
+// Fermer en cliquant le fond — attaché après chargement du DOM
 
 // ── Accordéon ─────────────────────────────────────────────
 function toggleMois(moisKey) {
@@ -1368,7 +1365,15 @@ async function lancerAction(action) {
     }
 }
 
-window.onload = chargerDemandes;
+window.onload = function() {
+    chargerDemandes();
+    const modalModifier = document.getElementById('modal-modifier-tout');
+    if (modalModifier) {
+        modalModifier.addEventListener('click', function(e) {
+            if (e.target === this) fermerModifierTout();
+        });
+    }
+};
 
 // ── Raccourci / pour la recherche ────────────────────────
 document.addEventListener('keydown', e => {
