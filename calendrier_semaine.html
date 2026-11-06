@@ -798,7 +798,7 @@
             activeEl = ce;
             // Position du toolbar = milieu haut du rect de sélection
             const rect = sel.getRangeAt(0).getBoundingClientRect();
-            showToolbar(rect.left + rect.width / 2, rect.top + window.scrollY);
+            showToolbar(rect.left + rect.width / 2, rect.top);
         });
 
         // Chaque bouton : mousedown (pas click) pour conserver la sélection
