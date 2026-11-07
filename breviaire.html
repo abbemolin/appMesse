@@ -254,6 +254,9 @@
         line-height: 1.15; color: var(--brev-encre); letter-spacing: 0;
     }
     .brev-text > .do-psaume:first-child { margin-top: 4px; }
+    /* Le premier psaume d'une partie est déjà nommé par l'onglet : seul le ton (grégorien) reste */
+    .do-psaume.masque { font-size: 0; margin: 12px 0 0; }
+    .do-psaume.masque .ps-ref { font-size: .85rem; }
     .do-psaume .ps-ref {
         display: block; text-align: right; margin-top: 2px;
         font-size: .58em; font-style: italic; color: var(--rubric);
@@ -777,6 +780,8 @@ function construireParties(garder) {
     barre.innerHTML = '';
     barre.hidden = lignes.length < 2;
     lignes.forEach((l, k) => {
+        const ps = l.querySelector('.do-psaume');
+        if (ps) ps.classList.add('masque');
         const b = document.createElement('button');
         b.className = 'partie-tab';
         b.textContent = nomPartie(l);
