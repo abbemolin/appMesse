@@ -271,7 +271,7 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
     <h3>✅ Envoi programmé</h3>
     <p id="cancel-desc">La newsletter sera envoyée le <strong id="cancel-date">—</strong>.</p>
     <div class="confirm-actions">
-      <button class="btn btn-secondary" id="btn-cancel-scheduled">🗑 Annuler l'envoi programmé</button>
+      <button class="btn btn-secondary" id="btn-cancel-scheduled">🗑 Annuler sur Brevo</button>
     </div>
   </div>
 
@@ -1088,7 +1088,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-cancel-scheduled').addEventListener('click', () => {
-    annulerEnvoi();
+    // Brevo ne permet pas d'annuler une campagne programmée via API
+    // On ouvre directement la campagne dans Brevo pour annulation manuelle
+    if (currentCampaignId) {
+      window.open(`https://app.brevo.com/campaign/email/${currentCampaignId}/report`, '_blank');
+    }
   });
 
   // Chargement initial — semaine suivante
