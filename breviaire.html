@@ -645,8 +645,12 @@ function mettreEnForme(cellule) {
 
 // « Psaume 118(1-16) » → titre « Psaume 118 », référence « Ps 118, 1-16 »
 function titrePsaume(t) {
-    return t.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    return t.replace(/\s*\(([^)]*)\)\s*$/, ' ($1)').trim();
 }
+
+// Doxologie à la fin des psaumes et cantiques : non affichée
+const RE_DOXOLOGIE = /^\s*(?:℣\.\s*|℟\.\s*)?(?:Gl[óo]ria Patri|Gloire au Père|Sicut erat|Comme il était)/i;
+const sansBalises = h => h.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 function refPsaume(t) {
     const m = t.match(/(\d+)\s*(?:\(([^)]*)\))?/);
     return m ? `Ps ${m[1]}${m[2] ? ', ' + m[2] : ''}` : t;
@@ -660,17 +664,20 @@ function versetsPsaume(html) {
     let dans = false;
     for (const brut of morceaux) {
         const m = brut.trim();
-        if (m.includes('class="do-psaume"')) {
-            const fin = m.lastIndexOf('</span></span>');
-            const titre = fin >= 0 ? m.slice(0, fin + 14) : m;
-            sortie.push({ bloc: true, h: titre });
-            const reste = fin >= 0 ? m.slice(fin + 14).trim() : '';
+        const t = m.match(/<span class="do-psaume">[^<]*(?:<span class="ps-ref">[^<]*<\/span>)?<\/span>/);
+        if (t) {
+            const avant = m.slice(0, t.index).trim(), reste = m.slice(t.index + t[0].length).trim();
+            if (avant) sortie.push({ bloc: false, h: avant });
+            sortie.push({ bloc: true, h: t[0] });
             dans = true;
-            if (reste) sortie.push(verset(reste));
+            if (reste && !RE_DOXOLOGIE.test(sansBalises(reste))) sortie.push(verset(reste));
             continue;
         }
         if (dans && (!m || /^<span class="do-(?:rubr|titre|partie)"><i>Ant\.|^<span class="do-(?:titre|partie)">/.test(m))) dans = false;
-        if (dans) { sortie.push(verset(m)); continue; }
+        if (dans) {
+            if (!RE_DOXOLOGIE.test(sansBalises(m))) sortie.push(verset(m));
+            continue;
+        }
         sortie.push({ bloc: false, h: brut });
     }
     let out = '';
@@ -687,7 +694,7 @@ function verset(m) {
     const texte = n ? m.slice(n[0].length) : m;
     const coupe = texte.search(/\s\*\s/);
     const corps = coupe < 0 ? `<span class="v1">${texte}</span>`
-        : `<span class="v1">${texte.slice(0, coupe)} <span class="ast">*</span></span><span class="v2">${texte.slice(coupe + 3)}</span>`;
+        : `<span class="v1">${texte.slice(0, coupe)}&nbsp;<span class="ast">*</span></span><span class="v2">${texte.slice(coupe + 3)}</span>`;
     return { bloc: true, h: `<div class="v"><span class="vn">${n ? n[1] : ''}</span><span class="vt">${corps}</span></div>` };
 }
 
@@ -703,7 +710,7 @@ function mettreEnFormeTexte(html) {
         .replace(/<span class="do-rubr"><i>((?:Psalmus|Psaume|Canticum|Cantique)\b[^<]*)<\/i><\/span>(?:\s*\[\d+\])?\s*(?:<br>\s*)?(?:<span class="do-rubr"><i>([^<]*\d[^<]*)<\/i><\/span>\s*(?:<br>\s*)?)?/g,
                  (_, t, ref) => enGregorien()
                     ? (([n, ton]) => `<span class="do-psaume">${n}${ton ? `<span class="ps-ref">${ton}</span>` : ''}</span>`)(titreClair(t).split(' · '))
-                    : `<span class="do-psaume">${titrePsaume(t)}<span class="ps-ref">— ${ref || refPsaume(t)}</span></span>`)
+                    : `<span class="do-psaume">${titrePsaume(t)}</span>`)
         .replace(/<br>\s*(<span class="do-psaume">)/g, '$1');
 }
 
@@ -876,7 +883,7 @@ function decouperPsaume(source) {
         dernier = { num: m[1] || '', fin: reg.lastIndex };
     }
     if (dernier) blocs.push({ num: dernier.num, txt: corps.slice(dernier.fin) });
-    const html = blocs.map(b => {
+    const html = blocs.filter(b => !RE_DOXOLOGIE.test(b.txt.replace(/\([^)]*\)/g, '').replace(/[*_^]/g, ''))).map(b => {
         const t = b.txt
             .replace(/\*\(:\)/g, '\u0001')
             .replace(/\^†\^|†\([^)]*\)/g, '†')
