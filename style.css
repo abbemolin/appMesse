@@ -341,3 +341,60 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);bo
     /* Time chip pris */
     .time-chip.taken { background: #2a1515; color: #b07068; border-color: #4a2020; }
 }
+
+/* ════════════════════════════════════════════════════════════
+   BARRE DE NAVIGATION BAS (toutes pages)
+════════════════════════════════════════════════════════════ */
+.bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: #1a1108;
+    border-top: 1px solid rgba(184,150,42,.18);
+    display: flex;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -4px 20px rgba(0,0,0,.35);
+}
+.bottom-nav-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px; padding: 10px 4px 8px;
+    text-decoration: none; cursor: pointer;
+    border: none; background: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity .15s;
+    position: relative;
+}
+.bottom-nav-item:active { opacity: .6; }
+.bottom-nav-icon {
+    font-size: 1.3rem; line-height: 1;
+    transition: transform .2s cubic-bezier(.2,.8,.3,1);
+}
+.bottom-nav-label {
+    font-family: 'Cinzel', serif; font-size: .38rem;
+    letter-spacing: .12em; text-transform: uppercase;
+    color: rgba(240,232,213,.35);
+    white-space: nowrap;
+}
+.bottom-nav-item.actif .bottom-nav-label { color: #c9a840; }
+.bottom-nav-item.actif .bottom-nav-icon  { transform: translateY(-2px); }
+/* Trait doré sous l'onglet actif */
+.bottom-nav-item.actif::after {
+    content: ''; position: absolute; top: 0; left: 20%; right: 20%;
+    height: 2px; border-radius: 0 0 2px 2px;
+    background: linear-gradient(to right, transparent, #c9a840, transparent);
+}
+/* Badge notification */
+.bottom-nav-badge {
+    position: absolute; top: 6px; right: calc(50% - 18px);
+    background: var(--rubric); color: #fff;
+    font-family: 'Cinzel', serif; font-size: .38rem;
+    min-width: 16px; height: 16px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px; line-height: 1;
+}
+
+/* Compensation pour que le contenu ne passe pas sous la nav */
+.bottom-nav-spacer { height: calc(env(safe-area-inset-bottom, 0px) + 64px); }
+
+@media (prefers-color-scheme: light) {
+    .bottom-nav { background: #1a1108; }
+}
