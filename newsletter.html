@@ -888,7 +888,7 @@ async function envoyerNewsletter() {
   const payload = {
     name: 'Newsletter ' + new Date().toLocaleDateString('fr-FR'),
     subject: subject,
-    sender: { name: 'Paroisse La Croix Glorieuse', email: 'contact@croix-glorieuse.org' },
+    sender: { name: 'Paroisse La Croix Glorieuse', email: 'secretariat@croix-glorieuse.org' },
     type: 'classic',
     htmlContent: emailHtml,
     recipients: { listIds: [BREVO_LIST_ID] },
