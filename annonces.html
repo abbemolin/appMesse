@@ -190,19 +190,24 @@
     .annonce-card-foot {
         display: flex; border-top: 1px solid var(--border-soft);
     }
-    /* Boutons ↑↓ réordonnement */
-    .annonce-ordre-btn {
-        display: flex; flex-direction: column;
+    /* Handle drag-and-drop */
+    .annonce-drag-handle {
+        display: flex; align-items: center; justify-content: center;
+        width: 36px; flex-shrink: 0;
+        cursor: grab; touch-action: none;
+        color: var(--ink-muted); font-size: 1rem;
         border-right: 1px solid var(--border-soft);
+        transition: color .15s, background .15s;
+        user-select: none;
     }
-    .annonce-ordre {
-        flex: 1; padding: 0 10px;
-        cursor: pointer; border: none; background: none;
-        color: var(--ink-muted); font-size: .75rem; line-height: 1;
-        transition: background .15s, color .15s;
+    .annonce-drag-handle:active { cursor: grabbing; }
+    .annonce-drag-handle:hover { color: var(--gold); background: rgba(0,0,0,.03); }
+    .annonce-card.dragging {
+        opacity: .4; background: rgba(184,150,42,.06);
     }
-    .annonce-ordre:hover { background: rgba(0,0,0,.05); color: var(--gold); }
-    .annonce-ordre:first-child { border-bottom: 1px solid var(--border-soft); }
+    .annonce-card.drag-over {
+        border-top: 2px solid var(--gold);
+    }
     .annonce-action {
         flex: 1; padding: 9px 6px;
         display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -681,7 +686,9 @@ function renderCard(a) {
         : '';
 
     return `
-    <div class="annonce-card${a.prioritaire ? ' prioritaire-card' : ''}${!a.actif ? ' inactif' : ''}">
+    <div class="annonce-card${a.prioritaire ? ' prioritaire-card' : ''}${!a.actif ? ' inactif' : ''}"
+         draggable="true" data-id="${a.id}"
+         ondragstart="dndStart(event)" ondragover="dndOver(event)" ondragend="dndEnd(event)" ondrop="dndDrop(event)">
         <div class="annonce-card-head">
             <div class="annonce-card-prio">${a.prioritaire ? '⚑' : '📌'}</div>
             <div class="annonce-card-body">
@@ -692,10 +699,8 @@ function renderCard(a) {
             ${imgHtml}
         </div>
         <div class="annonce-card-foot">
-            <div class="annonce-ordre-btn">
-                <button class="annonce-ordre" onclick="deplacerOrdre(${a.id},-1)" title="Monter">▲</button>
-                <button class="annonce-ordre" onclick="deplacerOrdre(${a.id},+1)" title="Descendre">▼</button>
-            </div>
+            <div class="annonce-drag-handle" title="Glisser pour réordonner"
+                 ontouchstart="dndTouchStart(event)" ontouchmove="dndTouchMove(event)" ontouchend="dndTouchEnd(event)">⠿</div>
             <button class="annonce-action${a.prioritaire ? ' prio-on' : ''}" onclick="togglePrioCard(${a.id})">
                 <span class="ico">⚑</span>${a.prioritaire ? 'Prioritaire' : 'Priorité'}
             </button>
@@ -888,33 +893,114 @@ async function toggleActifCard(id) {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  RÉORDONNEMENT
+//  RÉORDONNEMENT — DRAG AND DROP
 // ══════════════════════════════════════════════════════════════
-async function deplacerOrdre(id, direction) {
-    // On travaille sur la liste filtrée actuellement affichée
+let _dndSrcId = null;
+
+function dndStart(e) {
+    _dndSrcId = parseInt(e.currentTarget.dataset.id);
+    e.currentTarget.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function dndOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    // Marquer la carte cible
+    document.querySelectorAll('.annonce-card').forEach(c => c.classList.remove('drag-over'));
+    const card = e.currentTarget;
+    if (parseInt(card.dataset.id) !== _dndSrcId) card.classList.add('drag-over');
+}
+
+function dndEnd(e) {
+    document.querySelectorAll('.annonce-card').forEach(c => {
+        c.classList.remove('dragging', 'drag-over');
+    });
+}
+
+function dndDrop(e) {
+    e.preventDefault();
+    const destId = parseInt(e.currentTarget.dataset.id);
+    if (!_dndSrcId || _dndSrcId === destId) return;
+    sauvegarderOrdre(_dndSrcId, destId);
+}
+
+async function sauvegarderOrdre(srcId, destId) {
     const liste = annocesFiltrees();
-    const idx = liste.findIndex(x => x.id === id);
-    const idxCible = idx + direction;
-    if (idxCible < 0 || idxCible >= liste.length) return;
+    const srcIdx  = liste.findIndex(x => x.id === srcId);
+    const destIdx = liste.findIndex(x => x.id === destId);
+    if (srcIdx === -1 || destIdx === -1) return;
 
-    const a = liste[idx];
-    const b = liste[idxCible];
+    // Réordonner localement
+    const reordonee = [...liste];
+    const [item] = reordonee.splice(srcIdx, 1);
+    reordonee.splice(destIdx, 0, item);
 
-    // Attribuer des valeurs ordre si elles sont null (on initialise à l'index)
-    const ordreA = a.ordre ?? idx;
-    const ordreB = b.ordre ?? idxCible;
+    // Sauvegarder les nouveaux indices en BDD
+    const updates = reordonee.map((a, i) =>
+        maConnexion.from('annonces').update({ ordre: i }).eq('id', a.id)
+    );
+    const results = await Promise.all(updates);
+    const erreur = results.find(r => r.error);
 
-    // Échange des valeurs ordre
-    const [err1, err2] = await Promise.all([
-        maConnexion.from('annonces').update({ ordre: ordreB }).eq('id', a.id),
-        maConnexion.from('annonces').update({ ordre: ordreA }).eq('id', b.id)
-    ]).then(results => results.map(r => r.error));
-
-    if (!err1 && !err2) {
+    if (!erreur) {
+        toast('Ordre enregistré ✓');
         await charger();
     } else {
         toast('Erreur lors du réordonnement');
     }
+}
+
+/* ── Touch events (mobile) ── */
+let _touchCard = null, _touchClone = null, _touchStartY = 0;
+
+function dndTouchStart(e) {
+    const card = e.currentTarget.closest('.annonce-card');
+    _touchCard = card;
+    _touchStartY = e.touches[0].clientY;
+    _dndSrcId = parseInt(card.dataset.id);
+    card.classList.add('dragging');
+
+    // Clone fantôme
+    _touchClone = card.cloneNode(true);
+    _touchClone.style.cssText = `
+        position:fixed; left:${card.getBoundingClientRect().left}px;
+        top:${card.getBoundingClientRect().top}px;
+        width:${card.offsetWidth}px; opacity:.75; pointer-events:none;
+        z-index:9999; box-shadow:0 8px 24px rgba(0,0,0,.25);
+        transition:none;
+    `;
+    document.body.appendChild(_touchClone);
+    e.preventDefault();
+}
+
+function dndTouchMove(e) {
+    if (!_touchClone) return;
+    e.preventDefault();
+    const dy = e.touches[0].clientY - _touchStartY;
+    _touchClone.style.transform = `translateY(${dy}px)`;
+
+    // Trouver la carte sous le doigt
+    _touchClone.style.display = 'none';
+    const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+    _touchClone.style.display = '';
+    const targetCard = el && el.closest('.annonce-card');
+    document.querySelectorAll('.annonce-card').forEach(c => c.classList.remove('drag-over'));
+    if (targetCard && targetCard !== _touchCard) targetCard.classList.add('drag-over');
+}
+
+function dndTouchEnd(e) {
+    if (!_touchClone) return;
+    _touchClone.remove(); _touchClone = null;
+
+    const destCard = document.querySelector('.annonce-card.drag-over');
+    document.querySelectorAll('.annonce-card').forEach(c => c.classList.remove('dragging','drag-over'));
+
+    if (destCard) {
+        const destId = parseInt(destCard.dataset.id);
+        if (destId !== _dndSrcId) sauvegarderOrdre(_dndSrcId, destId);
+    }
+    _touchCard = null; _dndSrcId = null;
 }
 
 // ══════════════════════════════════════════════════════════════
