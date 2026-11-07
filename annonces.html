@@ -175,6 +175,8 @@
     .annonce-chip.date { border-color: rgba(184,150,42,.3); color: var(--gold); }
     .annonce-chip.lien { border-color: rgba(58,102,68,.3); color: var(--green); }
     .annonce-chip.image { border-color: rgba(80,80,180,.3); color: #6060c0; }
+    .annonce-chip.newsletter { border-color: rgba(30,100,160,.3); color: #3a7ab8; }
+    .annonce-chip.feuille { border-color: rgba(100,70,20,.3); color: #8a6020; }
     .annonce-chip.inactif-badge { border-color: rgba(139,26,26,.25); color: var(--rubric); }
 
     /* Miniature image */
@@ -501,6 +503,20 @@
                     <span class="form-toggle-label">✓ Active</span>
                 </div>
             </div>
+
+            <div class="form-field">
+                <label class="form-label">Publication</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="form-toggle" id="toggle-newsletter" onclick="toggleNewsletter()">
+                        <div class="form-toggle-box" id="toggle-newsletter-box"></div>
+                        <span class="form-toggle-label">✉ Newsletter</span>
+                    </div>
+                    <div class="form-toggle" id="toggle-feuille" onclick="toggleFeuille()">
+                        <div class="form-toggle-box" id="toggle-feuille-box"></div>
+                        <span class="form-toggle-label">🖨 Feuille imprimée</span>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="modal-foot">
             <button class="btn-annuler" onclick="fermerModal()">Annuler</button>
@@ -538,8 +554,10 @@ let filtreActuel = 'toutes';
 let idASupprimer = null;
 
 // État formulaire
-let _prio  = false;
-let _actif = true;
+let _prio        = false;
+let _actif       = true;
+let _newsletter  = false;
+let _feuille     = false;
 
 // ── Chargement ────────────────────────────────────────────────
 async function charger() {
@@ -621,6 +639,8 @@ function renderCard(a) {
     }
     if (a.lien) chips.push(`<span class="annonce-chip lien">🔗 Lien</span>`);
     if (a.image_url) chips.push(`<span class="annonce-chip image">🖼 Image</span>`);
+    if (a.dans_newsletter) chips.push(`<span class="annonce-chip newsletter">✉ Newsletter</span>`);
+    if (a.dans_feuille) chips.push(`<span class="annonce-chip feuille">🖨 Feuille</span>`);
     if (!a.actif) chips.push(`<span class="annonce-chip inactif-badge">Inactive</span>`);
     if (expired) chips.push(`<span class="annonce-chip inactif-badge">Expirée</span>`);
 
@@ -673,10 +693,14 @@ function ouvrirModal(id) {
     document.getElementById('f-lien').value       = a ? (a.lien || '') : '';
     document.getElementById('f-lien-label').value = a ? (a.lien_label || '') : '';
 
-    _prio  = a ? !!a.prioritaire : false;
-    _actif = a ? !!a.actif : true;
-    majToggle('toggle-prio',  'toggle-prio-box',  _prio,  'prio-on');
-    majToggle('toggle-actif', 'toggle-actif-box', _actif, 'on');
+    _prio       = a ? !!a.prioritaire     : false;
+    _actif      = a ? !!a.actif          : true;
+    _newsletter = a ? !!a.dans_newsletter : false;
+    _feuille    = a ? !!a.dans_feuille   : false;
+    majToggle('toggle-prio',        'toggle-prio-box',        _prio,       'prio-on');
+    majToggle('toggle-actif',       'toggle-actif-box',       _actif,      'on');
+    majToggle('toggle-newsletter',  'toggle-newsletter-box',  _newsletter, 'on');
+    majToggle('toggle-feuille',     'toggle-feuille-box',     _feuille,    'on');
 
     previewImage();
     overlay.classList.add('visible');
@@ -698,6 +722,14 @@ function togglePrio() {
 function toggleActif() {
     _actif = !_actif;
     majToggle('toggle-actif', 'toggle-actif-box', _actif, 'on');
+}
+function toggleNewsletter() {
+    _newsletter = !_newsletter;
+    majToggle('toggle-newsletter', 'toggle-newsletter-box', _newsletter, 'on');
+}
+function toggleFeuille() {
+    _feuille = !_feuille;
+    majToggle('toggle-feuille', 'toggle-feuille-box', _feuille, 'on');
 }
 function majToggle(wrapId, boxId, etat, cls) {
     const wrap = document.getElementById(wrapId);
@@ -737,8 +769,10 @@ async function sauver() {
         image_url:   document.getElementById('f-image').value.trim() || null,
         lien:        document.getElementById('f-lien').value.trim() || null,
         lien_label:  document.getElementById('f-lien-label').value.trim() || null,
-        prioritaire: _prio,
-        actif:       _actif,
+        prioritaire:      _prio,
+        actif:            _actif,
+        dans_newsletter:  _newsletter,
+        dans_feuille:     _feuille,
     };
 
     const id = document.getElementById('edit-id').value;
