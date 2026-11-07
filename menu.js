@@ -3,6 +3,7 @@
     const isAccueil    = href.includes('accueil') || href.endsWith('/') || href.endsWith('index.html');
     const isCalendrier = href.includes('calendrier.html');
     const isIntentions = href.includes('intentions');
+    const isAnnonces   = href.includes('annonces');
     const isSemaine    = href.includes('calendrier_semaine');
     const isBible      = href.includes('bible.html');
     const isBreviaire  = href.includes('breviaire.html');
@@ -66,6 +67,10 @@
             <span class="nav-icon">✍️</span>
             <span class="nav-label">Gérer</span>
         </a>
+        <a href="annonces.html" class="nav-item ${isAnnonces ? 'active' : ''}">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Annonces</span>
+        </a>
         <a href="calendrier_semaine.html" class="nav-item ${isSemaine ? 'active' : ''}">
             <span class="nav-icon">📄</span>
             <span class="nav-label">Semaine</span>
@@ -92,6 +97,7 @@ function navRefresh() {
     const href = window.location.href;
     let fn = null;
     if      (href.includes('intentions'))        fn = window.chargerDemandes;
+    else if (href.includes('annonces'))          fn = window.charger;
     else if (href.includes('calendrier_semaine')) fn = window.chargerSemaine;
     else if (href.includes('calendrier.html'))    fn = window.chargerAgenda;
     else if (href.includes('accueil') || href.endsWith('/') || href.endsWith('index.html'))
