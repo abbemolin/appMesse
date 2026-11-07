@@ -492,11 +492,22 @@
 
             <div class="form-row form-field">
                 <div>
-                    <label class="form-label">Date de début <span class="opt">(facultatif)</span></label>
+                    <label class="form-label">Date de l'événement <span class="opt">(facultatif)</span></label>
+                    <input class="form-input" id="f-event-date" type="date">
+                </div>
+                <div>
+                    <label class="form-label">Heure <span class="opt">(facultatif)</span></label>
+                    <input class="form-input" id="f-event-heure" type="time">
+                </div>
+            </div>
+
+            <div class="form-row form-field" style="opacity:.65">
+                <div>
+                    <label class="form-label">Publication à partir du <span class="opt">(facultatif)</span></label>
                     <input class="form-input" id="f-debut" type="date">
                 </div>
                 <div>
-                    <label class="form-label">Date de fin <span class="opt">(facultatif)</span></label>
+                    <label class="form-label">Masquer après le <span class="opt">(facultatif)</span></label>
                     <input class="form-input" id="f-fin" type="date">
                 </div>
             </div>
@@ -669,10 +680,10 @@ function renderCard(a) {
     const today = new Date().toISOString().split('T')[0];
     const expired = a.date_fin && a.date_fin < today;
     const chips = [];
-    if (a.date_debut || a.date_fin) {
-        const d1 = a.date_debut ? fmtDate(a.date_debut) : '…';
-        const d2 = a.date_fin   ? fmtDate(a.date_fin)   : '…';
-        chips.push(`<span class="annonce-chip date">${d1} → ${d2}</span>`);
+    if (a.event_date) {
+        const evDate = fmtDate(a.event_date);
+        const evHeure = a.event_heure ? ' à ' + a.event_heure.slice(0,5) : '';
+        chips.push(`<span class="annonce-chip date">📅 ${evDate}${evHeure}</span>`);
     }
     if (a.lien) chips.push(`<span class="annonce-chip lien">🔗 Lien</span>`);
     if (a.image_url) chips.push(`<span class="annonce-chip image">🖼 Image</span>`);
@@ -728,11 +739,13 @@ function ouvrirModal(id) {
     document.getElementById('edit-id').value      = a ? a.id : '';
     document.getElementById('f-titre').value      = a ? (a.titre || '') : '';
     document.getElementById('f-desc').value       = a ? (a.description || '') : '';
-    document.getElementById('f-debut').value      = a ? (a.date_debut || '') : '';
-    document.getElementById('f-fin').value        = a ? (a.date_fin || '') : '';
-    document.getElementById('f-image').value      = a ? (a.image_url || '') : '';
-    document.getElementById('f-lien').value       = a ? (a.lien || '') : '';
-    document.getElementById('f-lien-label').value = a ? (a.lien_label || '') : '';
+    document.getElementById('f-event-date').value  = a ? (a.event_date  || '') : '';
+    document.getElementById('f-event-heure').value = a ? (a.event_heure ? a.event_heure.slice(0,5) : '') : '';
+    document.getElementById('f-debut').value       = a ? (a.date_debut || '') : '';
+    document.getElementById('f-fin').value         = a ? (a.date_fin || '') : '';
+    document.getElementById('f-image').value       = a ? (a.image_url || '') : '';
+    document.getElementById('f-lien').value        = a ? (a.lien || '') : '';
+    document.getElementById('f-lien-label').value  = a ? (a.lien_label || '') : '';
 
     _prio       = a ? !!a.prioritaire     : false;
     _actif      = a ? !!a.actif          : true;
@@ -842,12 +855,14 @@ async function sauver() {
 
     const payload = {
         titre,
-        description: document.getElementById('f-desc').value.trim() || null,
-        date_debut:  document.getElementById('f-debut').value || null,
-        date_fin:    document.getElementById('f-fin').value || null,
-        image_url:   document.getElementById('f-image').value.trim() || null,
-        lien:        document.getElementById('f-lien').value.trim() || null,
-        lien_label:  document.getElementById('f-lien-label').value.trim() || null,
+        description:  document.getElementById('f-desc').value.trim() || null,
+        event_date:   document.getElementById('f-event-date').value || null,
+        event_heure:  document.getElementById('f-event-heure').value || null,
+        date_debut:   document.getElementById('f-debut').value || null,
+        date_fin:     document.getElementById('f-fin').value || null,
+        image_url:    document.getElementById('f-image').value.trim() || null,
+        lien:         document.getElementById('f-lien').value.trim() || null,
+        lien_label:   document.getElementById('f-lien-label').value.trim() || null,
         prioritaire:      _prio,
         actif:            _actif,
         dans_newsletter:  _newsletter,

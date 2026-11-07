@@ -229,8 +229,12 @@
     function renderCarte(a) {
         const img      = a.image_url ? `<img class="ann-carte-img" src="${escHTML(a.image_url)}" alt="${escHTML(a.titre)}" loading="lazy">` : '';
         const prio     = a.prioritaire ? `<span class="ann-badge-prio">À la une</span>` : '';
-        const dates    = fmtDates(a.date_debut, a.date_fin);
-        const datesHtml = dates ? `<div class="ann-carte-dates">📅 ${escHTML(dates)}</div>` : '';
+        let eventHtml = '';
+        if (a.event_date) {
+            const evDate = fmtDate(a.event_date);
+            const evHeure = a.event_heure ? ' à ' + a.event_heure.slice(0, 5) : '';
+            eventHtml = `<div class="ann-carte-dates">📅 ${escHTML(evDate + evHeure)}</div>`;
+        }
         const desc     = a.description ? `<p class="ann-carte-desc">${escHTML(a.description).replace(/\n/g, '<br>')}</p>` : '';
         const lienLabel = a.lien_label || 'En savoir plus';
         const lien     = a.lien ? `<a class="ann-carte-lien" href="${escHTML(a.lien)}" target="_blank" rel="noopener">${escHTML(lienLabel)} →</a>` : '';
@@ -241,7 +245,7 @@
             <div class="ann-carte-corps">
                 ${prio}
                 <h3 class="ann-carte-titre">${escHTML(a.titre)}</h3>
-                ${datesHtml}
+                ${eventHtml}
                 ${desc}
                 ${lien}
             </div>
