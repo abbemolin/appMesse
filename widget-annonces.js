@@ -124,15 +124,27 @@
         border-color: var(--ann-accent);
         border-top-width: 3px;
     }
+    /* Sur desktop : image à gauche, texte à droite */
+    @media (min-width: 768px) {
+        .ann-carte.avec-image {
+            flex-direction: row;
+        }
+        .ann-carte.avec-image .ann-carte-img {
+            width: 200px;
+            height: auto;
+            min-height: 140px;
+            flex-shrink: 0;
+        }
+    }
     .ann-carte-img {
         width: 100%;
-        height: 160px;
+        height: 180px;
         object-fit: cover;
         display: block;
         background: #f4f0eb;
     }
     .ann-carte-corps {
-        padding: 12px 14px;
+        padding: 14px 16px;
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -240,7 +252,7 @@
         const lien     = a.lien ? `<a class="ann-carte-lien" href="${escHTML(a.lien)}" target="_blank" rel="noopener">${escHTML(lienLabel)} →</a>` : '';
 
         return `
-        <article class="ann-carte${a.prioritaire ? ' prioritaire' : ''}">
+        <article class="ann-carte${a.prioritaire ? ' prioritaire' : ''}${a.image_url ? ' avec-image' : ''}">
             ${img}
             <div class="ann-carte-corps">
                 ${prio}
