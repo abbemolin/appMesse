@@ -11,86 +11,123 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtZWFpbWZjd3R5a2hxdHVlb21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MzA4MzIsImV4cCI6MjA4MzMwNjgzMn0.X91Usnq8WtZYuY40UFIo7Xl8P1O46LKqe1GvJ7RIWYE';
     const CONTENEUR_ID = 'annonces-paroissiales';
 
-    /* ── Styles ────────────────────────────────────────────── */
+    /* ── Styles — alignés sur le widget horaires du site ──── */
     const CSS = `
     #annonces-paroissiales {
-        font-family: Georgia, 'Times New Roman', serif;
-        max-width: 900px;
+        --ann-accent: #551a25;
+        --ann-texte: #292529;
+        --ann-doux: #8a888a;
+        --ann-ligne: #e6e2e2;
+        --ann-fond: #faf8f8;
+        font-family: "Source Sans Pro", Arial, sans-serif;
+        color: var(--ann-texte);
+        max-width: 560px;
         margin: 0 auto;
-        padding: 0 16px 40px;
+        padding: 8px 16px;
+        box-sizing: border-box;
+        text-align: center;
     }
-    .ann-accordeon {
-        border: 1px solid #e0d4c8;
-        border-radius: 4px;
-        overflow: hidden;
-        margin-bottom: 8px;
+    #annonces-paroissiales * { box-sizing: border-box; }
+
+    /* ── Titre ── */
+    .ann-titre {
+        font-family: "Book Antiqua", Palatino, "Palatino Linotype", Georgia, serif;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: .6px;
+        line-height: 1.2;
+        color: #000;
+        margin: 0 0 10px;
     }
-    .ann-summary {
-        display: flex;
+
+    /* ── Bouton résumé / trigger ── */
+    .ann-resume {
+        max-width: 100%;
+        text-align: center;
+        display: inline-flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 14px 20px;
-        font-family: Georgia, serif;
-        font-size: 1.1rem;
-        font-weight: bold;
-        color: #1a1a1a;
-        background: #fff;
+        gap: 10px;
+        border: 0;
+        background: none;
         cursor: pointer;
-        list-style: none;
-        border-bottom: 1px solid transparent;
-        transition: background .15s;
-        user-select: none;
+        font: inherit;
+        font-size: 18px;
+        color: var(--ann-texte);
+        padding: 6px 4px;
+        border-bottom: 1px solid var(--ann-ligne);
+        text-decoration: none;
     }
-    .ann-summary::-webkit-details-marker { display: none; }
-    .ann-summary:hover { background: #faf7f4; }
-    details[open] .ann-summary {
-        border-bottom-color: #e0d4c8;
-        color: #8b1a1a;
+    .ann-resume:hover, .ann-resume:focus-visible {
+        border-bottom-color: var(--ann-accent);
     }
-    .ann-chevron {
-        font-size: .85rem;
-        color: #8b1a1a;
-        transition: transform .2s;
-        flex-shrink: 0;
+    #annonces-paroissiales.ouvert .ann-resume {
+        color: var(--ann-accent);
+        border-bottom-color: var(--ann-accent);
     }
-    details[open] .ann-chevron { transform: rotate(180deg); }
-    .ann-grille {
-        padding: 20px;
-        background: #faf7f4;
+
+    /* ── Flèche ── */
+    .ann-fleche {
+        width: 8px;
+        height: 8px;
+        border-right: 2px solid var(--ann-accent);
+        border-bottom: 2px solid var(--ann-accent);
+        transform: translateY(-3px) rotate(45deg);
+        transition: transform .25s;
+        flex: 0 0 auto;
+    }
+    #annonces-paroissiales.ouvert .ann-fleche {
+        transform: translateY(2px) rotate(-135deg);
+    }
+
+    /* ── Panneau dépliable (animation identique au widget horaires) ── */
+    .ann-panneau {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 24px;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows .3s ease;
+        text-align: left;
     }
+    #annonces-paroissiales.ouvert .ann-panneau {
+        grid-template-rows: 1fr;
+    }
+    .ann-interieur {
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    /* ── Grille de cartes ── */
+    .ann-grille {
+        padding: 16px 0 4px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    /* ── Carte ── */
     .ann-carte {
-        border: 1px solid #e8e0d8;
+        border: 1px solid var(--ann-ligne);
         border-radius: 4px;
         overflow: hidden;
         background: #fff;
         display: flex;
         flex-direction: column;
-        transition: box-shadow .2s, transform .2s;
-    }
-    .ann-carte:hover {
-        box-shadow: 0 4px 18px rgba(0,0,0,.1);
-        transform: translateY(-2px);
     }
     .ann-carte.prioritaire {
-        border-color: #8b1a1a;
+        border-color: var(--ann-accent);
         border-top-width: 3px;
     }
     .ann-carte-img {
         width: 100%;
-        height: 180px;
+        height: 160px;
         object-fit: cover;
         display: block;
         background: #f4f0eb;
     }
     .ann-carte-corps {
-        padding: 16px 18px;
+        padding: 12px 14px;
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
     }
     .ann-badge-prio {
         display: inline-block;
@@ -99,36 +136,37 @@
         font-weight: bold;
         letter-spacing: .1em;
         text-transform: uppercase;
-        color: #8b1a1a;
-        border: 1px solid #8b1a1a;
+        color: var(--ann-accent);
+        border: 1px solid var(--ann-accent);
         border-radius: 2px;
         padding: 2px 7px;
         align-self: flex-start;
     }
     .ann-carte-titre {
+        font-family: "Book Antiqua", Palatino, Georgia, serif;
         font-size: 1.05rem;
-        font-weight: bold;
-        color: #1a1a1a;
-        line-height: 1.35;
+        font-weight: 700;
+        color: #000;
+        line-height: 1.3;
         margin: 0;
     }
     .ann-carte-dates {
         font-family: Arial, sans-serif;
         font-size: .78rem;
-        color: #8b1a1a;
-        font-style: normal;
+        color: var(--ann-accent);
     }
     .ann-carte-desc {
         font-size: .95rem;
         color: #444;
-        line-height: 1.6;
+        line-height: 1.55;
         flex: 1;
+        margin: 0;
     }
     .ann-carte-lien {
         display: inline-block;
-        margin-top: 4px;
-        padding: 8px 18px;
-        background: #8b1a1a;
+        margin-top: 6px;
+        padding: 7px 16px;
+        background: var(--ann-accent);
         color: #fff !important;
         text-decoration: none !important;
         font-family: Arial, sans-serif;
@@ -140,23 +178,22 @@
         align-self: flex-start;
         transition: background .2s;
     }
-    .ann-carte-lien:hover { background: #6b1414; }
-    .ann-vide {
+    .ann-carte-lien:hover { background: #3d1219; }
+
+    /* ── États ── */
+    .ann-vide, .ann-chargement {
         text-align: center;
-        color: #999;
-        font-style: italic;
-        padding: 32px 0;
-        grid-column: 1 / -1;
-    }
-    .ann-chargement {
-        text-align: center;
-        color: #bbb;
+        color: var(--ann-doux);
         font-style: italic;
         padding: 24px 0;
     }
-    @media (max-width: 600px) {
-        .ann-grille { grid-template-columns: 1fr; }
-        .ann-carte-img { height: 200px; }
+
+    @media (max-width: 480px) {
+        .ann-titre  { font-size: 24px; }
+        .ann-resume { font-size: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .ann-panneau, .ann-fleche { transition: none; }
     }
     `;
 
@@ -181,13 +218,13 @@
 
     /* ── Rendu d'une carte ─────────────────────────────────── */
     function renderCarte(a) {
-        const img     = a.image_url ? `<img class="ann-carte-img" src="${escHTML(a.image_url)}" alt="${escHTML(a.titre)}" loading="lazy">` : '';
-        const prio    = a.prioritaire ? `<span class="ann-badge-prio">À la une</span>` : '';
-        const dates   = fmtDates(a.date_debut, a.date_fin);
+        const img      = a.image_url ? `<img class="ann-carte-img" src="${escHTML(a.image_url)}" alt="${escHTML(a.titre)}" loading="lazy">` : '';
+        const prio     = a.prioritaire ? `<span class="ann-badge-prio">À la une</span>` : '';
+        const dates    = fmtDates(a.date_debut, a.date_fin);
         const datesHtml = dates ? `<div class="ann-carte-dates">📅 ${escHTML(dates)}</div>` : '';
-        const desc    = a.description ? `<p class="ann-carte-desc">${escHTML(a.description).replace(/\n/g, '<br>')}</p>` : '';
+        const desc     = a.description ? `<p class="ann-carte-desc">${escHTML(a.description).replace(/\n/g, '<br>')}</p>` : '';
         const lienLabel = a.lien_label || 'En savoir plus';
-        const lien    = a.lien ? `<a class="ann-carte-lien" href="${escHTML(a.lien)}" target="_blank" rel="noopener">${escHTML(lienLabel)} →</a>` : '';
+        const lien     = a.lien ? `<a class="ann-carte-lien" href="${escHTML(a.lien)}" target="_blank" rel="noopener">${escHTML(lienLabel)} →</a>` : '';
 
         return `
         <article class="ann-carte${a.prioritaire ? ' prioritaire' : ''}">
@@ -203,10 +240,7 @@
     }
 
     /* ── Chargement depuis Supabase ────────────────────────── */
-    async function charger() {
-        const conteneur = document.getElementById(CONTENEUR_ID);
-        if (!conteneur) return;
-
+    async function charger(conteneur) {
         const today = new Date().toISOString().split('T')[0];
 
         try {
@@ -227,19 +261,17 @@
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const annonces = await res.json();
 
+            const grille = conteneur.querySelector('.ann-grille');
             if (!annonces.length) {
-                conteneur.querySelector('.ann-grille').innerHTML =
-                    '<p class="ann-vide">Aucune annonce en ce moment.</p>';
+                grille.innerHTML = '<p class="ann-vide">Aucune annonce en ce moment.</p>';
                 return;
             }
-
-            conteneur.querySelector('.ann-grille').innerHTML =
-                annonces.map(renderCarte).join('');
+            grille.innerHTML = annonces.map(renderCarte).join('');
 
         } catch (e) {
             console.error('[Annonces widget]', e);
             const grille = conteneur.querySelector('.ann-grille');
-            if (grille) grille.innerHTML = '<p class="ann-vide" style="grid-column:1/-1">Les annonces ne peuvent pas être chargées pour le moment.</p>';
+            if (grille) grille.innerHTML = '<p class="ann-vide">Les annonces ne peuvent pas être chargées pour le moment.</p>';
         }
     }
 
@@ -250,22 +282,39 @@
         style.textContent = CSS;
         document.head.appendChild(style);
 
-        // Structurer le conteneur
         const conteneur = document.getElementById(CONTENEUR_ID);
         if (!conteneur) {
             console.warn('[Annonces widget] Élément #annonces-paroissiales introuvable.');
             return;
         }
 
+        // Structure : accordéon FERMÉ par défaut (pas d'attribut "open")
         conteneur.innerHTML = `
-            <details class="ann-accordeon" open>
-            <summary class="ann-summary">Annonces paroissiales <span class="ann-chevron">▾</span></summary>
-            <div class="ann-grille">
-                <p class="ann-chargement">Chargement…</p>
-            </div>
-            </details>`;
+            <h2 class="ann-titre">Annonces paroissiales</h2>
+            <button type="button" class="ann-resume" aria-expanded="false" aria-controls="ann-panneau">
+                <span>Voir les annonces</span>
+                <span class="ann-fleche" aria-hidden="true"></span>
+            </button>
+            <div class="ann-panneau" id="ann-panneau" role="region">
+                <div class="ann-interieur">
+                    <div class="ann-grille">
+                        <p class="ann-chargement">Chargement…</p>
+                    </div>
+                </div>
+            </div>`;
 
-        charger();
+        const btn = conteneur.querySelector('.ann-resume');
+        let chargeDone = false;
+
+        btn.addEventListener('click', function () {
+            const ouvert = conteneur.classList.toggle('ouvert');
+            btn.setAttribute('aria-expanded', ouvert ? 'true' : 'false');
+            // Charger les données au premier clic seulement
+            if (ouvert && !chargeDone) {
+                chargeDone = true;
+                charger(conteneur);
+            }
+        });
     }
 
     // Lancer après chargement du DOM
