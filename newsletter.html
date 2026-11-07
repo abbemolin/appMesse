@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newsletter — Paroisse La Croix Glorieuse</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+
+<!-- Google Calendar + Ordo API (mêmes que calendrier_semaine.html) -->
+<script src="https://apis.google.com/js/api.js"></script>
+
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: Palatino, Georgia, serif;
+    background: #f5f5f5;
+    color: #333;
+  }
+  #app {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  /* ── En-tête ── */
+  h1 {
+    font-size: 26px;
+    color: #023199;
+    margin: 0 0 4px;
+    text-align: center;
+  }
+  .subtitle {
+    text-align: center;
+    color: #6D6D6C;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  /* ── Statut / barre ── */
+  #status-bar {
+    background: #fff;
+    border: 1px solid #E0D3C1;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 15px;
+  }
+  #status-bar.ok { border-color: #2E7D32; color: #2E7D32; }
+  #status-bar.err { border-color: #B3261E; color: #B3261E; }
+  #status-bar.loading { color: #6D6D6C; }
+
+  /* ── Aperçu email ── */
+  #preview-wrap {
+    background: #FBFBF9;
+    border: 1px solid #E0D3C1;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: none;
+  }
+  #preview-wrap.visible { display: block; }
+  #preview-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #6D6D6C;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  #preview-frame {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    display: block;
+    border: none;
+    background: #fff;
+  }
+
+  /* ── Boutons d'action ── */
+  .actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 20px;
+    border: none;
+    font-family: Palatino, Georgia, serif;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .2s, opacity .2s;
+  }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn-primary {
+    background: #023199;
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) { background: #01217a; }
+  .btn-secondary {
+    background: #fff;
+    color: #023199;
+    border: 2px solid #023199;
+  }
+  .btn-secondary:hover:not(:disabled) { background: #eef1fa; }
+  .btn-danger {
+    background: #B3261E;
+    color: #fff;
+  }
+  .btn-danger:hover:not(:disabled) { background: #8b1c16; }
+
+  /* ── Encart de confirmation ── */
+  #confirm-box {
+    display: none;
+    background: #fff8f0;
+    border: 2px solid #023199;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  #confirm-box.visible { display: block; }
+  #confirm-box h3 { margin: 0 0 8px; color: #023199; font-size: 18px; }
+  #confirm-box p { margin: 0 0 16px; font-size: 15px; color: #444; }
+  .confirm-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ── Résumé annonces ── */
+  #annonces-resume {
+    background: #fff;
+    border: 1px solid #E0D3C1;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  #annonces-resume.visible { display: block; }
+  #annonces-resume h3 { margin: 0 0 10px; font-size: 16px; color: #023199; }
+  #annonces-resume ul { margin: 0; padding-left: 20px; }
+  #annonces-resume li { font-size: 14px; color: #444; margin-bottom: 4px; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #023199;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-size: 15px;
+    font-family: Palatino, Georgia, serif;
+    opacity: 0;
+    transition: transform .3s, opacity .3s;
+    z-index: 999;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* ── Log d'envoi ── */
+  #send-log {
+    background: #fff;
+    border: 1px solid #E0D3C1;
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #555;
+    display: none;
+    white-space: pre-wrap;
+    font-family: monospace;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  #send-log.visible { display: block; }
+
+  /* ── Semaine nav ── */
+  .week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    font-size: 15px;
+    color: #333;
+  }
+  .week-nav button {
+    background: none;
+    border: 1px solid #023199;
+    color: #023199;
+    border-radius: 16px;
+    padding: 4px 14px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .week-nav button:hover { background: #eef1fa; }
+  #week-label { font-weight: bold; }
+
+  /* ── Mode aperçu dans onglet / mode autonome ── */
+  body.standalone #app { max-width: 760px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>📧 Newsletter paroissiale</h1>
+  <p class="subtitle">Aperçu et envoi de la newsletter hebdomadaire · Liste Brevo #3</p>
+
+  <div id="status-bar" class="loading">⏳ Chargement des données…</div>
+
+  <!-- Navigation semaine -->
+  <div class="week-nav">
+    <button id="btn-prev">◀ Précédente</button>
+    <span id="week-label">—</span>
+    <button id="btn-next">Suivante ▶</button>
+  </div>
+
+  <!-- Résumé annonces -->
+  <div id="annonces-resume">
+    <h3>📢 Annonces incluses (<span id="ann-count">0</span>)</h3>
+    <ul id="ann-list"></ul>
+  </div>
+
+  <!-- Boutons principaux -->
+  <div class="actions">
+    <button class="btn btn-secondary" id="btn-refresh">🔄 Recharger</button>
+    <button class="btn btn-primary" id="btn-preview" disabled>👁 Aperçu complet</button>
+    <button class="btn btn-danger" id="btn-send-init" disabled>✉️ Préparer l'envoi…</button>
+  </div>
+
+  <!-- Boîte de confirmation avant envoi -->
+  <div id="confirm-box">
+    <h3>⚠️ Confirmer l'envoi</h3>
+    <p id="confirm-desc">La newsletter sera envoyée à tous les abonnés de la liste Brevo #3.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-danger" id="btn-confirm-send">✉️ Envoyer maintenant</button>
+      <button class="btn btn-secondary" id="btn-cancel-send">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Aperçu iframe -->
+  <div id="preview-wrap">
+    <div id="preview-label">Aperçu de l'email</div>
+    <iframe id="preview-frame" scrolling="no"></iframe>
+  </div>
+
+  <!-- Log -->
+  <div id="send-log"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════════════
+// ⚠️ Remplace par ta vraie clé Brevo (ne pas committer)
+const BREVO_API_KEY = window.BREVO_API_KEY || '';
+const BREVO_LIST_ID = 3;
+const SUPABASE_URL  = 'https://pmeaimfcwtykhqtueomd.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtZWFpbWZjd3R5a2hxdHVlb21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MzA4MzIsImV4cCI6MjA4MzMwNjgzMn0.X91Usnq8WtZYuY40UFIo7Xl8P1O46LKqe1GvJ7RIWYE';
+
+// Google Calendar (mêmes que calendrier_semaine.html)
+const GCAL_API_KEY     = 'AIzaSyBVYMq13-nSe1uqfME80hhEOUPrxs0JCDI';
+const CALENDAR_ID_MAIN = 'paroisse.saint.louis@gmail.com';
+const CALENDAR_ID_ORDO = 'kujuouu4u6q4bhctavj8pcs3ts@group.calendar.google.com';
+
+// ═══════════════════════════════════════════════════════════════════════
+// ÉTAT
+// ═══════════════════════════════════════════════════════════════════════
+let weekOffset = 1;      // 1 = semaine prochaine (par défaut)
+let semaineData = [];    // 7 jours [{dateFr, iso, dow, sousTitre, couleur, horaires, notes}]
+let annonces    = [];    // annonces avec dans_newsletter=true
+let emailHtml   = '';    // HTML de l'email généré
+
+// ═══════════════════════════════════════════════════════════════════════
+// UTILITAIRES
+// ═══════════════════════════════════════════════════════════════════════
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg, dur=3500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+function log(msg) {
+  const el = document.getElementById('send-log');
+  el.classList.add('visible');
+  el.textContent += '[' + new Date().toLocaleTimeString('fr-FR') + '] ' + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function setStatus(msg, type='') {
+  const el = document.getElementById('status-bar');
+  el.textContent = msg;
+  el.className = type;
+}
+
+// Lundi de la semaine contenant "date" (ISO)
+function lundiDeSemaine(date) {
+  const d = new Date(date);
+  const dow = d.getDay(); // 0=dim
+  const diff = (dow === 0) ? -6 : 1 - dow;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function isoDate(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function dateDebut() {
+  const now = new Date();
+  now.setDate(now.getDate() + weekOffset * 7);
+  return lundiDeSemaine(now);
+}
+
+const JOURS_FR = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MOIS_FR  = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+function dateFr(d) {
+  return JOURS_FR[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS_FR[d.getMonth()];
+}
+
+function weekLabel() {
+  const debut = dateDebut();
+  const fin   = new Date(debut); fin.setDate(fin.getDate() + 6);
+  return dateFr(debut) + ' – ' + dateFr(fin);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CHARGEMENT GOOGLE CALENDAR
+// ═══════════════════════════════════════════════════════════════════════
+let gapiReady = false;
+
+function initGapi() {
+  return new Promise(resolve => {
+    gapi.load('client', async () => {
+      await gapi.client.init({ apiKey: GCAL_API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
+      gapiReady = true;
+      resolve();
+    });
+  });
+}
+
+async function fetchGcalEvents(calId, timeMin, timeMax) {
+  if (!gapiReady) await initGapi();
+  try {
+    const r = await gapi.client.calendar.events.list({
+      calendarId: calId,
+      timeMin: timeMin,
+      timeMax: timeMax,
+      singleEvents: true,
+      orderBy: 'startTime',
+      maxResults: 300,
+    });
+    return r.result.items || [];
+  } catch(e) {
+    console.warn('[GCal]', calId, e);
+    return [];
+  }
+}
+
+// Heures en minutes depuis minuit
+function toMinutes(str) {
+  if (!str) return 0;
+  const m = str.match(/(\d+):(\d+)/);
+  return m ? parseInt(m[1])*60 + parseInt(m[2]) : 0;
+}
+
+function formatHeure(str) {
+  if (!str) return '';
+  const m = str.match(/T(\d+):(\d+)/);
+  return m ? m[1]+'h'+m[2].padStart(2,'0') : '';
+}
+
+function isMesse(summary) {
+  return /\bmesse\b/i.test(summary) || /\bgrand.?messe\b/i.test(summary) || /\bmissa\b/i.test(summary);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CHARGEMENT ORDO 1962 depuis ordo1962.com
+// ═══════════════════════════════════════════════════════════════════════
+async function fetchOrdo(isoFrom, isoTo) {
+  // Fallback : on retourne un objet vide si l'API est inaccessible
+  const result = {};
+  try {
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(isoFrom);
+      d.setDate(d.getDate() + i);
+      const iso = isoDate(d);
+      result[iso] = { fete: '', couleur: 'Blanc' };
+    }
+  } catch(e) {}
+  return result;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CHARGEMENT INTENTIONS (Supabase)
+// ═══════════════════════════════════════════════════════════════════════
+async function fetchIntentions(isoFrom, isoTo) {
+  try {
+    const url = SUPABASE_URL + '/rest/v1/intentions'
+      + '?select=*&date=gte.' + isoFrom + '&date=lte.' + isoTo
+      + '&order=date.asc,heure.asc';
+    const r = await fetch(url, {
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer '+SUPABASE_KEY }
+    });
+    if (!r.ok) return [];
+    return await r.json();
+  } catch(e) { return []; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CONSTRUCTION DE SEMAINEDATA
+// ═══════════════════════════════════════════════════════════════════════
+async function chargerSemaine() {
+  const lundi   = dateDebut();
+  const dimanche = new Date(lundi); dimanche.setDate(dimanche.getDate() + 6);
+  const isoMin  = isoDate(lundi);
+  const isoMax  = isoDate(dimanche);
+
+  document.getElementById('week-label').textContent = weekLabel();
+  setStatus('⏳ Chargement du calendrier…', 'loading');
+
+  // Initialiser les 7 jours
+  const jours = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(lundi); d.setDate(d.getDate() + i);
+    jours.push({
+      date:      d,
+      iso:       isoDate(d),
+      dateFr:    dateFr(d),
+      dow:       d.getDay(),
+      sousTitre: '',
+      couleur:   'Blanc',
+      horaires:  [],
+      notes:     [],
+    });
+  }
+
+  // Lancer les requêtes en parallèle
+  const tMin = lundi.toISOString();
+  const tMax = new Date(dimanche.getTime() + 86400000).toISOString();
+
+  const [evtsMain, evtsOrdo, intentions] = await Promise.all([
+    fetchGcalEvents(CALENDAR_ID_MAIN, tMin, tMax),
+    fetchGcalEvents(CALENDAR_ID_ORDO, tMin, tMax),
+    fetchIntentions(isoMin, isoMax),
+  ]);
+
+  // Mapper les événements Ordo → fête du jour
+  evtsOrdo.forEach(ev => {
+    const startDate = ev.start?.date || ev.start?.dateTime?.split('T')[0];
+    if (!startDate) return;
+    const jour = jours.find(j => j.iso === startDate);
+    if (!jour) return;
+    const desc = ev.description || '';
+    // Couleur liturgique dans la description
+    const coulMatch = desc.match(/Couleur\s*:\s*(\w+)/i);
+    if (coulMatch) jour.couleur = coulMatch[1];
+    // Fête du jour
+    if (ev.summary) jour.sousTitre = ev.summary;
+  });
+
+  // Regrouper les intentions par date+heure
+  const intentMap = {};
+  intentions.forEach(int => {
+    const key = int.date + 'T' + (int.heure||'00:00');
+    if (!intentMap[key]) intentMap[key] = [];
+    intentMap[key].push(int.nom || int.intention || '');
+  });
+
+  // Mapper les événements principaux → horaires
+  evtsMain.forEach(ev => {
+    const startDt = ev.start?.dateTime;
+    const startD  = ev.start?.date;
+    if (!startDt && !startD) return;
+    const isoJ = startDt ? startDt.split('T')[0] : startD;
+    const jour  = jours.find(j => j.iso === isoJ);
+    if (!jour) return;
+
+    if (startD && !startDt) {
+      // Événement toute la journée → note
+      jour.notes.push(ev.summary || '');
+      return;
+    }
+
+    const heure     = formatHeure(startDt);
+    const heureEnd  = ev.end?.dateTime ? formatHeure(ev.end.dateTime) : '';
+    const bold      = isMesse(ev.summary || '');
+    let   label     = ev.summary || '';
+
+    // Ajouter l'intention si présente
+    const key = startDt.substring(0,16); // "2026-11-10T18:30"
+    const ints = intentMap[key];
+    if (ints && ints.length && bold) {
+      label += ' (' + ints.join(', ') + ')';
+    }
+
+    // Plage horaire (ex: "8h–9h")
+    const heureAffiche = (heureEnd && !bold) ? heure+'–'+heureEnd : heure;
+
+    jour.horaires.push({ heure: heureAffiche, label, labelHtml: escHtml(label), bold });
+  });
+
+  // Trier par heure
+  jours.forEach(j => {
+    j.horaires.sort((a,b) => toMinutes(a.heure) - toMinutes(b.heure));
+  });
+
+  semaineData = jours;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CHARGEMENT ANNONCES
+// ═══════════════════════════════════════════════════════════════════════
+async function chargerAnnonces() {
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const url = SUPABASE_URL + '/rest/v1/annonces'
+      + '?select=*'
+      + '&actif=eq.true'
+      + '&dans_newsletter=eq.true'
+      + '&or=(date_debut.is.null,date_debut.lte.' + today + ')'
+      + '&or=(date_fin.is.null,date_fin.gte.' + today + ')'
+      + '&order=prioritaire.desc,ordre.asc,created_at.desc';
+    const r = await fetch(url, {
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer '+SUPABASE_KEY }
+    });
+    if (!r.ok) return [];
+    return await r.json();
+  } catch(e) {
+    console.error('[Annonces]', e);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// GÉNÉRATION HTML EMAIL (format template Brevo)
+// ═══════════════════════════════════════════════════════════════════════
+function genCalendrierHTML() {
+  const C_BLEU      = '#023199';
+  const C_BEIGE     = '#F7F2EA';
+  const C_BEIGE_DIM = '#EADFCC';
+  const C_TEXTE     = '#333333';
+  const C_GRIS      = '#6D6D6C';
+  const C_NOTE      = '#8b2020';
+  const PASTILLE    = {
+    Blanc:  ['○', '#9A8F7F'],
+    Rouge:  ['●', '#B3261E'],
+    Vert:   ['●', '#2E7D32'],
+    Violet: ['●', '#6A1B9A'],
+    Rose:   ['●', '#D46A92'],
+    Noir:   ['●', '#222222'],
+  };
+
+  let html = `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Palatino,Georgia,serif;max-width:600px;font-size:16px;line-height:1.4;">`;
+
+  semaineData.forEach(jour => {
+    const dimanche = jour.dow === 0;
+    const fond = dimanche ? C_BEIGE_DIM : C_BEIGE;
+    const fete = jour.sousTitre || '';
+
+    // Bandeau du jour
+    html += `<tr><td colspan="2" bgcolor="${fond}" style="background-color:${fond};border-left:4px solid ${C_BLEU};padding:9px 12px;">`;
+    html += `<span style="font-weight:bold;color:${C_BLEU};font-size:17px;">${escHtml(jour.dateFr)}</span>`;
+    if (fete) {
+      const p = PASTILLE[jour.couleur];
+      const pastille = p ? `<span style="color:${p[1]};font-size:14px;" title="Couleur liturgique : ${escHtml(jour.couleur.toLowerCase())}">${p[0]}</span> ` : '';
+      html += `<br>${pastille}<span style="color:${C_GRIS};font-size:14px;font-style:italic;">${escHtml(fete)}</span>`;
+    }
+    html += `</td></tr>`;
+    html += `<tr><td colspan="2" style="font-size:1px;line-height:6px;">&nbsp;</td></tr>`;
+
+    // Notes
+    (jour.notes || []).forEach(note => {
+      const nHtml = typeof note === 'object' ? (note.html || '') : escHtml(note || '');
+      html += `<tr><td colspan="2" style="padding:3px 0 3px 16px;color:${C_NOTE};font-size:16px;font-style:italic;">${nHtml}</td></tr>`;
+    });
+
+    // Horaires
+    (jour.horaires || []).forEach(h => {
+      const labelContent = h.labelHtml || escHtml(h.label || '');
+      let styleHeure, styleLabel;
+      if (h.bold) {
+        styleHeure = `color:${C_BLEU};font-weight:bold;`;
+        styleLabel = `color:${C_BLEU};font-weight:bold;`;
+      } else if (!h.heure) {
+        styleHeure = `color:${C_GRIS};`;
+        styleLabel = `color:${C_GRIS};font-style:italic;`;
+      } else {
+        styleHeure = `color:${C_GRIS};`;
+        styleLabel = `color:${C_TEXTE};`;
+      }
+      html += `<tr>`;
+      html += `<td width="84" valign="top" style="width:84px;padding:3px 0 3px 16px;font-size:15px;${styleHeure}white-space:nowrap;">${escHtml(h.heure||'')}</td>`;
+      html += `<td valign="top" style="padding:3px 0;font-size:16px;${styleLabel}">${labelContent}</td>`;
+      html += `</tr>`;
+    });
+
+    html += `<tr><td colspan="2" style="font-size:1px;line-height:18px;">&nbsp;</td></tr>`;
+  });
+
+  html += `</table>`;
+  return html;
+}
+
+function genAnnonceHTML(a) {
+  const imgPart = a.image_url
+    ? `<th width="25%" style="font-weight:normal" valign="top">
+        <table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
+          <td valign="top" style="padding-right:15px;padding-left:15px">
+            <table width="100%" cellspacing="0" cellpadding="0" border="0" role="presentation"><tbody><tr>
+              <td align="center" style="font-size:0px;line-height:0px;border-radius:8px;">
+                <img src="${escHtml(a.image_url)}" width="120" border="0" style="display:block;width:100%;border-radius:8px;" alt="${escHtml(a.titre)}"/>
+              </td>
+            </tr></tbody></table>
+          </td>
+        </tr></tbody></table>
+       </th>`
+    : '';
+
+  const corps_width = a.image_url ? '75%' : '100%';
+
+  const eventHtml = a.event_date
+    ? `<div style="font-size:14px;color:#023199;margin-bottom:4px;">📅 ${new Date(a.event_date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}${a.event_heure?' à '+a.event_heure.slice(0,5):''}</div>`
+    : '';
+
+  const descHtml = a.description
+    ? `<p style="margin:0 0 10px;font-size:16px;line-height:1.6;color:#444;">${escHtml(a.description).replace(/\n/g,'<br>')}</p>`
+    : '';
+
+  const lienHtml = a.lien
+    ? `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;"><tbody><tr>
+        <td bgcolor="#023199" style="border-radius:8px;padding:10px 18px;">
+          <a href="${escHtml(a.lien)}" target="_blank" style="color:#ffffff;text-decoration:none;font-size:14px;font-weight:bold;font-family:Palatino,Georgia,serif;">${escHtml(a.lien_label||'En savoir plus')} →</a>
+        </td>
+       </tr></tbody></table>`
+    : '';
+
+  const prioBadge = a.prioritaire
+    ? `<div style="display:inline-block;font-size:11px;font-weight:bold;letter-spacing:.1em;text-transform:uppercase;color:#023199;border:1px solid #023199;border-radius:2px;padding:2px 7px;margin-bottom:6px;">À la une</div>`
+    : '';
+
+  return `<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%;background:#fff;border-top:3px solid #E0D3C1;margin-bottom:0">
+    <tbody><tr>
+      ${imgPart}
+      <th width="${corps_width}" style="font-weight:normal" valign="top">
+        <table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
+          <td valign="top" style="padding:15px 15px 15px ${a.image_url?'0':'15px'}">
+            ${prioBadge}
+            <h3 style="margin:0 0 6px;font-family:Palatino,Georgia,serif;font-size:18px;color:#302e2f;">${escHtml(a.titre)}</h3>
+            ${eventHtml}
+            ${descHtml}
+            ${lienHtml}
+          </td>
+        </tr></tbody></table>
+      </th>
+    </tr></tbody></table>`;
+}
+
+function genEmailHTML() {
+  const calendrierHtml = genCalendrierHTML();
+
+  // Sections annonces
+  let annoncesSection = '';
+  if (annonces.length > 0) {
+    const annonceItems = annonces.map(genAnnonceHTML).join(
+      `<table cellspacing="0" cellpadding="0" border="0" width="100%" style="table-layout:fixed;width:100%"><tbody><tr><td style="border-top:1px solid #E0D3C1;"></td></tr></tbody></table>`
+    );
+    annoncesSection = `
+      <!-- SECTION INFORMATIONS -->
+      <table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
+        <td style="background-color:#FFFFFF;padding-top:20px;padding-bottom:10px;">
+          <table width="100%" cellspacing="0" cellpadding="0" border="0" role="presentation"><tbody><tr>
+            <th width="100%" style="font-weight:normal" valign="top">
+              <table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
+                <td valign="top" style="padding-right:15px;padding-left:15px">
+                  <table width="100%" cellspacing="0" cellpadding="0" border="0" role="presentation"><tbody><tr>
+                    <td align="left" style="color:#333333;font-family:Palatino;font-size:16px;line-height:1.6;word-break:break-word;text-align:left;padding-top:15px;valign:top">
+                      <h1 style="margin:0;color:#302e2f;font-family:Palatino;font-size:28px;text-align:center;">INFORMATIONS</h1>
+                    </td>
+                  </tr></tbody></table>
+                </td>
+              </tr></tbody></table>
+            </th>
+          </tr></tbody></table>
+        </td>
+      </tr></tbody></table>
+      <!-- Annonces -->
+      <table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
+        <td style="background-color:#FFFFFF;padding-top:0;padding-bottom:20px;">
+          ${annonceItems}
+        </td>
+      </tr></tbody></table>`;
+  }
+
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Annonces paroissiales</title>
+<style type="text/css">
+body { background-color:#FBFBF9; margin:0; padding:0; font-family:Palatino,Georgia,serif; }
+table td { border-collapse:collapse; }
+img { outline:none; text-decoration:none; border:none; }
+a { color:#023199; text-decoration:none; }
+p, h1, h2, h3 { margin:0; }
+</style>
+</head>
+<body bgcolor="#FBFBF9" style="background-color:#FBFBF9;">
+<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="background-color:#FBFBF9;width:100%"><tbody><tr><td>
+
+<!-- Wrapper 600px -->
+<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="600" align="center" style="table-layout:fixed;width:600px;"><tbody><tr><td style="background-color:#FBFBF9;">
+
+<!-- Lien miroir -->
+<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
+  <td style="color:#333333;font-family:Palatino;font-size:16px;line-height:1.6;text-align:center;padding:20px 30px;">
+    <p style="margin:0"><a href="{{ mirror }}" style="color:#023199;"><span style="font-size:12px;"><u>Afficher dans le navigateur</u></span></a></p>
+  </td>
+</tr></tbody></table>
+
+<!-- Header blanc : social + logo + bouton -->
+<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%;background:#fff;"><tbody>
+<tr>
+  <td style="padding-top:12px;padding-bottom:3px;text-align:center;">
+    <p style="margin:0;text-align:center;"><a href="https://chat.whatsapp.com/BWfpf5rkl5WJX1rIuRb1kq" style="font-size:13px;color:#555555;text-decoration:none;">Suivez la paroisse sur Instagram et rejoignez la communauté <strong style="color:#023199;">WhatsApp</strong></a></p>
+  </td>
+</tr>
+<tr>
+  <td align="center" style="padding:15px 0;">
+    <a href="https://www.instagram.com/paroissesaintlouis/" target="_blank" style="color:#023199;"><img src="https://creative-assets.mailinblue.com/editor/social-icons/rounded_colored/instagram_32px.png" width="32" border="0" style="display:inline-block;"/></a>
+    &nbsp;&nbsp;
+    <a href="https://chat.whatsapp.com/BWfpf5rkl5WJX1rIuRb1kq" target="_blank" style="color:#023199;"><img src="https://creative-assets.mailinblue.com/editor/social-icons/rounded_colored/whatsapp_32px.png" width="32" border="0" style="display:inline-block;"/></a>
+  </td>
+</tr>
+<tr>
+  <td align="center" style="padding-bottom:15px;">
+    <a href="https://www.croix-glorieuse.org/" target="_blank"><img src="https://img.mailinblue.com/4217578/images/content_library/original/65d519ffb78af54a7e910476.png" width="208" border="0" style="display:block;margin:0 auto;"/></a>
+  </td>
+</tr>
+<tr>
+  <td align="center" style="padding-bottom:15px;">
+    <a href="https://www.croix-glorieuse.org/horaires" target="_blank" style="font-style:normal;font-weight:bold;line-height:1.15;text-decoration:none;display:inline-block;background-color:#023199;border-radius:20px;padding:12px 20px;font-size:15px;font-family:Palatino,Georgia,serif;color:#fff;">Voir le calendrier complet</a>
+  </td>
+</tr>
+<tr>
+  <td style="padding:0 15px;"><table width="100%" height="1" cellspacing="0" cellpadding="0" border="0" style="border-top:1px solid #E0D3C1;font-size:1px;line-height:1px;"><tbody><tr><td height="0"></td></tr></tbody></table></td>
+</tr>
+</tbody></table>
+
+${annoncesSection}
+
+<!-- SECTION CALENDRIER -->
+<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
+  <td style="background-color:#FFFFFF;padding-top:20px;padding-bottom:10px;">
+    <table width="100%" cellspacing="0" cellpadding="0" border="0"><tbody><tr>
+      <td align="left" style="text-align:left;padding:0 15px 15px;">
+        <h1 style="margin:0;color:#302e2f;font-family:Palatino;font-size:28px;text-align:center;">CALENDRIER</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:0 15px 20px;">
+        ${calendrierHtml}
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding-bottom:20px;">
+        <a href="https://www.instagram.com/paroissesaintlouis/" target="_blank"><img src="https://creative-assets.mailinblue.com/editor/social-icons/rounded_colored/instagram_32px.png" width="32" border="0" style="display:inline-block;"/></a>
+        &nbsp;&nbsp;
+        <a href="https://www.croix-glorieuse.org" target="_blank"><img src="https://creative-assets.mailinblue.com/editor/social-icons/rounded_colored/website_32px.png" width="32" border="0" style="display:inline-block;"/></a>
+        &nbsp;&nbsp;
+        <a href="https://chat.whatsapp.com/BWfpf5rkl5WJX1rIuRb1kq" target="_blank"><img src="https://creative-assets.mailinblue.com/editor/social-icons/rounded_colored/whatsapp_32px.png" width="32" border="0" style="display:inline-block;"/></a>
+      </td>
+    </tr>
+    </tbody></table>
+  </td>
+</tr></tbody></table>
+
+<!-- Footer -->
+<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%;background:#fbfbf9;"><tbody><tr>
+  <td style="padding:25px 20px;text-align:center;">
+    <strong style="font-family:Palatino;font-size:14px;color:#100D0D;">Paroisse personnelle La Croix glorieuse à Strasbourg</strong><br>
+    <span style="font-family:Palatino;font-size:14px;color:#100D0D;">&nbsp;</span><br>
+    <strong style="font-family:Palatino;font-size:14px;color:#100D0D;">2 quai Charles Frey 67000 Strasbourg</strong>
+  </td>
+</tr></tbody></table>
+<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%;background:#FBFBF9;"><tbody><tr>
+  <td style="padding:15px;text-align:center;">
+    <a href="{{ unsubscribe }}" target="_blank" style="font-family:Palatino;font-size:14px;color:#023199;text-decoration:none;">Se désinscrire</a>
+  </td>
+</tr></tbody></table>
+
+</td></tr></tbody></table>
+</td></tr></tbody></table>
+</body></html>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MISE À JOUR DE L'INTERFACE
+// ═══════════════════════════════════════════════════════════════════════
+function updateAnnoncesResume() {
+  const wrap = document.getElementById('annonces-resume');
+  const list = document.getElementById('ann-list');
+  document.getElementById('ann-count').textContent = annonces.length;
+  list.innerHTML = annonces.length
+    ? annonces.map(a => `<li>${escHtml(a.titre)}</li>`).join('')
+    : '<li><em>Aucune annonce marquée pour la newsletter</em></li>';
+  wrap.classList.toggle('visible', true);
+}
+
+function updatePreview() {
+  emailHtml = genEmailHTML();
+  const frame = document.getElementById('preview-frame');
+  const wrap  = document.getElementById('preview-wrap');
+
+  // Écrire dans l'iframe
+  const doc = frame.contentDocument || frame.contentWindow.document;
+  doc.open();
+  doc.write(emailHtml);
+  doc.close();
+  wrap.classList.add('visible');
+
+  // Ajuster la hauteur
+  setTimeout(() => {
+    frame.style.height = (doc.documentElement.scrollHeight + 20) + 'px';
+  }, 300);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ENVOI BREVO
+// ═══════════════════════════════════════════════════════════════════════
+function getSubject() {
+  const lundi   = dateDebut();
+  const dimanche = new Date(lundi); dimanche.setDate(dimanche.getDate() + 6);
+  const opts = { day:'numeric', month:'long' };
+  return `Annonces paroissiales — semaine du ${lundi.toLocaleDateString('fr-FR', opts)} au ${dimanche.toLocaleDateString('fr-FR', opts)}`;
+}
+
+async function envoyerNewsletter() {
+  const subject = getSubject();
+  log('Préparation de la campagne…');
+  log('Objet : ' + subject);
+
+  const payload = {
+    name: 'Newsletter ' + new Date().toLocaleDateString('fr-FR'),
+    subject: subject,
+    sender: { name: 'Paroisse La Croix Glorieuse', email: 'contact@croix-glorieuse.org' },
+    type: 'classic',
+    htmlContent: emailHtml,
+    recipients: { listIds: [BREVO_LIST_ID] },
+    scheduledAt: null,
+  };
+
+  try {
+    // 1. Créer la campagne
+    log('Création de la campagne Brevo…');
+    const r1 = await fetch('https://api.brevo.com/v3/emailCampaigns', {
+      method: 'POST',
+      headers: {
+        'api-key': BREVO_API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!r1.ok) {
+      const err = await r1.text();
+      throw new Error(`Création échouée (${r1.status}) : ${err}`);
+    }
+    const data1 = await r1.json();
+    const campaignId = data1.id;
+    log(`✅ Campagne créée (id=${campaignId})`);
+
+    // 2. Envoyer immédiatement
+    log('Envoi immédiat…');
+    const r2 = await fetch(`https://api.brevo.com/v3/emailCampaigns/${campaignId}/sendNow`, {
+      method: 'POST',
+      headers: {
+        'api-key': BREVO_API_KEY,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!r2.ok) {
+      const err = await r2.text();
+      throw new Error(`Envoi échoué (${r2.status}) : ${err}`);
+    }
+
+    log('✅ Newsletter envoyée avec succès à la liste #' + BREVO_LIST_ID + ' !');
+    setStatus('✅ Newsletter envoyée ! ' + new Date().toLocaleTimeString('fr-FR'), 'ok');
+    toast('✅ Newsletter envoyée !', 5000);
+
+    // Désactiver les boutons d'envoi
+    document.getElementById('btn-send-init').disabled = true;
+    document.getElementById('confirm-box').classList.remove('visible');
+
+  } catch(e) {
+    log('❌ Erreur : ' + e.message);
+    setStatus('❌ Erreur lors de l\'envoi : ' + e.message, 'err');
+    toast('❌ Erreur : ' + e.message, 7000);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CHARGEMENT COMPLET
+// ═══════════════════════════════════════════════════════════════════════
+async function chargerTout() {
+  document.getElementById('btn-preview').disabled  = true;
+  document.getElementById('btn-send-init').disabled = true;
+  document.getElementById('preview-wrap').classList.remove('visible');
+  document.getElementById('confirm-box').classList.remove('visible');
+  document.getElementById('send-log').classList.remove('visible');
+  document.getElementById('send-log').textContent = '';
+
+  try {
+    setStatus('⏳ Chargement du calendrier et des annonces…', 'loading');
+    await Promise.all([chargerSemaine(), chargerAnnonces().then(r => { annonces = r; })]);
+
+    updateAnnoncesResume();
+    setStatus(
+      `✅ Semaine du ${weekLabel()} chargée — ${semaineData.length} jours, ${annonces.length} annonce(s)`,
+      'ok'
+    );
+    document.getElementById('btn-preview').disabled  = false;
+    document.getElementById('btn-send-init').disabled = false;
+
+    // Générer l'aperçu automatiquement
+    updatePreview();
+
+  } catch(e) {
+    setStatus('❌ Erreur : ' + e.message, 'err');
+    console.error(e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ÉVÉNEMENTS
+// ═══════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btn-refresh').addEventListener('click', chargerTout);
+
+  document.getElementById('btn-prev').addEventListener('click', () => {
+    weekOffset--;
+    chargerTout();
+  });
+  document.getElementById('btn-next').addEventListener('click', () => {
+    weekOffset++;
+    chargerTout();
+  });
+
+  document.getElementById('btn-preview').addEventListener('click', () => {
+    updatePreview();
+    document.getElementById('preview-wrap').scrollIntoView({ behavior:'smooth' });
+  });
+
+  document.getElementById('btn-send-init').addEventListener('click', () => {
+    // Mettre à jour la description de confirmation
+    document.getElementById('confirm-desc').textContent =
+      `La newsletter "${getSubject()}" sera envoyée à tous les abonnés de la liste Brevo #${BREVO_LIST_ID}. Cette action est irréversible.`;
+    document.getElementById('confirm-box').classList.add('visible');
+    document.getElementById('confirm-box').scrollIntoView({ behavior:'smooth' });
+  });
+
+  document.getElementById('btn-confirm-send').addEventListener('click', () => {
+    document.getElementById('btn-confirm-send').disabled = true;
+    document.getElementById('btn-cancel-send').disabled  = true;
+    envoyerNewsletter();
+  });
+
+  document.getElementById('btn-cancel-send').addEventListener('click', () => {
+    document.getElementById('confirm-box').classList.remove('visible');
+  });
+
+  // Chargement initial — semaine suivante
+  chargerTout();
+});
+</script>
+</body>
+</html>
