@@ -220,6 +220,9 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
 
   <div id="status-bar" class="loading">⏳ Chargement des données…</div>
 
+  <!-- Source calendrier -->
+  <div id="calendrier-source" style="display:none;font-size:13px;padding:8px 12px;border-radius:6px;margin-bottom:8px;"></div>
+
   <!-- Navigation semaine -->
   <div class="week-nav">
     <button id="btn-prev">◀ Précédente</button>
@@ -531,6 +534,13 @@ async function chargerAnnonces() {
 // GÉNÉRATION HTML EMAIL (format template Brevo)
 // ═══════════════════════════════════════════════════════════════════════
 function genCalendrierHTML() {
+  // Priorité : HTML généré par calendrier_semaine.html (via localStorage)
+  try {
+    const saved = localStorage.getItem('newsletter_calendrier_html');
+    if (saved) return saved;
+  } catch(e) {}
+
+  // Fallback : reconstruire depuis semaineData
   const C_BLEU      = '#023199';
   const C_BEIGE     = '#F7F2EA';
   const C_BEIGE_DIM = '#EADFCC';
@@ -908,12 +918,48 @@ async function chargerTout() {
   document.getElementById('send-log').textContent = '';
 
   try {
-    setStatus('⏳ Chargement du calendrier et des annonces…', 'loading');
-    await Promise.all([chargerSemaine(), chargerAnnonces().then(r => { annonces = r; })]);
+    setStatus('⏳ Chargement des annonces…', 'loading');
+
+    // Vérifier si le calendrier vient de calendrier_semaine.html (localStorage)
+    const srcDiv = document.getElementById('calendrier-source');
+    let calSource = '';
+    try {
+      const savedHtml  = localStorage.getItem('newsletter_calendrier_html');
+      const savedLundi = localStorage.getItem('newsletter_calendrier_lundi');
+      if (savedHtml && savedLundi) {
+        // Calculer le lundi de la semaine affichée
+        const lundiAttendu = isoDate(dateDebut());
+        if (savedLundi === lundiAttendu) {
+          calSource = 'calendrier_semaine';
+          srcDiv.style.display = '';
+          srcDiv.style.background = '#e8f5e9';
+          srcDiv.style.color = '#1b5e20';
+          srcDiv.style.border = '1px solid #a5d6a7';
+          srcDiv.textContent = '✅ Calendrier importé depuis calendrier_semaine.html';
+        } else {
+          srcDiv.style.display = '';
+          srcDiv.style.background = '#fff3e0';
+          srcDiv.style.color = '#e65100';
+          srcDiv.style.border = '1px solid #ffcc80';
+          srcDiv.textContent = `⚠️ Calendrier en mémoire (semaine du ${savedLundi}) ne correspond pas à la semaine affichée — rechargé depuis Google Calendar`;
+        }
+      } else {
+        srcDiv.style.display = '';
+        srcDiv.style.background = '#e3f2fd';
+        srcDiv.style.color = '#0d47a1';
+        srcDiv.style.border = '1px solid #90caf9';
+        srcDiv.textContent = '📅 Calendrier chargé depuis Google Calendar — allez dans calendrier_semaine.html pour le valider et l\'importer ici';
+      }
+    } catch(e) {}
+
+    await Promise.all([
+      calSource === 'calendrier_semaine' ? Promise.resolve() : chargerSemaine(),
+      chargerAnnonces().then(r => { annonces = r; }),
+    ]);
 
     updateAnnoncesResume();
     setStatus(
-      `✅ Semaine du ${weekLabel()} chargée — ${semaineData.length} jours, ${annonces.length} annonce(s)`,
+      `✅ Semaine du ${weekLabel()} — ${annonces.length} annonce(s)`,
       'ok'
     );
     document.getElementById('btn-preview').disabled  = false;

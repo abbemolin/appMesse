@@ -1225,9 +1225,16 @@
 
         html += '</table>';
 
+        // Sauvegarder pour newsletter.html (clé + date ISO de lundi)
+        try {
+            const lundiIso = semaineData[0]?.iso || '';
+            localStorage.setItem('newsletter_calendrier_html',  html);
+            localStorage.setItem('newsletter_calendrier_lundi', lundiIso);
+        } catch(e) { /* localStorage indisponible */ }
+
         try {
             await navigator.clipboard.writeText(html);
-            showToast('✅ HTML copié dans le presse-papier');
+            showToast('✅ HTML copié — disponible dans newsletter.html');
         } catch(e) {
             // Fallback : textarea temporaire
             const ta = document.createElement('textarea');
@@ -1238,7 +1245,7 @@
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            showToast('✅ HTML copié dans le presse-papier');
+            showToast('✅ HTML copié — disponible dans newsletter.html');
         }
     }
 
