@@ -139,6 +139,19 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
   #confirm-box p { margin: 0 0 16px; font-size: 15px; color: #444; }
   .confirm-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
+  /* ── Encart annulation envoi programmé ── */
+  #cancel-box {
+    display: none;
+    background: #f0fff4;
+    border: 2px solid #2e7d32;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  #cancel-box.visible { display: block; }
+  #cancel-box h3 { margin: 0 0 8px; color: #2e7d32; font-size: 18px; }
+  #cancel-box p { margin: 0 0 16px; font-size: 15px; color: #444; }
+
   /* ── Résumé annonces ── */
   #annonces-resume {
     background: #fff;
@@ -240,16 +253,25 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
   <div class="actions">
     <button class="btn btn-secondary" id="btn-refresh">🔄 Recharger</button>
     <button class="btn btn-primary" id="btn-preview" disabled>👁 Aperçu complet</button>
-    <button class="btn btn-danger" id="btn-send-init" disabled>✉️ Préparer l'envoi…</button>
+    <button class="btn btn-danger" id="btn-send-init" disabled>📅 Programmer l'envoi…</button>
   </div>
 
   <!-- Boîte de confirmation avant envoi -->
   <div id="confirm-box">
-    <h3>⚠️ Confirmer l'envoi</h3>
-    <p id="confirm-desc">La newsletter sera envoyée à tous les abonnés de la liste Brevo #3.</p>
+    <h3>📅 Confirmer la programmation</h3>
+    <p id="confirm-desc">La newsletter sera envoyée automatiquement le <strong id="confirm-date">dimanche à 12h00</strong> à tous les abonnés de la liste Brevo #3.</p>
     <div class="confirm-actions">
-      <button class="btn btn-danger" id="btn-confirm-send">✉️ Envoyer maintenant</button>
+      <button class="btn btn-danger" id="btn-confirm-send">📅 Programmer l'envoi</button>
       <button class="btn btn-secondary" id="btn-cancel-send">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Boîte d'annulation (après programmation réussie) -->
+  <div id="cancel-box">
+    <h3>✅ Envoi programmé</h3>
+    <p id="cancel-desc">La newsletter sera envoyée le <strong id="cancel-date">—</strong>.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" id="btn-cancel-scheduled">🗑 Annuler l'envoi programmé</button>
     </div>
   </div>
 
@@ -836,10 +858,32 @@ function getSubject() {
   return `Annonces paroissiales — semaine du ${lundi.toLocaleDateString('fr-FR', opts)} au ${dimanche.toLocaleDateString('fr-FR', opts)}`;
 }
 
+// Calcule le prochain dimanche à 12h00 UTC+1 (heure de Paris)
+function prochainDimanche12h() {
+  const now = new Date();
+  const dow = now.getDay(); // 0=dim, 1=lun, ...
+  const joursAvantDim = dow === 0 ? 7 : 7 - dow; // si aujourd'hui dimanche → dimanche prochain
+  const dim = new Date(now);
+  dim.setDate(now.getDate() + joursAvantDim);
+  dim.setHours(11, 0, 0, 0); // 12h Paris = 11h UTC (hiver) ou 10h UTC (été)
+  // Ajustement DST : on vérifie si l'Europe/Paris est en heure d'été
+  const tzOffset = new Date(dim.getFullYear(), dim.getMonth(), dim.getDate(), 12, 0, 0)
+    .toLocaleString('en-US', { timeZone: 'Europe/Paris', hour12: false, hour: '2-digit' });
+  // Si Paris = UTC+2 (été), 12h Paris = 10h UTC ; si UTC+1 (hiver), 12h Paris = 11h UTC
+  const parisHourUTC = parseInt(tzOffset) === 12 ? (dim.getTimezoneOffset() === -120 ? 10 : 11) : 11;
+  dim.setUTCHours(parisHourUTC, 0, 0, 0);
+  return dim;
+}
+
+let currentCampaignId = null; // pour permettre l'annulation
+
 async function envoyerNewsletter() {
   const subject = getSubject();
+  const sendAt  = prochainDimanche12h();
+
   log('Préparation de la campagne…');
   log('Objet : ' + subject);
+  log('Envoi prévu : ' + sendAt.toLocaleString('fr-FR', { timeZone: 'Europe/Paris', weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' }));
 
   const payload = {
     name: 'Newsletter ' + new Date().toLocaleDateString('fr-FR'),
@@ -848,11 +892,11 @@ async function envoyerNewsletter() {
     type: 'classic',
     htmlContent: emailHtml,
     recipients: { listIds: [BREVO_LIST_ID] },
-    scheduledAt: null,
+    scheduledAt: sendAt.toISOString(),
   };
 
   try {
-    // 1. Créer la campagne
+    // Créer la campagne programmée
     log('Création de la campagne Brevo…');
     const r1 = await fetch('https://api.brevo.com/v3/emailCampaigns', {
       method: 'POST',
@@ -869,36 +913,57 @@ async function envoyerNewsletter() {
       throw new Error(`Création échouée (${r1.status}) : ${err}`);
     }
     const data1 = await r1.json();
-    const campaignId = data1.id;
-    log(`✅ Campagne créée (id=${campaignId})`);
+    currentCampaignId = data1.id;
+    log(`✅ Campagne créée (id=${currentCampaignId})`);
 
-    // 2. Envoyer immédiatement
-    log('Envoi immédiat…');
-    const r2 = await fetch(`https://api.brevo.com/v3/emailCampaigns/${campaignId}/sendNow`, {
-      method: 'POST',
-      headers: {
-        'api-key': BREVO_API_KEY,
-        'Content-Type': 'application/json',
-      },
+    const dateLabel = sendAt.toLocaleString('fr-FR', {
+      timeZone: 'Europe/Paris',
+      weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
     });
+    log(`📅 Envoi programmé pour le ${dateLabel}`);
+    setStatus(`📅 Envoi programmé — ${dateLabel}`, 'ok');
+    toast(`📅 Envoi programmé pour le ${dateLabel}`, 6000);
 
-    if (!r2.ok) {
-      const err = await r2.text();
-      throw new Error(`Envoi échoué (${r2.status}) : ${err}`);
-    }
-
-    log('✅ Newsletter envoyée avec succès à la liste #' + BREVO_LIST_ID + ' !');
-    setStatus('✅ Newsletter envoyée ! ' + new Date().toLocaleTimeString('fr-FR'), 'ok');
-    toast('✅ Newsletter envoyée !', 5000);
-
-    // Désactiver les boutons d'envoi
-    document.getElementById('btn-send-init').disabled = true;
+    // Masquer confirm, montrer le panneau d'annulation
     document.getElementById('confirm-box').classList.remove('visible');
+    document.getElementById('btn-send-init').disabled = true;
+    document.getElementById('cancel-date').textContent = dateLabel;
+    document.getElementById('cancel-box').classList.add('visible');
 
   } catch(e) {
     log('❌ Erreur : ' + e.message);
     setStatus('❌ Erreur lors de l\'envoi : ' + e.message, 'err');
     toast('❌ Erreur : ' + e.message, 7000);
+  }
+}
+
+async function annulerEnvoi() {
+  if (!currentCampaignId) return;
+  if (!confirm(`Annuler l'envoi de la campagne #${currentCampaignId} ?`)) return;
+
+  log(`Annulation de la campagne #${currentCampaignId}…`);
+  try {
+    const r = await fetch(`https://api.brevo.com/v3/emailCampaigns/${currentCampaignId}`, {
+      method: 'DELETE',
+      headers: { 'api-key': BREVO_API_KEY, 'Accept': 'application/json' },
+    });
+
+    if (!r.ok && r.status !== 204) {
+      const err = await r.text();
+      throw new Error(`Annulation échouée (${r.status}) : ${err}`);
+    }
+
+    log(`✅ Campagne #${currentCampaignId} annulée.`);
+    setStatus('✅ Envoi annulé.', 'ok');
+    toast('✅ Envoi annulé.', 4000);
+    currentCampaignId = null;
+
+    document.getElementById('cancel-box').classList.remove('visible');
+    document.getElementById('btn-send-init').disabled = false;
+  } catch(e) {
+    log('❌ Erreur : ' + e.message);
+    setStatus('❌ ' + e.message, 'err');
+    toast('❌ ' + e.message, 6000);
   }
 }
 
@@ -910,6 +975,7 @@ async function chargerTout() {
   document.getElementById('btn-send-init').disabled = true;
   document.getElementById('preview-wrap').classList.remove('visible');
   document.getElementById('confirm-box').classList.remove('visible');
+  document.getElementById('cancel-box').classList.remove('visible');
   document.getElementById('send-log').classList.remove('visible');
   document.getElementById('send-log').textContent = '';
 
@@ -991,9 +1057,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-send-init').addEventListener('click', () => {
-    // Mettre à jour la description de confirmation
-    document.getElementById('confirm-desc').textContent =
-      `La newsletter "${getSubject()}" sera envoyée à tous les abonnés de la liste Brevo #${BREVO_LIST_ID}. Cette action est irréversible.`;
+    const dim = prochainDimanche12h();
+    const dateLabel = dim.toLocaleString('fr-FR', {
+      timeZone: 'Europe/Paris', weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'
+    });
+    document.getElementById('confirm-date').textContent = dateLabel;
     document.getElementById('confirm-box').classList.add('visible');
     document.getElementById('confirm-box').scrollIntoView({ behavior:'smooth' });
   });
@@ -1001,11 +1069,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-confirm-send').addEventListener('click', () => {
     document.getElementById('btn-confirm-send').disabled = true;
     document.getElementById('btn-cancel-send').disabled  = true;
-    envoyerNewsletter();
+    envoyerNewsletter().finally(() => {
+      document.getElementById('btn-confirm-send').disabled = false;
+      document.getElementById('btn-cancel-send').disabled  = false;
+    });
   });
 
   document.getElementById('btn-cancel-send').addEventListener('click', () => {
     document.getElementById('confirm-box').classList.remove('visible');
+  });
+
+  document.getElementById('btn-cancel-scheduled').addEventListener('click', () => {
+    annulerEnvoi();
   });
 
   // Chargement initial — semaine suivante
