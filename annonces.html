@@ -320,6 +320,19 @@
     }
     .btn-annuler:hover { border-color: var(--gold); color: var(--gold); }
 
+    /* Bouton upload image */
+    .btn-upload-img {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 9px 14px; border: 1px solid var(--border);
+        border-radius: 3px; background: var(--vellum-light);
+        color: var(--ink-muted); cursor: pointer; white-space: nowrap;
+        font-family: 'Cinzel', serif; font-size: .52rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        transition: all .15s; flex-shrink: 0;
+    }
+    .btn-upload-img:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-upload-img.loading { opacity: .6; pointer-events: none; }
+
     /* Preview image URL */
     .img-preview {
         margin-top: 8px; border-radius: 4px; overflow: hidden;
@@ -471,10 +484,20 @@
             </div>
 
             <div class="form-field">
-                <label class="form-label">URL de l'image <span class="opt">(facultatif)</span></label>
-                <input class="form-input" id="f-image" type="url" placeholder="https://…" oninput="previewImage()">
+                <label class="form-label">Image <span class="opt">(facultatif)</span></label>
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+                    <label class="btn-upload-img" for="f-image-fichier" id="btn-upload-label">
+                        <span id="btn-upload-ico">📁</span> Choisir un fichier
+                    </label>
+                    <input type="file" id="f-image-fichier" accept="image/*" style="display:none" onchange="uploadImage(this)">
+                    <span style="font-family:'EB Garamond',serif;font-style:italic;font-size:.8rem;color:var(--ink-muted)">ou</span>
+                    <input class="form-input" id="f-image" type="url" placeholder="https://… (URL directe)" oninput="previewImage()" style="flex:1;margin-bottom:0">
+                </div>
                 <div class="img-preview" id="img-preview">
                     <img id="img-preview-el" src="" alt="">
+                </div>
+                <div id="upload-progress" style="display:none;margin-top:6px;font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)">
+                    Envoi en cours…
                 </div>
             </div>
 
@@ -732,6 +755,44 @@ function majToggle(wrapId, boxId, etat, cls) {
     const box  = document.getElementById(boxId);
     wrap.classList.toggle(cls, etat);
     box.textContent = etat ? '✓' : '';
+}
+
+// ── Upload image vers Supabase Storage ───────────────────────
+async function uploadImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const btn      = document.getElementById('btn-upload-label');
+    const progress = document.getElementById('upload-progress');
+    btn.classList.add('loading');
+    btn.querySelector('#btn-upload-ico').textContent = '⏳';
+    progress.style.display = 'block';
+
+    try {
+        const ext  = file.name.split('.').pop().toLowerCase();
+        const nom  = `annonce_${Date.now()}.${ext}`;
+        const { data, error } = await maConnexion.storage
+            .from('annonces-images')
+            .upload(nom, file, { cacheControl: '3600', upsert: false });
+
+        if (error) throw error;
+
+        const { data: urlData } = maConnexion.storage
+            .from('annonces-images')
+            .getPublicUrl(nom);
+
+        document.getElementById('f-image').value = urlData.publicUrl;
+        previewImage();
+        toast('Image chargée ✓');
+    } catch(e) {
+        console.error(e);
+        toast('Erreur upload : ' + (e.message || 'inconnue'));
+    } finally {
+        btn.classList.remove('loading');
+        btn.querySelector('#btn-upload-ico').textContent = '📁';
+        progress.style.display = 'none';
+        input.value = '';
+    }
 }
 
 function previewImage() {
