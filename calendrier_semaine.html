@@ -1156,53 +1156,71 @@
             return;
         }
 
-        const C_TITRE   = '#1a1a1a';
-        const C_FETE    = '#555555';
-        const C_HEURE   = '#888888';
-        const C_TEXTE   = '#1a1a1a';
-        const C_NOTE    = '#8b2020';
-        const C_SEP     = '#dddddd';
+        // Charte de la newsletter (bleu de la paroisse + beiges)
+        const C_BLEU        = '#023199';  // jours, messes, liseré
+        const C_BEIGE       = '#F7F2EA';  // bandeau des jours de semaine
+        const C_BEIGE_DIM   = '#EADFCC';  // bandeau du dimanche
+        const C_TEXTE       = '#333333';  // offices et activités
+        const C_GRIS        = '#6D6D6C';  // heures, fête du jour, lignes sans heure
+        const C_NOTE        = '#8b2020';  // notes (rubrique)
+        const FONT          = 'font-family:Palatino,Georgia,serif;';
+        // Pastille de couleur liturgique (caractères : s'affichent même images bloquées)
+        const PASTILLE = {
+            Blanc:  ['○', '#9A8F7F'],
+            Rouge:  ['●', '#B3261E'],
+            Vert:   ['●', '#2E7D32'],
+            Violet: ['●', '#6A1B9A'],
+            Rose:   ['●', '#D46A92'],
+            Noir:   ['●', '#222222'],
+        };
 
-        let html = '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Georgia,serif;max-width:600px;">\n';
+        let html = `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="${FONT}max-width:600px;font-size:16px;line-height:1.4;">`;
 
-        semaineData.forEach((jour, idx) => {
-            if (idx > 0) {
-                // séparateur entre jours
-                html += `  <tr><td style="padding:4px 0;border-bottom:1px solid ${C_SEP};font-size:1px;">&nbsp;</td></tr>\n`;
-                html += `  <tr><td style="padding:4px 0;font-size:1px;">&nbsp;</td></tr>\n`;
-            }
+        semaineData.forEach(jour => {
+            const dimanche = jour.dow === 0 || /^dimanche/i.test(jour.dateFr || '');
+            const fond     = dimanche ? C_BEIGE_DIM : C_BEIGE;
+            const fete     = jour.sousTitre || '';
 
-            // Entête du jour
-            const dateParts = (jour.dateFr || '').split(' ');
-            const jourNom   = dateParts[0] || '';
-            const jourDate  = dateParts.slice(1).join(' ');
-            const fete      = jour.sousTitre || '';
-
-            html += `  <tr>\n    <td style="padding:6px 0 2px 0;">\n`;
-            html += `      <span style="font-weight:bold;color:${C_TITRE};font-size:1.1em;">${escHtml(jourNom)} ${escHtml(jourDate)}</span>`;
+            // Bandeau du jour
+            html += `<tr><td colspan="2" bgcolor="${fond}" style="background-color:${fond};border-left:4px solid ${C_BLEU};padding:9px 12px;">`
+                  + `<span style="font-weight:bold;color:${C_BLEU};font-size:17px;">${escHtml(jour.dateFr || '')}</span>`;
             if (fete) {
-                html += ` <span style="color:${C_FETE};font-size:0.9em;font-style:italic;">— ${escHtml(fete)}</span>`;
+                const p = PASTILLE[jour.couleur];
+                const pastille = p
+                    ? `<span style="color:${p[1]};font-size:14px;" title="Couleur liturgique : ${escHtml(jour.couleur.toLowerCase())}">${p[0]}</span> `
+                    : '';
+                html += `<br>${pastille}<span style="color:${C_GRIS};font-size:14px;font-style:italic;">${escHtml(fete)}</span>`;
             }
-            html += `\n    </td>\n  </tr>\n`;
+            html += '</td></tr>';
+            html += '<tr><td colspan="2" style="font-size:1px;line-height:6px;">&nbsp;</td></tr>';
 
             // Notes (rubrique) — affichées avant les horaires
             (jour.notes || []).forEach(note => {
                 const nHtml  = noteHtml(note);
                 const nAlign = noteAlign(note);
                 const alignStyle = nAlign ? `text-align:${nAlign};` : '';
-                html += `  <tr>\n    <td style="padding:1px 0 1px 16px;color:${C_NOTE};font-size:1em;font-style:italic;${alignStyle}">${nHtml}</td>\n  </tr>\n`;
+                html += `<tr><td colspan="2" style="padding:3px 0 3px 16px;color:${C_NOTE};font-size:16px;font-style:italic;${alignStyle}">${nHtml}</td></tr>`;
             });
 
-            // Horaires
+            // Horaires : heure | intitulé
             (jour.horaires || []).forEach(h => {
-                const heureStr  = h.heure  ? `<span style="color:${C_HEURE};font-size:0.9em;min-width:36px;display:inline-block;">${escHtml(h.heure)}</span> ` : '';
                 // labelHtml peut contenir des spans de formatage (gras, italique, souligné...)
                 const labelContent = h.labelHtml || escHtml(h.label || '');
-                const labelStyle = h.bold
-                    ? `font-weight:bold;color:${C_TEXTE};font-size:1em;`
-                    : `color:${C_TEXTE};font-size:1em;`;
-                html += `  <tr>\n    <td style="padding:1px 0 1px 16px;">${heureStr}<span style="${labelStyle}">${labelContent}</span></td>\n  </tr>\n`;
+                let styleHeure, styleLabel;
+                if (h.bold) {
+                    styleHeure = `color:${C_BLEU};font-weight:bold;`;
+                    styleLabel = `color:${C_BLEU};font-weight:bold;`;
+                } else {
+                    styleHeure = `color:${C_GRIS};`;
+                    styleLabel = `color:${C_TEXTE};`;
+                }
+                if (!h.heure) styleLabel = `color:${C_GRIS};font-style:italic;`;
+                const align = h.textAlign ? `text-align:${h.textAlign};` : '';
+                html += `<tr><td width="84" valign="top" style="width:84px;padding:3px 0 3px 16px;font-size:15px;${styleHeure}white-space:nowrap;">${escHtml(h.heure || '')}</td>`
+                      + `<td valign="top" style="padding:3px 0;font-size:16px;${styleLabel}${align}">${labelContent}</td></tr>`;
             });
+
+            html += '<tr><td colspan="2" style="font-size:1px;line-height:18px;">&nbsp;</td></tr>';
         });
 
         html += '</table>';
