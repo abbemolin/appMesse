@@ -19,22 +19,44 @@
         margin: 0 auto;
         padding: 0 16px 40px;
     }
-    .ann-titre-section {
-        text-align: center;
-        font-size: 1.5rem;
+    .ann-accordeon {
+        border: 1px solid #e0d4c8;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+    .ann-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        font-family: Georgia, serif;
+        font-size: 1.1rem;
         font-weight: bold;
         color: #1a1a1a;
-        margin-bottom: 6px;
-        letter-spacing: .02em;
+        background: #fff;
+        cursor: pointer;
+        list-style: none;
+        border-bottom: 1px solid transparent;
+        transition: background .15s;
+        user-select: none;
     }
-    .ann-sous-titre {
-        text-align: center;
-        font-size: .95rem;
-        color: #888;
-        margin-bottom: 32px;
-        font-style: italic;
+    .ann-summary::-webkit-details-marker { display: none; }
+    .ann-summary:hover { background: #faf7f4; }
+    details[open] .ann-summary {
+        border-bottom-color: #e0d4c8;
+        color: #8b1a1a;
     }
+    .ann-chevron {
+        font-size: .85rem;
+        color: #8b1a1a;
+        transition: transform .2s;
+        flex-shrink: 0;
+    }
+    details[open] .ann-chevron { transform: rotate(180deg); }
     .ann-grille {
+        padding: 20px;
+        background: #faf7f4;
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
         gap: 24px;
@@ -217,7 +239,7 @@
         } catch (e) {
             console.error('[Annonces widget]', e);
             const grille = conteneur.querySelector('.ann-grille');
-            if (grille) grille.innerHTML = '<p class="ann-vide">Les annonces ne peuvent pas être chargées pour le moment.</p>';
+            if (grille) grille.innerHTML = '<p class="ann-vide" style="grid-column:1/-1">Les annonces ne peuvent pas être chargées pour le moment.</p>';
         }
     }
 
@@ -236,11 +258,12 @@
         }
 
         conteneur.innerHTML = `
-            <h2 class="ann-titre-section">Annonces paroissiales</h2>
-            <p class="ann-sous-titre">Informations de la paroisse La Croix Glorieuse</p>
+            <details class="ann-accordeon" open>
+            <summary class="ann-summary">Annonces paroissiales <span class="ann-chevron">▾</span></summary>
             <div class="ann-grille">
                 <p class="ann-chargement">Chargement…</p>
-            </div>`;
+            </div>
+            </details>`;
 
         charger();
     }
