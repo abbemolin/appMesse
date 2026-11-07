@@ -402,6 +402,9 @@
 <script src="menu.js"></script>
 <script src="exsurge.js"></script>
 <script src="titres.js"></script>
+<script src="ordo1962.js"></script>
+<script src="data/messe/calendrier.js"></script>
+<script src="messe.js"></script>
 <script>
 
 // ══════════════════════════════════════════════════════════
@@ -490,12 +493,12 @@ function positionLecture() {
     const l = document.querySelector('#brev-content .brev-ligne.active');
     if (!l) return null;
     const r = l.getBoundingClientRect();
-    return { i: l.dataset.i, part: r.height ? Math.max(0, (hautBarres() - r.top) / r.height) : 0 };
+    return { i: cleLigne(l), part: r.height ? Math.max(0, (hautBarres() - r.top) / r.height) : 0 };
 }
 
 function restaurerLecture(pos) {
     if (!pos) return;
-    const l = document.querySelector(`#brev-content .brev-ligne[data-i="${pos.i}"]`);
+    const l = [...document.querySelectorAll('#brev-content .brev-ligne')].find(x => cleLigne(x) === pos.i);
     if (!l) return;
     const r = l.getBoundingClientRect();
     if (pos.part > 0) window.scrollTo({ top: window.scrollY + r.top + r.height * pos.part - hautBarres(), behavior: 'instant' });
@@ -717,33 +720,81 @@ function mettreEnFormeTexte(html) {
         .replace(/<br>\s*(<span class="do-psaume">)/g, '$1');
 }
 
-function buildLigne(ligne) {
-    if (typeof ligne === 'string') {
-        return `<div class="brev-ligne"><div class="brev-text latin">${mettreEnForme(separerParties(ligne))}</div></div>`;
-    }
-    let [la, fr] = ligne;
-    la = mettreEnForme(separerParties(la)); fr = mettreEnForme(separerParties(fr));
-    return _lang === 'Francais'
-        ? `<div class="brev-ligne"><div class="brev-text francais">${fr}</div></div>`
-        : `<div class="brev-ligne"><div class="brev-text latin">${la}</div></div>`;
+// « Capitule · Hymne · Verset » : une page pour le capitule, une pour l'hymne (avec son verset)
+function decouperPages(html) {
+    const morceaux = html.split(/(?=<span class="do-partie">)/).filter(m => m.replace(/<[^>]+>/g, '').trim());
+    if (morceaux.length < 2) return [html];
+    const pages = [];
+    morceaux.forEach(m => {
+        const nom = (m.match(/^<span class="do-partie">([^<]*)</) || [])[1] || '';
+        if (pages.length && /^(Vers|Verset)/.test(nom)) pages[pages.length - 1] += m;
+        else pages.push(m);
+    });
+    return pages;
+}
+
+function buildLigne(ligne, i) {
+    const latin = typeof ligne === 'string' || _lang !== 'Francais';
+    const brut = typeof ligne === 'string' ? ligne : ligne[latin ? 0 : 1];
+    return decouperPages(mettreEnForme(separerParties(brut))).map((h, k) =>
+        `<div class="brev-ligne" data-i="${i}" data-k="${k}"><div class="brev-text ${latin ? 'latin' : 'francais'}">${h}</div></div>`).join('');
 }
 
 function afficher(office, garderPosition = false) {
-    document.getElementById('brev-fete').textContent =
-        titreFrancais(office.titre_fr || (office.titre || 'Bréviaire').split(' ~ ')[0]);
+    document.getElementById('brev-fete').textContent = titreBreviaire(office);
     // Les rubriques « omittitur » signalent une partie qui n'est pas dite : on ne les affiche pas
     const garde = l => !/\{omittitur\}\s*(<[^>]+>\s*)*$/.test(typeof l === 'string' ? l : l[0]);
     const box = document.getElementById('brev-content');
     box.innerHTML = office.lignes
-        .map((l, i) => garde(l) ? buildLigne(l).replace('class="brev-ligne', `data-i="${i}" class="brev-ligne`) : '').join('');
+        .map((l, i) => garde(l) ? buildLigne(l, i) : '').join('');
+    fusionnerAnonymes();
     box.classList.add('par-partie');
-    construireParties(garderPosition ? _partie : null);
+    const memo = garderPosition ? null : lectureMemorisee();
+    _restaure = true;
+    construireParties(garderPosition ? _partie : memo && memo.i);
     dessinerPartitions(office);
-    if (!garderPosition) window.scrollTo(0, 0);
+    if (!garderPosition) {
+        window.scrollTo(0, 0);
+        if (memo && memo.part > 0) setTimeout(() => { restaurerLecture(memo); _restaure = false; }, 60);
+        else _restaure = false;
+    } else _restaure = false;
+}
+
+// Fêtes de la communauté et du diocèse : nommées dans le titre (les textes restent ceux du jour)
+function titreBreviaire(office) {
+    const base = titreFrancais(office.titre_fr || (office.titre || 'Bréviaire').split(' ~ ')[0]);
+    try {
+        const [y, m, d] = (office.date || '').split('-').map(Number);
+        const o = y && Ordo1962.getDay(y, m, d);
+        if (!o) return base;
+        if (o.source === 'smmd' || o.source === 'diocese') return o.fete;
+        if (o.mention) return `${base} · ${o.mention} (facultatif)`;
+    } catch (e) { console.error(e); }
+    return base;
 }
 
 // ── Parties de l'heure : une par écran ────────────────────
 let _partie = null;
+let _restaure = false;
+
+// Dernière partie lue, par jour et par heure (sur cet appareil)
+function lectureMemorisee() {
+    try {
+        const m = JSON.parse(localStorage.getItem('breviaire-lecture') || 'null');
+        return m && m.cle === cleOffice() ? m : null;
+    } catch (e) { return null; }
+}
+function memoriserLecture() {
+    if (_restaure) return;
+    const pos = positionLecture();
+    if (!pos) return;
+    try { localStorage.setItem('breviaire-lecture', JSON.stringify({ cle: cleOffice(), ...pos })); } catch (e) {}
+}
+let _minuteurLecture = null;
+window.addEventListener('scroll', () => {
+    clearTimeout(_minuteurLecture);
+    _minuteurLecture = setTimeout(memoriserLecture, 400);
+}, { passive: true });
 const NOMS_PARTIES = { Incipit: 'Début', Invitatorium: 'Invitatoire', Hymnus: 'Hymne', Psalmi: 'Psaumes',
     'Psalmi cum lectionibus': 'Psaumes', Capitulum: 'Capitule', 'Lectio brevis': 'Leçon brève', Responsorium: 'Répons',
     Versus: 'Verset', Oratio: 'Oraison', Conclusio: 'Conclusion', Martyrologium: 'Martyrologe',
@@ -759,19 +810,34 @@ function nomPartie(el) {
         return t.replace(/^Psalmus/, 'Psaume').replace(/^Canticum B\. Mariæ Virginis/, 'Magnificat')
                 .replace(/^Canticum Zachariæ/, 'Benedictus').replace(/^Canticum Simeonis/, 'Nunc dimittis')
                 .replace(/^Canticum Trium Puerorum/i, 'Cantique des trois enfants')
+                .replace(/^Cantique de (la B\. Vierge Marie|la Bienheureuse Vierge Marie)$/, 'Magnificat')
+                .replace(/^Cantique de Zacharie$/, 'Benedictus').replace(/^Cantique de Siméon$/, 'Nunc dimittis')
                 .replace(/^Canticum/, 'Cantique');
     }
     const titres = [...el.querySelectorAll('.do-titre, .do-partie')].map(t => t.textContent.trim()).filter(t => t.length > 1);
     if (titres.length) {
-        const n = titres.slice(0, 2).map(t => NOMS_PARTIES[t] || t.replace(/^Lectio (\d)/, 'Leçon $1'));
+        const n = titres.filter((t, j) => !j || !/^(Versus|Verset)$/.test(t)).slice(0, 2)
+            .map(t => NOMS_PARTIES[t] || t.replace(/^Lectio (\d)/, 'Leçon $1').replace(/^Antienne finale.*/, 'Antienne à la Vierge'));
         return n.join(' · ');
     }
     const m = el.textContent.match(/(?:Lectio|Leçon)\s*(\d+)/);
     if (m) return 'Leçon ' + m[1];
-    const t = el.textContent.trim();
-    if (/^℣/.test(t)) return 'Verset';
-    if (/Pater\s*Noster|Notre Père/i.test(t)) return 'Pater';
-    return t.split(/\s+/).slice(0, 3).join(' ');
+    return null;   // partie sans nom : rattachée à une partie voisine
+}
+
+// Petites parties sans titre (verset, Pater, rubrique) : rattachées à la voisine.
+// Le Pater et l'absolution précèdent les leçons : ils vont avec la suivante.
+function fusionnerAnonymes() {
+    const lignes = [...document.querySelectorAll('#brev-content .brev-ligne')];
+    lignes.forEach((l, j) => {
+        if (nomPartie(l)) return;
+        const versSuivante = /Pater\s*Noster|Notre Père/i.test(l.textContent) && lignes[j + 1];
+        const cible = versSuivante ? lignes[j + 1] : lignes.slice(0, j).reverse().find(x => x.isConnected);
+        if (!cible) return;
+        const textes = [...l.children];
+        if (versSuivante) cible.prepend(...textes); else cible.append(...textes);
+        l.remove();
+    });
 }
 
 function construireParties(garder) {
@@ -784,11 +850,11 @@ function construireParties(garder) {
         if (ps) ps.classList.add('masque');
         const b = document.createElement('button');
         b.className = 'partie-tab';
-        b.textContent = nomPartie(l);
+        b.textContent = nomPartie(l) || 'Partie';
         b.onclick = () => allerPartie(k);
         barre.appendChild(b);
     });
-    const idx = Math.max(0, lignes.findIndex(l => l.dataset.i === garder));
+    const idx = Math.max(0, lignes.findIndex(l => cleLigne(l) === garder));
     allerPartie(idx, 0, true);
 }
 
@@ -798,7 +864,8 @@ function allerPartie(k, sens = 0, silencieux = false) {
     const tabs = [...document.querySelectorAll('#brev-parties .partie-tab')];
     lignes.forEach((l, j) => l.classList.toggle('active', j === k));
     tabs.forEach((t, j) => t.classList.toggle('active', j === k));
-    _partie = lignes[k].dataset.i;
+    _partie = cleLigne(lignes[k]);
+    memoriserLecture();
     const tab = tabs[k];
     if (tab) tab.parentElement.scrollTo({ left: tab.offsetLeft - (tab.parentElement.clientWidth - tab.offsetWidth) / 2, behavior: silencieux ? 'instant' : 'smooth' });
     if (silencieux) return;
@@ -809,6 +876,8 @@ function allerPartie(k, sens = 0, silencieux = false) {
     const top = document.getElementById('brev-content').getBoundingClientRect().top + window.scrollY - haut;
     if (window.scrollY > top) window.scrollTo({ top, behavior: 'instant' });
 }
+
+const cleLigne = l => `${l.dataset.i}.${l.dataset.k || 0}`;
 
 function partieActive() {
     const l = [...document.querySelectorAll('#brev-content .brev-ligne')];
@@ -1050,8 +1119,8 @@ async function chargerFrancais(office) {
 }
 
 // Découpe une cellule française en morceaux correspondant aux pièces chantées
-function morceauxFrancais(cellule) {
-    const html = mettreEnForme(separerParties(cellule));
+function morceauxFrancais(cellule, k = 0) {
+    const html = decouperPages(mettreEnForme(separerParties(cellule)))[k] || '';
     return html.split(/(?=<span class="do-partie">|<span class="do-rubr"><i>Ant\.|<span class="do-psaume">)/)
         .map(m => m
             .replace(/<span class="do-(?:partie|psaume|titre)">[^]*?<\/span>/g, '')
@@ -1077,7 +1146,7 @@ async function dessinerPartitions(office) {
 
     for (const ligne of document.querySelectorAll('#brev-content .brev-ligne')) {
         const pieces = [...ligne.querySelectorAll('.gabc')];
-        const fr = francais ? morceauxFrancais(francais[+ligne.dataset.i] || '') : [];
+        const fr = francais ? morceauxFrancais(francais[parseInt(ligne.dataset.i, 10)] || '', +ligne.dataset.k || 0) : [];
         const parPiece = fr.length === pieces.length;
         const psaumes = pieces.map(p => decouperPsaume(p.textContent) ? p.textContent : null);
 

@@ -1,4 +1,4 @@
-const CACHE_NAME  = 'messes-v13';
+const CACHE_NAME  = 'messes-v14';
 const CACHE_OFFICES = 'breviaire-offices-v1';   // conservé entre les mises à jour de l'app
 const SYNC_TAG    = 'sync-intentions';
 const QUEUE_KEY   = 'offline-queue';
