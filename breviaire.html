@@ -247,11 +247,48 @@
         letter-spacing: .12em; text-transform: uppercase; color: var(--rubric);
     }
     .brev-text > .do-partie:first-child { margin-top: 0; }
+    /* Titre de psaume ou de cantique : grand, référence à droite */
     .do-psaume {
-        display: block; margin: 14px 0 4px;
-        font-family: 'Cinzel', serif; font-size: .68rem; font-weight: 600;
-        letter-spacing: .08em; color: var(--rubric);
+        display: block; margin: 18px 0 14px;
+        font-family: 'EB Garamond', serif; font-size: 1.75em; font-weight: 500;
+        line-height: 1.15; color: var(--brev-encre); letter-spacing: 0;
     }
+    .brev-text > .do-psaume:first-child { margin-top: 4px; }
+    .do-psaume .ps-ref {
+        display: block; text-align: right; margin-top: 2px;
+        font-size: .58em; font-style: italic; color: var(--rubric);
+    }
+    /* Versets : numéro dans la marge, verset coupé à l'astérisque */
+    .brev-text .v { display: grid; grid-template-columns: 2.1em 1fr; margin: 0 0 .75em; }
+    .brev-text .vn {
+        color: var(--rubric); font-size: .68em; line-height: 2.5; text-align: left;
+        user-select: none; font-variant-numeric: tabular-nums;
+    }
+    .brev-text .v1, .brev-text .v2 { display: block; }
+    .brev-text .ast { color: var(--rubric); }
+
+    /* Parties de l'heure : une par écran */
+    .brev-parties {
+        display: flex; overflow-x: auto; gap: 2px; padding: 0 10px;
+        position: sticky; top: var(--haut-barre, 52px); z-index: 39;
+        background: var(--vellum); border-bottom: 1px solid var(--border-soft);
+        scrollbar-width: none;
+    }
+    .brev-parties::-webkit-scrollbar { display: none; }
+    .brev-parties[hidden] { display: none; }
+    .partie-tab {
+        flex-shrink: 0; white-space: nowrap; cursor: pointer;
+        font-family: 'EB Garamond', serif; font-size: .95rem; color: var(--rubric); opacity: .75;
+        padding: 9px 10px 7px; background: none; border: none; border-bottom: 2px solid transparent;
+    }
+    .partie-tab.active { opacity: 1; border-bottom-color: var(--rubric); }
+    #brev-content.par-partie .brev-ligne { display: none; border-bottom: none; }
+    #brev-content.par-partie .brev-ligne.active { display: block; }
+    .brev-ligne.entre-g { animation: entreG .22s ease both; }
+    .brev-ligne.entre-d { animation: entreD .22s ease both; }
+    @keyframes entreG { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+    @keyframes entreD { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .brev-ligne.entre-g, .brev-ligne.entre-d { animation: none; } }
     .brev-text sup.vnum {
         font-size: .62em; color: var(--ink-muted); margin-right: 3px;
         font-style: normal; user-select: none;
@@ -350,6 +387,8 @@
     <button class="greg-btn" id="btn-trad" onclick="basculerTraduction()">Traduction française</button>
 </div>
 
+<nav class="brev-parties" id="brev-parties" hidden></nav>
+
 <!-- ════════════ CONTENU ════════════ -->
 <div class="brev-content" id="brev-content">
     <div class="brev-loading">Chargement de l'office…</div>
@@ -445,23 +484,18 @@ function memoriserGregorien() {
 
 // Mémorise la partie lue, pour la retrouver après le changement de langue
 function positionLecture() {
-    const haut = document.querySelector('.brev-toolbar').getBoundingClientRect().bottom;
-    for (const l of document.querySelectorAll('#brev-content .brev-ligne')) {
-        const r = l.getBoundingClientRect();
-        if (r.bottom > haut) {
-            return { i: l.dataset.i, part: r.height ? Math.max(0, (haut - r.top) / r.height) : 0 };
-        }
-    }
-    return null;
+    const l = document.querySelector('#brev-content .brev-ligne.active');
+    if (!l) return null;
+    const r = l.getBoundingClientRect();
+    return { i: l.dataset.i, part: r.height ? Math.max(0, (hautBarres() - r.top) / r.height) : 0 };
 }
 
 function restaurerLecture(pos) {
     if (!pos) return;
     const l = document.querySelector(`#brev-content .brev-ligne[data-i="${pos.i}"]`);
     if (!l) return;
-    const haut = document.querySelector('.brev-toolbar').getBoundingClientRect().bottom;
     const r = l.getBoundingClientRect();
-    window.scrollTo({ top: window.scrollY + r.top + r.height * pos.part - haut, behavior: 'instant' });
+    if (pos.part > 0) window.scrollTo({ top: window.scrollY + r.top + r.height * pos.part - hautBarres(), behavior: 'instant' });
 }
 
 function changerLangueEnFondu(office) {
@@ -515,6 +549,7 @@ async function chargerOffice() {
     if (_cache[cle]) { afficher(_cache[cle]); return; }
 
     document.getElementById('brev-content').classList.remove('brev-fondu');
+    document.getElementById('brev-parties').hidden = true;
     document.getElementById('brev-content').innerHTML =
         '<div class="brev-loading">Chargement de l\'office…</div>';
 
@@ -543,6 +578,7 @@ async function chargerOffice() {
 
 function afficherVide(message) {
     document.getElementById('brev-fete').textContent = 'Bréviaire';
+    document.getElementById('brev-parties').hidden = true;
     const box = document.getElementById('brev-content');
     box.innerHTML = '<div class="brev-empty"></div>';
     box.firstChild.textContent = message;
@@ -604,7 +640,55 @@ function titreClair(t) {
 
 function mettreEnForme(cellule) {
     return cellule.split(/(<div class="gabc">[^]*?<\/div>)/)
-        .map(p => p.startsWith('<div class="gabc">') ? p : mettreEnFormeTexte(p)).join('');
+        .map(p => p.startsWith('<div class="gabc">') ? p : versetsPsaume(mettreEnFormeTexte(p))).join('');
+}
+
+// « Psaume 118(1-16) » → titre « Psaume 118 », référence « Ps 118, 1-16 »
+function titrePsaume(t) {
+    return t.replace(/\s*\([^)]*\)\s*$/, '').trim();
+}
+function refPsaume(t) {
+    const m = t.match(/(\d+)\s*(?:\(([^)]*)\))?/);
+    return m ? `Ps ${m[1]}${m[2] ? ', ' + m[2] : ''}` : t;
+}
+
+// Chaque verset : numéro dans la marge, première moitié jusqu'à l'astérisque, seconde moitié en dessous
+function versetsPsaume(html) {
+    if (!html.includes('class="do-psaume"')) return html;
+    const morceaux = html.split(/<br>/);
+    const sortie = [];
+    let dans = false;
+    for (const brut of morceaux) {
+        const m = brut.trim();
+        if (m.includes('class="do-psaume"')) {
+            const fin = m.lastIndexOf('</span></span>');
+            const titre = fin >= 0 ? m.slice(0, fin + 14) : m;
+            sortie.push({ bloc: true, h: titre });
+            const reste = fin >= 0 ? m.slice(fin + 14).trim() : '';
+            dans = true;
+            if (reste) sortie.push(verset(reste));
+            continue;
+        }
+        if (dans && (!m || /^<span class="do-(?:rubr|titre|partie)"><i>Ant\.|^<span class="do-(?:titre|partie)">/.test(m))) dans = false;
+        if (dans) { sortie.push(verset(m)); continue; }
+        sortie.push({ bloc: false, h: brut });
+    }
+    let out = '';
+    sortie.forEach((x, i) => {
+        const prec = sortie[i - 1];
+        if (i && !x.bloc && !prec.bloc) out += '<br>';
+        out += x.h;
+    });
+    return out;
+}
+
+function verset(m) {
+    const n = m.match(/^<sup class="vnum">(\w+)<\/sup>\s*/);
+    const texte = n ? m.slice(n[0].length) : m;
+    const coupe = texte.search(/\s\*\s/);
+    const corps = coupe < 0 ? `<span class="v1">${texte}</span>`
+        : `<span class="v1">${texte.slice(0, coupe)} <span class="ast">*</span></span><span class="v2">${texte.slice(coupe + 3)}</span>`;
+    return { bloc: true, h: `<div class="v"><span class="vn">${n ? n[1] : ''}</span><span class="vt">${corps}</span></div>` };
 }
 
 function mettreEnFormeTexte(html) {
@@ -616,8 +700,10 @@ function mettreEnFormeTexte(html) {
         .replace(/<span class="do-rubr"><b><i>(.)<\/i><\/b><\/span>/gu, '<span class="do-initiale">$1</span>')
         // Psaumes : numéro de verset discret, titre détaché, sans le rang [1]
         .replace(/<span class="do-petit">\d+:(\w+)<\/span>\s*/g, '<sup class="vnum">$1</sup>')
-        .replace(/<span class="do-rubr"><i>((?:Psalmus|Psaume|Canticum|Cantique)\b[^<]*)<\/i><\/span>(?:\s*\[\d+\])?\s*(?:<br>\s*)?/g,
-                 (_, t) => `<span class="do-psaume">${enGregorien() ? titreClair(t) : t}</span>`)
+        .replace(/<span class="do-rubr"><i>((?:Psalmus|Psaume|Canticum|Cantique)\b[^<]*)<\/i><\/span>(?:\s*\[\d+\])?\s*(?:<br>\s*)?(?:<span class="do-rubr"><i>([^<]*\d[^<]*)<\/i><\/span>\s*(?:<br>\s*)?)?/g,
+                 (_, t, ref) => enGregorien()
+                    ? (([n, ton]) => `<span class="do-psaume">${n}${ton ? `<span class="ps-ref">${ton}</span>` : ''}</span>`)(titreClair(t).split(' · '))
+                    : `<span class="do-psaume">${titrePsaume(t)}<span class="ps-ref">— ${ref || refPsaume(t)}</span></span>`)
         .replace(/<br>\s*(<span class="do-psaume">)/g, '$1');
 }
 
@@ -637,11 +723,115 @@ function afficher(office, garderPosition = false) {
         titreFrancais(office.titre_fr || (office.titre || 'Bréviaire').split(' ~ ')[0]);
     // Les rubriques « omittitur » signalent une partie qui n'est pas dite : on ne les affiche pas
     const garde = l => !/\{omittitur\}\s*(<[^>]+>\s*)*$/.test(typeof l === 'string' ? l : l[0]);
-    document.getElementById('brev-content').innerHTML = office.lignes
+    const box = document.getElementById('brev-content');
+    box.innerHTML = office.lignes
         .map((l, i) => garde(l) ? buildLigne(l).replace('class="brev-ligne', `data-i="${i}" class="brev-ligne`) : '').join('');
+    box.classList.add('par-partie');
+    construireParties(garderPosition ? _partie : null);
     dessinerPartitions(office);
     if (!garderPosition) window.scrollTo(0, 0);
 }
+
+// ── Parties de l'heure : une par écran ────────────────────
+let _partie = null;
+const NOMS_PARTIES = { Incipit: 'Début', Invitatorium: 'Invitatoire', Hymnus: 'Hymne', Psalmi: 'Psaumes',
+    'Psalmi cum lectionibus': 'Psaumes', Capitulum: 'Capitule', 'Lectio brevis': 'Leçon brève', Responsorium: 'Répons',
+    Versus: 'Verset', Oratio: 'Oraison', Conclusio: 'Conclusion', Martyrologium: 'Martyrologe',
+    'De Officio Capituli': 'Office du chapitre', 'Antiphona finalis B.M.V.': 'Antienne à la Vierge',
+    'Preces Feriales': 'Prières', 'Canticum: Benedictus': 'Benedictus', 'Canticum: Magnificat': 'Magnificat',
+    'Canticum: Nunc dimittis': 'Nunc dimittis', 'Cantique : Benedictus': 'Benedictus',
+    'Cantique : Magnificat': 'Magnificat', 'Cantique : Nunc dimittis': 'Nunc dimittis' };
+
+function nomPartie(el) {
+    const ps = el.querySelector('.do-psaume');
+    if (ps) {
+        const t = (ps.firstChild ? ps.firstChild.textContent : ps.textContent).split(' · ')[0].trim();
+        return t.replace(/^Psalmus/, 'Psaume').replace(/^Canticum B\. Mariæ Virginis/, 'Magnificat')
+                .replace(/^Canticum Zachariæ/, 'Benedictus').replace(/^Canticum Simeonis/, 'Nunc dimittis')
+                .replace(/^Canticum Trium Puerorum/i, 'Cantique des trois enfants')
+                .replace(/^Canticum/, 'Cantique');
+    }
+    const titres = [...el.querySelectorAll('.do-titre, .do-partie')].map(t => t.textContent.trim()).filter(t => t.length > 1);
+    if (titres.length) {
+        const n = titres.slice(0, 2).map(t => NOMS_PARTIES[t] || t.replace(/^Lectio (\d)/, 'Leçon $1'));
+        return n.join(' · ');
+    }
+    const m = el.textContent.match(/(?:Lectio|Leçon)\s*(\d+)/);
+    if (m) return 'Leçon ' + m[1];
+    const t = el.textContent.trim();
+    if (/^℣/.test(t)) return 'Verset';
+    if (/Pater\s*Noster|Notre Père/i.test(t)) return 'Pater';
+    return t.split(/\s+/).slice(0, 3).join(' ');
+}
+
+function construireParties(garder) {
+    const lignes = [...document.querySelectorAll('#brev-content .brev-ligne')];
+    const barre = document.getElementById('brev-parties');
+    barre.innerHTML = '';
+    barre.hidden = lignes.length < 2;
+    lignes.forEach((l, k) => {
+        const b = document.createElement('button');
+        b.className = 'partie-tab';
+        b.textContent = nomPartie(l);
+        b.onclick = () => allerPartie(k);
+        barre.appendChild(b);
+    });
+    const idx = Math.max(0, lignes.findIndex(l => l.dataset.i === garder));
+    allerPartie(idx, 0, true);
+}
+
+function allerPartie(k, sens = 0, silencieux = false) {
+    const lignes = [...document.querySelectorAll('#brev-content .brev-ligne')];
+    if (!lignes.length || k < 0 || k >= lignes.length) return;
+    const tabs = [...document.querySelectorAll('#brev-parties .partie-tab')];
+    lignes.forEach((l, j) => l.classList.toggle('active', j === k));
+    tabs.forEach((t, j) => t.classList.toggle('active', j === k));
+    _partie = lignes[k].dataset.i;
+    const tab = tabs[k];
+    if (tab) tab.parentElement.scrollTo({ left: tab.offsetLeft - (tab.parentElement.clientWidth - tab.offsetWidth) / 2, behavior: silencieux ? 'instant' : 'smooth' });
+    if (silencieux) return;
+    lignes[k].classList.remove('entre-g', 'entre-d');
+    void lignes[k].offsetWidth;
+    if (sens) lignes[k].classList.add(sens > 0 ? 'entre-g' : 'entre-d');
+    const haut = hautBarres();
+    const top = document.getElementById('brev-content').getBoundingClientRect().top + window.scrollY - haut;
+    if (window.scrollY > top) window.scrollTo({ top, behavior: 'instant' });
+}
+
+function partieActive() {
+    const l = [...document.querySelectorAll('#brev-content .brev-ligne')];
+    return l.findIndex(x => x.classList.contains('active'));
+}
+
+function hautBarres() {
+    const b = document.getElementById('brev-parties');
+    return b.hidden ? document.querySelector('.brev-toolbar').getBoundingClientRect().bottom : b.getBoundingClientRect().bottom;
+}
+
+// Hauteur de la barre de langue, pour coller la barre des parties juste dessous
+function majHautBarre() {
+    document.documentElement.style.setProperty('--haut-barre', document.querySelector('.brev-toolbar').offsetHeight + 'px');
+}
+window.addEventListener('resize', majHautBarre);
+majHautBarre();
+
+// Glisser le doigt : partie suivante ou précédente
+(function () {
+    const box = document.getElementById('brev-content');
+    let x0 = null, y0 = 0, t0 = 0;
+    box.addEventListener('touchstart', e => {
+        if (e.touches.length !== 1) { x0 = null; return; }
+        x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+    }, { passive: true });
+    box.addEventListener('touchend', e => {
+        if (x0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+        x0 = null;
+        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6 || Date.now() - t0 > 700) return;
+        const k = partieActive();
+        if (dx < 0) allerPartie(k + 1, 1); else allerPartie(k - 1, -1);
+    }, { passive: true });
+})();
 
 document.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft')  naviguerJour(-1);
@@ -663,7 +853,7 @@ function dessinerScore(source, boite) {
     if (lettrine && tete) score.annotation = new exsurge.Annotation(ctxt, tete);
     boite._mapping = mapping;
     return new Promise(fin => score.performLayoutAsync(ctxt, () =>
-        score.layoutChantLines(ctxt, boite.clientWidth, () => {
+        score.layoutChantLines(ctxt, boite.clientWidth || (document.getElementById('brev-content').clientWidth - 32), () => {
             boite.innerHTML = score.createSvg(ctxt);
             fin();
         })));
