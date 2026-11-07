@@ -190,6 +190,19 @@
     .annonce-card-foot {
         display: flex; border-top: 1px solid var(--border-soft);
     }
+    /* Boutons ↑↓ réordonnement */
+    .annonce-ordre-btn {
+        display: flex; flex-direction: column;
+        border-right: 1px solid var(--border-soft);
+    }
+    .annonce-ordre {
+        flex: 1; padding: 0 10px;
+        cursor: pointer; border: none; background: none;
+        color: var(--ink-muted); font-size: .75rem; line-height: 1;
+        transition: background .15s, color .15s;
+    }
+    .annonce-ordre:hover { background: rgba(0,0,0,.05); color: var(--gold); }
+    .annonce-ordre:first-child { border-bottom: 1px solid var(--border-soft); }
     .annonce-action {
         flex: 1; padding: 9px 6px;
         display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -679,6 +692,10 @@ function renderCard(a) {
             ${imgHtml}
         </div>
         <div class="annonce-card-foot">
+            <div class="annonce-ordre-btn">
+                <button class="annonce-ordre" onclick="deplacerOrdre(${a.id},-1)" title="Monter">▲</button>
+                <button class="annonce-ordre" onclick="deplacerOrdre(${a.id},+1)" title="Descendre">▼</button>
+            </div>
             <button class="annonce-action${a.prioritaire ? ' prio-on' : ''}" onclick="togglePrioCard(${a.id})">
                 <span class="ico">⚑</span>${a.prioritaire ? 'Prioritaire' : 'Priorité'}
             </button>
@@ -868,6 +885,36 @@ async function toggleActifCard(id) {
     if (!a) return;
     const { error } = await maConnexion.from('annonces').update({ actif: !a.actif }).eq('id', id);
     if (!error) { toast(a.actif ? 'Annonce désactivée' : 'Annonce activée ✓'); await charger(); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RÉORDONNEMENT
+// ══════════════════════════════════════════════════════════════
+async function deplacerOrdre(id, direction) {
+    // On travaille sur la liste filtrée actuellement affichée
+    const liste = annocesFiltrees();
+    const idx = liste.findIndex(x => x.id === id);
+    const idxCible = idx + direction;
+    if (idxCible < 0 || idxCible >= liste.length) return;
+
+    const a = liste[idx];
+    const b = liste[idxCible];
+
+    // Attribuer des valeurs ordre si elles sont null (on initialise à l'index)
+    const ordreA = a.ordre ?? idx;
+    const ordreB = b.ordre ?? idxCible;
+
+    // Échange des valeurs ordre
+    const [err1, err2] = await Promise.all([
+        maConnexion.from('annonces').update({ ordre: ordreB }).eq('id', a.id),
+        maConnexion.from('annonces').update({ ordre: ordreA }).eq('id', b.id)
+    ]).then(results => results.map(r => r.error));
+
+    if (!err1 && !err2) {
+        await charger();
+    } else {
+        toast('Erreur lors du réordonnement');
+    }
 }
 
 // ══════════════════════════════════════════════════════════════

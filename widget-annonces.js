@@ -27,6 +27,15 @@
         box-sizing: border-box;
         text-align: center;
     }
+    @media (min-width: 768px) {
+        #annonces-paroissiales {
+            max-width: 100%;
+            padding: 8px 32px;
+        }
+        .ann-grille {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        }
+    }
     #annonces-paroissiales * { box-sizing: border-box; }
 
     /* ── Titre ── */
@@ -247,6 +256,7 @@
             const url = `${SUPABASE_URL}/rest/v1/annonces`
                 + `?select=*`
                 + `&actif=eq.true`
+                + `&or=(date_debut.is.null,date_debut.lte.${today})`
                 + `&or=(date_fin.is.null,date_fin.gte.${today})`
                 + `&order=prioritaire.desc,ordre.asc,created_at.desc`;
 
