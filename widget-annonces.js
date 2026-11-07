@@ -32,9 +32,6 @@
             max-width: 100%;
             padding: 8px 32px;
         }
-        .ann-grille {
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        }
     }
     #annonces-paroissiales * { box-sizing: border-box; }
 
@@ -103,12 +100,30 @@
         min-height: 0;
     }
 
-    /* ── Grille de cartes ── */
+    /* ── Grille de cartes — mobile : colonne unique ── */
     .ann-grille {
         padding: 16px 0 4px;
-        display: grid;
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
         gap: 16px;
+    }
+
+    /* ── Grille masonry sur tablette / desktop ── */
+    @media (min-width: 640px) {
+        .ann-grille {
+            display: block;
+            column-count: 2;
+            column-gap: 16px;
+        }
+        .ann-carte {
+            break-inside: avoid;
+            margin-bottom: 16px;
+        }
+    }
+    @media (min-width: 1024px) {
+        .ann-grille {
+            column-count: 3;
+        }
     }
 
     /* ── Carte ── */
@@ -123,18 +138,6 @@
     .ann-carte.prioritaire {
         border-color: var(--ann-accent);
         border-top-width: 3px;
-    }
-    /* Sur desktop : image à gauche, texte à droite */
-    @media (min-width: 768px) {
-        .ann-carte.avec-image {
-            flex-direction: row;
-        }
-        .ann-carte.avec-image .ann-carte-img {
-            width: 200px;
-            height: auto;
-            min-height: 140px;
-            flex-shrink: 0;
-        }
     }
     .ann-carte-img {
         width: 100%;
