@@ -943,6 +943,14 @@ async function annulerEnvoi() {
 
   log(`Annulation de la campagne #${currentCampaignId}…`);
   try {
+    // Brevo refuse DELETE sur une campagne programmée — il faut d'abord la remettre en brouillon
+    const rPut = await fetch(`https://api.brevo.com/v3/emailCampaigns/${currentCampaignId}`, {
+      method: 'PUT',
+      headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'draft' }),
+    });
+    // On ignore l'erreur du PUT (Brevo peut retourner 400 si déjà en brouillon)
+
     const r = await fetch(`https://api.brevo.com/v3/emailCampaigns/${currentCampaignId}`, {
       method: 'DELETE',
       headers: { 'api-key': BREVO_API_KEY, 'Accept': 'application/json' },
