@@ -6,11 +6,16 @@
 <title>Newsletter — Paroisse La Croix Glorieuse</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-<!-- Clé Brevo et autres secrets locaux (non versionnés) -->
-<script src="config.local.js"></script>
+<!-- Clé Brevo (non versionnée — chargée via config.local.js si présent) -->
+<script>
+// Fallback silencieux si config.local.js est absent (GitHub Pages)
+// La clé peut aussi être injectée ici directement sur le serveur IONOS
+window.BREVO_API_KEY = window.BREVO_API_KEY || '';
+</script>
+<script src="config.local.js" onerror="console.info('config.local.js absent — clé Brevo non chargée')"></script>
 
-<!-- Google Calendar + Ordo API (mêmes que calendrier_semaine.html) -->
-<script src="https://apis.google.com/js/api.js"></script>
+<!-- Ordo 1962 (même lib que calendrier_semaine.html) -->
+<script src="ordo1962.js"></script>
 
 <style>
   * { box-sizing: border-box; }
@@ -262,15 +267,14 @@
 // CONFIG
 // ═══════════════════════════════════════════════════════════════════════
 // ⚠️ Remplace par ta vraie clé Brevo (ne pas committer)
-const BREVO_API_KEY = window.BREVO_API_KEY || '';
-const BREVO_LIST_ID = 3;
-const SUPABASE_URL  = 'https://pmeaimfcwtykhqtueomd.supabase.co';
-const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtZWFpbWZjd3R5a2hxdHVlb21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MzA4MzIsImV4cCI6MjA4MzMwNjgzMn0.X91Usnq8WtZYuY40UFIo7Xl8P1O46LKqe1GvJ7RIWYE';
+const BREVO_API_KEY    = window.BREVO_API_KEY || '';
+const BREVO_LIST_ID    = 3;
+const SUPABASE_URL     = 'https://pmeaimfcwtykhqtueomd.supabase.co';
+const SUPABASE_KEY     = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtZWFpbWZjd3R5a2hxdHVlb21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MzA4MzIsImV4cCI6MjA4MzMwNjgzMn0.X91Usnq8WtZYuY40UFIo7Xl8P1O46LKqe1GvJ7RIWYE';
 
-// Google Calendar (mêmes que calendrier_semaine.html)
-const GCAL_API_KEY     = 'AIzaSyBVYMq13-nSe1uqfME80hhEOUPrxs0JCDI';
-const CALENDAR_ID_MAIN = 'paroisse.saint.louis@gmail.com';
-const CALENDAR_ID_ORDO = 'kujuouu4u6q4bhctavj8pcs3ts@group.calendar.google.com';
+// Google Calendar — mêmes constantes que calendrier_semaine.html
+const GOOGLE_API_KEY   = 'AIzaSyAI5N6lamviexKaPR-WoOP4006m5IClDoQ';
+const CALENDAR_ID      = 'saintlouisenville67@gmail.com';
 
 // ═══════════════════════════════════════════════════════════════════════
 // ÉTAT
@@ -338,34 +342,20 @@ function weekLabel() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// CHARGEMENT GOOGLE CALENDAR
+// CHARGEMENT GOOGLE CALENDAR (fetch direct, comme calendrier_semaine.html)
 // ═══════════════════════════════════════════════════════════════════════
-let gapiReady = false;
-
-function initGapi() {
-  return new Promise(resolve => {
-    gapi.load('client', async () => {
-      await gapi.client.init({ apiKey: GCAL_API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'] });
-      gapiReady = true;
-      resolve();
-    });
-  });
-}
-
-async function fetchGcalEvents(calId, timeMin, timeMax) {
-  if (!gapiReady) await initGapi();
+async function fetchGcalEvents(timeMin, timeMax) {
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`
+    + `?key=${GOOGLE_API_KEY}`
+    + `&timeMin=${timeMin}&timeMax=${timeMax}`
+    + `&singleEvents=true&orderBy=startTime&maxResults=200`;
   try {
-    const r = await gapi.client.calendar.events.list({
-      calendarId: calId,
-      timeMin: timeMin,
-      timeMax: timeMax,
-      singleEvents: true,
-      orderBy: 'startTime',
-      maxResults: 300,
-    });
-    return r.result.items || [];
+    const r = await fetch(url);
+    if (!r.ok) { console.warn('[GCal]', r.status); return []; }
+    const data = await r.json();
+    return data.items || [];
   } catch(e) {
-    console.warn('[GCal]', calId, e);
+    console.warn('[GCal]', e);
     return [];
   }
 }
@@ -388,35 +378,32 @@ function isMesse(summary) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// CHARGEMENT ORDO 1962 depuis ordo1962.com
+// ORDO 1962 — calculé localement via ordo1962.js (même lib que calendrier_semaine.html)
 // ═══════════════════════════════════════════════════════════════════════
-async function fetchOrdo(isoFrom, isoTo) {
-  // Fallback : on retourne un objet vide si l'API est inaccessible
-  const result = {};
-  try {
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(isoFrom);
-      d.setDate(d.getDate() + i);
-      const iso = isoDate(d);
-      result[iso] = { fete: '', couleur: 'Blanc' };
-    }
-  } catch(e) {}
-  return result;
+function getOrdoMap(lundi) {
+  const map = {};
+  if (typeof Ordo1962 === 'undefined') return map;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(lundi); d.setDate(d.getDate() + i);
+    const iso = isoDate(d);
+    map[iso] = Ordo1962.getDay(d.getFullYear(), d.getMonth()+1, d.getDate());
+  }
+  return map;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// CHARGEMENT INTENTIONS (Supabase)
+// CHARGEMENT INTENTIONS (Supabase — même table que calendrier_semaine.html)
 // ═══════════════════════════════════════════════════════════════════════
 async function fetchIntentions(isoFrom, isoTo) {
+  if (typeof maConnexion === 'undefined') return [];
   try {
-    const url = SUPABASE_URL + '/rest/v1/intentions'
-      + '?select=*&date=gte.' + isoFrom + '&date=lte.' + isoTo
-      + '&order=date.asc,heure.asc';
-    const r = await fetch(url, {
-      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer '+SUPABASE_KEY }
-    });
-    if (!r.ok) return [];
-    return await r.json();
+    const { data } = await maConnexion
+      .from('intentions')
+      .select('date_messe,heure_messe,nom_intention,type_intention,google_event_id')
+      .eq('statut','valide')
+      .gte('date_messe', isoFrom)
+      .lte('date_messe', isoTo);
+    return data || [];
   } catch(e) { return []; }
 }
 
@@ -452,36 +439,31 @@ async function chargerSemaine() {
   const tMin = lundi.toISOString();
   const tMax = new Date(dimanche.getTime() + 86400000).toISOString();
 
-  const [evtsMain, evtsOrdo, intentions] = await Promise.all([
-    fetchGcalEvents(CALENDAR_ID_MAIN, tMin, tMax),
-    fetchGcalEvents(CALENDAR_ID_ORDO, tMin, tMax),
+  const [events, intentions] = await Promise.all([
+    fetchGcalEvents(tMin, tMax),
     fetchIntentions(isoMin, isoMax),
   ]);
 
-  // Mapper les événements Ordo → fête du jour
-  evtsOrdo.forEach(ev => {
-    const startDate = ev.start?.date || ev.start?.dateTime?.split('T')[0];
-    if (!startDate) return;
-    const jour = jours.find(j => j.iso === startDate);
-    if (!jour) return;
-    const desc = ev.description || '';
-    // Couleur liturgique dans la description
-    const coulMatch = desc.match(/Couleur\s*:\s*(\w+)/i);
-    if (coulMatch) jour.couleur = coulMatch[1];
-    // Fête du jour
-    if (ev.summary) jour.sousTitre = ev.summary;
+  // Ordo 1962 calculé localement
+  const ordoMap = getOrdoMap(lundi);
+  jours.forEach(j => {
+    const o = ordoMap[j.iso];
+    if (o) {
+      j.sousTitre = o.fete   || '';
+      j.couleur   = o.couleur || 'Blanc';
+    }
   });
 
-  // Regrouper les intentions par date+heure
+  // Map intentions : clé = date_messe+'T'+heure_messe OU google_event_id
   const intentMap = {};
-  intentions.forEach(int => {
-    const key = int.date + 'T' + (int.heure||'00:00');
-    if (!intentMap[key]) intentMap[key] = [];
-    intentMap[key].push(int.nom || int.intention || '');
+  (intentions || []).forEach(i => {
+    const key1 = i.date_messe + 'T' + (i.heure_messe||'').substring(0,5);
+    if (!intentMap[key1]) intentMap[key1] = i;
+    if (i.google_event_id) intentMap['id_'+i.google_event_id] = i;
   });
 
-  // Mapper les événements principaux → horaires
-  evtsMain.forEach(ev => {
+  // Mapper les événements GCal → horaires
+  events.forEach(ev => {
     const startDt = ev.start?.dateTime;
     const startD  = ev.start?.date;
     if (!startDt && !startD) return;
@@ -495,21 +477,21 @@ async function chargerSemaine() {
       return;
     }
 
-    const heure     = formatHeure(startDt);
-    const heureEnd  = ev.end?.dateTime ? formatHeure(ev.end.dateTime) : '';
-    const bold      = isMesse(ev.summary || '');
-    let   label     = ev.summary || '';
+    const heure    = formatHeure(startDt);
+    const heureEnd = ev.end?.dateTime ? formatHeure(ev.end.dateTime) : '';
+    const bold     = isMesse(ev.summary || '');
+    let   label    = ev.summary || '';
 
-    // Ajouter l'intention si présente
-    const key = startDt.substring(0,16); // "2026-11-10T18:30"
-    const ints = intentMap[key];
-    if (ints && ints.length && bold) {
-      label += ' (' + ints.join(', ') + ')';
+    // Intention de messe
+    const key1 = startDt.substring(0,16).replace('T','T');  // "2026-11-10T18:30"
+    const int  = intentMap['id_'+ev.id] || intentMap[key1] || null;
+    if (int && bold) {
+      let nomInt = int.nom_intention || '';
+      if (int.type_intention === 'defunt') nomInt += ' ✝';
+      label += ' (' + nomInt + ')';
     }
 
-    // Plage horaire (ex: "8h–9h")
     const heureAffiche = (heureEnd && !bold) ? heure+'–'+heureEnd : heure;
-
     jour.horaires.push({ heure: heureAffiche, label, labelHtml: escHtml(label), bold });
   });
 
