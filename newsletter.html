@@ -163,8 +163,19 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
   }
   #annonces-resume.visible { display: block; }
   #annonces-resume h3 { margin: 0 0 10px; font-size: 16px; color: #023199; }
-  #annonces-resume ul { margin: 0; padding-left: 20px; }
-  #annonces-resume li { font-size: 14px; color: #444; margin-bottom: 4px; }
+  #annonces-resume ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  #annonces-resume li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 12px; background: #faf8f4;
+    border: 1px solid #E0D3C1; border-radius: 4px;
+    cursor: pointer; font-size: 14px; color: #444;
+  }
+  #annonces-resume li:hover { background: #f3ede3; }
+  #annonces-resume li input[type="checkbox"] {
+    margin-top: 2px; accent-color: #023199;
+    flex-shrink: 0; width: 15px; height: 15px; cursor: pointer;
+  }
+  #annonces-resume li label { cursor: pointer; line-height: 1.4; }
 
   /* ── Toast ── */
   #toast {
@@ -687,9 +698,10 @@ function genEmailHTML() {
   const calendrierHtml = genCalendrierHTML();
 
   // Sections annonces
+  const annoncesActives = annoncesSelectionnees();
   let annoncesSection = '';
-  if (annonces.length > 0) {
-    const annonceItems = annonces.map(genAnnonceHTML).join(
+  if (annoncesActives.length > 0) {
+    const annonceItems = annoncesActives.map(genAnnonceHTML).join(
       `<table cellspacing="0" cellpadding="0" border="0" width="100%" style="table-layout:fixed;width:100%"><tbody><tr><td style="border-top:1px solid #E0D3C1;"></td></tr></tbody></table>`
     );
     annoncesSection = `
@@ -828,10 +840,30 @@ function updateAnnoncesResume() {
   const wrap = document.getElementById('annonces-resume');
   const list = document.getElementById('ann-list');
   document.getElementById('ann-count').textContent = annonces.length;
-  list.innerHTML = annonces.length
-    ? annonces.map(a => `<li>${escHtml(a.titre)}</li>`).join('')
-    : '<li><em>Aucune annonce marquée pour la newsletter</em></li>';
+  if (annonces.length === 0) {
+    list.innerHTML = '<li style="border:none;background:none;padding:4px 0;color:#888;font-style:italic;">Aucune annonce marquée pour la newsletter</li>';
+  } else {
+    list.innerHTML = annonces.map(a => `
+      <li onclick="toggleAnnonce(${a.id}, this)">
+        <input type="checkbox" id="ann-cb-${a.id}" checked onchange="updatePreview()">
+        <label for="ann-cb-${a.id}">${escHtml(a.titre)}</label>
+      </li>`).join('');
+  }
   wrap.classList.toggle('visible', true);
+}
+
+function toggleAnnonce(id, li) {
+  const cb = li.querySelector('input[type="checkbox"]');
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  updatePreview();
+}
+
+function annoncesSelectionnees() {
+  return annonces.filter(a => {
+    const cb = document.getElementById('ann-cb-' + a.id);
+    return cb ? cb.checked : true;
+  });
 }
 
 function updatePreview() {
