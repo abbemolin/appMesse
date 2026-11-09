@@ -1070,7 +1070,7 @@
 
         const btn = document.getElementById('btn-generate');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spin">✦</span> Génération…';
+        btn.querySelector('div > div:last-child > div:first-child').textContent = 'Génération en cours…';
 
         try {
             // Sauvegarder les données du calendrier pour feuille_messe.html
@@ -1089,7 +1089,7 @@
             console.error(err);
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<span class="icon">📄</span> Générer le .docx';
+            btn.querySelector('div > div:last-child > div:first-child').textContent = 'Générer le .docx';
         }
     }
 
