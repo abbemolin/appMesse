@@ -132,10 +132,29 @@
     .feuille-panel-body {
         padding: 0 16px 16px; display: none;
         border-top: 1px solid var(--border);
+        max-height: 55vh; overflow-y: auto; overflow-x: hidden;
     }
     .feuille-panel.ouvert .feuille-panel-body { display: block; }
     .feuille-panel.ouvert .feuille-chevron { transform: rotate(90deg); }
     .feuille-chevron { transition: transform .2s; flex-shrink: 0; }
+
+    /* Bouton flottant d'ouverture */
+    .feuille-toggle-btn {
+        position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+        z-index: 89;
+        display: flex; align-items: center; gap: 7px;
+        padding: 7px 14px 7px 11px;
+        background: var(--rubric); border: none; border-radius: 20px 20px 0 0;
+        color: white; cursor: pointer;
+        font-family: 'Cinzel', serif; font-size: .6rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        box-shadow: 0 -3px 12px rgba(0,0,0,.2);
+        transition: bottom .25s, opacity .2s;
+        white-space: nowrap;
+    }
+    .feuille-toggle-btn:hover { opacity: .88; }
+    .feuille-toggle-chevron { transition: transform .2s; }
+    .feuille-toggle-btn.panel-ouvert .feuille-toggle-chevron { transform: rotate(180deg); }
     .feuille-date-row {
         display: flex; align-items: center; gap: 10px;
         margin: 12px 0; padding: 10px 12px;
@@ -156,8 +175,6 @@
     .feuille-liste {
         margin-bottom: 12px;
         display: flex; flex-direction: column; gap: 6px;
-        max-height: 40vh; overflow-y: auto;
-        overflow-x: hidden;
     }
     .feuille-item {
         display: flex; align-items: flex-start; gap: 10px;
@@ -568,8 +585,15 @@
     <div class="vide-msg"><span class="vide-ico">📋</span>Chargement…</div>
 </div>
 
+<!-- ══ BOUTON D'OUVERTURE FEUILLE DE MESSE ═══════════════════ -->
+<button class="feuille-toggle-btn" id="feuille-toggle-btn" onclick="toggleFeuillePanel()" title="Feuille de Messe">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+    <span id="feuille-toggle-label">Feuille de Messe</span>
+    <svg class="feuille-toggle-chevron" id="feuille-toggle-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
 <!-- ══ CARTE FEUILLE DE MESSE (fixe en bas) ═════════════════ -->
-<div class="feuille-panel ouvert" id="feuille-panel">
+<div class="feuille-panel" id="feuille-panel">
     <div class="feuille-panel-header" onclick="toggleFeuillePanel()">
         <div class="feuille-panel-header-left">
             <div class="feuille-panel-icon">
@@ -1203,18 +1227,24 @@ function prochainDimanche() {
 
 function toggleFeuillePanel() {
     const panel = document.getElementById('feuille-panel');
+    const btn   = document.getElementById('feuille-toggle-btn');
     panel.classList.toggle('ouvert');
+    btn.classList.toggle('panel-ouvert');
     ajusterPaddingListe();
 }
 
 function ajusterPaddingListe() {
     const panel = document.getElementById('feuille-panel');
+    const btn   = document.getElementById('feuille-toggle-btn');
     const liste = document.getElementById('liste-container');
-    // Laisser de la place selon l'état du panel
     setTimeout(() => {
-        const h = panel.offsetHeight;
-        liste.style.paddingBottom = (h + 16) + 'px';
-    }, 220); // après la transition CSS
+        const panelH = panel.offsetHeight;
+        const btnH   = btn.offsetHeight;
+        // Le bouton se positionne juste au-dessus du panneau
+        btn.style.bottom = panelH + 'px';
+        // La liste laisse de la place pour panneau + bouton
+        liste.style.paddingBottom = (panelH + btnH + 8) + 'px';
+    }, 220);
 }
 
 function annoncePourDimanche(a, dateISO) {
@@ -1303,7 +1333,16 @@ function copierFeuille() {
 // ── Init ──────────────────────────────────────────────────────
 document.getElementById('feuille-date').value = prochainDimanche();
 charger();
-ajusterPaddingListe();
+// Positionner le bouton dès le chargement (sans délai de transition)
+(function() {
+    const panel = document.getElementById('feuille-panel');
+    const btn   = document.getElementById('feuille-toggle-btn');
+    const liste = document.getElementById('liste-container');
+    const panelH = panel.offsetHeight;
+    const btnH   = btn.offsetHeight;
+    btn.style.bottom = panelH + 'px';
+    liste.style.paddingBottom = (panelH + btnH + 8) + 'px';
+})();
 </script>
 
 <div id="menu-container"></div>
