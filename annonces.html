@@ -99,6 +99,17 @@
     .sync-btn:active { border-color: var(--gold); color: var(--gold); }
     .sync-btn.spinning span { display: inline-block; animation: spin .7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-copie-feuille {
+        padding: 9px 14px; border: 1px solid var(--gold);
+        border-radius: 3px; background: var(--vellum-light);
+        color: var(--gold); cursor: pointer;
+        display: flex; align-items: center; gap: 6px;
+        font-family: 'Cinzel', serif; font-size: .52rem;
+        letter-spacing: .08em; text-transform: uppercase;
+        transition: all .15s; flex-shrink: 0;
+    }
+    .btn-copie-feuille:hover { background: var(--gold-pale); }
+    .btn-copie-feuille.copie-ok { border-color: var(--green, #4a7c4e); color: var(--green, #4a7c4e); }
     .filtre-wrap { flex: 1; display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
     .filtre-chip {
         padding: 6px 12px; border-radius: 20px;
@@ -462,6 +473,9 @@
         <div class="filtre-chip" data-filtre="prioritaires" onclick="setFiltre('prioritaires',this)">⚑ Prioritaires</div>
         <div class="filtre-chip" data-filtre="inactives" onclick="setFiltre('inactives',this)">Inactives</div>
     </div>
+    <button class="btn-copie-feuille" id="btn-copie-feuille" onclick="copierFeuille(this)" title="Copier les annonces 'Feuille' pour les coller dans Word">
+        <span>🖨</span> Copier feuille
+    </button>
     <button class="sync-btn" id="btn-sync" onclick="charger()">
         <span>↻</span>
     </button>
@@ -1063,6 +1077,46 @@ function toast(msg) {
     el.classList.add('visible');
     clearTimeout(_toastTimer);
     _toastTimer = setTimeout(() => el.classList.remove('visible'), 2500);
+}
+
+// ── Copie feuille ─────────────────────────────────────────────
+function copierFeuille(btn) {
+    // Récupère les annonces dans_feuille=true, actif=true, triées comme Supabase
+    const feuille = (annonces || [])
+        .filter(a => a.dans_feuille && a.actif)
+        .sort((a, b) => (b.prioritaire ? 1 : 0) - (a.prioritaire ? 1 : 0) || (a.ordre || 0) - (b.ordre || 0));
+
+    if (!feuille.length) {
+        toast('Aucune annonce "Feuille" active');
+        return;
+    }
+
+    // Format texte : titre en majuscules + description, séparés par une ligne vide
+    const texte = feuille.map(a => {
+        let bloc = '❖ ' + a.titre.toUpperCase();
+        if (a.description) bloc += '\n' + a.description;
+        return bloc;
+    }).join('\n\n');
+
+    navigator.clipboard.writeText(texte).then(() => {
+        btn.classList.add('copie-ok');
+        btn.innerHTML = '<span>✓</span> Copié !';
+        setTimeout(() => {
+            btn.classList.remove('copie-ok');
+            btn.innerHTML = '<span>🖨</span> Copier feuille';
+        }, 2000);
+        toast('Annonces copiées (' + feuille.length + ')');
+    }).catch(() => {
+        // Fallback : sélection manuelle
+        const ta = document.createElement('textarea');
+        ta.value = texte;
+        ta.style.cssText = 'position:fixed;top:-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('Annonces copiées (' + feuille.length + ')');
+    });
 }
 
 // ── Init ──────────────────────────────────────────────────────
