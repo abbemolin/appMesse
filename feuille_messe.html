@@ -618,16 +618,19 @@ function buildFeuilleMesse() {
     const hp = n => Math.round(n * 2);
     const MARGE = 567;  // ~1 cm
 
-    const BORDURE_NIL = { style: D.BorderStyle.NIL, size: 0, color: 'auto' };
+    // Bordures tableau : même logique que le .dotx de référence
+    // top/left/bottom/right = none blanc, insideH/insideV = none blanc (pas de traits du tout)
+    const BORDURE_NONE_WHITE = { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' };
     const BORDURES_TAB = {
-        top: BORDURE_NIL, bottom: BORDURE_NIL,
-        left: BORDURE_NIL, right: BORDURE_NIL,
-        insideH: BORDURE_NIL, insideV: BORDURE_NIL,
+        top:     BORDURE_NONE_WHITE,
+        bottom:  BORDURE_NONE_WHITE,
+        left:    BORDURE_NONE_WHITE,
+        right:   BORDURE_NONE_WHITE,
+        insideH: BORDURE_NONE_WHITE,
+        insideV: BORDURE_NONE_WHITE,
     };
-    const BORDURES_CELL = {
-        top: BORDURE_NIL, bottom: BORDURE_NIL,
-        left: BORDURE_NIL, right: BORDURE_NIL,
-    };
+    // Les cellules n'ont pas de tcBorders — le tableau gère tout
+    const BORDURES_CELL = undefined;
 
     const CELL_MARGE = { top: 50, bottom: 50, left: 70, right: 70 };
 
@@ -723,7 +726,6 @@ function buildFeuilleMesse() {
         return new D.TableCell({
             width: { size: W_LABEL, type: D.WidthType.PERCENTAGE },
             margins: CELL_MARGE,
-            borders: BORDURES_CELL,
             children: [new D.Paragraph({
                 spacing: { after: 0 },
                 children: [new D.TextRun({ text: text, bold: true, size: hp(8.5), allCaps: true, color: '7A1818', font: 'Garamond' })]
@@ -742,7 +744,6 @@ function buildFeuilleMesse() {
         return new D.TableCell({
             width: { size: width, type: D.WidthType.PERCENTAGE },
             margins: CELL_MARGE,
-            borders: BORDURES_CELL,
             children: [new D.Paragraph({ spacing: { after: 0 }, children: runs })]
         });
     }
@@ -763,7 +764,6 @@ function buildFeuilleMesse() {
                 new D.TableCell({
                     columnSpan: 3,
                     margins: CELL_MARGE,
-                    borders: BORDURES_CELL,
                     children: [new D.Paragraph({
                         spacing: { after: 0 },
                         alignment: opts.alignment || D.AlignmentType.LEFT,
@@ -782,7 +782,6 @@ function buildFeuilleMesse() {
                 new D.TableCell({
                     columnSpan: 2,
                     margins: CELL_MARGE,
-                    borders: BORDURES_CELL,
                     children: [new D.Paragraph({
                         spacing: { after: 0 },
                         children: [new D.TextRun({
@@ -810,7 +809,6 @@ function buildFeuilleMesse() {
                 new D.TableCell({
                     columnSpan: 2,
                     margins: CELL_MARGE,
-                    borders: BORDURES_CELL,
                     children: [new D.Paragraph({ spacing: { after: 0 }, children: runs })]
                 })
             ]
@@ -975,13 +973,11 @@ function buildFeuilleMesse() {
             new D.TableCell({
                 width: { size: W_LABEL, type: D.WidthType.PERCENTAGE },
                 margins: CELL_MARGE,
-                borders: BORDURES_CELL,
                 children: [new D.Paragraph({ spacing: { after: 0 }, children: [] })]
             }),
             new D.TableCell({
                 columnSpan: 2,
                 margins: CELL_MARGE,
-                borders: BORDURES_CELL,
                 children: [new D.Paragraph({
                     spacing: { after: 0 },
                     children: [
@@ -1066,13 +1062,11 @@ function buildFeuilleMesse() {
                     new D.TableCell({
                         width: { size: 1750, type: D.WidthType.PERCENTAGE },
                         margins: CELL_MARGE,
-                        borders: BORDURES_CELL,
                         children: [new D.Paragraph({ spacing: { after: 0 }, children: runsJour })]
                     }),
                     new D.TableCell({
                         width: { size: 3250, type: D.WidthType.PERCENTAGE },
                         margins: CELL_MARGE,
-                        borders: BORDURES_CELL,
                         children: [new D.Paragraph({ spacing: { after: 0 }, children: runsEvts.length ? runsEvts : [new D.TextRun({ text: '', font: 'Garamond' })] })]
                     }),
                 ]
