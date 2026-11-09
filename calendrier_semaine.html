@@ -1062,6 +1062,13 @@
         btn.innerHTML = '<span class="spin">✦</span> Génération…';
 
         try {
+            // Sauvegarder les données du calendrier pour feuille_messe.html
+            try {
+                const lundiIso = semaineData[0]?.iso || '';
+                localStorage.setItem('feuille_calendrier_data',  JSON.stringify(semaineData));
+                localStorage.setItem('feuille_calendrier_lundi', lundiIso);
+            } catch(e) { /* localStorage indisponible */ }
+
             const doc  = buildDocxDoc();
             const blob = await window.docx.Packer.toBlob(doc);
             telecharger(blob, nomFichier('docx'));
