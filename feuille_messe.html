@@ -251,18 +251,28 @@
         </div>
     </div>
 
-    <!-- ── Chant d'entrée + Asperges me ─────────────────────── -->
+    <!-- ── Chants ────────────────────────────────────────────── -->
+    <style>
+        .chant-label { font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px; }
+        .chant-input { width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink); }
+        .chant-row   { display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px; }
+        .chant-row:last-child { margin-bottom:0; }
+        .chant-col   { flex:1;min-width:200px; }
+        .chant-col-auto { flex:0 0 auto;min-width:180px; }
+    </style>
+
     <div class="feuille-wrap">
-        <span class="section-label">Chant d'entrée</span>
-        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
-            <div style="flex:1;min-width:200px;">
-                <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Cantique d'entrée (titre + nº)</label>
-                <input type="text" id="chant-entree" placeholder="ex : En marchant vers toi, Seigneur p. 806"
-                    style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
+        <span class="section-label">Chants &amp; ordinaire</span>
+
+        <!-- Chant d'entrée + Asperges -->
+        <div class="chant-row">
+            <div class="chant-col">
+                <label class="chant-label">Chant d'entrée (titre + nº)</label>
+                <input type="text" id="chant-entree" class="chant-input" placeholder="ex : En marchant vers toi, Seigneur p. 806">
             </div>
-            <div style="flex:0 0 auto;min-width:180px;">
-                <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Asperges me</label>
-                <select id="asperges-ref" style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
+            <div class="chant-col-auto">
+                <label class="chant-label">Asperges me</label>
+                <select id="asperges-ref" class="chant-input">
                     <option value="">— aucun —</option>
                     <option value="Asperges me I p. 39">Asperges me I p. 39</option>
                     <option value="Asperges me II p. 39">Asperges me II p. 39</option>
@@ -271,15 +281,12 @@
                 </select>
             </div>
         </div>
-    </div>
 
-    <!-- ── Messe (Kyrie/Sanctus/Agnus) ───────────────────────── -->
-    <div class="feuille-wrap">
-        <span class="section-label">Ordinaire de la Messe</span>
-        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
-            <div style="flex:1;min-width:180px;">
-                <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Kyriale (Kyrie · Sanctus · Agnus)</label>
-                <select id="messe-ref" style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
+        <!-- Kyriale + Credo -->
+        <div class="chant-row">
+            <div class="chant-col">
+                <label class="chant-label">Kyriale (Kyrie · Sanctus · Agnus)</label>
+                <select id="messe-ref" class="chant-input">
                     <option value="">— choisir —</option>
                     <option value="I">Kyriale I p. 41</option>
                     <option value="II">Kyriale II p. 43</option>
@@ -292,9 +299,9 @@
                     <option value="XVII">Kyriale XVII p. 57</option>
                 </select>
             </div>
-            <div style="flex:0 0 auto;min-width:160px;">
-                <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Credo</label>
-                <select id="credo-ref" style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
+            <div class="chant-col-auto">
+                <label class="chant-label">Credo</label>
+                <select id="credo-ref" class="chant-input">
                     <option value="">— aucun —</option>
                     <option value="I">Credo I p. 60</option>
                     <option value="III">Credo III p. 61</option>
@@ -302,6 +309,39 @@
                 </select>
             </div>
         </div>
+
+        <!-- Chant d'Offertoire -->
+        <div class="chant-row">
+            <div class="chant-col">
+                <label class="chant-label">Chant d'Offertoire (titre + nº)</label>
+                <input type="text" id="chant-offertoire" class="chant-input" placeholder="ex : À toi la gloire p. 512">
+            </div>
+        </div>
+
+        <!-- Chant de Communion -->
+        <div class="chant-row">
+            <div class="chant-col">
+                <label class="chant-label">Chant de Communion (titre + nº)</label>
+                <input type="text" id="chant-communion" class="chant-input" placeholder="ex : Seigneur, je ne suis pas digne p. 403">
+            </div>
+        </div>
+
+        <!-- Antienne à la Vierge -->
+        <div class="chant-row">
+            <div class="chant-col">
+                <label class="chant-label">Antienne à la Vierge (titre + nº)</label>
+                <input type="text" id="chant-antienne" class="chant-input" placeholder="ex : Salve Regina p. 1002">
+            </div>
+        </div>
+
+        <!-- Chant de sortie -->
+        <div class="chant-row">
+            <div class="chant-col">
+                <label class="chant-label">Chant de sortie (titre + nº)</label>
+                <input type="text" id="chant-sortie" class="chant-input" placeholder="ex : Allez, la Messe est dite p. 820">
+            </div>
+        </div>
+
     </div>
 
     <!-- ── Annonces Supabase ─────────────────────────────────── -->
@@ -778,10 +818,14 @@ function buildFeuilleMesse() {
     const PAGES_CREDO = { 'I': 60, 'III': 61, 'IV': 63 };
 
     // ── Lecture des champs UI ─────────────────────────────────
-    const chantsEntreeVal = (document.getElementById('chant-entree') || {}).value || '';
-    const aspergesVal     = (document.getElementById('asperges-ref') || {}).value || '';
-    const messeNum        = (document.getElementById('messe-ref') || {}).value || '';
-    const credoNum        = (document.getElementById('credo-ref') || {}).value || '';
+    const chantsEntreeVal    = (document.getElementById('chant-entree')    || {}).value || '';
+    const aspergesVal        = (document.getElementById('asperges-ref')    || {}).value || '';
+    const messeNum           = (document.getElementById('messe-ref')       || {}).value || '';
+    const credoNum           = (document.getElementById('credo-ref')       || {}).value || '';
+    const chantsOffertoire   = (document.getElementById('chant-offertoire')|| {}).value || '';
+    const chantsCommunion    = (document.getElementById('chant-communion') || {}).value || '';
+    const chantsAntienne     = (document.getElementById('chant-antienne')  || {}).value || '';
+    const chantsSortie       = (document.getElementById('chant-sortie')    || {}).value || '';
 
     // Pré-sélection automatique messe depuis le propre (ex: "Kyrie XI" → "XI")
     // On fait ça après avoir lu le propre; on stocke dans une variable mutable
@@ -886,6 +930,16 @@ function buildFeuilleMesse() {
                     cellTexte(frCorps, W_FR, { italics: true }),
                 ]
             }));
+
+            // Chant d'Offertoire → inséré après la pièce Offertorium
+            if (cano === 'Offertorium' && chantsOffertoire) {
+                propre_rows.push(rowFullWidth(chantsOffertoire, { bold: true }));
+            }
+
+            // Chant de Communion → inséré après la pièce Communio
+            if (cano === 'Communio' && chantsCommunion) {
+                propre_rows.push(rowFullWidth(chantsCommunion, { bold: true }));
+            }
         });
 
         // ── Sanctus + Agnus : toujours affichés avec le numéro de messe ──
@@ -935,8 +989,12 @@ function buildFeuilleMesse() {
         ]
     }));
 
-    // Ligne chants finaux (Salve Regina, etc.)
-    propre_rows.push(rowFullWidth('Salve Regina p. 1002', { bold: true }));
+    // Antienne à la Vierge (par défaut : Salve Regina) + Chant de sortie
+    const antiValeur = chantsAntienne || 'Salve Regina p. 1002';
+    propre_rows.push(rowFullWidth(antiValeur, { bold: true }));
+    if (chantsSortie) {
+        propre_rows.push(rowFullWidth(chantsSortie, { bold: true }));
+    }
 
     const tableauPropre = new D.Table({
         width: { size: 100, type: D.WidthType.PERCENTAGE },
