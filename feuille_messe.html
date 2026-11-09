@@ -251,7 +251,7 @@
         </div>
     </div>
 
-    <!-- ── Chant d'entrée + Asperges me (saisie manuelle) ───── -->
+    <!-- ── Chant d'entrée + Asperges me ─────────────────────── -->
     <div class="feuille-wrap">
         <span class="section-label">Chant d'entrée</span>
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
@@ -260,10 +260,46 @@
                 <input type="text" id="chant-entree" placeholder="ex : En marchant vers toi, Seigneur p. 806"
                     style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
             </div>
-            <div style="flex:0 0 auto;min-width:160px;">
+            <div style="flex:0 0 auto;min-width:180px;">
                 <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Asperges me</label>
-                <input type="text" id="asperges-ref" placeholder="ex : Asperges me III p. 40"
-                    style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
+                <select id="asperges-ref" style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
+                    <option value="">— aucun —</option>
+                    <option value="Asperges me I p. 39">Asperges me I p. 39</option>
+                    <option value="Asperges me II p. 39">Asperges me II p. 39</option>
+                    <option value="Asperges me III p. 40">Asperges me III p. 40</option>
+                    <option value="Vidi Aquam p. 40">Vidi Aquam p. 40</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Messe (Kyrie/Sanctus/Agnus) ───────────────────────── -->
+    <div class="feuille-wrap">
+        <span class="section-label">Ordinaire de la Messe</span>
+        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+            <div style="flex:1;min-width:180px;">
+                <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Messe (Kyrie · Sanctus · Agnus)</label>
+                <select id="messe-ref" style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
+                    <option value="">— choisir —</option>
+                    <option value="I">Messe I p. 41</option>
+                    <option value="II">Messe II p. 43</option>
+                    <option value="IV">Messe IV p. 45</option>
+                    <option value="VIII">Messe VIII p. 47</option>
+                    <option value="IX">Messe IX p. 49</option>
+                    <option value="X">Messe X p. 51</option>
+                    <option value="XI">Messe XI p. 53</option>
+                    <option value="XII">Messe XII p. 55</option>
+                    <option value="XVII">Messe XVII p. 57</option>
+                </select>
+            </div>
+            <div style="flex:0 0 auto;min-width:160px;">
+                <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Credo</label>
+                <select id="credo-ref" style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
+                    <option value="">— aucun —</option>
+                    <option value="I">Credo I p. 60</option>
+                    <option value="III">Credo III p. 61</option>
+                    <option value="IV">Credo IV p. 63</option>
+                </select>
             </div>
         </div>
     </div>
@@ -408,9 +444,40 @@ async function chargerPropre(y, m, d) {
         const rep = await fetch(url);
         if (rep.ok) {
             properData = await rep.json();
+            preselecterMesse();
         }
     } catch(e) {
         console.warn('Propre non disponible:', e);
+    }
+}
+
+// ── Pré-sélection automatique du numéro de messe ─────────────
+// Si le propre contient "Kyrie XI", on sélectionne "XI" dans le <select>
+// (seulement si l'utilisateur n'a pas déjà fait un choix)
+const NUMS_ROMAINS = ['XVII','XVI','XV','XIV','XIII','XII','XI','X','IX','VIII','VII','VI','IV','III','II','I'];
+function preselecterMesse() {
+    const sel = document.getElementById('messe-ref');
+    if (!sel || sel.value) return; // déjà un choix → ne pas écraser
+    if (!properData || !properData.messes) return;
+    const messe = properData.messes[properData.principal || 0];
+    if (!messe) return;
+    for (const ligneArr of (messe.lignes || [])) {
+        const html = ligneArr[0] || '';
+        if (!html.includes('do-titre')) continue;
+        // Chercher "Kyrie" dans le titre
+        const m = html.match(/do-titre[^>]*><b><i>\s*Kyrie\s*<\/i>/);
+        if (!m) continue;
+        // Chercher le numéro romain dans le texte latin brut
+        const txt = html.replace(/<[^>]+>/g, '').replace(/&[a-z]+;/g, ' ');
+        for (const num of NUMS_ROMAINS) {
+            if (new RegExp('\\bKyrie\\s+' + num + '\\b', 'i').test(txt)) {
+                // Vérifier que l'option existe dans le select
+                for (const opt of sel.options) {
+                    if (opt.value === num) { sel.value = num; return; }
+                }
+            }
+        }
+        break; // Kyrie trouvé mais sans numéro reconnu
     }
 }
 
@@ -547,7 +614,8 @@ function buildFeuilleMesse() {
         'Oratio super populum': 'Or. sur le peuple',
     };
 
-    const PIECES_REFERENCE = new Set(['Gloria', 'Kyrie', 'Credo']);
+    // Kyrie, Gloria, Credo sont gérés individuellement plus bas (avec numéros de page)
+    const PIECES_REFERENCE = new Set([]); // plus utilisé directement
     const PIECE_PREFATIO = 'Prefatio';
 
     function htmlToText(html) {
@@ -702,9 +770,22 @@ function buildFeuilleMesse() {
         });
     }
 
-    // ── Lecture du chant d'entrée depuis l'UI ─────────────────
+    // ── Table numéros de page du livret ──────────────────────
+    const PAGES_MESSE = {
+        'I': 41, 'II': 43, 'IV': 45, 'VIII': 47,
+        'IX': 49, 'X': 51, 'XI': 53, 'XII': 55, 'XVII': 57,
+    };
+    const PAGES_CREDO = { 'I': 60, 'III': 61, 'IV': 63 };
+
+    // ── Lecture des champs UI ─────────────────────────────────
     const chantsEntreeVal = (document.getElementById('chant-entree') || {}).value || '';
     const aspergesVal     = (document.getElementById('asperges-ref') || {}).value || '';
+    const messeNum        = (document.getElementById('messe-ref') || {}).value || '';
+    const credoNum        = (document.getElementById('credo-ref') || {}).value || '';
+
+    // Pré-sélection automatique messe depuis le propre (ex: "Kyrie XI" → "XI")
+    // On fait ça après avoir lu le propre; on stocke dans une variable mutable
+    let messeNumEffectif = messeNum;
 
     // ── Construction des lignes du propre ─────────────────────
     const propre_rows = [];
@@ -729,6 +810,29 @@ function buildFeuilleMesse() {
         const messe  = properData.messes[properData.principal || 0];
         const lignes = messe.lignes || [];
 
+        // ── Pré-scan pour détecter le numéro de messe dans le propre ──
+        // Ex: Kyrie contient "Kyrie XI" → on déduit "XI" si l'UI est vide
+        if (!messeNumEffectif) {
+            for (var _i = 0; _i < lignes.length; _i++) {
+                var _cano = nomCano(lignes[_i][0] || '');
+                if (_cano === 'Kyrie') {
+                    var _latinTx = htmlToText(lignes[_i][0] || '');
+                    // Cherche un numéro romain ou chiffre après "Kyrie"
+                    var _m = _latinTx.match(/Kyrie\s+(XVII|XVI|XV|XIV|XIII|XII|XI|X|IX|VIII|VII|VI|IV|III|II|I)\b/i);
+                    if (_m) messeNumEffectif = _m[1].toUpperCase();
+                    break;
+                }
+            }
+        }
+
+        // Référence messe calculée
+        const messeRef = messeNumEffectif
+            ? ('Messe ' + messeNumEffectif + ' p. ' + (PAGES_MESSE[messeNumEffectif] || '?'))
+            : '';
+        const credoRef = credoNum
+            ? ('Credo ' + credoNum + ' p. ' + (PAGES_CREDO[credoNum] || '?'))
+            : '';
+
         lignes.forEach(function(ligneArr) {
             const latinHtml = ligneArr[0] || '';
             const frHtml    = ligneArr[1] || '';
@@ -739,10 +843,24 @@ function buildFeuilleMesse() {
             const latinTx = htmlToText(latinHtml);
             const frTx    = htmlToText(frHtml);
 
-            // ── Gloria, Kyrie, Credo : référence seule
-            if (PIECES_REFERENCE.has(cano)) {
-                const ref = latinTx.replace(new RegExp('^\\s*' + cano + '\\b\\s*', 'i'), '').trim();
-                propre_rows.push(rowReference(cano, ref || cano));
+            // ── Kyrie : référence avec numéro de messe
+            if (cano === 'Kyrie') {
+                propre_rows.push(rowReference('Kyrie', messeRef || 'Kyrie'));
+                return;
+            }
+
+            // ── Gloria : référence avec numéro de messe (seulement si présent dans le propre)
+            if (cano === 'Gloria') {
+                propre_rows.push(rowReference('Gloria', messeRef || 'Gloria'));
+                return;
+            }
+
+            // ── Credo : référence avec numéro choisi dans l'UI
+            if (cano === 'Credo') {
+                if (credoRef) {
+                    propre_rows.push(rowReference('Credo', credoRef));
+                }
+                // Si aucun Credo sélectionné, on ne l'affiche pas
                 return;
             }
 
@@ -769,6 +887,13 @@ function buildFeuilleMesse() {
                 ]
             }));
         });
+
+        // ── Sanctus + Agnus : toujours affichés avec le numéro de messe ──
+        if (messeRef) {
+            propre_rows.push(rowReference('Sanctus', messeRef));
+            propre_rows.push(rowReference('Agnus Dei', messeRef));
+        }
+
     } else {
         propre_rows.push(new D.TableRow({
             children: [
