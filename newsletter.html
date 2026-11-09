@@ -547,14 +547,17 @@ async function chargerSemaine() {
 // CHARGEMENT ANNONCES
 // ═══════════════════════════════════════════════════════════════════════
 async function chargerAnnonces() {
-  const today = new Date().toISOString().split('T')[0];
+  // Utiliser le dimanche de la semaine sélectionnée pour le filtre de dates
+  const lundi    = dateDebut();
+  const dimanche = new Date(lundi); dimanche.setDate(dimanche.getDate() + 6);
+  const dimancheISO = isoDate(dimanche);
   try {
     const url = SUPABASE_URL + '/rest/v1/annonces'
       + '?select=*'
       + '&actif=eq.true'
       + '&dans_newsletter=eq.true'
-      + '&or=(date_debut.is.null,date_debut.lte.' + today + ')'
-      + '&or=(date_fin.is.null,date_fin.gte.' + today + ')'
+      + '&or=(date_debut.is.null,date_debut.lte.' + dimancheISO + ')'
+      + '&or=(date_fin.is.null,date_fin.gte.' + dimancheISO + ')'
       + '&order=prioritaire.desc,ordre.asc,created_at.desc';
     const r = await fetch(url, {
       headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer '+SUPABASE_KEY }
