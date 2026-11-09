@@ -618,19 +618,9 @@ function buildFeuilleMesse() {
     const hp = n => Math.round(n * 2);
     const MARGE = 567;  // ~1 cm
 
-    // Bordures tableau : même logique que le .dotx de référence
-    // top/left/bottom/right = none blanc, insideH/insideV = none blanc (pas de traits du tout)
-    const BORDURE_NONE_WHITE = { style: D.BorderStyle.NONE, size: 0, color: 'FFFFFF' };
-    const BORDURES_TAB = {
-        top:     BORDURE_NONE_WHITE,
-        bottom:  BORDURE_NONE_WHITE,
-        left:    BORDURE_NONE_WHITE,
-        right:   BORDURE_NONE_WHITE,
-        insideH: BORDURE_NONE_WHITE,
-        insideV: BORDURE_NONE_WHITE,
-    };
-    // Les cellules n'ont pas de tcBorders — le tableau gère tout
-    const BORDURES_CELL = undefined;
+    // Pas de tblBorders du tout — le .dotx de référence n'a aucun élément <tblBorders>
+    // sur le tableau propre. Passer borders:{} génère quand même un tblBorders, donc on
+    // omet complètement la propriété.
 
     const CELL_MARGE = { top: 50, bottom: 50, left: 70, right: 70 };
 
@@ -999,7 +989,6 @@ function buildFeuilleMesse() {
 
     const tableauPropre = new D.Table({
         width: { size: 100, type: D.WidthType.PERCENTAGE },
-        borders: BORDURES_TAB,
         rows: propre_rows,
     });
 
@@ -1080,7 +1069,7 @@ function buildFeuilleMesse() {
     );
 
     const tableauCal = cal_rows.length > 0
-        ? new D.Table({ width: { size: 100, type: D.WidthType.PERCENTAGE }, borders: BORDURES_TAB, rows: cal_rows })
+        ? new D.Table({ width: { size: 100, type: D.WidthType.PERCENTAGE }, rows: cal_rows })
         : null;
 
     // ═══════════════════════════════════════════════════════════
