@@ -619,12 +619,12 @@ function buildFeuilleMesse() {
     const MARGE = 567;  // ~1 cm
 
     const BORDURES_TAB = {
-        top:     { style: D.BorderStyle.SINGLE, size: 4, color: 'CCBFAA' },
-        bottom:  { style: D.BorderStyle.SINGLE, size: 4, color: 'CCBFAA' },
-        left:    { style: D.BorderStyle.SINGLE, size: 4, color: 'CCBFAA' },
-        right:   { style: D.BorderStyle.SINGLE, size: 4, color: 'CCBFAA' },
-        insideH: { style: D.BorderStyle.SINGLE, size: 4, color: 'CCBFAA' },
-        insideV: { style: D.BorderStyle.SINGLE, size: 4, color: 'CCBFAA' },
+        top:     { style: D.BorderStyle.NONE, size: 0, color: 'auto' },
+        bottom:  { style: D.BorderStyle.NONE, size: 0, color: 'auto' },
+        left:    { style: D.BorderStyle.NONE, size: 0, color: 'auto' },
+        right:   { style: D.BorderStyle.NONE, size: 0, color: 'auto' },
+        insideH: { style: D.BorderStyle.NONE, size: 0, color: 'auto' },
+        insideV: { style: D.BorderStyle.NONE, size: 0, color: 'auto' },
     };
 
     const CELL_MARGE = { top: 50, bottom: 50, left: 70, right: 70 };
@@ -833,16 +833,6 @@ function buildFeuilleMesse() {
 
     // ── Construction des lignes du propre ─────────────────────
     const propre_rows = [];
-
-    // En-tête colonnes
-    propre_rows.push(new D.TableRow({
-        tableHeader: true,
-        children: [
-            cellEnTete('', W_LABEL),
-            cellEnTete('Latin', W_LAT),
-            cellEnTete('Français', W_FR),
-        ]
-    }));
 
     // Ligne chant d'entrée (séparée)
     if (chantsEntreeVal) {
