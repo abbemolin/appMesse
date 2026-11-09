@@ -120,7 +120,11 @@
         width: 36px; height: 36px; flex-shrink: 0;
         background: var(--rubric); border-radius: 2px;
         display: flex; align-items: center; justify-content: center;
+        border: none; cursor: pointer; padding: 0;
+        transition: opacity .15s;
     }
+    .feuille-panel-icon:hover { opacity: .82; }
+    .feuille-panel-icon.ok { background: var(--green, #4a7c4e); }
     .feuille-panel-titre {
         font-family: 'Cinzel', serif; font-size: .7rem;
         letter-spacing: .12em; text-transform: uppercase;
@@ -596,17 +600,17 @@
 
 <!-- ══ CARTE FEUILLE DE MESSE (fixe en bas) ═════════════════ -->
 <div class="feuille-panel" id="feuille-panel">
-    <div class="feuille-panel-header" onclick="toggleFeuillePanel()">
+    <div class="feuille-panel-header">
         <div class="feuille-panel-header-left">
-            <div class="feuille-panel-icon">
+            <button class="feuille-panel-icon" id="feuille-icon-copier" onclick="copierFeuille()" title="Copier les annonces sélectionnées">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="11" y2="9"/></svg>
-            </div>
-            <div>
+            </button>
+            <div onclick="toggleFeuillePanel()" style="flex:1;cursor:pointer;">
                 <div class="feuille-panel-titre">Feuille de Messe</div>
                 <div class="feuille-panel-sous" id="feuille-panel-sous">Copier les annonces pour le dimanche</div>
             </div>
         </div>
-        <svg class="feuille-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg class="feuille-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2" onclick="toggleFeuillePanel()" style="cursor:pointer;"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
     <div class="feuille-panel-body">
         <div class="feuille-date-row">
@@ -1312,14 +1316,18 @@ function copierFeuille() {
         return bloc;
     }).join('\n\n');
 
-    const btn = document.getElementById('feuille-btn-copier');
+    const btn     = document.getElementById('feuille-btn-copier');
+    const icone   = document.getElementById('feuille-icon-copier');
     const ecrire = () => {
-        btn.classList.add('ok');
-        btn.textContent = '✓ Copié !';
+        // Retour visuel sur l'icône rouge dans le header
+        icone.classList.add('ok');
+        icone.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+        if (btn) { btn.classList.add('ok'); btn.textContent = '✓ Copié !'; }
         toast('Annonces copiées (' + selection.length + ')');
         setTimeout(() => {
-            btn.classList.remove('ok');
-            btn.textContent = '🖨 Copier les annonces sélectionnées';
+            icone.classList.remove('ok');
+            icone.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="8" y1="9" x2="11" y2="9"/></svg>';
+            if (btn) { btn.classList.remove('ok'); btn.textContent = '🖨 Copier les annonces sélectionnées'; }
         }, 2000);
     };
 
