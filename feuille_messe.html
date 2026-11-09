@@ -278,18 +278,18 @@
         <span class="section-label">Ordinaire de la Messe</span>
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:1;min-width:180px;">
-                <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Messe (Kyrie · Sanctus · Agnus)</label>
+                <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Kyriale (Kyrie · Sanctus · Agnus)</label>
                 <select id="messe-ref" style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
                     <option value="">— choisir —</option>
-                    <option value="I">Messe I p. 41</option>
-                    <option value="II">Messe II p. 43</option>
-                    <option value="IV">Messe IV p. 45</option>
-                    <option value="VIII">Messe VIII p. 47</option>
-                    <option value="IX">Messe IX p. 49</option>
-                    <option value="X">Messe X p. 51</option>
-                    <option value="XI">Messe XI p. 53</option>
-                    <option value="XII">Messe XII p. 55</option>
-                    <option value="XVII">Messe XVII p. 57</option>
+                    <option value="I">Kyriale I p. 41</option>
+                    <option value="II">Kyriale II p. 43</option>
+                    <option value="IV">Kyriale IV p. 45</option>
+                    <option value="VIII">Kyriale VIII p. 47</option>
+                    <option value="IX">Kyriale IX p. 49</option>
+                    <option value="X">Kyriale X p. 51</option>
+                    <option value="XI">Kyriale XI p. 53</option>
+                    <option value="XII">Kyriale XII p. 55</option>
+                    <option value="XVII">Kyriale XVII p. 57</option>
                 </select>
             </div>
             <div style="flex:0 0 auto;min-width:160px;">
@@ -827,7 +827,7 @@ function buildFeuilleMesse() {
 
         // Référence messe calculée
         const messeRef = messeNumEffectif
-            ? ('Messe ' + messeNumEffectif + ' p. ' + (PAGES_MESSE[messeNumEffectif] || '?'))
+            ? ('Kyriale ' + messeNumEffectif + ' p. ' + (PAGES_MESSE[messeNumEffectif] || '?'))
             : '';
         const credoRef = credoNum
             ? ('Credo ' + credoNum + ' p. ' + (PAGES_CREDO[credoNum] || '?'))
