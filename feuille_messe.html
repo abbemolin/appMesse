@@ -808,12 +808,12 @@ function buildFeuilleMesse() {
     };
     const PAGES_CREDO = { 'I': 60, 'III': 61, 'IV': 63 };
 
-    // ── Pièces du propre à afficher (dans l’ordre liturgique) ───
+    // ── Pièces du propre à afficher (dans l'ordre liturgique) ───
     // Uniquement : Introït, Collecte, Graduel, Alléluia/Trait,
     //              Offertoire, Secrète, Préface, Communion, Postcommunion
     const PIECES_PROPRE = new Set([
-        ‘Introitus’, ‘Oratio’, ‘Graduale’, ‘Alleluia’, ‘Tractus’,
-        ‘Offertorium’, ‘Secreta’, ‘Prefatio’, ‘Communio’, ‘Postcommunio’
+        'Introitus', 'Oratio', 'Graduale', 'Alleluia', 'Tractus',
+        'Offertorium', 'Secreta', 'Prefatio', 'Communio', 'Postcommunio'
     ]);
 
     // ── Construction des lignes du propre ─────────────────────
@@ -824,8 +824,8 @@ function buildFeuilleMesse() {
         const lignes = messe.lignes || [];
 
         lignes.forEach(function(ligneArr) {
-            const latinHtml = ligneArr[0] || ‘’;
-            const frHtml    = ligneArr[1] || ‘’;
+            const latinHtml = ligneArr[0] || '';
+            const frHtml    = ligneArr[1] || '';
             const cano      = nomCano(latinHtml);
 
             if (!cano || !PIECES_PROPRE.has(cano)) return;
@@ -835,15 +835,15 @@ function buildFeuilleMesse() {
 
             // ── Préface : texte plein FR, sur toute la largeur
             if (cano === PIECE_PREFATIO) {
-                const frCorps = frTx.replace(/^Pref[aá]tio\s*/i, ‘’).trim();
+                const frCorps = frTx.replace(/^Pref[aá]tio\s*/i, '').trim();
                 propre_rows.push(rowPrefatio(frCorps));
                 return;
             }
 
             // ── Pièces normales : Label | Latin | Français
             const labelFr = LIBELLES_FR[cano] || cano;
-            const latinCorps = latinTx.replace(new RegExp(‘^\\s*’ + cano + ‘\\b\\s*’, ‘i’), ‘’).trim();
-            const frCorps    = frTx.replace(new RegExp(‘^\\s*’ + (LIBELLES_FR[cano] || cano) + ‘\\b\\s*’, ‘i’), ‘’).trim();
+            const latinCorps = latinTx.replace(new RegExp('^\\s*' + cano + '\\b\\s*', 'i'), '').trim();
+            const frCorps    = frTx.replace(new RegExp('^\\s*' + (LIBELLES_FR[cano] || cano) + '\\b\\s*', 'i'), '').trim();
 
             if (!latinCorps && !frCorps) return;
 
@@ -864,7 +864,7 @@ function buildFeuilleMesse() {
                     margins: CELL_MARGE,
                     children: [new D.Paragraph({
                         spacing: { after: 0 },
-                        children: [new D.TextRun({ text: ‘Propre non disponible pour cette date.’, italics: true, size: hp(9.5), color: ‘888888’, font: ‘Garamond’ })]
+                        children: [new D.TextRun({ text: 'Propre non disponible pour cette date.', italics: true, size: hp(9.5), color: '888888', font: 'Garamond' })]
                     })]
                 })
             ]
