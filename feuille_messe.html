@@ -996,8 +996,8 @@ function buildFeuilleMesse() {
     // C) ANNONCES
     // ═══════════════════════════════════════════════════════════
     const annonces_paras = [
-        para([run('Annonces', { bold: true, size: hp(12), allCaps: true })],
-             { spacing: { before: 180, after: 80 } }),
+        para([run('ANNONCES', { bold: true, size: hp(12) })],
+             { alignment: D.AlignmentType.CENTER, spacing: { before: 180, after: 80 } }),
     ];
 
     if (annoncesData.length === 0) {
@@ -1007,7 +1007,7 @@ function buildFeuilleMesse() {
         annoncesData.forEach(function(a) {
             if (a.titre) {
                 annonces_paras.push(para(
-                    [run(a.titre, { bold: true, size: hp(10) })],
+                    [run('❖ ' + a.titre, { bold: true, size: hp(10) })],
                     { spacing: { before: 80, after: 20 } }
                 ));
             }
@@ -1031,41 +1031,80 @@ function buildFeuilleMesse() {
 
     if (calData && calData.length > 0) {
         calData.forEach(function(jour) {
+            // Ligne jour : pleine largeur, gras 14pt
             const runsJour = [];
-            runsJour.push(new D.TextRun({ text: jour.dateFr || '', bold: true, size: hp(9.5), font: 'Garamond' }));
+            runsJour.push(new D.TextRun({ text: jour.dateFr || '', bold: true, size: hp(14), font: 'Garamond' }));
             if (jour.sousTitre) {
-                runsJour.push(new D.TextRun({ text: ' — ' + jour.sousTitre, italics: true, size: hp(9), font: 'Garamond' }));
+                runsJour.push(new D.TextRun({ text: ' — ' + jour.sousTitre, italics: true, size: hp(11), font: 'Garamond' }));
             }
-
-            const horaires = jour.horaires || [];
-            const runsEvts = [];
-            horaires.forEach(function(h, i) {
-                const texte = h.heure ? (h.heure + '  ' + h.label) : h.label;
-                const opts = { text: texte, size: hp(9.5), font: 'Garamond', bold: h.bold || false };
-                if (i > 0) opts.break = 1;
-                runsEvts.push(new D.TextRun(opts));
-            });
-
             cal_rows.push(new D.TableRow({
                 children: [
                     new D.TableCell({
-                        width: { size: 1750, type: D.WidthType.PERCENTAGE },
-                        margins: CELL_MARGE,
+                        columnSpan: 2,
+                        margins: { top: 50, bottom: 0, left: 80, right: 80 },
                         children: [new D.Paragraph({ spacing: { after: 0 }, children: runsJour })]
-                    }),
-                    new D.TableCell({
-                        width: { size: 3250, type: D.WidthType.PERCENTAGE },
-                        margins: CELL_MARGE,
-                        children: [new D.Paragraph({ spacing: { after: 0 }, children: runsEvts.length ? runsEvts : [new D.TextRun({ text: '', font: 'Garamond' })] })]
-                    }),
+                    })
                 ]
             }));
+
+            // Lignes horaires : col1 = heure (étroite), col2 = événement
+            const horaires = jour.horaires || [];
+            if (horaires.length === 0) {
+                cal_rows.push(new D.TableRow({
+                    children: [
+                        new D.TableCell({
+                            width: { size: 1500, type: D.WidthType.DXA },
+                            margins: { top: 0, bottom: 50, left: 80, right: 40 },
+                            children: [new D.Paragraph({ spacing: { after: 0 }, children: [] })]
+                        }),
+                        new D.TableCell({
+                            margins: { top: 0, bottom: 50, left: 40, right: 80 },
+                            children: [new D.Paragraph({
+                                spacing: { after: 0 },
+                                children: [new D.TextRun({ text: 'Pas de Messe', italics: true, size: hp(9.5), font: 'Garamond' })]
+                            })]
+                        })
+                    ]
+                }));
+            } else {
+                horaires.forEach(function(h) {
+                    cal_rows.push(new D.TableRow({
+                        children: [
+                            new D.TableCell({
+                                width: { size: 1500, type: D.WidthType.DXA },
+                                margins: { top: 0, bottom: 0, left: 80, right: 40 },
+                                children: [new D.Paragraph({
+                                    spacing: { after: 0 },
+                                    children: [new D.TextRun({ text: h.heure || '', size: hp(9.5), font: 'Garamond' })]
+                                })]
+                            }),
+                            new D.TableCell({
+                                margins: { top: 0, bottom: 0, left: 40, right: 80 },
+                                children: [new D.Paragraph({
+                                    spacing: { after: 0 },
+                                    children: [new D.TextRun({ text: h.label || '', bold: h.bold || false, size: hp(9.5), font: 'Garamond' })]
+                                })]
+                            })
+                        ]
+                    }));
+                });
+                // Espace après les horaires du jour
+                cal_rows.push(new D.TableRow({
+                    children: [
+                        new D.TableCell({
+                            columnSpan: 2,
+                            margins: { top: 0, bottom: 20, left: 80, right: 80 },
+                            children: [new D.Paragraph({ spacing: { after: 0 }, children: [] })]
+                        })
+                    ]
+                }));
+            }
         });
     }
 
     const titreCalendrier = para(
-        [run('Calendrier de la semaine', { bold: true, size: hp(12), allCaps: true })],
-        { pageBreakBefore: true, spacing: { before: 0, after: 80 } }
+        [run('CALENDRIER DE LA SEMAINE', { bold: true, size: hp(18) })],
+        { alignment: D.AlignmentType.CENTER, pageBreakBefore: true, spacing: { before: 0, after: 120 } }
     );
 
     const tableauCal = cal_rows.length > 0
