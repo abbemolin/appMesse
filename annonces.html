@@ -104,15 +104,16 @@
         position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
         background: var(--vellum);
         border-top: 3px solid var(--gold);
-        border-left: 1px solid var(--border);
-        border-right: 1px solid var(--border);
-        box-shadow: 0 -4px 20px var(--shadow);
-        padding: 0;
+        border: 1px solid var(--border);
+        border-top: 3px solid var(--gold);
+        box-shadow: 0 -6px 24px rgba(0,0,0,.18);
         max-width: 540px; margin: 0 auto;
+        border-radius: 0;
     }
     .feuille-panel-header {
         display: flex; align-items: center; justify-content: space-between;
-        gap: 12px; padding: 12px 16px; cursor: pointer;
+        gap: 12px; padding: 13px 16px; cursor: pointer;
+        user-select: none;
     }
     .feuille-panel-header-left { display: flex; align-items: center; gap: 12px; }
     .feuille-panel-icon {
@@ -126,53 +127,65 @@
         color: var(--rubric); margin-bottom: 2px;
     }
     .feuille-panel-sous {
-        font-family: 'EB Garamond', serif; font-size: .9rem; color: var(--ink-soft);
+        font-family: 'EB Garamond', serif; font-size: .95rem; color: var(--ink-soft);
     }
-    .feuille-panel-body { padding: 0 16px 16px; display: none; }
+    .feuille-panel-body {
+        padding: 0 16px 16px; display: none;
+        border-top: 1px solid var(--border);
+    }
     .feuille-panel.ouvert .feuille-panel-body { display: block; }
     .feuille-panel.ouvert .feuille-chevron { transform: rotate(90deg); }
-    .feuille-chevron { transition: transform .2s; }
+    .feuille-chevron { transition: transform .2s; flex-shrink: 0; }
     .feuille-date-row {
         display: flex; align-items: center; gap: 10px;
-        margin-bottom: 12px; padding: 8px 10px;
+        margin: 12px 0; padding: 10px 12px;
         background: var(--vellum-light); border: 1px solid var(--border);
         border-radius: 2px;
     }
     .feuille-date-row label {
-        font-family: 'Cinzel', serif; font-size: .6rem;
+        font-family: 'Cinzel', serif; font-size: .58rem;
         letter-spacing: .1em; text-transform: uppercase;
         color: var(--ink-muted); white-space: nowrap;
     }
     .feuille-date-row input[type="date"] {
         flex: 1; border: none; background: transparent;
-        font-family: 'EB Garamond', serif; font-size: .95rem;
+        font-family: 'EB Garamond', serif; font-size: 1rem;
         color: var(--ink); outline: none; cursor: pointer;
+        min-width: 0;
     }
-    .feuille-liste { margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; }
+    .feuille-liste {
+        margin-bottom: 12px;
+        display: flex; flex-direction: column; gap: 6px;
+        max-height: 40vh; overflow-y: auto;
+        overflow-x: hidden;
+    }
     .feuille-item {
         display: flex; align-items: flex-start; gap: 10px;
-        padding: 8px 10px; background: var(--vellum-light);
+        padding: 10px 12px; background: var(--vellum-light);
         border: 1px solid var(--border); border-radius: 2px;
-        cursor: pointer;
+        cursor: pointer; width: 100%; box-sizing: border-box;
     }
     .feuille-item:hover { background: var(--gold-pale); }
-    .feuille-item input[type="checkbox"] { margin-top: 2px; accent-color: var(--rubric); flex-shrink: 0; }
+    .feuille-item input[type="checkbox"] {
+        margin-top: 3px; accent-color: var(--rubric); flex-shrink: 0;
+        width: 16px; height: 16px;
+    }
     .feuille-item-titre {
-        font-family: 'Cinzel', serif; font-size: .6rem;
+        font-family: 'Cinzel', serif; font-size: .62rem;
         letter-spacing: .08em; text-transform: uppercase;
-        color: var(--ink); margin-bottom: 1px;
+        color: var(--ink); margin-bottom: 2px; line-height: 1.4;
     }
     .feuille-item-desc {
-        font-family: 'EB Garamond', serif; font-size: .85rem;
-        color: var(--ink-soft); line-height: 1.3;
+        font-family: 'EB Garamond', serif; font-size: .9rem;
+        color: var(--ink-soft); line-height: 1.35;
     }
     .feuille-vide {
         font-family: 'EB Garamond', serif; font-style: italic;
-        color: var(--ink-muted); font-size: .9rem; text-align: center;
-        padding: 12px 0;
+        color: var(--ink-muted); font-size: .95rem; text-align: center;
+        padding: 16px 0;
     }
     .feuille-btn-copier {
-        width: 100%; padding: 10px 16px;
+        width: 100%; padding: 11px 16px;
         background: var(--rubric); border: none; border-radius: 2px;
         color: white; cursor: pointer;
         font-family: 'Cinzel', serif; font-size: .65rem;
@@ -551,7 +564,7 @@
 </div>
 
 <!-- ══ LISTE ════════════════════════════════════════════════ -->
-<div id="liste-container" style="padding: 8px 0 300px;">
+<div id="liste-container" style="padding: 8px 0 90px;">
     <div class="vide-msg"><span class="vide-ico">📋</span>Chargement…</div>
 </div>
 
@@ -734,6 +747,7 @@ async function charger() {
         if (error) throw error;
         annonces = data || [];
         rendreListe();
+        majFeuilleListe();
     } catch(e) {
         console.error(e);
         toast('Erreur de chargement');
@@ -1190,9 +1204,17 @@ function prochainDimanche() {
 function toggleFeuillePanel() {
     const panel = document.getElementById('feuille-panel');
     panel.classList.toggle('ouvert');
-    if (panel.classList.contains('ouvert')) {
-        majFeuilleListe();
-    }
+    ajusterPaddingListe();
+}
+
+function ajusterPaddingListe() {
+    const panel = document.getElementById('feuille-panel');
+    const liste = document.getElementById('liste-container');
+    // Laisser de la place selon l'état du panel
+    setTimeout(() => {
+        const h = panel.offsetHeight;
+        liste.style.paddingBottom = (h + 16) + 'px';
+    }, 220); // après la transition CSS
 }
 
 function annoncePourDimanche(a, dateISO) {
@@ -1223,6 +1245,7 @@ function majFeuilleListe() {
     if (!candidats.length) {
         liste.innerHTML = '<div class="feuille-vide">Aucune annonce pour ce dimanche</div>';
         btn.disabled = true;
+        ajusterPaddingListe();
         return;
     }
 
@@ -1230,12 +1253,13 @@ function majFeuilleListe() {
     liste.innerHTML = candidats.map(a => `
         <label class="feuille-item">
             <input type="checkbox" name="feuille-sel" value="${a.id}" checked>
-            <div>
+            <div style="min-width:0;flex:1;">
                 <div class="feuille-item-titre">${escapeHtml(a.titre)}</div>
-                ${a.description ? `<div class="feuille-item-desc">${escapeHtml(a.description.substring(0, 80))}${a.description.length > 80 ? '…' : ''}</div>` : ''}
+                ${a.description ? `<div class="feuille-item-desc">${escapeHtml(a.description.substring(0, 100))}${a.description.length > 100 ? '…' : ''}</div>` : ''}
             </div>
         </label>
     `).join('');
+    ajusterPaddingListe();
 }
 
 function escapeHtml(s) {
@@ -1279,6 +1303,7 @@ function copierFeuille() {
 // ── Init ──────────────────────────────────────────────────────
 document.getElementById('feuille-date').value = prochainDimanche();
 charger();
+ajusterPaddingListe();
 </script>
 
 <div id="menu-container"></div>
