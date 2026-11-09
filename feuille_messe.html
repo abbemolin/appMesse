@@ -844,10 +844,13 @@ function buildFeuilleMesse() {
         ]
     }));
 
-    // Ligne chant d'entrée + Asperges me
-    if (chantsEntreeVal || aspergesVal) {
-        const texteEntree = [chantsEntreeVal, aspergesVal ? ('— ' + aspergesVal) : ''].filter(Boolean).join('     ');
-        propre_rows.push(rowFullWidth(texteEntree, { bold: true }));
+    // Ligne chant d'entrée (séparée)
+    if (chantsEntreeVal) {
+        propre_rows.push(rowFullWidth(chantsEntreeVal, { bold: true }));
+    }
+    // Ligne Asperges me (séparée)
+    if (aspergesVal) {
+        propre_rows.push(rowFullWidth(aspergesVal, { bold: true }));
     }
 
     if (properData && properData.messes && properData.messes.length > 0) {
@@ -887,15 +890,19 @@ function buildFeuilleMesse() {
             const latinTx = htmlToText(latinHtml);
             const frTx    = htmlToText(frHtml);
 
-            // ── Kyrie : référence avec numéro de messe
+            // ── Kyrie : on mémorise la présence, Gloria fusionnera avec
             if (cano === 'Kyrie') {
-                propre_rows.push(rowReference('Kyrie', messeRef || 'Kyrie'));
+                // Gloria viendra ensuite — on insère Kyrie & Gloria ensemble à la détection du Gloria
+                propre_rows._kyrieRef = messeRef || 'Kyrie';
                 return;
             }
 
-            // ── Gloria : référence avec numéro de messe (seulement si présent dans le propre)
+            // ── Gloria : fusionné avec Kyrie sur une ligne pleine largeur
             if (cano === 'Gloria') {
-                propre_rows.push(rowReference('Gloria', messeRef || 'Gloria'));
+                const kyrieRef = propre_rows._kyrieRef || messeRef || 'Kyriale';
+                const messeLabel = kyrieRef;
+                propre_rows.push(rowFullWidth('Kyrie & Gloria — ' + messeLabel, { bold: true }));
+                delete propre_rows._kyrieRef;
                 return;
             }
 
@@ -942,10 +949,9 @@ function buildFeuilleMesse() {
             }
         });
 
-        // ── Sanctus + Agnus : toujours affichés avec le numéro de messe ──
+        // ── Sanctus + Agnus : une seule ligne pleine largeur après la Préface ──
         if (messeRef) {
-            propre_rows.push(rowReference('Sanctus', messeRef));
-            propre_rows.push(rowReference('Agnus Dei', messeRef));
+            propre_rows.push(rowFullWidth('Sanctus & Agnus Dei — ' + messeRef, { bold: true }));
         }
 
     } else {
