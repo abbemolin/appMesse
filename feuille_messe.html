@@ -251,6 +251,23 @@
         </div>
     </div>
 
+    <!-- ── Chant d'entrée + Asperges me (saisie manuelle) ───── -->
+    <div class="feuille-wrap">
+        <span class="section-label">Chant d'entrée</span>
+        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+                <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Cantique d'entrée (titre + nº)</label>
+                <input type="text" id="chant-entree" placeholder="ex : En marchant vers toi, Seigneur p. 806"
+                    style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
+            </div>
+            <div style="flex:0 0 auto;min-width:160px;">
+                <label style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.18em;color:var(--ink-muted);text-transform:uppercase;display:block;margin-bottom:4px;">Asperges me</label>
+                <input type="text" id="asperges-ref" placeholder="ex : Asperges me III p. 40"
+                    style="width:100%;font-family:'EB Garamond',serif;font-size:.9rem;padding:7px 10px;border:1px solid var(--border-soft);border-radius:2px;background:var(--vellum);color:var(--ink);">
+            </div>
+        </div>
+    </div>
+
     <!-- ── Annonces Supabase ─────────────────────────────────── -->
     <div class="feuille-wrap">
         <span class="section-label">Annonces</span>
@@ -491,13 +508,9 @@ function buildFeuilleMesse() {
     const o = ordoJour || {};
 
     // ── Helpers ───────────────────────────────────────────────
-    // docx.js : taille de police en demi-points (10pt = size:20)
     const hp = n => Math.round(n * 2);
+    const MARGE = 567;  // ~1 cm
 
-    // Marges A4 étroites (~1 cm) pour tenir sur 4 pages
-    const MARGE = 567;  // 567 twips ≈ 1 cm
-
-    // Bordures tableau standard
     const BORDURES_TAB = {
         top:     { style: D.BorderStyle.SINGLE, size: 4, color: 'CCBFAA' },
         bottom:  { style: D.BorderStyle.SINGLE, size: 4, color: 'CCBFAA' },
@@ -516,18 +529,15 @@ function buildFeuilleMesse() {
 
     function para(children, opts) {
         opts = opts || {};
-        var spacing = opts.spacing || {};
-        var alignment = opts.alignment || D.AlignmentType.LEFT;
-        var pageBreakBefore = opts.pageBreakBefore || false;
         return new D.Paragraph({
-            spacing: Object.assign({ after: 60, before: 0 }, spacing),
-            alignment: alignment,
-            pageBreakBefore: pageBreakBefore,
+            spacing: Object.assign({ after: 60, before: 0 }, opts.spacing || {}),
+            alignment: opts.alignment || D.AlignmentType.LEFT,
+            pageBreakBefore: opts.pageBreakBefore || false,
             children: Array.isArray(children) ? children : [children],
         });
     }
 
-    // ── Libellés FR des pièces ────────────────────────────────
+    // ── Libellés FR ──────────────────────────────────────────
     const LIBELLES_FR = {
         Introitus: 'Introït', Oratio: 'Collecte', Graduale: 'Graduel',
         Tractus: 'Trait', Sequentia: 'Séquence', Alleluia: 'Alléluia',
@@ -537,12 +547,9 @@ function buildFeuilleMesse() {
         'Oratio super populum': 'Or. sur le peuple',
     };
 
-    // Pièces à n'afficher QUE comme référence (pas de texte bilingue)
     const PIECES_REFERENCE = new Set(['Gloria', 'Kyrie', 'Credo']);
-    // Pièce préface : texte plein FR uniquement
     const PIECE_PREFATIO = 'Prefatio';
 
-    // Nettoyage HTML → texte brut (sans rubriques do-rubr)
     function htmlToText(html) {
         if (!html) return '';
         return html
@@ -557,7 +564,6 @@ function buildFeuilleMesse() {
             .trim();
     }
 
-    // Extraire le nom canonique de la pièce depuis le HTML
     function nomCano(htmlLatin) {
         if (!htmlLatin) return '';
         const m = htmlLatin.match(/do-titre[^>]*><b><i>\s*([^<]+?)\s*<\/i>/);
@@ -568,7 +574,9 @@ function buildFeuilleMesse() {
     // A) EN-TÊTE
     // ═══════════════════════════════════════════════════════════
     const nomFete     = o.fete    || '';
-    const rangCouleur = [o.classe, o.couleur].filter(Boolean).join('  –  ');
+    const classeVal   = o.classe  || '';
+    const couleurVal  = o.couleur || '';
+    const rangCouleur = [classeVal, couleurVal].filter(Boolean).join('  —  ');
 
     const header = [
         para([run('Paroisse La Croix glorieuse', { bold: true, size: hp(11), allCaps: true })],
@@ -577,14 +585,13 @@ function buildFeuilleMesse() {
              { alignment: D.AlignmentType.CENTER, spacing: { after: 40 } }),
         para([run(nomFete, { bold: true, size: hp(14) })],
              { alignment: D.AlignmentType.CENTER, spacing: { after: 40 } }),
-        para([run(rangCouleur, { size: hp(9), color: '7A1818' })],
-             { alignment: D.AlignmentType.CENTER, spacing: { after: 160 } }),
+        para([run(rangCouleur, { size: hp(9), italics: true, color: '7A1818' })],
+             { alignment: D.AlignmentType.CENTER, spacing: { after: 120 } }),
     ];
 
     // ═══════════════════════════════════════════════════════════
     // B) TABLEAU PROPRE (3 colonnes)
     //    Col 1 : Label (15%) | Col 2 : Latin (42.5%) | Col 3 : Français (42.5%)
-    //    Largeurs en cinquantièmes de % (OOXML : 5000 = 100%)
     // ═══════════════════════════════════════════════════════════
     const W_LABEL = 750;   // 15 %
     const W_LAT   = 2125;  // 42.5 %
@@ -613,7 +620,6 @@ function buildFeuilleMesse() {
         });
     }
 
-    // Cellule texte : chaque \n devient un TextRun avec break
     function cellTexte(text, width, extraOpts) {
         const lignes = (text || '').split('\n');
         const runs = [];
@@ -629,7 +635,33 @@ function buildFeuilleMesse() {
         });
     }
 
-    // Ligne de référence : label col1 + texte italique sur col2+3 fusionnées
+    // Ligne pleine largeur (3 colonnes fusionnées) — pour chant d'entrée / chants finaux
+    function rowFullWidth(texte, opts) {
+        opts = opts || {};
+        const runs = (texte || '').split('\n').map(function(l, i) {
+            const r = { text: l, size: hp(opts.size || 9.5), font: 'Garamond' };
+            if (opts.bold) r.bold = true;
+            if (opts.italics) r.italics = true;
+            if (opts.color) r.color = opts.color;
+            if (i > 0) r.break = 1;
+            return new D.TextRun(r);
+        });
+        return new D.TableRow({
+            children: [
+                new D.TableCell({
+                    columnSpan: 3,
+                    margins: CELL_MARGE,
+                    children: [new D.Paragraph({
+                        spacing: { after: 0 },
+                        alignment: opts.alignment || D.AlignmentType.LEFT,
+                        children: runs,
+                    })]
+                })
+            ]
+        });
+    }
+
+    // Ligne de référence : label col1 + texte gras sur col2+3 fusionnées
     function rowReference(label, refText) {
         return new D.TableRow({
             children: [
@@ -641,7 +673,7 @@ function buildFeuilleMesse() {
                         spacing: { after: 0 },
                         children: [new D.TextRun({
                             text: refText || label,
-                            italics: true, size: hp(9), color: '555555', font: 'Garamond',
+                            bold: true, size: hp(9.5), color: '333333', font: 'Garamond',
                         })]
                     })]
                 })
@@ -670,10 +702,14 @@ function buildFeuilleMesse() {
         });
     }
 
-    // ── Lecture du propre ─────────────────────────────────────
+    // ── Lecture du chant d'entrée depuis l'UI ─────────────────
+    const chantsEntreeVal = (document.getElementById('chant-entree') || {}).value || '';
+    const aspergesVal     = (document.getElementById('asperges-ref') || {}).value || '';
+
+    // ── Construction des lignes du propre ─────────────────────
     const propre_rows = [];
 
-    // Ligne d'en-tête
+    // En-tête colonnes
     propre_rows.push(new D.TableRow({
         tableHeader: true,
         children: [
@@ -682,6 +718,12 @@ function buildFeuilleMesse() {
             cellEnTete('Français', W_FR),
         ]
     }));
+
+    // Ligne chant d'entrée + Asperges me
+    if (chantsEntreeVal || aspergesVal) {
+        const texteEntree = [chantsEntreeVal, aspergesVal ? ('— ' + aspergesVal) : ''].filter(Boolean).join('     ');
+        propre_rows.push(rowFullWidth(texteEntree, { bold: true }));
+    }
 
     if (properData && properData.messes && properData.messes.length > 0) {
         const messe  = properData.messes[properData.principal || 0];
@@ -699,14 +741,14 @@ function buildFeuilleMesse() {
 
             // ── Gloria, Kyrie, Credo : référence seule
             if (PIECES_REFERENCE.has(cano)) {
-                const ref = latinTx.replace(new RegExp('^\\s*' + cano + '\\s*', 'i'), '').trim();
+                const ref = latinTx.replace(new RegExp('^\\s*' + cano + '\\b\\s*', 'i'), '').trim();
                 propre_rows.push(rowReference(cano, ref || cano));
                 return;
             }
 
             // ── Préface : texte plein FR, sur toute la largeur
             if (cano === PIECE_PREFATIO) {
-                const frCorps = frTx.replace(/^Prefatio\s*/i, '').trim();
+                const frCorps = frTx.replace(/^Pref[aá]tio\s*/i, '').trim();
                 propre_rows.push(rowPrefatio(frCorps));
                 return;
             }
@@ -714,8 +756,8 @@ function buildFeuilleMesse() {
             // ── Pièces normales : Label | Latin | Français
             const labelFr = LIBELLES_FR[cano] || cano;
 
-            const latinCorps = latinTx.replace(new RegExp('^\\s*' + cano + '\\s*', 'i'), '').trim();
-            const frCorps    = frTx.replace(new RegExp('^\\s*' + (LIBELLES_FR[cano] || cano) + '\\s*', 'i'), '').trim();
+            const latinCorps = latinTx.replace(new RegExp('^\\s*' + cano + '\\b\\s*', 'i'), '').trim();
+            const frCorps    = frTx.replace(new RegExp('^\\s*' + (LIBELLES_FR[cano] || cano) + '\\b\\s*', 'i'), '').trim();
 
             if (!latinCorps && !frCorps) return;
 
@@ -723,7 +765,7 @@ function buildFeuilleMesse() {
                 children: [
                     cellLabel(labelFr),
                     cellTexte(latinCorps, W_LAT),
-                    cellTexte(frCorps, W_FR),
+                    cellTexte(frCorps, W_FR, { italics: true }),
                 ]
             }));
         });
@@ -742,6 +784,35 @@ function buildFeuilleMesse() {
         }));
     }
 
+    // ── Prière pour la patrie (fixe, après Postcommunion) ─────
+    const prierePatrieLat = 'Domine, salvam fac rem publicam ; et exaudi nos in die qua invocaverimus te.';
+    const prierePatrieFr  = 'Dieu tout-puissant et éternel, tous les pouvoirs et le gouvernement de tous les peuples sont entre vos mains : regardez avec bienveillance ceux qui exercent sur nous l’autorité, afin que sous la protection de votre main, la religion chrétienne garde partout sa pureté, et que la patrie connaisse toujours la sécurité.';
+
+    propre_rows.push(new D.TableRow({
+        children: [
+            new D.TableCell({
+                width: { size: W_LABEL, type: D.WidthType.PERCENTAGE },
+                margins: CELL_MARGE,
+                children: [new D.Paragraph({ spacing: { after: 0 }, children: [] })]
+            }),
+            new D.TableCell({
+                columnSpan: 2,
+                margins: CELL_MARGE,
+                children: [new D.Paragraph({
+                    spacing: { after: 0 },
+                    children: [
+                        new D.TextRun({ text: prierePatrieLat, bold: true, size: hp(9), font: 'Garamond' }),
+                        new D.TextRun({ text: '', break: 1, font: 'Garamond' }),
+                        new D.TextRun({ text: prierePatrieFr, italics: true, size: hp(9), font: 'Garamond' }),
+                    ]
+                })]
+            })
+        ]
+    }));
+
+    // Ligne chants finaux (Salve Regina, etc.)
+    propre_rows.push(rowFullWidth('Salve Regina p. 1002', { bold: true }));
+
     const tableauPropre = new D.Table({
         width: { size: 100, type: D.WidthType.PERCENTAGE },
         borders: BORDURES_TAB,
@@ -757,8 +828,8 @@ function buildFeuilleMesse() {
     ];
 
     if (annoncesData.length === 0) {
-        annonces_paras.push(para([run('Aucune annonce.', { italics: true, size: hp(9.5), color: '666666' })],
-                                 { spacing: { before: 0, after: 60 } }));
+        annonces_paras.push(para([run('', { size: hp(9.5) })],
+                                 { spacing: { before: 0, after: 40 } }));
     } else {
         annoncesData.forEach(function(a) {
             if (a.titre) {
@@ -781,21 +852,20 @@ function buildFeuilleMesse() {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // D) CALENDRIER — toujours sur page 4 (saut de page forcé)
+    // D) CALENDRIER — saut de page forcé, page 4 uniquement
     // ═══════════════════════════════════════════════════════════
     const cal_rows = [];
 
     if (calData && calData.length > 0) {
         calData.forEach(function(jour) {
-            const runsJour = [
-                new D.TextRun({ text: jour.dateFr || '', bold: true, size: hp(9.5), font: 'Garamond' })
-            ];
+            const runsJour = [];
+            runsJour.push(new D.TextRun({ text: jour.dateFr || '', bold: true, size: hp(9.5), font: 'Garamond' }));
             if (jour.sousTitre) {
-                runsJour.push(new D.TextRun({ text: jour.sousTitre, italics: true, size: hp(9), font: 'Garamond', break: 1 }));
+                runsJour.push(new D.TextRun({ text: ' — ' + jour.sousTitre, italics: true, size: hp(9), font: 'Garamond' }));
             }
 
-            const runsEvts = [];
             const horaires = jour.horaires || [];
+            const runsEvts = [];
             horaires.forEach(function(h, i) {
                 const texte = h.heure ? (h.heure + '  ' + h.label) : h.label;
                 const opts = { text: texte, size: hp(9.5), font: 'Garamond', bold: h.bold || false };
@@ -813,14 +883,13 @@ function buildFeuilleMesse() {
                     new D.TableCell({
                         width: { size: 3250, type: D.WidthType.PERCENTAGE },
                         margins: CELL_MARGE,
-                        children: [new D.Paragraph({ spacing: { after: 0 }, children: runsEvts.length ? runsEvts : [run('')] })]
+                        children: [new D.Paragraph({ spacing: { after: 0 }, children: runsEvts.length ? runsEvts : [new D.TextRun({ text: '', font: 'Garamond' })] })]
                     }),
                 ]
             }));
         });
     }
 
-    // Titre calendrier avec SAUT DE PAGE FORCÉ (calendrier = page 4 uniquement)
     const titreCalendrier = para(
         [run('Calendrier de la semaine', { bold: true, size: hp(12), allCaps: true })],
         { pageBreakBefore: true, spacing: { before: 0, after: 80 } }
@@ -855,8 +924,6 @@ function buildFeuilleMesse() {
     });
 }
 
-
-// ── Toast ─────────────────────────────────────────────────────
 function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
