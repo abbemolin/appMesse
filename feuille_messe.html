@@ -410,7 +410,7 @@ async function chargerAnnonces(dateIso) {
             .select('titre,description,prioritaire,ordre')
             .eq('actif', true)
             .eq('dans_feuille', true)
-            .lte('date_debut', dateIso)
+            .or(`date_debut.is.null,date_debut.lte.${dateIso}`)
             .or(`date_fin.is.null,date_fin.gte.${dateIso}`)
             .order('prioritaire', { ascending: false })
             .order('ordre', { ascending: true });
