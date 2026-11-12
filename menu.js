@@ -8,6 +8,8 @@
     const isBible      = href.includes('bible.html');
     const isBreviaire  = href.includes('breviaire.html');
     const isNewsletter = href.includes('newsletter.html');
+    // "Plus" actif si on est sur une des pages secondaires
+    const isPlus = isIntentions || isAnnonces || isSemaine || isNewsletter;
 
     const menuHTML = `
     <style>
@@ -32,21 +34,99 @@
             font-family:'Cinzel',serif; font-size:.5rem; font-weight:600;
             text-transform:uppercase; letter-spacing:.1em;
         }
-        .nav-refresh {
+        /* Bouton "Plus" */
+        .nav-more-btn {
             background:none; border:none; cursor:pointer;
             display:flex; flex-direction:column; align-items:center;
             justify-content:center; flex:1; padding:8px 0; gap:3px;
             color:rgba(240,230,184,.45); transition:color .2s;
+            font-family:'Cinzel',serif;
         }
-        .nav-refresh:active { color:var(--gold-light, #d4af37); }
-        .nav-refresh .nav-icon { transition:transform .4s ease; }
-        .nav-refresh.spinning .nav-icon { animation:spin-refresh .6s linear infinite; }
+        .nav-more-btn.active { color:var(--gold-light, #d4af37); }
+        /* Panneau secondaire */
+        .nav-panel {
+            position:fixed; bottom:65px; left:0; right:0;
+            background:#1a1108; border-top:1px solid #b8962a44;
+            z-index:999; padding:0;
+            transform:translateY(100%); opacity:0;
+            transition:transform .25s ease, opacity .2s ease;
+            pointer-events:none;
+            box-shadow:0 -4px 20px rgba(0,0,0,.55);
+        }
+        .nav-panel.open {
+            transform:translateY(0); opacity:1; pointer-events:auto;
+        }
+        .nav-panel-inner {
+            display:flex; flex-wrap:wrap; justify-content:space-around;
+            padding:12px 8px calc(8px); gap:4px;
+        }
+        .nav-panel-item {
+            text-decoration:none; display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            width:calc(25% - 8px); padding:10px 4px; gap:4px;
+            color:rgba(240,230,184,.55); transition:color .2s;
+            border-radius:8px;
+        }
+        .nav-panel-item:active, .nav-panel-item.active {
+            color:var(--gold-light, #d4af37);
+            background:rgba(184,150,42,.1);
+        }
+        .nav-panel-refresh {
+            background:none; border:none; cursor:pointer;
+            display:flex; flex-direction:column; align-items:center;
+            justify-content:center; width:calc(25% - 8px); padding:10px 4px; gap:4px;
+            color:rgba(240,230,184,.55); transition:color .2s;
+            border-radius:8px; font-family:inherit;
+        }
+        .nav-panel-refresh:active { color:var(--gold-light, #d4af37); }
+        .nav-panel-refresh .nav-icon { transition:transform .4s ease; }
+        .nav-panel-refresh.spinning .nav-icon { animation:spin-refresh .6s linear infinite; }
         @keyframes spin-refresh { to { transform:rotate(360deg); } }
+        .nav-panel-label {
+            font-family:'Cinzel',serif; font-size:.48rem; font-weight:600;
+            text-transform:uppercase; letter-spacing:.08em;
+        }
+        /* Overlay pour fermer le panneau en cliquant en dehors */
+        .nav-overlay {
+            display:none; position:fixed; inset:0; bottom:65px;
+            z-index:998; background:rgba(0,0,0,0);
+        }
+        .nav-overlay.open { display:block; }
         @media(max-width:420px){ .nav-label{font-size:.44rem;letter-spacing:.04em} }
         @media(min-width:1024px){
             .mobile-nav{max-width:400px;left:50%;transform:translateX(-50%);border-radius:3px 3px 0 0}
+            .nav-panel{max-width:400px;left:50%;transform:translateX(-50%) translateY(100%);}
+            .nav-panel.open{transform:translateX(-50%) translateY(0);}
         }
     </style>
+    <!-- Overlay -->
+    <div class="nav-overlay" id="nav-overlay" onclick="navTogglePlus(false)"></div>
+    <!-- Panneau secondaire -->
+    <div class="nav-panel" id="nav-panel">
+        <div class="nav-panel-inner">
+            <a href="intentions.html" class="nav-panel-item ${isIntentions ? 'active' : ''}" onclick="navTogglePlus(false)">
+                <span class="nav-icon">✍️</span>
+                <span class="nav-panel-label">Gérer</span>
+            </a>
+            <a href="annonces.html" class="nav-panel-item ${isAnnonces ? 'active' : ''}" onclick="navTogglePlus(false)">
+                <span class="nav-icon">📋</span>
+                <span class="nav-panel-label">Annonces</span>
+            </a>
+            <a href="calendrier_semaine.html" class="nav-panel-item ${isSemaine ? 'active' : ''}" onclick="navTogglePlus(false)">
+                <span class="nav-icon">📄</span>
+                <span class="nav-panel-label">Semaine</span>
+            </a>
+            <a href="newsletter.html" class="nav-panel-item ${isNewsletter ? 'active' : ''}" onclick="navTogglePlus(false)">
+                <span class="nav-icon">📧</span>
+                <span class="nav-panel-label">Newsletter</span>
+            </a>
+            <button class="nav-panel-refresh" id="btn-nav-refresh" onclick="navRefresh(); navTogglePlus(false);" title="Actualiser">
+                <span class="nav-icon" id="nav-refresh-icon">↻</span>
+                <span class="nav-panel-label">Actualiser</span>
+            </button>
+        </div>
+    </div>
+    <!-- Barre principale (5 items) -->
     <nav class="mobile-nav">
         <a href="accueil.html" class="nav-item ${isAccueil ? 'active' : ''}">
             <span class="nav-icon">✝</span>
@@ -64,25 +144,9 @@
             <span class="nav-icon nav-icon-brev" aria-hidden="true"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5C10 7 7 6.6 3 7v12c4-.4 7 0 9 1.5 2-1.5 5-1.9 9-1.5V7c-4-.4-7 0-9 1.5z"/><path d="M12 8.5v12"/><path d="M12 1.5v5M9.8 3.4h4.4"/></svg></span>
             <span class="nav-label">Bréviaire</span>
         </a>
-        <a href="intentions.html" class="nav-item ${isIntentions ? 'active' : ''}">
-            <span class="nav-icon">✍️</span>
-            <span class="nav-label">Gérer</span>
-        </a>
-        <a href="annonces.html" class="nav-item ${isAnnonces ? 'active' : ''}">
-            <span class="nav-icon">📋</span>
-            <span class="nav-label">Annonces</span>
-        </a>
-        <a href="calendrier_semaine.html" class="nav-item ${isSemaine ? 'active' : ''}">
-            <span class="nav-icon">📄</span>
-            <span class="nav-label">Semaine</span>
-        </a>
-        <a href="newsletter.html" class="nav-item ${isNewsletter ? 'active' : ''}">
-            <span class="nav-icon">📧</span>
-            <span class="nav-label">Newsletter</span>
-        </a>
-        <button class="nav-refresh" id="btn-nav-refresh" onclick="navRefresh()" title="Actualiser">
-            <span class="nav-icon" id="nav-refresh-icon">↻</span>
-            <span class="nav-label">Actualiser</span>
+        <button class="nav-more-btn ${isPlus ? 'active' : ''}" id="btn-nav-more" onclick="navTogglePlus()" aria-label="Plus de pages">
+            <span class="nav-icon">⋯</span>
+            <span class="nav-label">Plus</span>
         </button>
     </nav>`;
 
@@ -97,6 +161,19 @@
         });
     }
 })();
+
+// ── Panneau "Plus" ────────────────────────────────────────────────
+function navTogglePlus(force) {
+    const panel   = document.getElementById('nav-panel');
+    const overlay = document.getElementById('nav-overlay');
+    const btn     = document.getElementById('btn-nav-more');
+    if (!panel) return;
+    const isOpen = panel.classList.contains('open');
+    const shouldOpen = (force === undefined) ? !isOpen : !!force;
+    panel.classList.toggle('open', shouldOpen);
+    if (overlay) overlay.classList.toggle('open', shouldOpen);
+    if (btn) btn.classList.toggle('active', shouldOpen || btn.classList.contains('was-active'));
+}
 
 // ── Actualisation — appelle la fonction propre à chaque page ─────
 function navRefresh() {
