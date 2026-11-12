@@ -779,6 +779,13 @@ function filtrerRecherche(val) {
 // ── Chargement ───────────────────────────────────────────
 async function chargerDemandes() {
     if (typeof maConnexion === 'undefined') { setTimeout(chargerDemandes, 300); return; }
+
+    // Après 4s sans réponse, prévenir que Supabase se réveille
+    const wakeTimer = setTimeout(() => {
+        const s = document.getElementById('loading-status');
+        if (s && s.textContent.includes('Chargement')) s.textContent = 'Connexion en cours…';
+    }, 4000);
+
     try {
         const tMin = new Date(); tMin.setMonth(tMin.getMonth() - 1);
         const tMax = new Date(); tMax.setFullYear(tMax.getFullYear() + 2);
@@ -788,6 +795,7 @@ async function chargerDemandes() {
             fetch(urlGcal),
             maConnexion.from('intentions').select('*').neq('statut','annule').order('date_messe', { ascending: true })
         ]);
+        clearTimeout(wakeTimer);
         const gcalData = await gcalResp.json();
         googleEventsGlobal = gcalData.items || [];
         intentionsGlobal   = data || [];
@@ -795,6 +803,7 @@ async function chargerDemandes() {
         document.getElementById('loading-status').style.display = 'none';
         await renderIntentions();
     } catch (err) {
+        clearTimeout(wakeTimer);
         console.error(err);
         document.getElementById('loading-status').innerHTML =
             '<div class="empty-state" style="color:var(--rubric);">Erreur de connexion<br><button onclick="chargerDemandes()" class="btn-primary" style="margin-top:12px;width:auto;padding:10px 22px;">Réessayer</button></div>';

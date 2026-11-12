@@ -832,6 +832,14 @@ async function chargerMois() {
     // Spinner visible
     showSpinner(true);
 
+    // Après 4s sans réponse, prévenir que Supabase se réveille
+    const wakeTimer = setTimeout(() => {
+        const sp = document.getElementById('cal-spinner');
+        if (sp) { sp.textContent = ''; sp.style.fontSize = '.65rem';
+            sp.style.width = 'auto'; sp.style.padding = '8px 14px'; sp.style.borderRadius = '8px';
+            sp.innerHTML = '⏳<br>Connexion<br>en cours…'; }
+    }, 4000);
+
     try {
         // Cache GCal : re-requêter si absent ou expiré (TTL 5 min)
         const cached = _gcalCache[moisKey];
@@ -860,6 +868,7 @@ async function chargerMois() {
     } catch(e) {
         console.error('Erreur chargement:', e);
     } finally {
+        clearTimeout(wakeTimer);
         showSpinner(false);
     }
 

@@ -696,13 +696,28 @@ function ouvrirAttribution(isoDate, googleId, heure) {
 // ── Init ──────────────────────────────────────────────────
 async function initDashboard() {
     if (typeof maConnexion === 'undefined') { setTimeout(initDashboard, 300); return; }
+
+    // Après 4s sans réponse, prévenir que Supabase se réveille
+    const wakeTimer = setTimeout(() => {
+        const t = document.getElementById('pending-text');
+        if (t && t.textContent === 'Chargement…') {
+            t.textContent = 'Connexion en cours…';
+        }
+        const listDiv = document.getElementById('liste-messes');
+        if (listDiv && listDiv.querySelector('.no-messe-label')) {
+            listDiv.querySelector('.no-messe-label').textContent = 'Connexion en cours…';
+        }
+    }, 4000);
+
     try {
         const { error } = await maConnexion.from('intentions').select('id').limit(1);
+        clearTimeout(wakeTimer);
         if (error) throw error;
         document.getElementById('conn-error').classList.remove('visible');
         countPendingIntentions();
         chargerJour();
     } catch {
+        clearTimeout(wakeTimer);
         document.getElementById('conn-error').classList.add('visible');
         document.getElementById('pending-text').textContent = 'Erreur de connexion';
     }
