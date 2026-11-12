@@ -78,12 +78,13 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
     margin-bottom: 12px;
   }
   #preview-frame {
-    width: 100%;
-    max-width: 600px;
+    width: 600px;
+    max-width: 100%;
     margin: 0 auto;
     display: block;
     border: none;
     background: #fff;
+    transition: width .3s ease;
   }
 
   /* ── Boutons d'action ── */
@@ -358,7 +359,15 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
 
   <!-- Aperçu iframe -->
   <div id="preview-wrap">
-    <div id="preview-label">Aperçu de l'email</div>
+    <div id="preview-label" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <span>Aperçu de l'email</span>
+      <div style="display:flex;gap:6px;">
+        <button id="btn-view-mobile" onclick="setPreviewWidth(375)" title="Vue mobile"
+          style="padding:5px 12px;border:1.5px solid #023199;border-radius:14px;background:#023199;color:#fff;font-size:13px;cursor:pointer;">📱 Mobile</button>
+        <button id="btn-view-desktop" onclick="setPreviewWidth(600)" title="Vue desktop"
+          style="padding:5px 12px;border:1.5px solid #023199;border-radius:14px;background:#fff;color:#023199;font-size:13px;cursor:pointer;">🖥 Desktop</button>
+      </div>
+    </div>
     <iframe id="preview-frame" scrolling="no"></iframe>
   </div>
 
@@ -948,6 +957,31 @@ function annoncesSelectionnees() {
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// TOGGLE LARGEUR APERÇU
+// ═══════════════════════════════════════════════════════════════════════
+let currentPreviewWidth = 600; // desktop par défaut
+function setPreviewWidth(w) {
+  currentPreviewWidth = w;
+  const frame = document.getElementById('preview-frame');
+  frame.style.width = w + 'px';
+  // Ajuster la hauteur après transition
+  setTimeout(() => {
+    const doc = frame.contentDocument || frame.contentWindow?.document;
+    if (doc) frame.style.height = (doc.documentElement.scrollHeight + 20) + 'px';
+  }, 350);
+  // Mettre à jour l'état actif des boutons
+  const isMobile = w <= 375;
+  const btnM = document.getElementById('btn-view-mobile');
+  const btnD = document.getElementById('btn-view-desktop');
+  if (btnM && btnD) {
+    btnM.style.background  = isMobile ? '#023199' : '#fff';
+    btnM.style.color       = isMobile ? '#fff'    : '#023199';
+    btnD.style.background  = isMobile ? '#fff'    : '#023199';
+    btnD.style.color       = isMobile ? '#023199' : '#fff';
+  }
+}
+
 function updatePreview() {
   emailHtml = genEmailHTML();
   const frame = document.getElementById('preview-frame');
@@ -959,6 +993,7 @@ function updatePreview() {
   doc.write(emailHtml);
   doc.close();
   wrap.classList.add('visible');
+  frame.style.width = currentPreviewWidth + 'px';
 
   // Ajuster la hauteur
   setTimeout(() => {
