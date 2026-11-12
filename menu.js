@@ -7,6 +7,7 @@
     const isSemaine    = href.includes('calendrier_semaine');
     const isBible      = href.includes('bible.html');
     const isBreviaire  = href.includes('breviaire.html');
+    const isNewsletter = href.includes('newsletter.html');
 
     const menuHTML = `
     <style>
@@ -74,6 +75,10 @@
         <a href="calendrier_semaine.html" class="nav-item ${isSemaine ? 'active' : ''}">
             <span class="nav-icon">📄</span>
             <span class="nav-label">Semaine</span>
+        </a>
+        <a href="newsletter.html" class="nav-item ${isNewsletter ? 'active' : ''}">
+            <span class="nav-icon">📧</span>
+            <span class="nav-label">Newsletter</span>
         </a>
         <button class="nav-refresh" id="btn-nav-refresh" onclick="navRefresh()" title="Actualiser">
             <span class="nav-icon" id="nav-refresh-icon">↻</span>

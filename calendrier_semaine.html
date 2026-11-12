@@ -313,6 +313,62 @@
     </style>
 </head>
 <body>
+
+<!-- ── Écran de connexion ─────────────────────────────────── -->
+<div id="auth-screen" style="display:none;position:fixed;inset:0;z-index:9999;
+    background:#1a1108;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:24px;
+      padding:36px 28px;background:rgba(255,255,255,.06);border-radius:20px;
+      max-width:320px;width:90%;">
+    <img src="icons/apple-touch-icon.png" style="width:64px;height:64px;border-radius:14px;opacity:.9;">
+    <div style="color:#f5efe0;font-family:'Palatino Linotype',Palatino,serif;
+        font-size:1.15rem;text-align:center;line-height:1.4;">
+      AppMesse<br><span style="font-size:.8rem;opacity:.6;">Paroisse La Croix Glorieuse</span>
+    </div>
+    <input id="auth-input" type="password" inputmode="numeric" placeholder="Code d'accès"
+        style="width:100%;padding:14px 16px;border:1.5px solid rgba(255,255,255,.2);
+        border-radius:12px;background:rgba(255,255,255,.08);color:#f5efe0;
+        font-size:1.3rem;text-align:center;letter-spacing:.3em;outline:none;"
+        onkeydown="if(event.key==='Enter')verifierAuth()">
+    <div id="auth-error" style="color:#e74c3c;font-size:.85rem;display:none;">Code incorrect</div>
+    <button onclick="verifierAuth()" style="width:100%;padding:14px;border:none;
+        border-radius:12px;background:#8b1a1a;color:#f5efe0;font-size:1rem;
+        font-weight:600;cursor:pointer;letter-spacing:.05em;">
+      Accéder
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  var HASH = 'd61432d15ffa422ace538be31834859d1e4ae432e094c71ba634ab30e2dda520';
+  var KEY  = 'app_auth_h';
+  async function verifierAuth() {
+    var val = document.getElementById('auth-input').value.trim();
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+    var h   = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    if (h === HASH) {
+      try { localStorage.setItem(KEY, HASH); } catch(e) {}
+      document.getElementById('auth-screen').style.display = 'none';
+    } else {
+      document.getElementById('auth-error').style.display = 'block';
+      document.getElementById('auth-input').value = '';
+    }
+  }
+  window.verifierAuth = verifierAuth;
+  var stored;
+  try { stored = localStorage.getItem(KEY); } catch(e) {}
+  if (stored !== HASH) {
+    var s = document.getElementById('auth-screen');
+    s.style.display = 'flex';
+    setTimeout(function() {
+      var inp = document.getElementById('auth-input');
+      if (inp) inp.focus();
+    }, 100);
+  }
+})();
+</script>
+
     <div id="menu-container"></div>
     <main>
         <div class="page-header">
