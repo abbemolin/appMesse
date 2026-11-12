@@ -344,8 +344,15 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
   <div id="cancel-box">
     <h3>✅ Envoi programmé</h3>
     <p id="cancel-desc">La newsletter sera envoyée le <strong id="cancel-date">—</strong>.</p>
+    <div id="cancel-confirm" style="display:none;background:#fff3e0;border:1px solid #ffcc80;border-radius:6px;padding:12px 14px;margin-bottom:12px;font-size:14px;color:#e65100;">
+      ⚠️ Confirmer l'annulation ? Cette action supprimera la campagne sur Brevo.
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button class="btn btn-danger" id="btn-cancel-confirm-yes" style="padding:8px 18px;font-size:14px;">Oui, annuler</button>
+        <button class="btn btn-secondary" id="btn-cancel-confirm-no" style="padding:8px 18px;font-size:14px;">Non, garder</button>
+      </div>
+    </div>
     <div class="confirm-actions">
-      <button class="btn btn-secondary" id="btn-cancel-scheduled">🗑 Annuler sur Brevo</button>
+      <button class="btn btn-secondary" id="btn-cancel-scheduled">🗑 Annuler l'envoi</button>
     </div>
   </div>
 
@@ -950,21 +957,26 @@ function getSubject() {
   return `Annonces paroissiales — semaine du ${lundi.toLocaleDateString('fr-FR', opts)} au ${dimanche.toLocaleDateString('fr-FR', opts)}`;
 }
 
-// Calcule le prochain dimanche à 12h00 UTC+1 (heure de Paris)
+// Calcule le prochain dimanche à 12h00 heure de Paris (gère DST correctement)
 function prochainDimanche12h() {
   const now = new Date();
   const dow = now.getDay(); // 0=dim, 1=lun, ...
   const joursAvantDim = dow === 0 ? 7 : 7 - dow; // si aujourd'hui dimanche → dimanche prochain
   const dim = new Date(now);
   dim.setDate(now.getDate() + joursAvantDim);
-  dim.setHours(11, 0, 0, 0); // 12h Paris = 11h UTC (hiver) ou 10h UTC (été)
-  // Ajustement DST : on vérifie si l'Europe/Paris est en heure d'été
-  const tzOffset = new Date(dim.getFullYear(), dim.getMonth(), dim.getDate(), 12, 0, 0)
-    .toLocaleString('en-US', { timeZone: 'Europe/Paris', hour12: false, hour: '2-digit' });
-  // Si Paris = UTC+2 (été), 12h Paris = 10h UTC ; si UTC+1 (hiver), 12h Paris = 11h UTC
-  const parisHourUTC = parseInt(tzOffset) === 12 ? (dim.getTimezoneOffset() === -120 ? 10 : 11) : 11;
-  dim.setUTCHours(parisHourUTC, 0, 0, 0);
-  return dim;
+
+  // Trouver l'offset UTC de Paris ce dimanche-là à 12h00 (Intl, pas getTimezoneOffset local)
+  // On construit "ce dimanche à 12h00 Paris" en cherchant l'UTC correspondant
+  // Méthode : diff entre UTC et l'heure locale Paris via Intl.DateTimeFormat
+  const candidat = new Date(Date.UTC(dim.getFullYear(), dim.getMonth(), dim.getDate(), 11, 0, 0));
+  const parisParts = new Intl.DateTimeFormat('fr-FR', {
+    timeZone: 'Europe/Paris', hour: 'numeric', hour12: false
+  }).formatToParts(candidat);
+  const parisHour = parseInt(parisParts.find(p => p.type === 'hour').value);
+  // Si Paris affiche 12 pour UTC 11h → offset +1 (hiver)
+  // Si Paris affiche 13 pour UTC 11h → offset +2 (été), il faut UTC 10h
+  const utcHour = parisHour === 12 ? 11 : 10;
+  return new Date(Date.UTC(dim.getFullYear(), dim.getMonth(), dim.getDate(), utcHour, 0, 0));
 }
 
 let currentCampaignId = null; // pour permettre l'annulation
@@ -1031,8 +1043,6 @@ async function envoyerNewsletter() {
 
 async function annulerEnvoi() {
   if (!currentCampaignId) return;
-  if (!confirm(`Annuler l'envoi de la campagne #${currentCampaignId} ?`)) return;
-
   log(`Annulation de la campagne #${currentCampaignId}…`);
   try {
     // Brevo refuse DELETE sur une campagne programmée — il faut d'abord la remettre en brouillon
@@ -1180,12 +1190,32 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-cancel-scheduled').addEventListener('click', () => {
-    // Brevo ne permet pas d'annuler une campagne programmée via API
-    // On ouvre directement la campagne dans Brevo pour annulation manuelle
-    if (currentCampaignId) {
-      window.open(`https://app.brevo.com/campaign/email/${currentCampaignId}/report`, '_blank');
-    }
+    // Afficher la confirmation inline (pas de confirm() qui est bloqué en PWA)
+    document.getElementById('cancel-confirm').style.display = 'block';
   });
+
+  document.getElementById('btn-cancel-confirm-no').addEventListener('click', () => {
+    document.getElementById('cancel-confirm').style.display = 'none';
+  });
+
+  document.getElementById('btn-cancel-confirm-yes').addEventListener('click', () => {
+    document.getElementById('cancel-confirm').style.display = 'none';
+    document.getElementById('btn-cancel-confirm-yes').disabled = true;
+    annulerEnvoi().finally(() => {
+      document.getElementById('btn-cancel-confirm-yes').disabled = false;
+    });
+  });
+
+  // Exposer pour navRefresh()
+  window.chargerNewsletter = chargerTout;
+
+  // Avertissement clé Brevo manquante
+  if (!BREVO_API_KEY) {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:14px;color:#856404;';
+    warn.textContent = '⚠️ Clé Brevo non configurée — l\'envoi de la newsletter sera impossible. Ajoutez config.local.js avec window.BREVO_API_KEY.';
+    document.getElementById('app').insertBefore(warn, document.getElementById('status-bar').nextSibling);
+  }
 
   // Chargement initial — semaine suivante
   chargerTout();

@@ -101,10 +101,11 @@ function navRefresh() {
     // Détecter la page et appeler la bonne fonction
     const href = window.location.href;
     let fn = null;
-    if      (href.includes('intentions'))        fn = window.chargerDemandes;
-    else if (href.includes('annonces'))          fn = window.charger;
+    if      (href.includes('intentions'))         fn = window.chargerDemandes;
+    else if (href.includes('annonces'))           fn = window.charger;
     else if (href.includes('calendrier_semaine')) fn = window.chargerSemaine;
     else if (href.includes('calendrier.html'))    fn = window.chargerAgenda;
+    else if (href.includes('newsletter'))         fn = window.chargerNewsletter;
     else if (href.includes('accueil') || href.endsWith('/') || href.endsWith('index.html'))
                                                   fn = window.initDashboard;
 
