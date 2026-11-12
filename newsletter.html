@@ -385,7 +385,26 @@ const CALENDAR_ID      = 'saintlouisenville67@gmail.com';
 // ═══════════════════════════════════════════════════════════════════════
 // ÉTAT
 // ═══════════════════════════════════════════════════════════════════════
-let weekOffset = 1;      // 1 = semaine prochaine (par défaut)
+// weekOffset calculé depuis le localStorage si calendrier_semaine a exporté une semaine
+function weekOffsetDepuisLocalStorage() {
+  try {
+    const savedLundi = localStorage.getItem('newsletter_calendrier_lundi');
+    if (!savedLundi) return 1; // pas de données → semaine suivante par défaut
+    // Calculer le lundi de la semaine en cours
+    const now = new Date();
+    const dow = now.getDay();
+    const diff = (dow === 0) ? -6 : 1 - dow;
+    const lundiCourant = new Date(now);
+    lundiCourant.setDate(now.getDate() + diff);
+    lundiCourant.setHours(0,0,0,0);
+    // Calculer le nombre de semaines entre lundi courant et le lundi sauvegardé
+    const lundiSauvegarde = new Date(savedLundi + 'T00:00:00');
+    const diffMs = lundiSauvegarde.getTime() - lundiCourant.getTime();
+    const diffSemaines = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
+    return diffSemaines; // peut être 0 (semaine courante), 1 (suivante), -1 (précédente), etc.
+  } catch(e) { return 1; }
+}
+let weekOffset = weekOffsetDepuisLocalStorage();
 let semaineData = [];    // 7 jours [{dateFr, iso, dow, sousTitre, couleur, horaires, notes}]
 let annonces    = [];    // annonces avec dans_newsletter=true
 let emailHtml   = '';    // HTML de l'email généré
