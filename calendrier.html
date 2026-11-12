@@ -333,12 +333,14 @@ body {
 
 <script>
 (function() {
-  var CODE = '5717';
-  var KEY  = 'app_auth';
-  function verifierAuth() {
+  var HASH = 'd61432d15ffa422ace538be31834859d1e4ae432e094c71ba634ab30e2dda520';
+  var KEY  = 'app_auth_h';
+  async function verifierAuth() {
     var val = document.getElementById('auth-input').value.trim();
-    if (val === CODE) {
-      try { localStorage.setItem(KEY, CODE); } catch(e) {}
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+    var h   = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    if (h === HASH) {
+      try { localStorage.setItem(KEY, HASH); } catch(e) {}
       document.getElementById('auth-screen').style.display = 'none';
     } else {
       document.getElementById('auth-error').style.display = 'block';
@@ -348,7 +350,7 @@ body {
   window.verifierAuth = verifierAuth;
   var stored;
   try { stored = localStorage.getItem(KEY); } catch(e) {}
-  if (stored !== CODE) {
+  if (stored !== HASH) {
     var s = document.getElementById('auth-screen');
     s.style.display = 'flex';
     setTimeout(function() {
