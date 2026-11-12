@@ -1104,6 +1104,9 @@ function init() {
 }
 init();
 
+// ── Exposition pour le bouton Actualiser (menu.js → navRefresh) ──
+// menu.js cherche window.chargerAgenda ; la fonction locale s'appelle chargerMois
+window.chargerAgenda = chargerMois;
 </script>
 
 </body>

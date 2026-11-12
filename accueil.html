@@ -799,6 +799,9 @@ function escHA(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function setPropraAccLang(l){_propreAccLang=l;document.getElementById('propre-acc-btn-la').style.background=l==='la'?'#b8962a':'transparent';document.getElementById('propre-acc-btn-la').style.color=l==='la'?'#fff':'#b8962a';document.getElementById('propre-acc-btn-fr').style.background=l==='fr'?'#b8962a':'transparent';document.getElementById('propre-acc-btn-fr').style.color=l==='fr'?'#fff':'#b8962a';renderPropreAccPieces();}
 function fermerPropreAcc(){document.getElementById('modal-propre-acc').style.display='none';_propreAccData=null;}
 document.getElementById('modal-propre-acc').addEventListener('click',function(e){if(e.target===this)fermerPropreAcc();});
+
+// ── Exposition pour le bouton Actualiser (menu.js → navRefresh) ──
+window.initDashboard = initDashboard;
 </script>
 <script>
 // ── Gestion hors ligne ────────────────────────────────────
