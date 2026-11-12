@@ -1045,14 +1045,23 @@ async function annulerEnvoi() {
   if (!currentCampaignId) return;
   log(`Annulation de la campagne #${currentCampaignId}…`);
   try {
-    // Brevo refuse DELETE sur une campagne programmée — il faut d'abord la remettre en brouillon
-    const rPut = await fetch(`https://api.brevo.com/v3/emailCampaigns/${currentCampaignId}`, {
+    // Étape 1 : suspendre la campagne (Brevo refuse DELETE sur une campagne scheduled)
+    log('Suspension de la campagne…');
+    const rSuspend = await fetch(`https://api.brevo.com/v3/emailCampaigns/${currentCampaignId}/status`, {
       method: 'PUT',
-      headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'draft' }),
+      headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ status: 'suspended' }),
     });
-    // On ignore l'erreur du PUT (Brevo peut retourner 400 si déjà en brouillon)
+    if (!rSuspend.ok) {
+      const err = await rSuspend.text();
+      // Brevo peut renvoyer 400 si la campagne est déjà en brouillon/suspendue — continuer quand même
+      log(`ℹ️ Suspension : statut ${rSuspend.status} (${err}) — tentative suppression directe`);
+    } else {
+      log('✅ Campagne suspendue.');
+    }
 
+    // Étape 2 : supprimer
+    log('Suppression de la campagne…');
     const r = await fetch(`https://api.brevo.com/v3/emailCampaigns/${currentCampaignId}`, {
       method: 'DELETE',
       headers: { 'api-key': BREVO_API_KEY, 'Accept': 'application/json' },
@@ -1060,10 +1069,13 @@ async function annulerEnvoi() {
 
     if (!r.ok && r.status !== 204) {
       const err = await r.text();
-      throw new Error(`Annulation échouée (${r.status}) : ${err}`);
+      // Fallback : ouvrir Brevo manuellement
+      log(`⚠️ Suppression API échouée (${r.status}) — ouverture de Brevo pour annulation manuelle`);
+      window.open(`https://app.brevo.com/campaign/email/${currentCampaignId}/report`, '_blank');
+      throw new Error(`Suppression échouée (${r.status}) — annulez manuellement dans Brevo (onglet ouvert)`);
     }
 
-    log(`✅ Campagne #${currentCampaignId} annulée.`);
+    log(`✅ Campagne #${currentCampaignId} supprimée.`);
     setStatus('✅ Envoi annulé.', 'ok');
     toast('✅ Envoi annulé.', 4000);
     currentCampaignId = null;
@@ -1071,7 +1083,7 @@ async function annulerEnvoi() {
     document.getElementById('cancel-box').classList.remove('visible');
     document.getElementById('btn-send-init').disabled = false;
   } catch(e) {
-    log('❌ Erreur : ' + e.message);
+    log('❌ ' + e.message);
     setStatus('❌ ' + e.message, 'err');
     toast('❌ ' + e.message, 6000);
   }

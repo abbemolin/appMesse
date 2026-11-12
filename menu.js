@@ -86,7 +86,16 @@
         </button>
     </nav>`;
 
-    document.getElementById('menu-container').innerHTML = menuHTML;
+    const container = document.getElementById('menu-container');
+    if (container) {
+        container.innerHTML = menuHTML;
+    } else {
+        // DOM pas encore prêt — attendre
+        document.addEventListener('DOMContentLoaded', function() {
+            const c = document.getElementById('menu-container');
+            if (c) c.innerHTML = menuHTML;
+        });
+    }
 })();
 
 // ── Actualisation — appelle la fonction propre à chaque page ─────
