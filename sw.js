@@ -1,4 +1,4 @@
-const CACHE_NAME  = 'messes-v15';
+const CACHE_NAME  = 'messes-v16';
 const CACHE_OFFICES = 'breviaire-offices-v1';   // conservé entre les mises à jour de l'app
 const SYNC_TAG    = 'sync-intentions';
 const QUEUE_KEY   = 'offline-queue';
@@ -8,6 +8,8 @@ const ASSETS_TO_CACHE = [
     './calendrier.html',
     './calendrier_semaine.html',
     './intentions.html',
+    './annonces.html',
+    './newsletter.html',
     './breviaire.html',
     './bible.html',
     './style.css',
