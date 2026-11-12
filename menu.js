@@ -43,6 +43,10 @@
             font-family:'Cinzel',serif;
         }
         .nav-more-btn.active { color:var(--gold-light, #d4af37); }
+        /* SVG icons panneau */
+        .nav-svg { display:flex; line-height:0; color:inherit; }
+        .nav-svg svg { width:22px; height:22px; }
+        .nav-panel-item .nav-svg, .nav-panel-refresh .nav-svg { opacity:.85; }
         /* Panneau secondaire */
         .nav-panel {
             position:fixed; bottom:65px; left:0; right:0;
@@ -79,8 +83,8 @@
             border-radius:8px; font-family:inherit;
         }
         .nav-panel-refresh:active { color:var(--gold-light, #d4af37); }
-        .nav-panel-refresh .nav-icon { transition:transform .4s ease; }
-        .nav-panel-refresh.spinning .nav-icon { animation:spin-refresh .6s linear infinite; }
+        .nav-panel-refresh .nav-svg { transition:transform .4s ease; }
+        .nav-panel-refresh.spinning .nav-svg { animation:spin-refresh .6s linear infinite; }
         @keyframes spin-refresh { to { transform:rotate(360deg); } }
         .nav-panel-label {
             font-family:'Cinzel',serif; font-size:.48rem; font-weight:600;
@@ -89,7 +93,9 @@
         /* Overlay pour fermer le panneau en cliquant en dehors */
         .nav-overlay {
             display:none; position:fixed; inset:0; bottom:65px;
-            z-index:998; background:rgba(0,0,0,0);
+            z-index:998; background:rgba(0,0,0,.18);
+            backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+            transition:opacity .2s ease;
         }
         .nav-overlay.open { display:block; }
         @media(max-width:420px){ .nav-label{font-size:.44rem;letter-spacing:.04em} }
@@ -105,23 +111,34 @@
     <div class="nav-panel" id="nav-panel">
         <div class="nav-panel-inner">
             <a href="intentions.html" class="nav-panel-item ${isIntentions ? 'active' : ''}" onclick="navTogglePlus(false)">
-                <span class="nav-icon">✍️</span>
+                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg></span>
                 <span class="nav-panel-label">Gérer</span>
             </a>
             <a href="annonces.html" class="nav-panel-item ${isAnnonces ? 'active' : ''}" onclick="navTogglePlus(false)">
-                <span class="nav-icon">📋</span>
+                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg></span>
                 <span class="nav-panel-label">Annonces</span>
             </a>
             <a href="calendrier_semaine.html" class="nav-panel-item ${isSemaine ? 'active' : ''}" onclick="navTogglePlus(false)">
-                <span class="nav-icon">📄</span>
+                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+                    <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+                </svg></span>
                 <span class="nav-panel-label">Semaine</span>
             </a>
             <a href="newsletter.html" class="nav-panel-item ${isNewsletter ? 'active' : ''}" onclick="navTogglePlus(false)">
-                <span class="nav-icon">📧</span>
+                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg></span>
                 <span class="nav-panel-label">Newsletter</span>
             </a>
             <button class="nav-panel-refresh" id="btn-nav-refresh" onclick="navRefresh(); navTogglePlus(false);" title="Actualiser">
-                <span class="nav-icon" id="nav-refresh-icon">↻</span>
+                <span class="nav-svg" id="nav-refresh-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>
+                </svg></span>
                 <span class="nav-panel-label">Actualiser</span>
             </button>
         </div>
