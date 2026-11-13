@@ -831,7 +831,9 @@ function fusionnerAnonymes() {
     const lignes = [...document.querySelectorAll('#brev-content .brev-ligne')];
     lignes.forEach((l, j) => {
         if (nomPartie(l)) return;
-        const versSuivante = /Pater\s*Noster|Notre Père/i.test(l.textContent) && lignes[j + 1];
+        const suivante = lignes[j + 1];
+        const versSuivante = /Pater\s*Noster|Notre Père/i.test(l.textContent) && suivante
+            && !suivante.querySelector('.do-psaume');
         const cible = versSuivante ? lignes[j + 1] : lignes.slice(0, j).reverse().find(x => x.isConnected);
         if (!cible) return;
         const textes = [...l.children];
