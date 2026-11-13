@@ -27,7 +27,8 @@
             color:rgba(240,230,184,.45); transition:color .2s; padding:8px 0; gap:3px;
         }
         .nav-item.active { color:var(--gold-light, #d4af37); }
-        .nav-icon { font-size:1.2rem; }
+        .nav-icon { display:flex; line-height:0; }
+        .nav-icon svg { width:22px; height:22px; }
         .nav-icon-brev { display:flex; line-height:0; color:#c9a840; }
         .nav-item.active .nav-icon-brev { color:#f0cf5a; }
         .nav-label {
@@ -111,33 +112,34 @@
     <div class="nav-panel" id="nav-panel">
         <div class="nav-panel-inner">
             <a href="intentions.html" class="nav-panel-item ${isIntentions ? 'active' : ''}" onclick="navTogglePlus(false)">
-                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>
                 </svg></span>
                 <span class="nav-panel-label">Gérer</span>
             </a>
             <a href="annonces.html" class="nav-panel-item ${isAnnonces ? 'active' : ''}" onclick="navTogglePlus(false)">
-                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg></span>
                 <span class="nav-panel-label">Annonces</span>
             </a>
             <a href="calendrier_semaine.html" class="nav-panel-item ${isSemaine ? 'active' : ''}" onclick="navTogglePlus(false)">
-                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <rect x="3" y="4" width="18" height="18" rx="1"/><path d="M16 2v4M8 2v4M3 10h18"/>
                     <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
                 </svg></span>
                 <span class="nav-panel-label">Semaine</span>
             </a>
             <a href="newsletter.html" class="nav-panel-item ${isNewsletter ? 'active' : ''}" onclick="navTogglePlus(false)">
-                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                <span class="nav-svg" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <rect x="2" y="4" width="20" height="16" rx="1"/><polyline points="2,4 12,13 22,4"/>
                 </svg></span>
                 <span class="nav-panel-label">Newsletter</span>
             </a>
             <button class="nav-panel-refresh" id="btn-nav-refresh" onclick="navRefresh(); navTogglePlus(false);" title="Actualiser">
-                <span class="nav-svg" id="nav-refresh-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>
+                <span class="nav-svg" id="nav-refresh-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>
                 </svg></span>
                 <span class="nav-panel-label">Actualiser</span>
             </button>
@@ -146,23 +148,53 @@
     <!-- Barre principale (5 items) -->
     <nav class="mobile-nav">
         <a href="accueil.html" class="nav-item ${isAccueil ? 'active' : ''}">
-            <span class="nav-icon">✝</span>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <path d="M12 2 L10 6 L12 5 L14 6 Z" fill="currentColor" stroke="none"/>
+                <path d="M12 22 L10 18 L12 19 L14 18 Z" fill="currentColor" stroke="none"/>
+                <path d="M2 12 L6 10 L5 12 L6 14 Z" fill="currentColor" stroke="none"/>
+                <path d="M22 12 L18 10 L19 12 L18 14 Z" fill="currentColor" stroke="none"/>
+                <line x1="12" y1="4" x2="12" y2="20"/>
+                <line x1="4" y1="12" x2="20" y2="12"/>
+            </svg></span>
             <span class="nav-label">Accueil</span>
         </a>
         <a href="calendrier.html" class="nav-item ${isCalendrier ? 'active' : ''}">
-            <span class="nav-icon">📅</span>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <rect x="3" y="6" width="18" height="15" rx="1"/>
+                <path d="M3 11 h18"/>
+                <path d="M7 3 v5"/>
+                <path d="M17 3 v5"/>
+                <text x="12" y="19" text-anchor="middle" font-family="'IM Fell English', serif" font-size="6" fill="currentColor" stroke="none">VII</text>
+            </svg></span>
             <span class="nav-label">Calendrier</span>
         </a>
         <a href="bible.html" class="nav-item ${isBible ? 'active' : ''}">
-            <span class="nav-icon">📖</span>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <rect x="4" y="3" width="13" height="18" rx="1"/>
+                <line x1="4" y1="8" x2="17" y2="8"/>
+                <line x1="4" y1="16" x2="17" y2="16"/>
+                <line x1="8" y1="8" x2="8" y2="16"/>
+                <path d="M17 3 L20 5 L20 21 L17 21"/>
+                <line x1="17" y1="12" x2="20" y2="12"/>
+            </svg></span>
             <span class="nav-label">Bible</span>
         </a>
         <a href="breviaire.html" class="nav-item ${isBreviaire ? 'active' : ''}">
-            <span class="nav-icon nav-icon-brev" aria-hidden="true"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5C10 7 7 6.6 3 7v12c4-.4 7 0 9 1.5 2-1.5 5-1.9 9-1.5V7c-4-.4-7 0-9 1.5z"/><path d="M12 8.5v12"/><path d="M12 1.5v5M9.8 3.4h4.4"/></svg></span>
+            <span class="nav-icon nav-icon-brev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 8.5C10 7 7 6.6 3 7v12c4-.4 7 0 9 1.5 2-1.5 5-1.9 9-1.5V7c-4-.4-7 0-9 1.5z"/>
+                <path d="M12 8.5v12"/>
+                <path d="M12 1.5v5M9.8 3.4h4.4"/>
+            </svg></span>
             <span class="nav-label">Bréviaire</span>
         </a>
         <button class="nav-more-btn ${isPlus ? 'active' : ''}" id="btn-nav-more" onclick="navTogglePlus()" aria-label="Plus de pages">
-            <span class="nav-icon">⋯</span>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <circle cx="12" cy="8" r="1.5"/>
+                <circle cx="12" cy="14" r="1.5"/>
+                <circle cx="12" cy="20" r="1.5"/>
+                <line x1="12" y1="9.5" x2="12" y2="12.5"/>
+                <line x1="12" y1="15.5" x2="12" y2="18.5"/>
+            </svg></span>
             <span class="nav-label">Plus</span>
         </button>
     </nav>`;
