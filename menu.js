@@ -24,13 +24,16 @@
         .nav-item {
             text-decoration:none; display:flex; flex-direction:column;
             align-items:center; justify-content:center; flex:1;
-            color:rgba(240,230,184,.45); transition:color .2s; padding:8px 0; gap:3px;
+            color:rgba(240,230,184,.32); transition:color .2s; padding:8px 0; gap:3px;
+            position:relative; border-radius:6px;
         }
-        .nav-item.active { color:var(--gold-light, #d4af37); }
+        .nav-item.active { color:#f0d060; }
+        .nav-item.active::after {
+            content:''; position:absolute; inset:-2px 4px -6px;
+            border-radius:6px; background:rgba(201,168,64,.15); z-index:-1;
+        }
         .nav-icon { display:flex; line-height:0; }
         .nav-icon svg { width:22px; height:22px; }
-        .nav-icon-brev { display:flex; line-height:0; color:#c9a840; }
-        .nav-item.active .nav-icon-brev { color:#f0cf5a; }
         .nav-label {
             font-family:'Cinzel',serif; font-size:.5rem; font-weight:600;
             text-transform:uppercase; letter-spacing:.1em;
@@ -40,10 +43,14 @@
             background:none; border:none; cursor:pointer;
             display:flex; flex-direction:column; align-items:center;
             justify-content:center; flex:1; padding:8px 0; gap:3px;
-            color:rgba(240,230,184,.45); transition:color .2s;
-            font-family:'Cinzel',serif;
+            color:rgba(240,230,184,.32); transition:color .2s;
+            font-family:'Cinzel',serif; position:relative; border-radius:6px;
         }
-        .nav-more-btn.active { color:var(--gold-light, #d4af37); }
+        .nav-more-btn.active { color:#f0d060; }
+        .nav-more-btn.active::after {
+            content:''; position:absolute; inset:-2px 4px -6px;
+            border-radius:6px; background:rgba(201,168,64,.15); z-index:-1;
+        }
         /* SVG icons panneau */
         .nav-svg { display:flex; line-height:0; color:inherit; }
         .nav-svg svg { width:22px; height:22px; }
@@ -148,52 +155,54 @@
     <!-- Barre principale (5 items) -->
     <nav class="mobile-nav">
         <a href="accueil.html" class="nav-item ${isAccueil ? 'active' : ''}">
-            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                <path d="M12 2 L10 6 L12 5 L14 6 Z" fill="currentColor" stroke="none"/>
-                <path d="M12 22 L10 18 L12 19 L14 18 Z" fill="currentColor" stroke="none"/>
-                <path d="M2 12 L6 10 L5 12 L6 14 Z" fill="currentColor" stroke="none"/>
-                <path d="M22 12 L18 10 L19 12 L18 14 Z" fill="currentColor" stroke="none"/>
-                <line x1="12" y1="4" x2="12" y2="20"/>
-                <line x1="4" y1="12" x2="20" y2="12"/>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round">
+                <path d="M12 3 L12 21" stroke-width="1.6"/>
+                <path d="M6 8.5 L18 8.5" stroke-width="1.6"/>
             </svg></span>
             <span class="nav-label">Accueil</span>
         </a>
         <a href="calendrier.html" class="nav-item ${isCalendrier ? 'active' : ''}">
-            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                <rect x="3" y="6" width="18" height="15" rx="1"/>
-                <path d="M3 11 h18"/>
-                <path d="M7 3 v5"/>
-                <path d="M17 3 v5"/>
-                <text x="12" y="19" text-anchor="middle" font-family="'IM Fell English', serif" font-size="6" fill="currentColor" stroke="none">VII</text>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round">
+                <rect x="3" y="5" width="18" height="16" rx="1.5" stroke-width="1.4"/>
+                <path d="M3 11 L21 11" stroke-width="1.2"/>
+                <path d="M8 3 L8 7" stroke-width="1.6"/>
+                <path d="M16 3 L16 7" stroke-width="1.6"/>
+                <path d="M7.5 15 L10 15" stroke-width="1.2"/>
+                <path d="M14 15 L16.5 15" stroke-width="1.2"/>
+                <path d="M7.5 19 L10 19" stroke-width="1.2"/>
+                <path d="M14 19 L16.5 19" stroke-width="1.2"/>
             </svg></span>
             <span class="nav-label">Calendrier</span>
         </a>
         <a href="bible.html" class="nav-item ${isBible ? 'active' : ''}">
-            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                <rect x="4" y="3" width="13" height="18" rx="1"/>
-                <line x1="4" y1="8" x2="17" y2="8"/>
-                <line x1="4" y1="16" x2="17" y2="16"/>
-                <line x1="8" y1="8" x2="8" y2="16"/>
-                <path d="M17 3 L20 5 L20 21 L17 21"/>
-                <line x1="17" y1="12" x2="20" y2="12"/>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 5 C3 5 7 5.5 12 5" stroke-width="1.4"/>
+                <path d="M3 5 L3 19 C7 18.5 12 19 12 19" stroke-width="1.4"/>
+                <path d="M21 5 C17 5.5 12 5 12 5" stroke-width="1.4"/>
+                <path d="M21 5 L21 19 C17 18.5 12 19 12 19" stroke-width="1.4"/>
+                <path d="M6 9 L10 9" stroke-width="1"/>
+                <path d="M6 11.5 L10 11.5" stroke-width="1"/>
+                <path d="M6 14 L10 14" stroke-width="1"/>
+                <path d="M14 9 L18 9" stroke-width="1"/>
+                <path d="M14 11.5 L18 11.5" stroke-width="1"/>
+                <path d="M14 14 L18 14" stroke-width="1"/>
             </svg></span>
             <span class="nav-label">Bible</span>
         </a>
         <a href="breviaire.html" class="nav-item ${isBreviaire ? 'active' : ''}">
-            <span class="nav-icon nav-icon-brev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 8.5C10 7 7 6.6 3 7v12c4-.4 7 0 9 1.5 2-1.5 5-1.9 9-1.5V7c-4-.4-7 0-9 1.5z"/>
-                <path d="M12 8.5v12"/>
-                <path d="M12 1.5v5M9.8 3.4h4.4"/>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 8.5C10 7 7 6.6 3 7v12c4-.4 7 0 9 1.5 2-1.5 5-1.9 9-1.5V7c-4-.4-7 0-9 1.5z" stroke-width="1.4"/>
+                <path d="M12 8.5v12" stroke-width="1.3"/>
+                <path d="M12 1.5v5" stroke-width="1.5"/>
+                <path d="M9.8 3.4h4.4" stroke-width="1.5"/>
             </svg></span>
             <span class="nav-label">Bréviaire</span>
         </a>
         <button class="nav-more-btn ${isPlus ? 'active' : ''}" id="btn-nav-more" onclick="navTogglePlus()" aria-label="Plus de pages">
-            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                <circle cx="12" cy="8" r="1.5"/>
-                <circle cx="12" cy="14" r="1.5"/>
-                <circle cx="12" cy="20" r="1.5"/>
-                <line x1="12" y1="9.5" x2="12" y2="12.5"/>
-                <line x1="12" y1="15.5" x2="12" y2="18.5"/>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none">
+                <circle cx="6.5"  cy="12" r="1.4" fill="currentColor"/>
+                <circle cx="12"   cy="12" r="1.4" fill="currentColor"/>
+                <circle cx="17.5" cy="12" r="1.4" fill="currentColor"/>
             </svg></span>
             <span class="nav-label">Plus</span>
         </button>
@@ -221,7 +230,7 @@ function navTogglePlus(force) {
     const shouldOpen = (force === undefined) ? !isOpen : !!force;
     panel.classList.toggle('open', shouldOpen);
     if (overlay) overlay.classList.toggle('open', shouldOpen);
-    if (btn) btn.classList.toggle('active', shouldOpen || btn.classList.contains('was-active'));
+    if (btn) btn.classList.toggle('active', shouldOpen);
 }
 
 // ── Actualisation — appelle la fonction propre à chaque page ─────
