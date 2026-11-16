@@ -99,7 +99,7 @@
     `;
     document.head.appendChild(css);
 
-    const LIBELLES = { Introitus: 'Introït', Oratio: 'Collecte', Lectio: 'Épître', Graduale: 'Graduel', Tractus: 'Trait',
+    const LIBELLES = { Introitus: 'Introït', Oratio: 'Collecte', Lectio: 'Épître', Graduale: 'Graduel', Alleluia: 'Alléluia', Tractus: 'Trait',
         Sequentia: 'Séquence', Evangelium: 'Évangile', Offertorium: 'Offertoire', Secreta: 'Secrète', Prefatio: 'Préface',
         Communio: 'Communion', Gloria: 'Gloria', Credo: 'Credo', Postcommunio: 'Postcommunion', 'Oratio super populum': 'Oraison sur le peuple' };
 
@@ -110,6 +110,75 @@
             .replace(/<span class="do-titre"><b><i>([^<]+)<\/i><\/b><\/span>/g, (t, nom) =>
                 `<span class="do-titre">${nomPartie(nom.trim())}</span>`)
             .replace(/^(<span class="do-titre">[^<]*<\/span>)\s*(?:<br>\s*)+/, '$1');
+    };
+
+    // Le bloc « Graduale » des données contient aussi l'Alléluia, le Trait et la Séquence :
+    // on le découpe en pièces distinctes, chacune avec son titre.
+    const TITRE_PIECE = n => `<span class="do-titre"><b><i>${n}</i></b></span>`;
+    const ALLELUIA2 = /All[eé]l+[uú][ij]a,\s*all+[eé]l+[uú][ij]a\.?/i;
+    const REF_BIBLIQUE = /<span class="do-rubr"><i>[^<]*\d[^<]*<\/i><\/span>/g;
+    const CHANTS = ['Graduale', 'Alleluia', 'Tractus'];
+    const finPropre = s => s.replace(/(?:\s|<br>)+$/, '').replace(/,$/, '.');
+    const titreDe = p => (p.match(/^<span class="do-titre"><b><i>([^<]+)</) || [])[1] || '';
+    const corpsDe = p => p.slice(p.indexOf('</span>') + 7);
+    const estGraduel = html => /^\s*<span class="do-titre"><b><i>Graduale<\/i><\/b><\/span>/.test(html);
+
+    // Une pièce par titre (Graduale, Tractus, Sequentia…) ; le Trait, signalé par une simple rubrique, devient un titre
+    function parTitres(html) {
+        return html.trim()
+            .replace(/(?:\s|<br>)*<span class="do-rubr"><i>\s*Tract(?:us)?\.?\s*<\/i><\/span>(?:\s|<br>)*/g, ' ' + TITRE_PIECE('Tractus') + ' <br> ')
+            .split(/(?=<span class="do-titre"><b><i>[^<]{2,}<\/i><\/b><\/span>)/)
+            .map(finPropre).filter(Boolean);
+    }
+
+    // Découpe d'après les mots du texte lui-même (« Allelúia, allelúia. »)
+    function parMarqueurs(html) {
+        const pieces = parTitres(html);
+        let corps = corpsDe(pieces[0]);
+        let m = ALLELUIA2.exec(corps);
+        if (!m) return pieces;
+        if (!corps.slice(0, m.index).replace(/<br>|\s/g, '')) {
+            const suite = corps.slice(m.index + m[0].length);
+            const m2 = ALLELUIA2.exec(suite);
+            // Temps pascal : pas de Graduel, seulement l'Alléluia
+            if (!m2) { pieces[0] = TITRE_PIECE('Alleluia') + corps; return pieces; }
+            corps = suite; m = m2;
+        }
+        pieces.splice(0, 1, TITRE_PIECE('Graduale') + finPropre(corps.slice(0, m.index)),
+            TITRE_PIECE('Alleluia') + ' <br> ' + corps.slice(m.index));
+        return pieces;
+    }
+
+    // Découpe d'après la structure du latin, quand la traduction a perdu ses repères :
+    // on coupe à la même référence biblique que dans le latin
+    function parPosition(html, modele) {
+        const pieces = parTitres(html);
+        if (pieces.filter(p => CHANTS.includes(titreDe(p))).length !== 1) return null;
+        const chants = modele.filter(p => CHANTS.includes(titreDe(p)));
+        const corps = corpsDe(pieces[0]);
+        if (chants.length === 1 && titreDe(chants[0]) === 'Alleluia') {
+            pieces[0] = TITRE_PIECE('Alleluia') + corps;
+            return pieces;
+        }
+        if (chants.length !== 2 || titreDe(chants[0]) !== 'Graduale') return null;
+        const nb = p => (p.match(REF_BIBLIQUE) || []).length;
+        const avant = nb(chants[0]), refs = [...corps.matchAll(REF_BIBLIQUE)];
+        if (!avant || refs.length !== avant + nb(chants[1])) return null;
+        const coupe = refs[avant].index;
+        pieces.splice(0, 1, TITRE_PIECE('Graduale') + finPropre(corps.slice(0, coupe)),
+            TITRE_PIECE(titreDe(chants[1])) + ' <br> ' + corps.slice(coupe));
+        return pieces;
+    }
+
+    // html : le bloc à afficher ; latin : le même bloc en latin, qui sert de modèle
+    window.decouperGraduel = function (html, latin) {
+        if (!estGraduel(html)) return [html];
+        const pieces = parMarqueurs(html);
+        if (!latin || latin === html || !estGraduel(latin)) return pieces;
+        const modele = parMarqueurs(latin);
+        const forme = p => p.map(titreDe).join('+');
+        if (forme(pieces) === forme(modele)) return pieces;
+        return parPosition(html, modele) || pieces;
     };
 
     const omise = cellule => /^\s*<span class="do-titre">[^]*?<\/span>\s*(?:<br>\s*)*(?:<[^>]+>\s*)*omit\.?\s*(?:<[^>]+>\s*)*$/i.test(cellule);
@@ -151,7 +220,8 @@
                 if (n === 'Lectio') return ++lecture < nbLectures ? 'Leçon' : 'Épître';
                 return LIBELLES[n] || n;
             };
-            return `<div class="messe-piece">${formeMesse(fr ? l[1] : l[0], nomPartie)}</div>`;
+            return decouperGraduel(fr ? l[1] : l[0], l[0])
+                .map(piece => `<div class="messe-piece">${formeMesse(piece, nomPartie)}</div>`).join('');
         }).join('');
     };
 
