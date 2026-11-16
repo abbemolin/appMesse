@@ -338,6 +338,16 @@
         cursor: pointer; font-weight: bold;
     }
     #sync-badge.visible { display: flex; }
+
+    /* ── Célébration accueil ───────────────────────────────── */
+    .accueil-celeb-zone { border-top: 1px solid rgba(58,102,68,.2); padding: 10px 14px 10px 14px; background: rgba(58,102,68,.04); }
+    .accueil-celeb-label { font-family:'Cinzel',serif; font-size:.52rem; letter-spacing:.1em; text-transform:uppercase; color: var(--green, #3a6644); display:flex; align-items:center; gap:5px; margin-bottom:8px; }
+    .accueil-celeb-choix { display:flex; gap:6px; flex-wrap:wrap; }
+    .btn-celeb-pretre { flex:1; min-width:0; padding:8px 6px; font-family:'Cinzel',serif; font-size:.5rem; letter-spacing:.08em; text-transform:uppercase; background:rgba(58,102,68,.1); color:var(--green, #3a6644); border:1px solid rgba(58,102,68,.3); border-radius:3px; cursor:pointer; transition:all .18s; white-space:nowrap; }
+    .btn-celeb-pretre:active { background:rgba(58,102,68,.25); }
+    .accueil-celebree-info { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .accueil-celebree-label { font-family:'Cinzel',serif; font-size:.54rem; letter-spacing:.1em; text-transform:uppercase; color:var(--green, #3a6644); display:flex; align-items:center; gap:5px; }
+    .btn-accueil-annuler { font-family:'Cinzel',serif; font-size:.46rem; letter-spacing:.06em; text-transform:uppercase; background:none; border:1px solid var(--border-soft, #ddd); color:var(--ink-muted, #888); border-radius:3px; padding:4px 10px; cursor:pointer; }
     </style>
 </head>
 <body>
@@ -654,6 +664,33 @@ function renderMesseCard({ h, m, typeMesse, ordo, couleur, intention, isoDate, m
         </div>`;
     }
 
+    // Zone célébration (uniquement si intention validée)
+    let celebBlock = '';
+    if (!estLibre) {
+        if (!intention.celebrant) {
+            celebBlock = `<div class="accueil-celeb-zone">
+                <div class="accueil-celeb-label">✝ J'ai célébré cette messe</div>
+                <div class="accueil-celeb-choix">
+                    <button class="btn-celeb-pretre" onclick="declarerCelebrationAccueil(${intention.id},'molin')">Abbé Molin</button>
+                    <button class="btn-celeb-pretre" onclick="declarerCelebrationAccueil(${intention.id},'legall')">Abbé Le Gall</button>
+                    <button class="btn-celeb-pretre" onclick="declarerCelebrationAccueil(${intention.id},'autre')">Autre prêtre</button>
+                </div>
+            </div>`;
+        } else {
+            const nomCeleb = intention.celebrant === 'molin'  ? 'Abbé Molin'
+                           : intention.celebrant === 'legall' ? 'Abbé Le Gall'
+                           : intention.celebrant === 'carbonnieres' ? 'Abbé de Carbonnieres'
+                           : 'Autre prêtre';
+            const btnAnnuler = '<button class="btn-accueil-annuler" onclick="annulerCelebrationAccueil(' + intention.id + ')">Annuler</button>';
+            celebBlock = `<div class="accueil-celeb-zone">
+                <div class="accueil-celebree-info">
+                    <span class="accueil-celebree-label">✝ Célébrée — ${escH(nomCeleb)}</span>
+                    ${btnAnnuler}
+                </div>
+            </div>`;
+        }
+    }
+
     // Actions pied de carte
     const proprebtn = massKey
         ? `<button class="messe-card-action gold" onclick="ouvrirPropreAccueil('${isoDate}')">✦ Propre</button>` : '';
@@ -668,6 +705,7 @@ function renderMesseCard({ h, m, typeMesse, ordo, couleur, intention, isoDate, m
         </div>
         ${ordoblock}
         ${intentionBlock}
+        ${celebBlock}
         <div class="messe-card-foot">
             ${proprebtn}
             ${attribuer}
@@ -731,6 +769,27 @@ async function demanderPermissionNotification() {
             if (p === 'granted') AppModal.alert('🔔','Notifications activées',"Vous serez averti dès qu'une nouvelle intention arrive.");
         }, 2000);
     }
+}
+
+async function declarerCelebrationAccueil(id, pretreId) {
+    const now = new Date().toISOString();
+    const { error } = await maConnexion.from('intentions').update({
+        celebrant:  pretreId,
+        celebre_le: now,
+    }).eq('id', id);
+    if (error) { AppModal.alert('❌','Erreur',error.message); return; }
+    showToast('✝ Messe déclarée comme célébrée');
+    chargerJour();
+}
+
+async function annulerCelebrationAccueil(id) {
+    const { error } = await maConnexion.from('intentions').update({
+        celebrant:  null,
+        celebre_le: null,
+    }).eq('id', id);
+    if (error) { AppModal.alert('❌','Erreur',error.message); return; }
+    showToast('↩ Déclaration annulée');
+    chargerJour();
 }
 
 window.onload = () => {
