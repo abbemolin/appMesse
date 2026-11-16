@@ -27,30 +27,16 @@
     }
     @keyframes heroIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
 
-    /* Croix en filigrane */
-    .hero-cross {
-        position: absolute; left: 50%; top: 50%;
-        transform: translate(-50%, -50%);
-        opacity: .055; pointer-events: none;
-        width: 220px; height: 280px;
-    }
-
-    /* Navigation ±jour — zones invisibles sur les bords */
-    .hero-nav {
-        position: absolute; top: 0; bottom: 0; width: 52px;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer; z-index: 10; opacity: 0;
-        transition: opacity .2s;
+    /* Navigation ±jour — boutons visibles dans la date-row */
+    .hero-nav-btn {
+        background: none; border: none; cursor: pointer;
+        font-family: 'Cinzel', serif; font-size: 1.3rem;
+        color: rgba(184,150,42,.55); font-weight: 300; line-height: 1;
+        padding: 4px 10px; transition: color .2s;
         -webkit-tap-highlight-color: transparent;
+        flex-shrink: 0;
     }
-    .hero-nav:active, .hero-nav:hover { opacity: 1; }
-    .hero-nav-left  { left: 0; }
-    .hero-nav-right { right: 0; }
-    .hero-nav-arrow {
-        font-family: 'Cinzel', serif; font-size: 1.2rem;
-        color: var(--gold); font-weight: 300; line-height: 1;
-        text-shadow: 0 0 12px rgba(184,150,42,.4);
-    }
+    .hero-nav-btn:active, .hero-nav-btn:hover { color: var(--gold); }
 
     /* Corps du hero */
     .hero-body {
@@ -90,19 +76,6 @@
         font-family: 'EB Garamond', serif; font-size: 1rem;
         color: rgba(240,230,184,.65); font-style: italic;
         letter-spacing: .04em; padding: 0 8px;
-    }
-
-    /* Ornement de séparation */
-    .hero-ornament {
-        display: flex; align-items: center; gap: 0; margin-bottom: 0;
-    }
-    .hero-ornament-line {
-        flex: 1; height: 1px;
-        background: linear-gradient(to right, transparent, rgba(184,150,42,.35), transparent);
-    }
-    .hero-ornament-gem {
-        color: var(--gold); font-size: .5rem;
-        letter-spacing: .5em; padding: 0 12px; opacity: .7;
     }
 
     /* Liseré couleur liturgique — bas du hero */
@@ -182,6 +155,8 @@
     }
     .messe-card.libre::before { background: rgba(200,190,170,.5); }
     .messe-card.prise::before { background: var(--gold); }
+    .messe-card.passee { opacity: .5; }
+    .messe-card.passee .messe-card-heure { color: var(--ink-muted); }
 
     /* En-tête de carte */
     .messe-card-head {
@@ -361,35 +336,17 @@
      HERO
 ════════════════════════════════════════════════════════ -->
 <div class="hero" id="hero">
-    <!-- Croix filigrane -->
-    <svg class="hero-cross" viewBox="0 0 220 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="88" y="0" width="44" height="280" fill="#b8962a"/>
-        <rect x="0"  y="72" width="220" height="44" fill="#b8962a"/>
-    </svg>
-
-    <!-- Flèche gauche (jour précédent) -->
-    <div class="hero-nav hero-nav-left" onclick="naviguerJour(-1)" aria-label="Jour précédent">
-        <span class="hero-nav-arrow">‹</span>
-    </div>
-    <!-- Flèche droite (jour suivant) -->
-    <div class="hero-nav hero-nav-right" onclick="naviguerJour(1)" aria-label="Jour suivant">
-        <span class="hero-nav-arrow">›</span>
-    </div>
-
     <div class="hero-body">
         <span class="hero-paroisse">Paroisse La Croix Glorieuse</span>
         <span class="hero-fete loading" id="hero-fete">Chargement…</span>
         <span class="hero-classe" id="hero-classe"></span>
 
         <div class="hero-date-row">
+            <button class="hero-nav-btn" onclick="naviguerJour(-1)" aria-label="Jour précédent">‹</button>
             <div id="hero-date" class="hero-date"></div>
+            <button class="hero-nav-btn" onclick="naviguerJour(1)" aria-label="Jour suivant">›</button>
         </div>
 
-        <div class="hero-ornament">
-            <div class="hero-ornament-line"></div>
-            <span class="hero-ornament-gem">✦  ✦  ✦</span>
-            <div class="hero-ornament-line"></div>
-        </div>
     </div>
 
     <div class="hero-couleur-bar defaut" id="hero-couleur-bar"></div>
@@ -631,6 +588,14 @@ function renderMesseCard({ h, m, typeMesse, ordo, couleur, intention, isoDate, m
     const estLibre = !intention;
     const delay    = idx * 80;
 
+    // Heure passée ? (seulement pour le jour actuel)
+    const maintenant = new Date();
+    const jourAffiche = dateNaviguee();
+    const estAujourdHui = isoLocal(maintenant) === isoDate;
+    const heureMesse = parseInt(h) * 60 + parseInt(m || 0);
+    const heureNow   = maintenant.getHours() * 60 + maintenant.getMinutes();
+    const estPasse   = estAujourdHui && heureNow > heureMesse + 30;
+
     // Ordo badge (premier panneau uniquement)
     let ordoblock = '';
     if (ordo && ordo.fete && couleur) {
@@ -697,7 +662,7 @@ function renderMesseCard({ h, m, typeMesse, ordo, couleur, intention, isoDate, m
     const attribuer = estLibre
         ? `<button class="messe-card-action primary" onclick="ouvrirAttribution('${isoDate}','${escH(evt.id)}','${h}h${m}')">✍ Attribuer</button>` : '';
 
-    return `<div class="messe-card ${estLibre?'libre':'prise'}" style="animation-delay:${delay}ms">
+    return `<div class="messe-card ${estLibre?'libre':'prise'}${estPasse?' passee':''}" style="animation-delay:${delay}ms">
         <div class="messe-card-head">
             <div class="messe-card-heure">${h}<small>h${m==='00'?'':m}</small></div>
             <div class="messe-card-sep"></div>
@@ -796,7 +761,7 @@ window.onload = () => {
     afficherDateHero(dateNaviguee());
     initDashboard();
     demanderPermissionNotification();
-    setInterval(() => { countPendingIntentions(); chargerJour(); }, 5*60*1000);
+    setInterval(() => { countPendingIntentions(); chargerJour(); }, 2*60*1000);
 };
 
 // ── Installer l'app (PWA) ─────────────────────────────────
