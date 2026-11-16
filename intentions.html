@@ -596,6 +596,77 @@
         border-radius: 3px; padding: 1px 5px;
         margin-left: 6px; vertical-align: middle;
     }
+
+    /* ── Zone célébration ───────────────────────────── */
+    .int-celebrant-zone {
+        border-top: 1px solid var(--border-soft);
+        padding: 10px 14px 10px 16px;
+        background: var(--vellum);
+    }
+    .btn-celebre {
+        width: 100%; padding: 10px 14px;
+        font-family: 'Cinzel', serif; font-size: .6rem;
+        letter-spacing: .12em; text-transform: uppercase;
+        background: rgba(58,102,68,.12); color: var(--green);
+        border: 1px solid rgba(58,102,68,.3); border-radius: 3px;
+        cursor: pointer; transition: all .18s;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-celebre:active { opacity: .75; }
+    .celebrant-info {
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .celebrant-label {
+        font-family: 'Cinzel', serif; font-size: .56rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        color: var(--green);
+        display: flex; align-items: center; gap: 5px;
+    }
+    .btn-celebrant-annuler {
+        font-family: 'Cinzel', serif; font-size: .48rem;
+        letter-spacing: .08em; text-transform: uppercase;
+        background: none; border: 1px solid var(--border-soft);
+        color: var(--ink-muted); border-radius: 3px;
+        padding: 4px 10px; cursor: pointer; transition: all .15s;
+    }
+    .btn-celebrant-annuler:active { border-color: var(--rubric); color: var(--rubric); }
+    /* Attribution manuelle Molin */
+    .attrib-manuelle {
+        margin-top: 8px; display: flex; gap: 6px; align-items: center;
+    }
+    .attrib-select {
+        flex: 1; padding: 7px 10px;
+        font-family: 'Cinzel', serif; font-size: .54rem;
+        letter-spacing: .07em; text-transform: uppercase;
+        background: var(--vellum-light); border: 1px solid var(--border-soft);
+        border-radius: 3px; color: var(--ink); outline: none;
+    }
+    .attrib-select:focus { border-color: var(--gold); }
+    .btn-attrib-ok {
+        padding: 7px 12px;
+        font-family: 'Cinzel', serif; font-size: .54rem;
+        letter-spacing: .08em; text-transform: uppercase;
+        background: #1a1108; color: #c9a840;
+        border: none; border-radius: 3px; cursor: pointer; white-space: nowrap;
+        transition: opacity .15s;
+    }
+    .btn-attrib-ok:active { opacity: .7; }
+    /* Compteur célébrées */
+    .celebrant-stats {
+        display: flex; gap: 10px; flex-wrap: wrap;
+        padding: 0 18px 10px; margin-top: -4px;
+    }
+    .celebrant-stat-pill {
+        display: flex; align-items: center; gap: 6px;
+        font-family: 'Cinzel', serif; font-size: .5rem;
+        letter-spacing: .1em; text-transform: uppercase;
+        color: var(--green); opacity: .8;
+        background: rgba(58,102,68,.08); border: 1px solid rgba(58,102,68,.18);
+        border-radius: 3px; padding: 4px 10px;
+    }
+    .celebrant-stat-num {
+        font-size: .85rem; font-weight: 700; color: var(--green); opacity: 1;
+    }
     </style>
 </head>
 <body>
@@ -682,6 +753,7 @@
         <button class="admin-tab" onclick="filtrerPretre('',this)" id="tab-tous">Tous</button>
     </div>
     <div class="admin-header-bar"></div>
+    <div class="celebrant-stats" id="celebrant-stats"></div>
 </div>
 
 <!-- ════════════════════════════════════════════════════════
@@ -925,6 +997,23 @@ async function renderIntentions(filtre = '') {
     ).length;
     document.getElementById('annual-count').textContent = n;
     document.getElementById('annual-label').textContent = 'Messes ' + year;
+
+    // Compteur messes célébrées par prêtre
+    const statsMolin  = intentionsGlobal.filter(i => i.statut==='valide' && i.celebrant==='molin').length;
+    const statsLegall = intentionsGlobal.filter(i => i.statut==='valide' && i.celebrant==='legall').length;
+    const statsAutre  = intentionsGlobal.filter(i => i.statut==='valide' && i.celebrant==='autre').length;
+    const totalCelebre = statsMolin + statsLegall + statsAutre;
+    const statsEl = document.getElementById('celebrant-stats');
+    if (statsEl) {
+        if (totalCelebre > 0) {
+            statsEl.innerHTML =
+                (statsMolin  > 0 ? `<span class="celebrant-stat-pill"><span class="celebrant-stat-num">${statsMolin}</span> célébrées · Molin</span>` : '') +
+                (statsLegall > 0 ? `<span class="celebrant-stat-pill"><span class="celebrant-stat-num">${statsLegall}</span> célébrées · Le Gall</span>` : '') +
+                (statsAutre  > 0 ? `<span class="celebrant-stat-pill"><span class="celebrant-stat-num">${statsAutre}</span> célébrées · Autre</span>` : '');
+        } else {
+            statsEl.innerHTML = '';
+        }
+    }
 }
 
 // ── Construction d'une carte intention ──────────────────
@@ -1005,9 +1094,65 @@ function buildIntentionCard(item) {
             </div>
         </div>`;
     } else if (item.statut === 'valide') {
-        // Confirmé + pied de carte
+        // Confirmé + zone célébration + pied de carte
+        const isMolin = pretreActif === 'molin';
+        // Zone célébration
+        let celebZone = '';
+        if (!item.celebrant) {
+            // Pas encore déclaré
+            // Bouton propre au prêtre actif (ou Molin peut déclarer pour n'importe qui)
+            const pretreBtn = pretreActif || 'molin';
+            celebZone = `<div class="int-celebrant-zone">
+                <button class="btn-celebre" onclick="declarerCelebration(${item.id},'${pretreBtn}')">
+                    ✝ J'ai célébré cette messe
+                </button>`;
+            // Attribution manuelle Molin pour intentions 1–15 nov
+            if (isMolin) {
+                const dateMesse = item.date_messe || '';
+                const isHistorique = dateMesse >= '2026-11-01' && dateMesse <= '2026-11-15';
+                if (isHistorique) {
+                    celebZone += `<div class="attrib-manuelle">
+                        <select class="attrib-select" id="attrib-sel-${item.id}">
+                            <option value="">— Attribuer à…</option>
+                            <option value="molin">Abbé Molin</option>
+                            <option value="legall">Abbé Le Gall</option>
+                            <option value="autre">Autre prêtre</option>
+                        </select>
+                        <button class="btn-attrib-ok" onclick="attribuerCelebrant(${item.id})">✅ Confirmer</button>
+                    </div>`;
+                }
+            }
+            celebZone += '</div>';
+        } else {
+            // Déjà déclaré
+            const nomCelebrant = item.celebrant === 'molin'  ? 'Abbé Molin'
+                               : item.celebrant === 'legall' ? 'Abbé Le Gall'
+                               : item.celebrant === 'carbonnieres' ? 'Abbé de Carbonnieres'
+                               : 'Autre prêtre';
+            const peutAnnuler = isMolin || item.celebrant === (pretreActif || 'molin');
+            const btnAnnuler = peutAnnuler ? '<button class="btn-celebrant-annuler" onclick="annulerCelebration(' + item.id + ')">Annuler</button>' : '';
+            celebZone = `<div class="int-celebrant-zone">
+                <div class="celebrant-info">
+                    <span class="celebrant-label">✝ Célébrée — ${escH(nomCelebrant)}</span>
+                    ${btnAnnuler}
+                </div>`;
+            // Molin peut toujours modifier l'attribution
+            if (isMolin) {
+                celebZone += `<div class="attrib-manuelle" style="margin-top:8px;">
+                    <select class="attrib-select" id="attrib-sel-${item.id}">
+                        <option value="">— Modifier…</option>
+                        <option value="molin"${item.celebrant==='molin'?' selected':''}>Abbé Molin</option>
+                        <option value="legall"${item.celebrant==='legall'?' selected':''}>Abbé Le Gall</option>
+                        <option value="autre"${item.celebrant==='autre'?' selected':''}>Autre prêtre</option>
+                    </select>
+                    <button class="btn-attrib-ok" onclick="attribuerCelebrant(${item.id})">✅ Modifier</button>
+                </div>`;
+            }
+            celebZone += '</div>';
+        }
         bodyHTML += `
         <div class="int-confirme">Confirmée : ${escH(item.reponse_pretre||'—')}</div>
+        ${celebZone}
         <div class="int-card-foot">
             <button class="int-foot-btn" onclick="ouvrirModifierTout(${item.id})">✏️ Modifier</button>
             ${!item.mail_envoye ? `<button class="int-foot-btn mail" onclick="getIdAndCall(this,ouvrirModalMailById)">📧 Mail</button>` : ''}
@@ -1497,6 +1642,48 @@ async function lancerAction(action) {
         showToast('✅ ' + msg);
     }
     setTimeout(() => { chargerDemandes(); icon.textContent = action==='importer'?'📥':'📤'; btn.disabled=false; }, 2000);
+}
+
+// ── Célébration ──────────────────────────────────────────
+async function declarerCelebration(id, pretreId) {
+    const now = new Date().toISOString();
+    const { error } = await maConnexion.from('intentions').update({
+        celebrant:  pretreId,
+        celebre_le: now,
+    }).eq('id', id);
+    if (error) { AppModal.alert('❌','Erreur',error.message); return; }
+    const found = intentionsGlobal.find(i => String(i.id)===String(id));
+    if (found) { found.celebrant = pretreId; found.celebre_le = now; }
+    showToast('✝ Messe déclarée comme célébrée');
+    renderIntentions(filtreActif);
+}
+
+async function annulerCelebration(id) {
+    const { error } = await maConnexion.from('intentions').update({
+        celebrant:  null,
+        celebre_le: null,
+    }).eq('id', id);
+    if (error) { AppModal.alert('❌','Erreur',error.message); return; }
+    const found = intentionsGlobal.find(i => String(i.id)===String(id));
+    if (found) { found.celebrant = null; found.celebre_le = null; }
+    showToast('↩ Déclaration annulée');
+    renderIntentions(filtreActif);
+}
+
+async function attribuerCelebrant(id) {
+    const sel = document.getElementById('attrib-sel-' + id);
+    if (!sel || !sel.value) { showToast('⚠ Choisissez un célébrant'); return; }
+    const val = sel.value;
+    const now = new Date().toISOString();
+    const { error } = await maConnexion.from('intentions').update({
+        celebrant:  val,
+        celebre_le: now,
+    }).eq('id', id);
+    if (error) { AppModal.alert('❌','Erreur',error.message); return; }
+    const found = intentionsGlobal.find(i => String(i.id)===String(id));
+    if (found) { found.celebrant = val; found.celebre_le = now; }
+    showToast('✅ Attribution enregistrée');
+    renderIntentions(filtreActif);
 }
 
 window.onload = function() {
