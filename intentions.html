@@ -328,20 +328,6 @@
         margin-bottom: 8px;
     }
 
-    /* Sélecteur prêtre */
-    .pretre-chips {
-        display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;
-    }
-    .pretre-chip {
-        padding: 6px 14px; border: 1px solid var(--border-soft);
-        border-radius: 3px; background: var(--vellum-light);
-        font-family: 'Cinzel', serif; font-size: .56rem;
-        letter-spacing: .1em; text-transform: uppercase;
-        color: var(--ink-muted); cursor: pointer; transition: all .18s;
-    }
-    .pretre-chip:hover  { border-color: var(--gold); color: var(--gold); }
-    .pretre-chip.actif  { background: var(--gold-pale); border-color: var(--gold); color: var(--ink); font-weight: 600; }
-
     /* Chips horaires */
     .horaire-chips {
         display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;
@@ -511,8 +497,6 @@
         .int-card-foot { border-color: var(--border-soft); }
         .int-foot-btn { border-color: var(--border-soft); }
         .int-comment { background: var(--gold-pale); border-left-color: var(--gold); }
-        .pretre-chip { background: var(--vellum-light); border-color: var(--border-soft); }
-        .pretre-chip.actif { background: var(--gold-pale); color: var(--ink); }
         .h-chip { background: var(--vellum-light); border-color: var(--border-soft); }
         .h-chip.active { background: #0e0c08; color: #c9a840; border-color: #0e0c08; }
         .h-chip.taken { background: rgba(139,26,26,.12); }
@@ -531,13 +515,6 @@
     .int-heure {
         font-family: 'Cinzel', serif; font-size: .65em;
         color: var(--gold); opacity: .8;
-    }
-
-    /* ── Abbé sur carte confirmée ────────────────────── */
-    .int-pretre {
-        font-family: 'Cinzel', serif; font-size: .52rem;
-        letter-spacing: .1em; text-transform: uppercase;
-        color: var(--gold); opacity: .75; margin-top: 3px;
     }
 
     /* ── Badges mois colorés ─────────────────────────── */
@@ -739,7 +716,7 @@
     <div class="admin-header-body">
         <div class="admin-header-title">
             <span class="admin-header-paroisse">Administration</span>
-            <span class="admin-header-name" id="admin-pretre-name">Abbé Molin</span>
+            <span class="admin-header-name" id="admin-pretre-name">Toutes</span>
             <span class="admin-header-sub">Gestion des intentions de Messe</span>
         </div>
         <div class="admin-stat-pill">
@@ -879,6 +856,16 @@ async function chargerDemandes() {
     }
 }
 
+// Une messe est passée si sa date et son heure sont derrière nous
+// (sans heure connue : à partir du lendemain)
+function pretreBtnDefaut() { return (pretreActif === 'molin' || pretreActif === 'legall') ? pretreActif : 'molin'; }
+function messePassee(i) {
+    if (!i.date_messe) return false;
+    const m = /^(\d{1,2}):(\d{2})/.exec(i.heure_messe || '');
+    const h = m ? m[1].padStart(2,'0') + ':' + m[2] : '23:59';
+    return new Date(i.date_messe + 'T' + h + ':00') < new Date();
+}
+
 // ── Rendu principal ──────────────────────────────────────
 async function renderIntentions(filtre = '') {
     const tbody = document.getElementById('table-body');
@@ -886,7 +873,7 @@ async function renderIntentions(filtre = '') {
     if (pretreActif === 'molin' || pretreActif === 'legall') {
         list = list.filter(i => i.celebrant === pretreActif);
     } else if (pretreActif === 'non') {
-        list = list.filter(i => i.statut === 'valide' && !i.celebrant);
+        list = list.filter(i => i.statut === 'valide' && !i.celebrant && messePassee(i));
     }
 
     const filtreLC = filtre.toLowerCase().trim();
@@ -1095,8 +1082,15 @@ function buildIntentionCard(item) {
         if (!item.celebrant) {
             // Pas encore déclaré
             // Bouton propre au prêtre actif (ou Molin peut déclarer pour n'importe qui)
-            const pretreBtn = pretreActif || 'molin';
-            celebZone = `<div class="int-celebrant-zone">
+            const pretreBtn = (pretreActif === 'molin' || pretreActif === 'legall') ? pretreActif : 'molin';
+            celebZone = pretreActif === 'non'
+                ? `<div class="int-celebrant-zone">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="btn-celebre" style="flex:1 1 30%;min-width:0;width:auto;padding:10px 6px;" onclick="declarerCelebration(${item.id},'molin')">✝ Abbé Molin</button>
+                    <button class="btn-celebre" style="flex:1 1 30%;min-width:0;width:auto;padding:10px 6px;" onclick="declarerCelebration(${item.id},'legall')">✝ Abbé Le Gall</button>
+                    <button class="btn-celebre" style="flex:1 1 30%;min-width:0;width:auto;padding:10px 6px;" onclick="declarerCelebration(${item.id},'autre')">✝ Autre prêtre</button>
+                </div>`
+                : `<div class="int-celebrant-zone">
                 <button class="btn-celebre" onclick="declarerCelebration(${item.id},'${pretreBtn}')">
                     ✝ J'ai célébré cette messe
                 </button>`;
@@ -1123,7 +1117,7 @@ function buildIntentionCard(item) {
                                : item.celebrant === 'legall' ? 'Abbé Le Gall'
                                : item.celebrant === 'carbonnieres' ? 'Abbé de Carbonnieres'
                                : 'Autre prêtre';
-            const peutAnnuler = isMolin || item.celebrant === (pretreActif || 'molin');
+            const peutAnnuler = isMolin || item.celebrant === pretreBtnDefaut();
             const btnAnnuler = peutAnnuler ? '<button class="btn-celebrant-annuler" onclick="annulerCelebration(' + item.id + ')">Annuler</button>' : '';
             celebZone = `<div class="int-celebrant-zone">
                 <div class="celebrant-info">
