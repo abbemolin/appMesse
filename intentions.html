@@ -1512,7 +1512,7 @@ function genererTexteMail(item) {
     const msg = (item.reponse_pretre||'').trim();
     if (msg && msg.length<120 && !msg.startsWith('La Messe') && !msg.startsWith('Bonjour') && !msg.includes('sera célébrée'))
         phrase = `Concernant votre demande pour "${intention}", ${msg}.`;
-    return `Bonjour ${nom},\n\n${phrase}\n\nLa Messe sera célébrée le ${dateFr} à ${heure}.\n\nSecrétariat de la Paroisse personnelle La Croix glorieuse à Strasbourg\n\n---\n[Ce message est envoyé automatiquement suite à la validation de votre demande par la paroisse.]`;
+    return `Bonjour ${nom},\n\n${phrase}\n\nLa Messe sera célébrée le ${dateFr} à ${heure}.\n\nVous pouvez déposer votre offrande de Messe à l'église Saint-Louis-en-Ville de Strasbourg, ou l'envoyer au Presbytère, 2 quai Charles Frey, 67000 Strasbourg.\n\nSecrétariat de la Paroisse personnelle La Croix glorieuse à Strasbourg\n\n---\n[Ce message est envoyé automatiquement suite à la validation de votre demande par la paroisse.]`;
 }
 
 function ouvrirModalMailById(id) {
