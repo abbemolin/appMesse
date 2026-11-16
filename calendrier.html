@@ -807,7 +807,7 @@ function renderDetail(iso) {
                         ${intent ? escH(intent.nom_intention||'') : '—'}
                     </div>
                     ${intent?.nom_donateur ? `<div class="detail-messe-donateur">${escH(intent.nom_donateur)}</div>` : ''}
-                    ${intent ? `<div class="detail-messe-pretre">${pretreLabel(intent.pretre_id)}</div>` : ''}
+
                     <div class="detail-messe-status">
                         ${statusDot}
                         <span class="status-label">${statusLabel}</span>
