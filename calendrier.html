@@ -46,6 +46,8 @@ body {
     transition: color .15s;
 }
 .cal-nav-btn:hover { color: #f0e8d5; }
+.cal-today-btn { font-size: .55rem; color: rgba(184,150,42,.5); letter-spacing: .02em; }
+.cal-today-btn:hover { color: #b8962a; }
 .cal-add-btn {
     background: #b8962a; border: none; border-radius: 50%;
     width: 36px; height: 36px; cursor: pointer;
@@ -134,6 +136,11 @@ body {
     overflow: hidden; min-height: 48px;
     transition: all .2s ease;
 }
+@keyframes calDetailSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.cal-detail.animating { animation: calDetailSlideIn .22s ease both; }
 .cal-detail-empty {
     padding: 20px; text-align: center;
     font-family: 'EB Garamond', serif; font-style: italic;
@@ -161,6 +168,8 @@ body {
 }
 
 /* Carte messe dans le détail */
+.detail-messe.passee { opacity: .45; }
+.detail-messe.passee .detail-messe-heure { color: #5a5045; }
 .detail-messe {
     padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,.04);
     display: flex; align-items: flex-start; gap: 12px;
@@ -379,6 +388,7 @@ body {
     <div class="cal-nav-btns">
         <button class="cal-nav-btn" onclick="changerMois(-1)">‹</button>
         <button class="cal-nav-btn" onclick="changerMois(1)">›</button>
+        <button class="cal-nav-btn cal-today-btn" onclick="revenirAujourdhui()" title="Aujourd'hui">●</button>
         <button class="cal-add-btn" onclick="ouvrirModalLibre()" title="Ajouter une intention">+</button>
     </div>
 </div>
@@ -675,10 +685,14 @@ function renderCalendrier() {
 function selectionnerJour(iso) {
     _jourSel = iso;
     renderCalendrier();
+    const det = document.getElementById('cal-detail');
+    det.classList.remove('animating');
+    void det.offsetWidth; // reflow pour relancer l'animation
+    det.classList.add('animating');
+    setTimeout(() => det.classList.remove('animating'), 300);
     // Scroll vers le détail
     setTimeout(() => {
-        document.getElementById('cal-detail')
-            .scrollIntoView({behavior:'smooth', block:'nearest'});
+        det.scrollIntoView({behavior:'smooth', block:'nearest'});
     }, 50);
 }
 
@@ -799,7 +813,11 @@ function renderDetail(iso) {
                 }
             }
 
-            html += `<div class="detail-messe">
+            const maintenant3 = new Date();
+            const estAujourdHui3 = isoLocal(maintenant3) === iso;
+            const [hh3,mm3] = heure.split(':').map(Number);
+            const estPasse3 = estAujourdHui3 && (maintenant3.getHours() * 60 + maintenant3.getMinutes()) > (hh3 * 60 + (mm3||0) + 30);
+            html += `<div class="detail-messe${estPasse3 ? ' passee' : ''}">
                 <div class="detail-messe-heure">${heureFr}</div>
                 <div class="detail-messe-info">
                     <div class="detail-messe-type">${escH(typeLabel)}</div>
@@ -836,6 +854,18 @@ function renderDetail(iso) {
 }
 
 // ── Navigation mois ───────────────────────────────────────
+function revenirAujourdhui() {
+    const now = new Date();
+    _annee = now.getFullYear();
+    _mois  = now.getMonth();
+    _jourSel = isoLocal(now);
+    renderCalendrier();
+    chargerMois();
+    setTimeout(() => {
+        document.getElementById('cal-detail')
+            .scrollIntoView({behavior:'smooth', block:'nearest'});
+    }, 50);
+}
 function changerMois(delta) {
     _mois += delta;
     if (_mois < 0)  { _mois = 11; _annee--; }
@@ -843,6 +873,23 @@ function changerMois(delta) {
     renderCalendrier();
     chargerMois();
 }
+
+// ── Swipe horizontal pour changer de mois ─────────────────
+(function() {
+    let _tx = 0, _ty = 0;
+    document.addEventListener('touchstart', function(e) {
+        _tx = e.touches[0].clientX;
+        _ty = e.touches[0].clientY;
+    }, {passive: true});
+    document.addEventListener('touchend', function(e) {
+        const dx = e.changedTouches[0].clientX - _tx;
+        const dy = e.changedTouches[0].clientY - _ty;
+        // Swipe horizontal net (au moins 60px, plus horizontal que vertical)
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            changerMois(dx < 0 ? 1 : -1);
+        }
+    }, {passive: true});
+})();
 
 // ── Chargement données ────────────────────────────────────
 function showSpinner(show) {
