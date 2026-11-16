@@ -451,14 +451,6 @@ body {
                 <input type="text" id="nom_donateur" placeholder="Mme Dupont">
             </div>
         </div>
-        <label>Abbé célébrant</label>
-        <div style="display:flex;gap:8px;margin-bottom:4px;">
-            <button type="button" class="pretre-chip actif" id="chip-molin"
-                onclick="selectAbbe('molin')">Abbé Molin</button>
-            <button type="button" class="pretre-chip" id="chip-legall"
-                onclick="selectAbbe('legall')">Abbé Le Gall</button>
-        </div>
-        <input type="hidden" id="input-pretre" value="molin">
         <label>Note privée</label>
         <textarea id="commentaire" rows="2"></textarea>
         <button class="btn-save" onclick="enregistrerIntention()">✅ Confirmer l'intention</button>
@@ -520,21 +512,6 @@ let _gcalCache   = {}; // cache par mois : clé = 'YYYY-MM' → { items, ts }
 const GCAL_TTL   = 5 * 60 * 1000; // 5 minutes
 
 // ── Utilitaires ───────────────────────────────────────────
-const PRETRES = {
-    'molin':  '✝ Abbé Molin',
-    'legall': '✝ Abbé Le Gall',
-};
-
-function selectAbbe(id) {
-    document.getElementById('input-pretre').value = id;
-    ['molin','legall'].forEach(a => {
-        const btn = document.getElementById('chip-'+a);
-        if (btn) btn.classList.toggle('actif', a === id);
-    });
-}
-function pretreLabel(id) {
-    return PRETRES[id] || (id ? '✝ ' + id : '');
-}
 
 function isoLocal(d) {
     return d.getFullYear() + '-'
@@ -1001,7 +978,6 @@ function ouvrirModal(dateISO, dateFr, googleId, heure) {
     document.getElementById('nom_donateur').value  = '';
     document.getElementById('commentaire').value   = '';
     document.getElementById('type_intention').value = 'Défunt';
-    selectAbbe('molin');
     document.getElementById('modal-saisie').classList.add('open');
     setTimeout(() => document.getElementById('nom_intention').focus(), 300);
 }
@@ -1030,8 +1006,6 @@ function ouvrirModalModif(supaId) {
     document.getElementById('commentaire').value      = intent.commentaire || '';
     document.getElementById('type_intention').value   = intent.type_intention || 'Défunt';
     // Sélectionner l'abbé AVANT d'afficher/remplir libre-date-heure
-    // (selectAbbe ne pré-remplira pas l'heure car input-supa-id est déjà rempli)
-    selectAbbe(intent.pretre_id || 'molin');
     // Toujours afficher date + heure pour permettre la modification
     document.getElementById('libre-date-heure').style.display = 'flex';
     document.getElementById('libre-date').value       = intent.date_messe;
@@ -1062,14 +1036,12 @@ function ouvrirModalPrive(iso) {
     document.getElementById('commentaire').value      = '';
     document.getElementById('type_intention').value   = 'Défunt';
     document.getElementById('modal-title').textContent = '+ Messe privée';
-    selectAbbe('molin');
     document.getElementById('modal-saisie').classList.add('open');
     setTimeout(() => document.getElementById('nom_intention').focus(), 300);
 }
 
 function fermerModal() {
     document.getElementById('modal-saisie').classList.remove('open');
-    selectAbbe('molin');
 }
 
 document.getElementById('modal-saisie').addEventListener('click', e => {
@@ -1081,7 +1053,7 @@ async function enregistrerIntention() {
     const google_event_id = document.getElementById('input-google-id').value;
     const nom_intention   = document.getElementById('nom_intention').value.trim();
     let heure_brute       = document.getElementById('input-heure').value.replace('h',':');
-    const pretre_id       = document.getElementById('input-pretre').value || 'molin';
+
     const supaId          = document.getElementById('input-supa-id').value;
 
     // Toujours prendre date et heure depuis les champs visibles si disponibles
@@ -1103,7 +1075,6 @@ async function enregistrerIntention() {
             nom_donateur:   document.getElementById('nom_donateur').value.trim() || 'Paroisse',
             commentaire:    document.getElementById('commentaire').value.trim(),
             statut:         'valide',
-            pretre_id,
         }).eq('id', supaId));
     } else {
         // Doublon check pour les intentions sans google_event_id (messes privées)
@@ -1131,7 +1102,6 @@ async function enregistrerIntention() {
             statut:         'valide',
             email_donateur: 'non@renseigne.fr',
             mail_envoye:    true,
-            pretre_id,
         }], { onConflict: 'google_event_id', ignoreDuplicates: false }));
     }
 

@@ -748,8 +748,10 @@
         </div>
     </div>
     <div class="admin-tabs">
-        <button class="admin-tab actif" onclick="filtrerPretre('molin',this)" id="tab-molin">Abbé Molin</button>
-        <button class="admin-tab" onclick="filtrerPretre('legall',this)" id="tab-legall">Abbé Le Gall</button>
+        <button class="admin-tab actif" onclick="filtrerPretre('',this)" id="tab-tous">Toutes</button>
+        <button class="admin-tab" onclick="filtrerPretre('molin',this)" id="tab-molin">Molin</button>
+        <button class="admin-tab" onclick="filtrerPretre('legall',this)" id="tab-legall">Le Gall</button>
+        <button class="admin-tab" onclick="filtrerPretre('non',this)" id="tab-non">Non célébrées</button>
         <button class="admin-tab" onclick="filtrerPretre('',this)" id="tab-tous">Tous</button>
     </div>
     <div class="admin-header-bar"></div>
@@ -815,14 +817,9 @@ const CALENDAR_ID     = 'saintlouisenville67@gmail.com';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzA4wI1QmU4s8fVx8Nd3yeLxheo1kifLyQpuxNLvlxl4g1Q3yXAQ3pyuGKVSR40JT1/exec';
 
 const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-const PRETRES = {
-    molin:  { nom: "l'abbé Molin",    titre: 'Abbé MOLIN',   role: 'curé'    },
-    legall: { nom: "l'abbé Le Gall",  titre: 'Abbé LE GALL', role: 'vicaire' }
-};
-
 let googleEventsGlobal = [];
 let intentionsGlobal   = [];
-let pretreActif        = 'molin';
+let pretreActif        = '';
 let mailIdEnCours      = null;
 const mailsData        = {};
 let filtreActif        = '';
@@ -839,8 +836,8 @@ function filtrerPretre(id, btn) {
     pretreActif = id;
     document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('actif'));
     btn.classList.add('actif');
-    const names = { molin:'Abbé Molin', legall:'Abbé Le Gall', '':'Tous les prêtres' };
-    document.getElementById('admin-pretre-name').textContent = names[id] || 'Tous';
+    const names = { molin:'Abbé Molin', legall:'Abbé Le Gall', '':'Toutes', non:'Non célébrées' };
+    document.getElementById('admin-pretre-name').textContent = names[id] || 'Toutes';
     renderIntentions(filtreActif);
 }
 function filtrerRecherche(val) {
@@ -886,7 +883,11 @@ async function chargerDemandes() {
 async function renderIntentions(filtre = '') {
     const tbody = document.getElementById('table-body');
     let list = intentionsGlobal;
-    if (pretreActif) list = list.filter(i => (i.pretre_id || 'molin') === pretreActif);
+    if (pretreActif === 'molin' || pretreActif === 'legall') {
+        list = list.filter(i => i.celebrant === pretreActif);
+    } else if (pretreActif === 'non') {
+        list = list.filter(i => i.statut === 'valide' && !i.celebrant);
+    }
 
     const filtreLC = filtre.toLowerCase().trim();
     const doFiltre = arr => filtreLC
@@ -992,8 +993,7 @@ async function renderIntentions(filtre = '') {
     const year = new Date().getFullYear();
     const n = intentionsGlobal.filter(i =>
         i.statut === 'valide' &&
-        (i.date_messe||'').startsWith(year) &&
-        (pretreActif === '' || (i.pretre_id || 'molin') === pretreActif)
+        (i.date_messe||'').startsWith(year)
     ).length;
     document.getElementById('annual-count').textContent = n;
     document.getElementById('annual-label').textContent = 'Messes ' + year;
@@ -1063,7 +1063,7 @@ function buildIntentionCard(item) {
                 <span class="int-meta-dot"></span>
                 <span>${escH(item.email_donateur||'')}</span>
             </div>
-            ${!estEnCours && item.pretre_id ? `<div class="int-pretre">✝ ${escH(PRETRES[item.pretre_id] || item.pretre_id)}</div>` : ''}
+
             <span class="int-type ${tc}">
                 <span class="int-type-dot" style="background:${dotColor}"></span>
                 ${escH(item.type_intention)}
@@ -1079,13 +1079,7 @@ function buildIntentionCard(item) {
             <span class="int-action-label">📅 Disponibilités — choisir un créneau</span>
             <input type="date" id="d-${item.id}" value="${item.date_messe}"
                 onchange="refreshTimeChoicesFromInput(this)">
-            <div class="pretre-chips">
-                ${Object.entries(PRETRES).map(([id, p]) =>
-                    `<button class="pretre-chip${(item.pretre_id||'molin')===id?' actif':''}"
-                        data-iid="${item.id}" data-pid="${id}"
-                        onclick="setPretre(this,'${item.id}','${id}')">${p.titre}</button>`
-                ).join('')}
-            </div>
+
             <div id="times-${item.id}" class="horaire-chips"></div>
             <div class="int-btns">
                 <button class="btn-valider-int" onclick="getIdAndCall(this,finaliser)">✅ Valider</button>
@@ -1311,17 +1305,6 @@ async function editerNomIntention(id, btn) {
     });
 }
 
-// ── Sélecteur prêtre ──────────────────────────────────────
-function setPretre(btn, intentionId, pretreId) {
-    const card = btn.closest('[data-intention-id]');
-    if (card) card.querySelectorAll('.pretre-chip').forEach(c => c.classList.remove('actif'));
-    btn.classList.add('actif');
-    const found = intentionsGlobal.find(i => String(i.id)===String(intentionId));
-    if (found) found.pretre_id = pretreId;
-    if (mailIdEnCours == intentionId && found)
-        document.getElementById('mail-corps').value = genererTexteMail(found);
-}
-
 // ── Actions ────────────────────────────────────────────────
 async function finaliser(id) {
     const container = document.getElementById(`times-${id}`);
@@ -1345,9 +1328,8 @@ async function finaliser(id) {
     const { data: info } = await maConnexion.from('intentions').select('nom_intention').eq('id',id).single();
     const txt = `La Messe à votre intention (${info.nom_intention}) sera célébrée le ${dateFr} à ${hLabel}.`;
     try {
-        const pretreId = intentionsGlobal.find(i => String(i.id)===String(id))?.pretre_id || 'molin';
         const { error } = await maConnexion.from('intentions').update({
-            date_messe:d, heure_messe:hDb, statut:'valide', pretre_id:pretreId,
+            date_messe:d, heure_messe:hDb, statut:'valide',
             reponse_pretre:txt, en_edition:false, mail_envoye:false, mail_approuve:false
         }).eq('id',id);
         if (error) throw error;
@@ -1422,14 +1404,6 @@ function getIdAndCall(btn, fn) {
 }
 
 // ── Modifier une intention validée (modale complète) ──────
-function modSelectAbbe(id) {
-    document.getElementById('mod-pretre').value = id;
-    ['molin','legall'].forEach(a => {
-        const btn = document.getElementById('mod-chip-'+a);
-        if (btn) btn.classList.toggle('actif', a === id);
-    });
-}
-
 function ouvrirModifierTout(id) {
     const intent = intentionsGlobal.find(i => String(i.id) === String(id));
     if (!intent) { AppModal.alert('⚠️','Introuvable','Rechargez et réessayez.'); return; }
@@ -1441,8 +1415,6 @@ function ouvrirModifierTout(id) {
     document.getElementById('mod-commentaire').value  = intent.commentaire || '';
     document.getElementById('mod-date').value         = intent.date_messe || '';
     document.getElementById('mod-heure').value        = (intent.heure_messe || '09:00').replace('h',':');
-    modSelectAbbe(intent.pretre_id || 'molin');
-
     const d = new Date((intent.date_messe||'') + 'T12:00:00');
     const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
     document.getElementById('mod-title').textContent =
@@ -1465,8 +1437,6 @@ async function sauvegarderModification() {
     const commentaire = document.getElementById('mod-commentaire').value.trim();
     const date        = document.getElementById('mod-date').value;
     const heure       = document.getElementById('mod-heure').value; // HH:MM
-    const pretre_id   = document.getElementById('mod-pretre').value || 'molin';
-
     if (!nom)   { AppModal.alert('⚠️','Champ manquant','Veuillez indiquer une intention.'); return; }
     if (!date)  { AppModal.alert('⚠️','Champ manquant','Veuillez indiquer une date.'); return; }
 
@@ -1486,7 +1456,6 @@ async function sauvegarderModification() {
         commentaire,
         date_messe:     date,
         heure_messe:    heure,
-        pretre_id,
         mail_approuve:  false,
         mail_envoye:    false,
     }).eq('id', id);
@@ -1543,8 +1512,7 @@ function genererTexteMail(item) {
     const msg = (item.reponse_pretre||'').trim();
     if (msg && msg.length<120 && !msg.startsWith('La Messe') && !msg.startsWith('Bonjour') && !msg.includes('sera célébrée'))
         phrase = `Concernant votre demande pour "${intention}", ${msg}.`;
-    const p = PRETRES[item.pretre_id] || PRETRES.molin;
-    return `Bonjour ${nom},\n\n${phrase}\n\nLa Messe sera célébrée le ${dateFr} à ${heure}.\n\nJe vous assure de ma prière,\n\n${p.titre},\n${p.role}\n\n---\n[Ce mail est envoyé automatiquement suite à l'accord de ${p.nom}.]`;
+    return `Bonjour ${nom},\n\n${phrase}\n\nLa Messe sera célébrée le ${dateFr} à ${heure}.\n\nJe vous assure de ma prière,\n\nLa Paroisse La Croix Glorieuse\n\n---\n[Ce mail est envoyé automatiquement par la paroisse.]`;
 }
 
 function ouvrirModalMailById(id) {
@@ -1809,15 +1777,6 @@ window.chargerDemandes = chargerDemandes;
         <input type="time" id="mod-heure" class="mod-input">
       </div>
     </div>
-
-    <label class="mod-label">Abbé célébrant</label>
-    <div style="display:flex;gap:8px;margin-bottom:4px;">
-      <button type="button" class="pretre-chip" id="mod-chip-molin"
-          onclick="modSelectAbbe('molin')">Abbé Molin</button>
-      <button type="button" class="pretre-chip" id="mod-chip-legall"
-          onclick="modSelectAbbe('legall')">Abbé Le Gall</button>
-    </div>
-    <input type="hidden" id="mod-pretre" value="molin">
 
     <label class="mod-label">Note privée</label>
     <textarea id="mod-commentaire" class="mod-input" rows="2"></textarea>
