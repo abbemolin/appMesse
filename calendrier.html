@@ -302,6 +302,16 @@ body {
     background: rgba(184,150,42,.15);
     border-color: rgba(184,150,42,.4); color: #b8962a;
 }
+
+/* ── Célébration calendrier ───────────────────────────── */
+.cal-celeb-zone { border-top: 1px solid rgba(58,102,68,.2); padding: 8px 12px; background: rgba(58,102,68,.04); }
+.cal-celeb-label { font-family:'Cinzel',serif; font-size:.48rem; letter-spacing:.1em; text-transform:uppercase; color:#3a6644; display:block; margin-bottom:6px; }
+.cal-celeb-choix { display:flex; gap:5px; flex-wrap:wrap; }
+.btn-cal-pretre { flex:1; min-width:0; padding:7px 5px; font-family:'Cinzel',serif; font-size:.46rem; letter-spacing:.07em; text-transform:uppercase; background:rgba(58,102,68,.1); color:#3a6644; border:1px solid rgba(58,102,68,.3); border-radius:3px; cursor:pointer; transition:all .18s; white-space:nowrap; }
+.btn-cal-pretre:active { background:rgba(58,102,68,.25); }
+.cal-celebree-info { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.cal-celebree-label { font-family:'Cinzel',serif; font-size:.48rem; letter-spacing:.1em; text-transform:uppercase; color:#3a6644; }
+.btn-cal-annuler { font-family:'Cinzel',serif; font-size:.43rem; letter-spacing:.05em; text-transform:uppercase; background:none; border:1px solid rgba(0,0,0,.12); color:#888; border-radius:3px; padding:3px 8px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -764,6 +774,31 @@ function renderDetail(iso) {
                 </button>`;
             }
 
+            // Zone célébration pour intentions validées
+            let calCelebZone = '';
+            if (intent && intent.statut === 'valide') {
+                if (!intent.celebrant) {
+                    const btnAnnulerCal = '';
+                    calCelebZone = '<div class="cal-celeb-zone">'
+                        + '<span class="cal-celeb-label">✝ J\'ai célébré cette messe</span>'
+                        + '<div class="cal-celeb-choix">'
+                        + '<button class="btn-cal-pretre" onclick="declarerCelebrationCal(' + intent.id + ',\'molin\')">Abbé Molin</button>'
+                        + '<button class="btn-cal-pretre" onclick="declarerCelebrationCal(' + intent.id + ',\'legall\')">Abbé Le Gall</button>'
+                        + '<button class="btn-cal-pretre" onclick="declarerCelebrationCal(' + intent.id + ',\'autre\')">Autre prêtre</button>'
+                        + '</div></div>';
+                } else {
+                    const nomCeleb = intent.celebrant === 'molin'  ? 'Abbé Molin'
+                                   : intent.celebrant === 'legall' ? 'Abbé Le Gall'
+                                   : intent.celebrant === 'carbonnieres' ? 'Abbé de Carbonnieres'
+                                   : 'Autre prêtre';
+                    calCelebZone = '<div class="cal-celeb-zone">'
+                        + '<div class="cal-celebree-info">'
+                        + '<span class="cal-celebree-label">✝ Célébrée — ' + escH(nomCeleb) + '</span>'
+                        + '<button class="btn-cal-annuler" onclick="annulerCelebrationCal(' + intent.id + ')">Annuler</button>'
+                        + '</div></div>';
+                }
+            }
+
             html += `<div class="detail-messe">
                 <div class="detail-messe-heure">${heureFr}</div>
                 <div class="detail-messe-info">
@@ -779,7 +814,8 @@ function renderDetail(iso) {
                     </div>
                 </div>
                 ${btnHtml}
-            </div>`;
+            </div>
+            ${calCelebZone}`;
         });
         // Bouton messe privée toujours disponible, même quand des créneaux existent
         html += `<div style="padding:10px 16px;">
@@ -1114,6 +1150,49 @@ function init() {
     });
 }
 init();
+
+// ── Célébration depuis le calendrier ────────────────────────
+async function declarerCelebrationCal(id, pretreId) {
+    const now = new Date().toISOString();
+    const { error } = await maConnexion.from('intentions').update({
+        celebrant:  pretreId,
+        celebre_le: now,
+    }).eq('id', id);
+    if (error) { alert('Erreur : ' + error.message); return; }
+    const found = _intentions.find(i => String(i.id) === String(id));
+    if (found) { found.celebrant = pretreId; found.celebre_le = now; }
+    showToastCal('✝ Messe déclarée comme célébrée');
+    renderDetail(_jourSel);
+}
+
+async function annulerCelebrationCal(id) {
+    const { error } = await maConnexion.from('intentions').update({
+        celebrant:  null,
+        celebre_le: null,
+    }).eq('id', id);
+    if (error) { alert('Erreur : ' + error.message); return; }
+    const found = _intentions.find(i => String(i.id) === String(id));
+    if (found) { found.celebrant = null; found.celebre_le = null; }
+    showToastCal('↩ Déclaration annulée');
+    renderDetail(_jourSel);
+}
+
+function showToastCal(msg) {
+    let t = document.getElementById('toast-cal');
+    if (!t) {
+        t = document.createElement('div');
+        t.id = 'toast-cal';
+        t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+            'background:#1a1108;color:#c9a840;font-family:Cinzel,serif;font-size:.58rem;' +
+            'letter-spacing:.1em;padding:10px 20px;border-radius:3px;' +
+            'border:1px solid rgba(201,168,64,.3);z-index:9999;opacity:0;' +
+            'transition:opacity .3s;pointer-events:none;';
+        document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity = '1';
+    setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
 
 // ── Exposition pour le bouton Actualiser (menu.js → navRefresh) ──
 // menu.js cherche window.chargerAgenda ; la fonction locale s'appelle chargerMois
