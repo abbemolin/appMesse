@@ -1030,7 +1030,7 @@ async function sauver() {
     const id = document.getElementById('edit-id').value;
     try {
         if (id) {
-            const { error } = await maConnexion.from('annonces').update(payload).eq('id', id);
+            const error = verifierEcriture(await maConnexion.from('annonces').update(payload).eq('id', id).select('id'));
             if (error) throw error;
             toast('Annonce modifiée ✓');
         } else {
@@ -1054,15 +1054,17 @@ async function sauver() {
 async function togglePrioCard(id) {
     const a = annonces.find(x => x.id === id);
     if (!a) return;
-    const { error } = await maConnexion.from('annonces').update({ prioritaire: !a.prioritaire }).eq('id', id);
+    const error = verifierEcriture(await maConnexion.from('annonces').update({ prioritaire: !a.prioritaire }).eq('id', id).select('id'));
     if (!error) { toast(a.prioritaire ? 'Priorité retirée' : 'Annonce prioritaire ✓'); await charger(); }
+    else { console.error(error); toast('Erreur : priorité non modifiée'); }
 }
 
 async function toggleActifCard(id) {
     const a = annonces.find(x => x.id === id);
     if (!a) return;
-    const { error } = await maConnexion.from('annonces').update({ actif: !a.actif }).eq('id', id);
+    const error = verifierEcriture(await maConnexion.from('annonces').update({ actif: !a.actif }).eq('id', id).select('id'));
     if (!error) { toast(a.actif ? 'Annonce désactivée' : 'Annonce activée ✓'); await charger(); }
+    else { console.error(error); toast('Erreur : annonce non modifiée'); }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1111,10 +1113,10 @@ async function sauvegarderOrdre(srcId, destId) {
 
     // Sauvegarder les nouveaux indices en BDD
     const updates = reordonee.map((a, i) =>
-        maConnexion.from('annonces').update({ ordre: i }).eq('id', a.id)
+        maConnexion.from('annonces').update({ ordre: i }).eq('id', a.id).select('id')
     );
     const results = await Promise.all(updates);
-    const erreur = results.find(r => r.error);
+    const erreur = results.map(verifierEcriture).find(Boolean);
 
     if (!erreur) {
         toast('Ordre enregistré ✓');
@@ -1190,12 +1192,20 @@ function fermerConfirm() {
     document.getElementById('confirm-overlay').classList.remove('visible');
 }
 
+// La base ne renvoie pas d'erreur quand elle refuse une modification ou une suppression :
+// elle ne touche simplement aucune ligne. On le vérifie ici.
+function verifierEcriture({ data, error }) {
+    if (error) return error;
+    if (!data || data.length === 0) return new Error('Aucune ligne modifiée (droits refusés par la base)');
+    return null;
+}
+
 async function confirmerSuppr() {
     if (!idASupprimer) return;
-    const { error } = await maConnexion.from('annonces').delete().eq('id', idASupprimer);
+    const error = verifierEcriture(await maConnexion.from('annonces').delete().eq('id', idASupprimer).select('id'));
     fermerConfirm();
     if (!error) { toast('Annonce supprimée'); await charger(); }
-    else toast('Erreur lors de la suppression');
+    else { console.error(error); toast('Erreur : annonce non supprimée'); }
 }
 
 // ══════════════════════════════════════════════════════════════
