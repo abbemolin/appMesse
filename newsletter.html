@@ -244,6 +244,17 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
     font-size: 14px; color: #023199;
   }
   #edit-bar.modifie { background: #fff8e1; border-color: #ffcc80; color: #8a5a00; }
+  #edit-bar { position: sticky; top: 0; z-index: 50; text-transform: none; letter-spacing: 0; font-weight: normal; }
+  #edit-tools { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .fmt-btn {
+    min-width: 34px; height: 30px; padding: 0 8px;
+    border: 1.5px solid #023199; border-radius: 6px;
+    background: #fff; color: #023199; font-size: 15px; cursor: pointer;
+    font-family: Palatino, Georgia, serif; line-height: 1;
+  }
+  .fmt-btn.fmt-txt { font-size: 13px; }
+  .fmt-btn:hover, .fmt-btn.actif { background: #023199; color: #fff; }
+  .fmt-sep { width: 1px; height: 22px; background: #c5cfea; margin: 0 3px; }
   #btn-reset-edits {
     display: none;
     padding: 5px 12px; border: 1.5px solid #B3261E; border-radius: 14px;
@@ -387,7 +398,15 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
     </div>
     <div id="edit-bar">
       <span id="edit-state">✏️ Cliquez dans les annonces ou le calendrier pour les modifier avant l'envoi.</span>
-      <button id="btn-reset-edits" title="Revenir aux annonces et au calendrier d'origine">↺ Annuler mes modifications</button>
+      <div id="edit-tools">
+        <button class="fmt-btn" data-fmt="bold" title="Gras (Ctrl+B)"><b>G</b></button>
+        <button class="fmt-btn" data-fmt="italic" title="Italique (Ctrl+I)"><i>I</i></button>
+        <button class="fmt-btn" data-fmt="underline" title="Souligné (Ctrl+U)"><u>S</u></button>
+        <button class="fmt-btn fmt-txt" data-fmt="removeFormat" title="Retirer gras, italique et souligné du texte sélectionné">Effacer</button>
+        <span class="fmt-sep"></span>
+        <button class="fmt-btn fmt-txt" id="btn-add-annonce" title="Ajouter une annonce à cette newsletter">+ Annonce</button>
+        <button id="btn-reset-edits" title="Revenir aux annonces et au calendrier d'origine">↺ Annuler mes modifications</button>
+      </div>
     </div>
     <iframe id="preview-frame" scrolling="no"></iframe>
   </div>
@@ -473,8 +492,9 @@ function lundiDeSemaine(date) {
   return d;
 }
 
+// Date locale AAAA-MM-JJ (toISOString() passe en UTC et recule d'un jour à minuit, heure de Paris)
 function isoDate(d) {
-  return d.toISOString().split('T')[0];
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
 function dateDebut() {
@@ -811,12 +831,12 @@ function genEmailHTML() {
 
   // Sections annonces
   const annoncesActives = annoncesSelectionnees();
+  // Section toujours présente (masquée si vide) pour pouvoir y ajouter une annonce dans l'aperçu
   let annoncesSection = '';
-  if (annoncesActives.length > 0) {
-    const annonceItems = annoncesActives.map(genAnnonceHTML).join(
-      `<table data-nl-sep="1" cellspacing="0" cellpadding="0" border="0" width="100%" style="table-layout:fixed;width:100%"><tbody><tr><td style="border-top:1px solid #E0D3C1;"></td></tr></tbody></table>`
-    );
-    annoncesSection = `<div data-nl-zone="annonces">
+  {
+    const annonceItems = annoncesActives.map(genAnnonceHTML).join(NL_SEP_HTML);
+    const vide = annoncesActives.length === 0;
+    annoncesSection = `<div data-nl-zone="annonces"${vide ? ' data-nl-hidden="1" style="display:none"' : ''}>
       <!-- SECTION INFORMATIONS -->
       <table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
         <td style="background-color:#FFFFFF;padding-top:20px;padding-bottom:10px;">
@@ -837,7 +857,7 @@ function genEmailHTML() {
       </tr></tbody></table>
       <!-- Annonces -->
       <table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
-        <td style="background-color:#FFFFFF;padding-top:0;padding-bottom:20px;">
+        <td data-nl-annonces-liste="1" style="background-color:#FFFFFF;padding-top:0;padding-bottom:20px;">
           ${annonceItems}
         </td>
       </tr></tbody></table>
@@ -1041,6 +1061,8 @@ function updatePreview() {
 // et c'est le contenu modifié qui est envoyé à Brevo.
 // ═══════════════════════════════════════════════════════════════════════
 const NL_DOCTYPE = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">';
+// Séparateur entre deux annonces
+const NL_SEP_HTML = `<table data-nl-sep="1" cellspacing="0" cellpadding="0" border="0" width="100%" style="table-layout:fixed;width:100%"><tbody><tr><td style="border-top:1px solid #E0D3C1;"></td></tr></tbody></table>`;
 let nlModifie = false;
 let nlTimerSauvegarde = null;
 
@@ -1126,10 +1148,11 @@ function htmlFinal(pourEnvoi) {
     n.removeAttribute('spellcheck');
   });
   if (pourEnvoi) {
-    clone.querySelectorAll('[data-nl-zone],[data-nl-sep],[data-annonce-id]').forEach(n => {
+    clone.querySelectorAll('[data-nl-zone],[data-nl-sep],[data-annonce-id],[data-nl-annonces-liste]').forEach(n => {
       n.removeAttribute('data-nl-zone');
       n.removeAttribute('data-nl-sep');
       n.removeAttribute('data-annonce-id');
+      n.removeAttribute('data-nl-annonces-liste');
     });
   }
   return NL_DOCTYPE + '\n' + clone.outerHTML;
@@ -1213,13 +1236,11 @@ function preparerEdition(doc) {
   }
 
   // Annonces : bouton « Retirer »
-  doc.querySelectorAll('[data-annonce-id]').forEach(t => {
-    const td = t.querySelector('td[valign="top"]');
-    if (td && !td.querySelector('.nl-ctrls')) {
-      td.insertBefore(nlGroupe(doc, [nlBouton(doc, 'retirer-annonce', '✕ Retirer', 'Retirer cette annonce de la newsletter', true)]), td.firstChild);
-    }
-  });
+  doc.querySelectorAll('[data-annonce-id]').forEach(t => ajouterOutilsAnnonce(doc, t));
   majSeparateurs(doc);
+
+  // Barre de mise en forme : état gras / italique / souligné selon la sélection
+  doc.addEventListener('selectionchange', majEtatFormat);
 
   // Clics sur les boutons d'édition
   doc.addEventListener('click', e => {
@@ -1242,6 +1263,81 @@ function preparerEdition(doc) {
 
   // Les liens ne s'ouvrent pas pendant l'édition
   doc.querySelectorAll('[data-nl-zone] a').forEach(a => a.addEventListener('click', e => e.preventDefault()));
+}
+
+function ajouterOutilsAnnonce(doc, t) {
+  const td = t.querySelector('td[valign="top"]');
+  if (td && !td.querySelector('.nl-ctrls')) {
+    td.insertBefore(nlGroupe(doc, [nlBouton(doc, 'retirer-annonce', '✕ Retirer', 'Retirer cette annonce de la newsletter', true)]), td.firstChild);
+  }
+}
+
+// ── Mise en forme : gras, italique, souligné ─────────────────────────────
+function selectionDansZone(doc) {
+  const sel = doc && doc.getSelection();
+  if (!sel || !sel.rangeCount) return false;
+  const n  = sel.getRangeAt(0).commonAncestorContainer;
+  const el = n.nodeType === 1 ? n : n.parentElement;
+  return !!(el && el.closest('[data-nl-zone]') && !el.closest('[data-nl-ctrl]'));
+}
+function appliquerFormat(cmd) {
+  const doc = docApercu();
+  if (!selectionDansZone(doc)) {
+    toast('Sélectionnez d\'abord un texte dans les annonces ou le calendrier');
+    return;
+  }
+  const frame = document.getElementById('preview-frame');
+  if (frame.contentWindow) frame.contentWindow.focus();
+  try { doc.execCommand('styleWithCSS', false, false); } catch(e) {}  // <b>, <i>, <u> : bien gérés par les messageries
+  doc.execCommand(cmd, false, null);
+  marquerModifie();
+  majEtatFormat();
+}
+function majEtatFormat() {
+  const doc = docApercu();
+  const dans = selectionDansZone(doc);
+  document.querySelectorAll('.fmt-btn[data-fmt]').forEach(b => {
+    const cmd = b.getAttribute('data-fmt');
+    let actif = false;
+    if (dans && cmd !== 'removeFormat') { try { actif = doc.queryCommandState(cmd); } catch(e) {} }
+    b.classList.toggle('actif', actif);
+  });
+}
+
+// ── Ajouter une annonce (pour cette newsletter seulement) ────────────────
+let nlCompteurAnnonces = 0;
+function ajouterAnnonce() {
+  const doc = docApercu();
+  const liste = doc && doc.querySelector('[data-nl-annonces-liste]');
+  if (!liste) { toast('⚠️ Aperçu non prêt — rechargez la page'); return; }
+
+  const id = 'n' + Date.now() + '-' + (++nlCompteurAnnonces);
+  const tmp = doc.createElement('div');
+  const dejaUne = !!liste.querySelector(':scope > [data-annonce-id]');
+  tmp.innerHTML = (dejaUne ? NL_SEP_HTML : '')
+    + genAnnonceHTML({ id, titre: 'Titre de la nouvelle annonce', description: 'Texte de l\'annonce.' });
+  Array.from(tmp.children).forEach(n => liste.appendChild(n));
+
+  const t = liste.querySelector(`[data-annonce-id="${id}"]`);
+  ajouterOutilsAnnonce(doc, t);
+  majSeparateurs(doc);
+  marquerModifie();
+  ajusterHauteurApercu();
+
+  // Sélectionner le titre pour le remplacer directement
+  const h3 = t.querySelector('h3');
+  const frame = document.getElementById('preview-frame');
+  if (frame.contentWindow) frame.contentWindow.focus();
+  const r = doc.createRange();
+  r.selectNodeContents(h3);
+  const sel = doc.getSelection();
+  sel.removeAllRanges(); sel.addRange(r);
+
+  // Faire défiler la page jusqu'à la nouvelle annonce
+  setTimeout(() => {
+    const y = frame.getBoundingClientRect().top + t.getBoundingClientRect().top + window.scrollY - 120;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }, 50);
 }
 
 function actionEdition(doc, action, bouton) {
@@ -1282,8 +1378,14 @@ function actionEdition(doc, action, bouton) {
     if (t) {
       const id = t.getAttribute('data-annonce-id');
       const cb = document.getElementById('ann-cb-' + id);
-      if (cb) cb.checked = false;
-      masquerAnnonce(doc, id, true);
+      if (cb) {
+        cb.checked = false;
+        masquerAnnonce(doc, id, true);
+      } else {
+        // Annonce ajoutée dans l'aperçu : on la supprime
+        t.remove();
+        majSeparateurs(doc);
+      }
     }
   }
 
@@ -1571,6 +1673,13 @@ async function chargerTout() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-refresh').addEventListener('click', chargerTout);
   document.getElementById('btn-reset-edits').addEventListener('click', annulerModifications);
+  document.getElementById('btn-add-annonce').addEventListener('click', ajouterAnnonce);
+  document.querySelectorAll('.fmt-btn[data-fmt]').forEach(b => {
+    // Garder la sélection dans l'aperçu au moment du clic
+    b.addEventListener('mousedown',   e => e.preventDefault());
+    b.addEventListener('pointerdown', e => e.preventDefault());
+    b.addEventListener('click', () => appliquerFormat(b.getAttribute('data-fmt')));
+  });
 
   document.getElementById('btn-prev').addEventListener('click', () => {
     weekOffset--;
