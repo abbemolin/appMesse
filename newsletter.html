@@ -235,6 +235,23 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
   .week-nav button:hover { background: #eef1fa; }
   #week-label { font-weight: bold; }
 
+  /* ── Barre d'édition de l'aperçu ── */
+  #edit-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+    background: #eef1fa; border: 1px solid #c5cfea; border-radius: 6px;
+    padding: 9px 12px; margin-bottom: 12px;
+    font-size: 14px; color: #023199;
+  }
+  #edit-bar.modifie { background: #fff8e1; border-color: #ffcc80; color: #8a5a00; }
+  #btn-reset-edits {
+    display: none;
+    padding: 5px 12px; border: 1.5px solid #B3261E; border-radius: 14px;
+    background: #fff; color: #B3261E; font-size: 13px; cursor: pointer;
+    font-family: Palatino, Georgia, serif;
+  }
+  #edit-bar.modifie #btn-reset-edits { display: inline-block; }
+
   /* ── Mode aperçu dans onglet / mode autonome ── */
   body.standalone #app { max-width: 760px; }
 </style>
@@ -367,6 +384,10 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
         <button id="btn-view-desktop" onclick="setPreviewWidth(600)" title="Vue desktop"
           style="padding:5px 12px;border:1.5px solid #023199;border-radius:14px;background:#fff;color:#023199;font-size:13px;cursor:pointer;">🖥 Desktop</button>
       </div>
+    </div>
+    <div id="edit-bar">
+      <span id="edit-state">✏️ Cliquez dans les annonces ou le calendrier pour les modifier avant l'envoi.</span>
+      <button id="btn-reset-edits" title="Revenir aux annonces et au calendrier d'origine">↺ Annuler mes modifications</button>
     </div>
     <iframe id="preview-frame" scrolling="no"></iframe>
   </div>
@@ -767,7 +788,7 @@ function genAnnonceHTML(a) {
 
   const textWidth = a.image_url ? 'calc(100% - 106px)' : '100%';
 
-  return `<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%"
+  return `<table data-annonce-id="${escHtml(String(a.id))}" cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%"
     style="table-layout:fixed;width:100%;background:#ffffff;border-bottom:2px solid #EADFCC;">
     <tbody><tr>
       <td style="padding:16px 20px;">
@@ -793,9 +814,9 @@ function genEmailHTML() {
   let annoncesSection = '';
   if (annoncesActives.length > 0) {
     const annonceItems = annoncesActives.map(genAnnonceHTML).join(
-      `<table cellspacing="0" cellpadding="0" border="0" width="100%" style="table-layout:fixed;width:100%"><tbody><tr><td style="border-top:1px solid #E0D3C1;"></td></tr></tbody></table>`
+      `<table data-nl-sep="1" cellspacing="0" cellpadding="0" border="0" width="100%" style="table-layout:fixed;width:100%"><tbody><tr><td style="border-top:1px solid #E0D3C1;"></td></tr></tbody></table>`
     );
-    annoncesSection = `
+    annoncesSection = `<div data-nl-zone="annonces">
       <!-- SECTION INFORMATIONS -->
       <table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
         <td style="background-color:#FFFFFF;padding-top:20px;padding-bottom:10px;">
@@ -819,7 +840,8 @@ function genEmailHTML() {
         <td style="background-color:#FFFFFF;padding-top:0;padding-bottom:20px;">
           ${annonceItems}
         </td>
-      </tr></tbody></table>`;
+      </tr></tbody></table>
+      </div>`;
   }
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -889,7 +911,7 @@ ${annoncesSection}
     </tr>
     <tr>
       <td style="padding:0 15px 20px;">
-        ${calendrierHtml}
+        <div data-nl-zone="calendrier">${calendrierHtml}</div>
       </td>
     </tr>
     <tr>
@@ -935,19 +957,21 @@ function updateAnnoncesResume() {
     list.innerHTML = '<li style="border:none;background:none;padding:4px 0;color:#888;font-style:italic;">Aucune annonce marquée pour la newsletter</li>';
   } else {
     list.innerHTML = annonces.map(a => `
-      <li onclick="toggleAnnonce(${a.id}, this)">
-        <input type="checkbox" id="ann-cb-${a.id}" checked onchange="updatePreview()">
+      <li onclick="toggleAnnonce(${a.id}, this, event)">
+        <input type="checkbox" id="ann-cb-${a.id}" checked onchange="onAnnonceToggle(${a.id})">
         <label for="ann-cb-${a.id}">${escHtml(a.titre)}</label>
       </li>`).join('');
   }
   wrap.classList.toggle('visible', true);
 }
 
-function toggleAnnonce(id, li) {
+function toggleAnnonce(id, li, ev) {
+  // Clic sur la case ou son libellé : le navigateur coche déjà lui-même (onchange)
+  if (ev && ev.target && (ev.target.tagName === 'INPUT' || ev.target.tagName === 'LABEL')) return;
   const cb = li.querySelector('input[type="checkbox"]');
   if (!cb) return;
   cb.checked = !cb.checked;
-  updatePreview();
+  onAnnonceToggle(id);
 }
 
 function annoncesSelectionnees() {
@@ -983,7 +1007,14 @@ function setPreviewWidth(w) {
 }
 
 function updatePreview() {
-  emailHtml = genEmailHTML();
+  // Ne pas perdre une saisie en cours avant de réécrire l'aperçu
+  if (nlModifie) sauvegarderBrouillonMaintenant();
+
+  // Brouillon modifié pour cette semaine ? Sinon, générer depuis les données
+  const brouillon = lireBrouillon();
+  emailHtml = brouillon ? brouillon.html : genEmailHTML();
+  nlModifie = !!brouillon;
+
   const frame = document.getElementById('preview-frame');
   const wrap  = document.getElementById('preview-wrap');
 
@@ -995,10 +1026,332 @@ function updatePreview() {
   wrap.classList.add('visible');
   frame.style.width = currentPreviewWidth + 'px';
 
+  // Rendre les annonces et le calendrier modifiables
+  preparerEdition(doc);
+  if (brouillon) synchroniserCasesAvecApercu(doc);
+  majBarreEdition();
+
   // Ajuster la hauteur
-  setTimeout(() => {
-    frame.style.height = (doc.documentElement.scrollHeight + 20) + 'px';
-  }, 300);
+  setTimeout(ajusterHauteurApercu, 300);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ÉDITION DIRECTE DANS L'APERÇU (annonces + calendrier)
+// Les modifications sont gardées sur l'appareil (brouillon par semaine)
+// et c'est le contenu modifié qui est envoyé à Brevo.
+// ═══════════════════════════════════════════════════════════════════════
+const NL_DOCTYPE = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">';
+let nlModifie = false;
+let nlTimerSauvegarde = null;
+
+// Styles des lignes du calendrier (identiques à genCalendrierHTML)
+const NL_STYLE_HEURE   = 'width:84px;padding:3px 0 3px 16px;font-size:15px;color:#6D6D6C;white-space:nowrap;';
+const NL_STYLE_LIBELLE = 'padding:3px 0;font-size:16px;color:#333333;';
+
+const NL_EDIT_CSS = `
+  [data-nl-zone] { outline: none; }
+  [data-nl-zone] td:hover, [data-nl-zone] h1:hover, [data-nl-zone] h3:hover, [data-nl-zone] p:hover {
+    background-image: linear-gradient(rgba(2,49,153,.05), rgba(2,49,153,.05));
+  }
+  [data-nl-zone]:focus-within { box-shadow: 0 0 0 2px rgba(2,49,153,.18); border-radius: 4px; }
+  .nl-ctrls { float: right; white-space: nowrap; opacity: .45; margin-left: 6px; }
+  tr:hover > td > .nl-ctrls, td:hover > .nl-ctrls { opacity: 1; }
+  .nl-ctrl {
+    display: inline-block; font: 11px/16px system-ui, -apple-system, sans-serif; font-weight: normal; font-style: normal;
+    color: #6D6D6C; background: #fff; border: 1px solid #c9bfae; border-radius: 10px;
+    padding: 1px 7px; margin-left: 4px; cursor: pointer; user-select: none; -webkit-user-select: none;
+  }
+  .nl-ctrl:hover { background: #023199; border-color: #023199; color: #fff; }
+  .nl-ctrl.nl-del:hover { background: #B3261E; border-color: #B3261E; }
+  .nl-add td { padding: 2px 0 4px 16px; }
+`;
+
+function isoLocalDate(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function cleBrouillon() {
+  return 'newsletter_brouillon_' + isoLocalDate(dateDebut());
+}
+function lireBrouillon() {
+  try {
+    const raw = localStorage.getItem(cleBrouillon());
+    if (!raw) return null;
+    const b = JSON.parse(raw);
+    return b && b.html ? b : null;
+  } catch(e) { return null; }
+}
+function supprimerBrouillon() {
+  try { localStorage.removeItem(cleBrouillon()); } catch(e) {}
+}
+function sauvegarderBrouillonMaintenant() {
+  clearTimeout(nlTimerSauvegarde);
+  try {
+    localStorage.setItem(cleBrouillon(), JSON.stringify({ html: htmlFinal(false), date: Date.now() }));
+  } catch(e) { console.warn('[Brouillon]', e); }
+}
+function marquerModifie() {
+  nlModifie = true;
+  majBarreEdition();
+  clearTimeout(nlTimerSauvegarde);
+  nlTimerSauvegarde = setTimeout(sauvegarderBrouillonMaintenant, 600);
+}
+function majBarreEdition() {
+  const bar = document.getElementById('edit-bar');
+  const st  = document.getElementById('edit-state');
+  if (!bar || !st) return;
+  bar.classList.toggle('modifie', nlModifie);
+  st.textContent = nlModifie
+    ? '✏️ Version modifiée — c\'est elle qui sera envoyée (enregistrée sur cet appareil).'
+    : '✏️ Cliquez dans les annonces ou le calendrier pour les modifier avant l\'envoi.';
+}
+function docApercu() {
+  const frame = document.getElementById('preview-frame');
+  return frame && (frame.contentDocument || (frame.contentWindow && frame.contentWindow.document));
+}
+function ajusterHauteurApercu() {
+  const frame = document.getElementById('preview-frame');
+  const doc = docApercu();
+  if (frame && doc && doc.documentElement) frame.style.height = (doc.documentElement.scrollHeight + 20) + 'px';
+}
+
+// HTML de l'aperçu sans les outils d'édition.
+// pourEnvoi = true : retire aussi les marqueurs internes (data-nl-*, data-annonce-id)
+function htmlFinal(pourEnvoi) {
+  const doc = docApercu();
+  if (!doc || !doc.documentElement || !doc.querySelector('[data-nl-zone]')) return emailHtml;
+  const clone = doc.documentElement.cloneNode(true);
+  clone.querySelectorAll('[data-nl-ctrl], #nl-edit-style, [data-nl-hidden]').forEach(n => n.remove());
+  clone.querySelectorAll('[contenteditable]').forEach(n => {
+    n.removeAttribute('contenteditable');
+    n.removeAttribute('spellcheck');
+  });
+  if (pourEnvoi) {
+    clone.querySelectorAll('[data-nl-zone],[data-nl-sep],[data-annonce-id]').forEach(n => {
+      n.removeAttribute('data-nl-zone');
+      n.removeAttribute('data-nl-sep');
+      n.removeAttribute('data-annonce-id');
+    });
+  }
+  return NL_DOCTYPE + '\n' + clone.outerHTML;
+}
+
+function nlBouton(doc, action, texte, titre, del) {
+  const b = doc.createElement('span');
+  b.className = 'nl-ctrl' + (del ? ' nl-del' : '');
+  b.setAttribute('data-nl-ctrl', '1');
+  b.setAttribute('data-nl-action', action);
+  b.setAttribute('contenteditable', 'false');
+  b.title = titre;
+  b.textContent = texte;
+  return b;
+}
+function nlGroupe(doc, boutons) {
+  const g = doc.createElement('span');
+  g.className = 'nl-ctrls';
+  g.setAttribute('data-nl-ctrl', '1');
+  g.setAttribute('contenteditable', 'false');
+  boutons.forEach(b => g.appendChild(b));
+  return g;
+}
+
+// Types de lignes du tableau calendrier
+function estLigneHoraire(tr) {
+  const tds = tr.children;
+  return tds.length === 2 && tds[0].getAttribute('width') === '84';
+}
+function estLigneNote(tr) {
+  const tds = tr.children;
+  if (tds.length !== 1 || tds[0].getAttribute('colspan') !== '2' || tds[0].hasAttribute('bgcolor')) return false;
+  return !/line-height\s*:\s*\d+px/.test(tds[0].getAttribute('style') || '') && tds[0].textContent.trim() !== '';
+}
+function estFinDeJour(tr) {
+  const td = tr.children[0];
+  return tr.children.length === 1 && td && /line-height\s*:\s*18px/.test(td.getAttribute('style') || '');
+}
+
+function ajouterOutilsLigne(doc, tr) {
+  if (tr.querySelector('.nl-ctrls')) return;
+  const cible = tr.children[tr.children.length - 1];
+  const boutons = [];
+  if (estLigneHoraire(tr)) boutons.push(nlBouton(doc, 'messe', 'Messe', 'Afficher / ne plus afficher comme une messe (bleu, gras)'));
+  boutons.push(nlBouton(doc, 'suppr-ligne', '✕', 'Supprimer cette ligne', true));
+  cible.insertBefore(nlGroupe(doc, boutons), cible.firstChild);
+}
+
+function preparerEdition(doc) {
+  if (!doc || !doc.head) return;
+  if (!doc.getElementById('nl-edit-style')) {
+    const st = doc.createElement('style');
+    st.id = 'nl-edit-style';
+    st.textContent = NL_EDIT_CSS;
+    doc.head.appendChild(st);
+  }
+
+  doc.querySelectorAll('[data-nl-zone]').forEach(z => {
+    z.setAttribute('contenteditable', 'true');
+    z.setAttribute('spellcheck', 'true');
+    z.setAttribute('lang', 'fr');
+  });
+
+  // Calendrier : boutons par ligne + « Ajouter une ligne » à la fin de chaque jour
+  const cal = doc.querySelector('[data-nl-zone="calendrier"]');
+  if (cal) {
+    Array.from(cal.querySelectorAll('tr')).forEach(tr => {
+      if (estLigneHoraire(tr) || estLigneNote(tr)) ajouterOutilsLigne(doc, tr);
+      else if (estFinDeJour(tr)) {
+        const add = doc.createElement('tr');
+        add.className = 'nl-add';
+        add.setAttribute('data-nl-ctrl', '1');
+        add.setAttribute('contenteditable', 'false');
+        const td = doc.createElement('td');
+        td.setAttribute('colspan', '2');
+        td.appendChild(nlBouton(doc, 'ajout-ligne', '+ Ajouter une ligne', 'Ajouter une ligne à ce jour'));
+        add.appendChild(td);
+        tr.parentNode.insertBefore(add, tr);
+      }
+    });
+  }
+
+  // Annonces : bouton « Retirer »
+  doc.querySelectorAll('[data-annonce-id]').forEach(t => {
+    const td = t.querySelector('td[valign="top"]');
+    if (td && !td.querySelector('.nl-ctrls')) {
+      td.insertBefore(nlGroupe(doc, [nlBouton(doc, 'retirer-annonce', '✕ Retirer', 'Retirer cette annonce de la newsletter', true)]), td.firstChild);
+    }
+  });
+  majSeparateurs(doc);
+
+  // Clics sur les boutons d'édition
+  doc.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-nl-action]');
+    if (!b) return;
+    e.preventDefault();
+    actionEdition(doc, b.getAttribute('data-nl-action'), b);
+  });
+
+  // Saisie
+  doc.addEventListener('input', () => { marquerModifie(); ajusterHauteurApercu(); });
+
+  // Collage : texte brut uniquement (évite d'importer des styles étrangers dans le mail)
+  doc.addEventListener('paste', e => {
+    if (!e.target.closest || !e.target.closest('[data-nl-zone]')) return;
+    e.preventDefault();
+    const texte = (e.clipboardData || window.clipboardData).getData('text/plain');
+    doc.execCommand('insertText', false, texte);
+  });
+
+  // Les liens ne s'ouvrent pas pendant l'édition
+  doc.querySelectorAll('[data-nl-zone] a').forEach(a => a.addEventListener('click', e => e.preventDefault()));
+}
+
+function actionEdition(doc, action, bouton) {
+  const tr = bouton.closest('tr');
+
+  if (action === 'suppr-ligne' && tr) {
+    tr.remove();
+  }
+
+  else if (action === 'messe' && tr) {
+    const [tdH, tdL] = tr.children;
+    const estMesseActuelle = /font-weight\s*:\s*bold/.test(tdL.getAttribute('style') || '');
+    [tdH, tdL].forEach(td => {
+      td.style.color      = estMesseActuelle ? '' : '#023199';
+      td.style.fontWeight = estMesseActuelle ? '' : 'bold';
+      td.style.fontStyle  = '';
+    });
+    if (estMesseActuelle) { tdH.style.color = '#6D6D6C'; tdL.style.color = '#333333'; }
+  }
+
+  else if (action === 'ajout-ligne' && tr) {
+    const nv = doc.createElement('tr');
+    nv.innerHTML = `<td width="84" valign="top" style="${NL_STYLE_HEURE}"></td>`
+                 + `<td valign="top" style="${NL_STYLE_LIBELLE}">Nouvelle ligne</td>`;
+    tr.parentNode.insertBefore(nv, tr);
+    ajouterOutilsLigne(doc, nv);
+    // Placer le curseur dans la cellule de l'heure
+    const sel = doc.getSelection();
+    const r = doc.createRange();
+    r.setStart(nv.children[0], 0);
+    r.collapse(true);
+    sel.removeAllRanges(); sel.addRange(r);
+    nv.children[0].focus && nv.children[0].focus();
+  }
+
+  else if (action === 'retirer-annonce') {
+    const t = bouton.closest('[data-annonce-id]');
+    if (t) {
+      const id = t.getAttribute('data-annonce-id');
+      const cb = document.getElementById('ann-cb-' + id);
+      if (cb) cb.checked = false;
+      masquerAnnonce(doc, id, true);
+    }
+  }
+
+  marquerModifie();
+  ajusterHauteurApercu();
+}
+
+function masquerAnnonce(doc, id, masquer) {
+  const t = doc.querySelector(`[data-annonce-id="${CSS.escape(String(id))}"]`);
+  if (!t) return false;
+  t.style.display = masquer ? 'none' : '';
+  if (masquer) t.setAttribute('data-nl-hidden', '1'); else t.removeAttribute('data-nl-hidden');
+  majSeparateurs(doc);
+  return true;
+}
+
+// Séparateurs entre annonces + section INFORMATIONS : masqués s'ils n'ont plus lieu d'être
+function majSeparateurs(doc) {
+  const visible = el => el.hasAttribute('data-annonce-id') && !el.hasAttribute('data-nl-hidden');
+  doc.querySelectorAll('[data-nl-sep]').forEach(sep => {
+    let avant = false, apres = false;
+    for (let n = sep.previousElementSibling; n; n = n.previousElementSibling) if (visible(n)) { avant = true; break; }
+    for (let n = sep.nextElementSibling; n; n = n.nextElementSibling) if (visible(n)) { apres = true; break; }
+    const cacher = !(avant && apres);
+    sep.style.display = cacher ? 'none' : '';
+    if (cacher) sep.setAttribute('data-nl-hidden', '1'); else sep.removeAttribute('data-nl-hidden');
+  });
+  const zone = doc.querySelector('[data-nl-zone="annonces"]');
+  if (zone) {
+    const aucune = !Array.from(zone.querySelectorAll('[data-annonce-id]')).some(visible);
+    zone.style.display = aucune ? 'none' : '';
+    if (aucune) zone.setAttribute('data-nl-hidden', '1'); else zone.removeAttribute('data-nl-hidden');
+  }
+}
+
+// Cocher/décocher une annonce dans la liste
+function onAnnonceToggle(id) {
+  if (!nlModifie) { updatePreview(); return; }
+  // Version modifiée : on masque / réaffiche l'annonce sans perdre les modifications
+  const doc = docApercu();
+  const cb = document.getElementById('ann-cb-' + id);
+  if (!doc || !cb) return;
+  if (!masquerAnnonce(doc, id, !cb.checked) && cb.checked) {
+    toast('ℹ️ Cette annonce n\'est pas dans la version modifiée — « Annuler mes modifications » pour la récupérer', 6000);
+    cb.checked = false;
+    return;
+  }
+  marquerModifie();
+  ajusterHauteurApercu();
+}
+
+// Après restauration d'un brouillon : cases cochées = annonces présentes
+function synchroniserCasesAvecApercu(doc) {
+  annonces.forEach(a => {
+    const cb = document.getElementById('ann-cb-' + a.id);
+    if (!cb) return;
+    const t = doc.querySelector(`[data-annonce-id="${CSS.escape(String(a.id))}"]`);
+    cb.checked = !!t && !t.hasAttribute('data-nl-hidden');
+  });
+}
+
+function annulerModifications() {
+  clearTimeout(nlTimerSauvegarde);
+  supprimerBrouillon();
+  nlModifie = false;
+  annonces.forEach(a => { const cb = document.getElementById('ann-cb-' + a.id); if (cb) cb.checked = true; });
+  updatePreview();
+  toast('↺ Modifications annulées');
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1048,7 +1401,7 @@ async function envoyerNewsletter() {
     subject: subject,
     sender: { name: 'Paroisse La Croix Glorieuse', email: 'secretariat@croix-glorieuse.org' },
     type: 'classic',
-    htmlContent: emailHtml,
+    htmlContent: htmlFinal(true),   // version affichée dans l'aperçu, avec les modifications
     recipients: { listIds: [BREVO_LIST_ID] },
     scheduledAt: sendAt.toISOString(),
   };
@@ -1217,6 +1570,7 @@ async function chargerTout() {
 // ═══════════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-refresh').addEventListener('click', chargerTout);
+  document.getElementById('btn-reset-edits').addEventListener('click', annulerModifications);
 
   document.getElementById('btn-prev').addEventListener('click', () => {
     weekOffset--;
