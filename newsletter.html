@@ -255,6 +255,29 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
   .fmt-btn.fmt-txt { font-size: 13px; }
   .fmt-btn:hover, .fmt-btn.actif { background: #023199; color: #fff; }
   .fmt-sep { width: 1px; height: 22px; background: #c5cfea; margin: 0 3px; }
+  #link-panel { display: none; width: 100%; flex-direction: column; gap: 6px; padding-top: 4px; }
+  #link-panel.visible { display: flex; }
+  #link-panel label { font-size: 13px; color: #023199; }
+  #link-url {
+    width: 100%; padding: 8px 10px; font-size: 16px; /* 16px : pas de zoom auto sur iPhone */
+    border: 1.5px solid #023199; border-radius: 6px; font-family: system-ui, sans-serif;
+  }
+  .link-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .fmt-btn.link-ok { background: #023199; color: #fff; }
+  .fmt-btn.link-del { border-color: #B3261E; color: #B3261E; }
+  .fmt-btn.link-del:hover { background: #B3261E; color: #fff; }
+
+  /* ── Téléphone : aperçu sur toute la largeur, barre compacte ── */
+  @media (max-width: 640px) {
+    #app { padding: 16px 8px 90px; }
+    #preview-wrap { padding: 8px 0; border-left: none; border-right: none; border-radius: 0; }
+    #preview-label { padding: 0 8px; }
+    #edit-bar { padding: 6px 8px; gap: 6px; border-radius: 0; }
+    #edit-state { font-size: 12px; line-height: 1.3; }
+    .fmt-btn { min-width: 32px; height: 32px; padding: 0 7px; }
+    #preview-frame { width: 100% !important; }
+    #toast { bottom: 100px; max-width: 90vw; text-align: center; } /* au-dessus de la barre de menu */
+  }
   #btn-reset-edits {
     display: none;
     padding: 5px 12px; border: 1.5px solid #B3261E; border-radius: 14px;
@@ -402,10 +425,21 @@ window.BREVO_API_KEY = window.BREVO_API_KEY || '';
         <button class="fmt-btn" data-fmt="bold" title="Gras (Ctrl+B)"><b>G</b></button>
         <button class="fmt-btn" data-fmt="italic" title="Italique (Ctrl+I)"><i>I</i></button>
         <button class="fmt-btn" data-fmt="underline" title="Souligné (Ctrl+U)"><u>S</u></button>
+        <button class="fmt-btn fmt-txt" data-fmt="majuscules" title="Mettre le texte sélectionné en CAPITALES (recliquer pour repasser en minuscules)">AA</button>
+        <button class="fmt-btn fmt-txt" data-fmt="lien" title="Ajouter, modifier ou retirer un lien sur le texte sélectionné">🔗 Lien</button>
         <button class="fmt-btn fmt-txt" data-fmt="removeFormat" title="Retirer gras, italique et souligné du texte sélectionné">Effacer</button>
         <span class="fmt-sep"></span>
         <button class="fmt-btn fmt-txt" id="btn-add-annonce" title="Ajouter une annonce à cette newsletter">+ Annonce</button>
         <button id="btn-reset-edits" title="Revenir aux annonces et au calendrier d'origine">↺ Annuler mes modifications</button>
+      </div>
+      <div id="link-panel">
+        <label for="link-url" id="link-titre">Adresse du lien</label>
+        <input id="link-url" type="url" inputmode="url" placeholder="https://… ou adresse e-mail" autocomplete="off">
+        <div class="link-actions">
+          <button class="fmt-btn fmt-txt link-ok" id="link-ok">OK</button>
+          <button class="fmt-btn fmt-txt link-del" id="link-del">Retirer le lien</button>
+          <button class="fmt-btn fmt-txt" id="link-cancel">Annuler</button>
+        </div>
       </div>
     </div>
     <iframe id="preview-frame" scrolling="no"></iframe>
@@ -792,7 +826,7 @@ function genAnnonceHTML(a) {
     : '';
 
   const lienHtml = a.lien
-    ? `<table cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+    ? `<table data-nl-bouton="1" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
         <td style="border:1px solid #023199;border-radius:20px;padding:5px 16px;">
           <a href="${escHtml(a.lien)}" target="_blank" style="color:#023199;text-decoration:none;font-size:13px;font-weight:bold;font-family:Palatino,Georgia,serif;">${escHtml(a.lien_label||'En savoir plus')}</a>
         </td>
@@ -880,8 +914,9 @@ p, h1, h2, h3 { margin:0; }
 <body bgcolor="#FBFBF9" style="background-color:#FBFBF9;">
 <table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="background-color:#FBFBF9;width:100%"><tbody><tr><td>
 
-<!-- Wrapper 600px -->
-<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="600" align="center" style="table-layout:fixed;width:600px;"><tbody><tr><td style="background-color:#FBFBF9;">
+<!-- Wrapper : 600px max, fluide sur téléphone (table fantôme pour Outlook) -->
+<!--[if mso]><table width="600" align="center" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr><td><![endif]-->
+<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" align="center" style="table-layout:fixed;width:100%;max-width:600px;margin:0 auto;"><tbody><tr><td style="background-color:#FBFBF9;">
 
 <!-- Lien miroir -->
 <table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" style="table-layout:fixed;width:100%"><tbody><tr>
@@ -962,6 +997,7 @@ ${annoncesSection}
 </tr></tbody></table>
 
 </td></tr></tbody></table>
+<!--[if mso]></td></tr></table><![endif]-->
 </td></tr></tbody></table>
 </body></html>`;
 }
@@ -1032,7 +1068,7 @@ function updatePreview() {
 
   // Brouillon modifié pour cette semaine ? Sinon, générer depuis les données
   const brouillon = lireBrouillon();
-  emailHtml = brouillon ? brouillon.html : genEmailHTML();
+  emailHtml = brouillon ? migrerBrouillon(brouillon.html) : genEmailHTML();
   nlModifie = !!brouillon;
 
   const frame = document.getElementById('preview-frame');
@@ -1148,7 +1184,8 @@ function htmlFinal(pourEnvoi) {
     n.removeAttribute('spellcheck');
   });
   if (pourEnvoi) {
-    clone.querySelectorAll('[data-nl-zone],[data-nl-sep],[data-annonce-id],[data-nl-annonces-liste]').forEach(n => {
+    clone.querySelectorAll('[data-nl-zone],[data-nl-sep],[data-annonce-id],[data-nl-annonces-liste],[data-nl-bouton]').forEach(n => {
+      n.removeAttribute('data-nl-bouton');
       n.removeAttribute('data-nl-zone');
       n.removeAttribute('data-nl-sep');
       n.removeAttribute('data-annonce-id');
@@ -1262,14 +1299,20 @@ function preparerEdition(doc) {
   });
 
   // Les liens ne s'ouvrent pas pendant l'édition
-  doc.querySelectorAll('[data-nl-zone] a').forEach(a => a.addEventListener('click', e => e.preventDefault()));
+  doc.addEventListener('click', e => {
+    if (e.target.closest && e.target.closest('[data-nl-zone] a')) e.preventDefault();
+  }, true);
 }
 
 function ajouterOutilsAnnonce(doc, t) {
   const td = t.querySelector('td[valign="top"]');
   if (td && !td.querySelector('.nl-ctrls')) {
-    td.insertBefore(nlGroupe(doc, [nlBouton(doc, 'retirer-annonce', '✕ Retirer', 'Retirer cette annonce de la newsletter', true)]), td.firstChild);
+    td.insertBefore(nlGroupe(doc, [
+      nlBouton(doc, 'ajout-bouton', '+ Bouton', 'Ajouter un bouton « En savoir plus » avec un lien'),
+      nlBouton(doc, 'retirer-annonce', '✕ Retirer', 'Retirer cette annonce de la newsletter', true),
+    ]), td.firstChild);
   }
+  majBoutonsAnnonces(doc);
 }
 
 // ── Mise en forme : gras, italique, souligné ─────────────────────────────
@@ -1299,8 +1342,174 @@ function majEtatFormat() {
   document.querySelectorAll('.fmt-btn[data-fmt]').forEach(b => {
     const cmd = b.getAttribute('data-fmt');
     let actif = false;
-    if (dans && cmd !== 'removeFormat') { try { actif = doc.queryCommandState(cmd); } catch(e) {} }
+    if (dans && ['bold', 'italic', 'underline'].includes(cmd)) { try { actif = doc.queryCommandState(cmd); } catch(e) {} }
+    if (dans && cmd === 'lien') actif = !!lienSousSelection(doc);
     b.classList.toggle('actif', actif);
+  });
+}
+
+// Brouillons enregistrés avant le passage au mail fluide (600 px fixe → max 600 px)
+function migrerBrouillon(html) {
+  return html.replace(
+    /<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="600" align="center" style="table-layout:fixed;width:600px;">/,
+    '<table cellspacing="0" cellpadding="0" border="0" role="presentation" width="100%" align="center" style="table-layout:fixed;width:100%;max-width:600px;margin:0 auto;">'
+  );
+}
+
+// ── CAPITALES ────────────────────────────────────────────────────────────
+// Transforme réellement le texte (plus fiable dans les messageries que text-transform).
+// Si la sélection est déjà en capitales : repasse en minuscules (1re lettre conservée).
+function basculerCapitales() {
+  const doc = docApercu();
+  if (!selectionDansZone(doc) || doc.getSelection().isCollapsed) {
+    toast('Sélectionnez d\'abord le texte à mettre en capitales');
+    return;
+  }
+  const range = doc.getSelection().getRangeAt(0);
+  const racine = range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentNode;
+  // Morceaux de texte couverts par la sélection
+  const morceaux = [];
+  const w = doc.createTreeWalker(racine, NodeFilter.SHOW_TEXT);
+  let n;
+  while ((n = w.nextNode())) {
+    if (!range.intersectsNode(n) || (n.parentElement && n.parentElement.closest('[data-nl-ctrl]'))) continue;
+    const debut = n === range.startContainer ? range.startOffset : 0;
+    const fin   = n === range.endContainer   ? range.endOffset   : n.data.length;
+    if (fin > debut) morceaux.push({ n, debut, fin });
+  }
+  if (racine.nodeType === 3 && !morceaux.length) morceaux.push({ n: racine, debut: range.startOffset, fin: range.endOffset });
+  const texte = morceaux.map(m => m.n.data.slice(m.debut, m.fin)).join('');
+  if (!/\p{L}/u.test(texte)) return;
+  const dejaCapitales = texte === texte.toLocaleUpperCase('fr-FR');
+
+  let premiereLettre = true;
+  morceaux.forEach(m => {
+    let part = m.n.data.slice(m.debut, m.fin);
+    if (dejaCapitales) {
+      part = part.toLocaleLowerCase('fr-FR');
+      if (premiereLettre) part = part.replace(/\p{L}/u, c => { premiereLettre = false; return c.toLocaleUpperCase('fr-FR'); });
+    } else {
+      part = part.toLocaleUpperCase('fr-FR');
+    }
+    m.n.data = m.n.data.slice(0, m.debut) + part + m.n.data.slice(m.fin);
+  });
+  // Garder la même sélection
+  const premier = morceaux[0], dernier = morceaux[morceaux.length - 1];
+  const r = doc.createRange();
+  r.setStart(premier.n, premier.debut);
+  r.setEnd(dernier.n, Math.min(dernier.fin, dernier.n.data.length));
+  const sel = doc.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  marquerModifie();
+}
+
+// ── LIENS ────────────────────────────────────────────────────────────────
+let nlLien = null;   // { range, a, bouton, annonce } pendant que le panneau est ouvert
+
+function lienSousSelection(doc) {
+  const sel = doc && doc.getSelection();
+  if (!sel || !sel.rangeCount) return null;
+  const n  = sel.getRangeAt(0).commonAncestorContainer;
+  const el = n.nodeType === 1 ? n : n.parentElement;
+  const a  = el && el.closest('a');
+  return a && a.closest('[data-nl-zone]') ? a : null;
+}
+function normaliserUrl(u) {
+  u = (u || '').trim();
+  if (!u) return '';
+  if (/^(https?:|mailto:|tel:)/i.test(u)) return u;
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u)) return 'mailto:' + u;
+  if (/^\+?[\d\s.]{8,}$/.test(u)) return 'tel:' + u.replace(/[\s.]/g, '');
+  return 'https://' + u.replace(/^\/+/, '');
+}
+function ouvrirPanneau(titre, url, peutRetirer) {
+  document.getElementById('link-titre').textContent = titre;
+  const inp = document.getElementById('link-url');
+  inp.value = url || '';
+  document.getElementById('link-del').style.display = peutRetirer ? '' : 'none';
+  document.getElementById('link-panel').classList.add('visible');
+  setTimeout(() => { inp.focus(); inp.select(); }, 30);
+}
+function fermerPanneauLien() {
+  nlLien = null;
+  document.getElementById('link-panel').classList.remove('visible');
+}
+
+// Bouton 🔗 de la barre : lien sur le texte sélectionné, ou modifier le lien où se trouve le curseur
+function ouvrirPanneauLien() {
+  const doc = docApercu();
+  if (!selectionDansZone(doc)) { toast('Sélectionnez d\'abord un texte dans les annonces ou le calendrier'); return; }
+  const a = lienSousSelection(doc);
+  const sel = doc.getSelection();
+  if (!a && sel.isCollapsed) { toast('Sélectionnez le texte à transformer en lien'); return; }
+  nlLien = { range: sel.getRangeAt(0).cloneRange(), a };
+  ouvrirPanneau(a ? 'Modifier le lien' : 'Adresse du lien', a ? a.getAttribute('href') : '', !!a);
+}
+
+// « + Bouton » d'une annonce : bouton « En savoir plus » vers une adresse
+function ouvrirPanneauBouton(annonce) {
+  nlLien = { annonce };
+  ouvrirPanneau('Adresse du bouton « En savoir plus »', '', false);
+}
+
+function validerLien() {
+  const doc = docApercu();
+  if (!nlLien || !doc) return fermerPanneauLien();
+  const url = normaliserUrl(document.getElementById('link-url').value);
+  if (!url) { toast('Indiquez une adresse'); return; }
+
+  if (nlLien.annonce) {
+    // Nouveau bouton en bas du texte de l'annonce
+    const td = nlLien.annonce.querySelector('td[valign="top"]');
+    const t = doc.createElement('div');
+    t.innerHTML = `<table data-nl-bouton="1" cellpadding="0" cellspacing="0" border="0"><tbody><tr>
+        <td style="border:1px solid #023199;border-radius:20px;padding:5px 16px;">
+          <a href="${escHtml(url)}" target="_blank" style="color:#023199;text-decoration:none;font-size:13px;font-weight:bold;font-family:Palatino,Georgia,serif;">En savoir plus</a>
+        </td></tr></tbody></table>`;
+    td.appendChild(t.firstElementChild);
+    majBoutonsAnnonces(doc);
+    toast('Bouton ajouté — touchez « En savoir plus » pour changer son texte', 4500);
+  } else if (nlLien.a) {
+    nlLien.a.setAttribute('href', url);
+  } else {
+    const frame = document.getElementById('preview-frame');
+    if (frame.contentWindow) frame.contentWindow.focus();
+    const sel = doc.getSelection();
+    sel.removeAllRanges(); sel.addRange(nlLien.range);
+    try { doc.execCommand('styleWithCSS', false, false); } catch(e) {}
+    doc.execCommand('createLink', false, url);
+    doc.querySelectorAll('[data-nl-zone] a').forEach(a => {
+      if (a.getAttribute('href') === url && !a.getAttribute('style')) {
+        a.setAttribute('style', 'color:#023199;text-decoration:underline;');
+        a.setAttribute('target', '_blank');
+      }
+    });
+  }
+  fermerPanneauLien();
+  marquerModifie();
+  ajusterHauteurApercu();
+}
+
+function retirerLien() {
+  const doc = docApercu();
+  if (!nlLien || !nlLien.a) return fermerPanneauLien();
+  const a = nlLien.a;
+  const bouton = a.closest('[data-nl-bouton]');
+  if (bouton) {
+    bouton.remove();               // bouton « En savoir plus » : on retire tout le bouton
+    majBoutonsAnnonces(doc);
+  } else {
+    a.replaceWith(...a.childNodes); // lien dans le texte : on garde le texte
+  }
+  fermerPanneauLien();
+  marquerModifie();
+  ajusterHauteurApercu();
+}
+
+// « + Bouton » visible seulement sur les annonces qui n'en ont pas
+function majBoutonsAnnonces(doc) {
+  doc.querySelectorAll('[data-annonce-id]').forEach(t => {
+    const ctrl = t.querySelector('[data-nl-action="ajout-bouton"]');
+    if (ctrl) ctrl.style.display = t.querySelector('[data-nl-bouton]') ? 'none' : '';
   });
 }
 
@@ -1341,6 +1550,11 @@ function ajouterAnnonce() {
 }
 
 function actionEdition(doc, action, bouton) {
+  if (action === 'ajout-bouton') {
+    const t = bouton.closest('[data-annonce-id]');
+    if (t) ouvrirPanneauBouton(t);
+    return;
+  }
   const tr = bouton.closest('tr');
 
   if (action === 'suppr-ligne' && tr) {
@@ -1678,8 +1892,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Garder la sélection dans l'aperçu au moment du clic
     b.addEventListener('mousedown',   e => e.preventDefault());
     b.addEventListener('pointerdown', e => e.preventDefault());
-    b.addEventListener('click', () => appliquerFormat(b.getAttribute('data-fmt')));
+    b.addEventListener('click', () => {
+      const f = b.getAttribute('data-fmt');
+      if (f === 'majuscules') basculerCapitales();
+      else if (f === 'lien') ouvrirPanneauLien();
+      else appliquerFormat(f);
+    });
   });
+  document.getElementById('link-ok').addEventListener('click', validerLien);
+  document.getElementById('link-del').addEventListener('click', retirerLien);
+  document.getElementById('link-cancel').addEventListener('click', fermerPanneauLien);
+  document.getElementById('link-url').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); validerLien(); }
+    if (e.key === 'Escape') fermerPanneauLien();
+  });
+
+  // Téléphone : aperçu à la largeur de l'écran, hauteur recalculée en tournant l'écran
+  if (window.innerWidth <= 640) currentPreviewWidth = 375;
+  window.addEventListener('resize', () => setTimeout(ajusterHauteurApercu, 200));
 
   document.getElementById('btn-prev').addEventListener('click', () => {
     weekOffset--;
