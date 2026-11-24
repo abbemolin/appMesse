@@ -2,66 +2,6 @@
  "version": 1,
  "fetes": [
   {
-   "id": "foucauld",
-   "groupe": "communaute",
-   "date": "12-01",
-   "nom_la": "S. Caroli de Foucauld Presbyteri",
-   "nom_fr": "Saint Charles de Foucauld, prêtre",
-   "rang": 3,
-   "commun": "C5",
-   "base": null,
-   "romain": "commemorer",
-   "nom_oraison": {
-    "la": "Cároli",
-    "fr": "Charles"
-   },
-   "office": {
-    "Oratio": {
-     "la": "Dómine, sancte Pater, qui ad imitatiónem Fílii tui Iesu Nazaréni sanctum Cárolum, presbýterum, vocásti, concéde, quǽsumus, eius intercessióne, ut, Eucharístia enutríti, in altiórem christiánam caritátem et universálem fraternitátem quotídie progrediámur.\n$Per Dominum",
-     "fr": "Seigneur, Père très saint, vous qui avez appelé saint Charles, votre prêtre, à imiter votre Fils, Jésus de Nazareth, nous vous en prions, accordez-nous, par son intercession, que, nourris de l’Eucharistie, nous progressions chaque jour vers une charité chrétienne plus profonde et une fraternité universelle."
-    }
-   },
-   "messe": {
-    "Introitus": {
-     "la": "!Ps 95, 3\nAnnuntiate inter gentes gloriam ejus ; in omnibus populis mirabilia ejus. (T. P. Allelúia, Allelúia.)\n!Ps 47, 2\nMagnus Dominus et laudabilis nimis\n&Gloria",
-     "fr": "Proclamez aux nations le salut de Dieu, et ses merveilles à tous les peuples.\nV. Il est grand le Seigneur, grande est sa gloire.\n&Gloria"
-    },
-    "Oratio": {
-     "la": "Dómine, sancte Pater, qui ad imitatiónem Fílii tui Iesu Nazaréni sanctum Cárolum, presbýterum, vocásti, concéde, quǽsumus, eius intercessióne, ut, Eucharístia enutríti, in altiórem christiánam caritátem et universálem fraternitátem quotídie progrediámur.\n$Per Dominum",
-     "fr": "Seigneur, Père très saint, vous qui avez appelé saint Charles, votre prêtre, à imiter votre Fils, Jésus de Nazareth, nous vous en prions, accordez-nous, par son intercession, que, nourris de l’Eucharistie, nous progressions chaque jour vers une charité chrétienne plus profonde et une fraternité universelle."
-    },
-    "Lectio": {
-     "la": "!Phil. 3, 7-14\nLecture de l’Épître de saint Paul aux Philippiens.\nFrères, tous les avantages que j’avais, je les ai considérés, à cause du Christ, comme une perte. Oui, je considère tout cela comme une perte à cause de ce bien qui dépasse tout : la connaissance du Christ Jésus, mon Seigneur. A cause de lui, j’ai tout perdu ; je considère tout comme des ordures, afin de gagner un seul avantage, le Christ, et, en lui, d’être reconnu juste, non pas de la justice venant de la loi de Moïse mais de celle qui vient de la foi au Christ, la justice venant de Dieu, qui est fondée sur la foi. Il s’agit pour moi de connaître le Christ, d’éprouver la puissance de sa résurrection et de communier aux souffrances de sa passion, en devenant semblable à lui dans sa mort, avec l’espoir de parvenir à la résurrection d’entre les morts. Certes, je n’ai pas encore obtenu cela, je n’ai pas encore atteint la perfection, mais je poursuis ma course pour tâcher de saisir, puisque j’ai moi-même été saisi par le Christ Jésus. Frères, quant à moi, je ne pense pas avoir déjà saisi cela. Une seule chose compte : oubliant ce qui est en arrière, et lancé vers l’avant, je cours vers le but en vue du prix auquel Dieu nous appelle là-haut dans le Christ Jésus.",
-     "fr": "!Phil. 3, 7-14\nLecture de l’Épître de saint Paul aux Philippiens.\nFrères, tous les avantages que j’avais, je les ai considérés, à cause du Christ, comme une perte. Oui, je considère tout cela comme une perte à cause de ce bien qui dépasse tout : la connaissance du Christ Jésus, mon Seigneur. A cause de lui, j’ai tout perdu ; je considère tout comme des ordures, afin de gagner un seul avantage, le Christ, et, en lui, d’être reconnu juste, non pas de la justice venant de la loi de Moïse mais de celle qui vient de la foi au Christ, la justice venant de Dieu, qui est fondée sur la foi. Il s’agit pour moi de connaître le Christ, d’éprouver la puissance de sa résurrection et de communier aux souffrances de sa passion, en devenant semblable à lui dans sa mort, avec l’espoir de parvenir à la résurrection d’entre les morts. Certes, je n’ai pas encore obtenu cela, je n’ai pas encore atteint la perfection, mais je poursuis ma course pour tâcher de saisir, puisque j’ai moi-même été saisi par le Christ Jésus. Frères, quant à moi, je ne pense pas avoir déjà saisi cela. Une seule chose compte : oubliant ce qui est en arrière, et lancé vers l’avant, je cours vers le but en vue du prix auquel Dieu nous appelle là-haut dans le Christ Jésus."
-    },
-    "Graduale": {
-     "la": "!Ps 91, 13-14\nJustus ut palma florebit ; sicut cedrus Libani multiplicabitur in domo Domini.\n!℣. Ibid 91, 3\nAd annuntiandum mane misericordiam tuam, et veritatem tuam per noctem. Alleluia, alleluia.\n!℣. Jc 1, 12\nBeatus vir qui suffert tentationem : quoniam cum probatus fuerit, accipiet coronam vit æ . Alleluia",
-     "fr": "Le juste grandira comme le palmier, il s’étendra comme le cèdre du Liban, dans la maison du Seigneur.\nV. Afin de publier dès le matin ton amour et ta fidélité au long des nuits. Alleluia, alleluia. V/ Heureux l’homme qui supporte l’épreuve, car après avoir été éprouvé, il recevra la couronne de vie. Alléluia."
-    },
-    "Evangelium": {
-     "la": "!Lc. 14, 1a. 7-14\nSuite du saint Evangile selon saint Luc.\nEn ce temps-là, un jour de sabbat, Jésus était entré dans la maison d’un chef des pharisiens pour y prendre son repas, et ces derniers l’observaient. Jésus dit une parabole aux invités lorsqu’il remarqua comment ils choisissaient les premières places, et il leur dit : « Quand quelqu’un t’invite à des noces, ne va pas t’installer à la première place, de peur qu’il ait invité un autre plus considéré que toi. Alors, celui qui vous a invités, toi et lui, viendra te dire : “Cède-lui ta place” ; et, à ce moment, tu iras, plein de honte, prendre la dernière place. Au contraire, quand tu es invité, va te mettre à la dernière place. Alors, quand viendra celui qui t’a invité, il te dira : “Mon ami, avance plus haut”, et ce sera pour toi un honneur aux yeux de tous ceux qui seront à la table avec toi. En effet, quiconque s’élève sera abaissé ; et qui s’abaisse sera élevé. » Jésus disait aussi à celui qui l’avait invité : « Quand tu donnes un déjeuner ou un dîner, n’invite pas tes amis, ni tes frères, ni tes parents, ni de riches voisins ; sinon, eux aussi te rendraient l’invitation et ce serait pour toi un don en retour. Au contraire, quand tu donnes une réception, invite des pauvres, des estropiés, des boiteux, des aveugles ; heureux seras-tu, parce qu’ils n’ont rien à te donner en retour : cela te sera rendu à la résurrection des justes. »",
-     "fr": "!Lc. 14, 1a. 7-14\nSuite du saint Evangile selon saint Luc.\nEn ce temps-là, un jour de sabbat, Jésus était entré dans la maison d’un chef des pharisiens pour y prendre son repas, et ces derniers l’observaient. Jésus dit une parabole aux invités lorsqu’il remarqua comment ils choisissaient les premières places, et il leur dit : « Quand quelqu’un t’invite à des noces, ne va pas t’installer à la première place, de peur qu’il ait invité un autre plus considéré que toi. Alors, celui qui vous a invités, toi et lui, viendra te dire : “Cède-lui ta place” ; et, à ce moment, tu iras, plein de honte, prendre la dernière place. Au contraire, quand tu es invité, va te mettre à la dernière place. Alors, quand viendra celui qui t’a invité, il te dira : “Mon ami, avance plus haut”, et ce sera pour toi un honneur aux yeux de tous ceux qui seront à la table avec toi. En effet, quiconque s’élève sera abaissé ; et qui s’abaisse sera élevé. » Jésus disait aussi à celui qui l’avait invité : « Quand tu donnes un déjeuner ou un dîner, n’invite pas tes amis, ni tes frères, ni tes parents, ni de riches voisins ; sinon, eux aussi te rendraient l’invitation et ce serait pour toi un don en retour. Au contraire, quand tu donnes une réception, invite des pauvres, des estropiés, des boiteux, des aveugles ; heureux seras-tu, parce qu’ils n’ont rien à te donner en retour : cela te sera rendu à la résurrection des justes. »"
-    },
-    "Offertorium": {
-     "la": "!Ps 88, 25\nveritas mea et misericordia mea cum ipso, et in nomine meo exaltabitur cornu ejus.",
-     "fr": "Ma fidélité et mon amour demeurent avec lui, et par mon nom grandira sa puissance."
-    },
-    "Secreta": {
-     "la": "Réspice quas offérimus hóstias, omnípotens Deus, in sancti Cároli festivitáte et præsta, ut, qui domínicæ passiónis mystéria celebrámus, imitémur quod ágimus.\n$Per Dominum",
-     "fr": "Regardez, Dieu tout puissant, le sacrifice que nous offrons en la fête de saint Charles, et donnez-nous d’imiter dans notre vie les mystères de la Passion du Sauveur que nous célébrons dans ces rites sacrés."
-    },
-    "Communio": {
-     "la": "!Jn 15,\n!4-5\nDominus dicit nobis : Manete in me, et ego in vobis. Qui manet in me, et ego in eo, hic fert fructum multum. »",
-     "fr": "Le Seigneur nous a dit : « Demeurez en Moi comme Moi en vous ; celui qui demeure en Moi et en qui Je demeure, celui-là donne beaucoup de fruits. »"
-    },
-    "Postcommunio": {
-     "la": "Refectióne sacra enutrítos, fac nos, omnípotens Deus, exémpla sancti Cároli iúgiter sequéntes, te pérpeti devotióne cólere, et indeféssa ómnibus caritáte profícere.\n$Per Dominum",
-     "fr": "Vous avez refait nos forces à cette table sainte, Dieu tout-puissant : donnez-nous d’imiter les exemples de saint Charles, en cherchant à vous servir d’un cœur toujours fidèle, animés d’une inlassable charité pour tous les hommes."
-    }
-   },
-   "note": ""
-  },
-  {
    "id": "sopocko",
    "groupe": "communaute",
    "date": "02-15",
@@ -124,6 +64,111 @@
     }
    },
    "note": ""
+  },
+  {
+   "id": "leon-ix",
+   "groupe": "strasbourg",
+   "date": "04-19",
+   "nom_la": "S. Leonis IX Papæ Confessoris",
+   "nom_fr": "Saint Léon IX, pape",
+   "rang": 2,
+   "commun": "C4",
+   "base": null,
+   "romain": "commemorer",
+   "nom_oraison": {
+    "la": "Leónem",
+    "fr": "Léon"
+   },
+   "office": {},
+   "messe": {},
+   "note": ""
+  },
+  {
+   "id": "translation-odile",
+   "groupe": "strasbourg",
+   "date": "07-07",
+   "nom_la": "In Translatione S. Odiliæ Virginis",
+   "nom_fr": "Translation des reliques de Sainte Odile",
+   "rang": 3,
+   "commun": "C6a",
+   "base": null,
+   "romain": "commemorer",
+   "nom_oraison": {
+    "la": "Odíliæ Vírginis tuæ",
+    "fr": "Odile, votre vierge"
+   },
+   "office": {},
+   "messe": {},
+   "note": ""
+  },
+  {
+   "id": "arbogast",
+   "groupe": "strasbourg",
+   "date": "07-21",
+   "nom_la": "S. Arbogasti Episcopi Confessoris",
+   "nom_fr": "Saint Arbogast, évêque, patron du diocèse",
+   "rang": 2,
+   "commun": "C4",
+   "base": null,
+   "romain": "commemorer",
+   "nom_oraison": {
+    "la": "Arbogástum",
+    "fr": "Arbogast"
+   },
+   "office": {},
+   "messe": {},
+   "note": ""
+  },
+  {
+   "id": "dedicace-cathedrale",
+   "groupe": "strasbourg",
+   "date": "09-07",
+   "nom_la": "In Dedicatione Ecclesiæ Cathedralis",
+   "nom_fr": "Dédicace de la Cathédrale",
+   "rang": 2,
+   "commun": "C8",
+   "base": null,
+   "romain": "commemorer",
+   "nom_oraison": {},
+   "office": {},
+   "messe": {},
+   "note": ""
+  },
+  {
+   "id": "materne",
+   "groupe": "strasbourg",
+   "date": "09-12",
+   "nom_la": "S. Materni Episcopi et Sociorum",
+   "nom_fr": "Saint Materne et les premiers apôtres de l’Alsace",
+   "rang": 3,
+   "commun": "C4",
+   "base": null,
+   "romain": "omettre",
+   "nom_oraison": {
+    "la": "Matérnum",
+    "fr": "Materne"
+   },
+   "office": {},
+   "messe": {},
+   "note": ""
+  },
+  {
+   "id": "eugenie-attale",
+   "groupe": "strasbourg",
+   "date": "09-25",
+   "nom_la": "Ss. Eugeniæ et Attalæ Virginum",
+   "nom_fr": "Saintes Eugénie et Attale, vierges",
+   "rang": 3,
+   "commun": "C6a",
+   "base": null,
+   "romain": "commemorer",
+   "nom_oraison": {
+    "la": "Eugéniæ et Attalæ Vírginum tuárum",
+    "fr": "Eugénie et Attale, vos vierges"
+   },
+   "office": {},
+   "messe": {},
+   "note": "Commun d'une vierge : oraison propre au pluriel à saisir."
   },
   {
    "id": "faustine",
@@ -246,6 +291,42 @@
    "note": ""
   },
   {
+   "id": "amand",
+   "groupe": "strasbourg",
+   "date": "10-26",
+   "nom_la": "S. Amandi Episcopi Confessoris",
+   "nom_fr": "Saint Amand, premier évêque de Strasbourg",
+   "rang": 3,
+   "commun": "C4",
+   "base": null,
+   "romain": "commemorer",
+   "nom_oraison": {
+    "la": "Amándum",
+    "fr": "Amand"
+   },
+   "office": {},
+   "messe": {},
+   "note": ""
+  },
+  {
+   "id": "florent",
+   "groupe": "strasbourg",
+   "date": "11-07",
+   "nom_la": "S. Florentii Episcopi Confessoris",
+   "nom_fr": "Saint Florent, évêque",
+   "rang": 3,
+   "commun": "C4",
+   "base": null,
+   "romain": "commemorer",
+   "nom_oraison": {
+    "la": "Floréntium",
+    "fr": "Florent"
+   },
+   "office": {},
+   "messe": {},
+   "note": ""
+  },
+  {
    "id": "notre-dame-misericorde",
    "groupe": "communaute",
    "date": "11-16",
@@ -303,54 +384,63 @@
    "note": ""
   },
   {
-   "id": "leon-ix",
-   "groupe": "strasbourg",
-   "date": "04-19",
-   "nom_la": "S. Leonis IX Papæ Confessoris",
-   "nom_fr": "Saint Léon IX, pape",
+   "id": "foucauld",
+   "groupe": "communaute",
+   "date": "12-01",
+   "nom_la": "S. Caroli de Foucauld Presbyteri",
+   "nom_fr": "Saint Charles de Foucauld, prêtre",
    "rang": 2,
-   "commun": "C4",
+   "commun": "C5",
    "base": null,
    "romain": "commemorer",
    "nom_oraison": {
-    "la": "Leónem",
-    "fr": "Léon"
+    "la": "Cároli",
+    "fr": "Charles"
    },
-   "office": {},
-   "messe": {},
-   "note": ""
-  },
-  {
-   "id": "arbogast",
-   "groupe": "strasbourg",
-   "date": "07-21",
-   "nom_la": "S. Arbogasti Episcopi Confessoris",
-   "nom_fr": "Saint Arbogast, évêque, patron du diocèse",
-   "rang": 2,
-   "commun": "C4",
-   "base": null,
-   "romain": "commemorer",
-   "nom_oraison": {
-    "la": "Arbogástum",
-    "fr": "Arbogast"
+   "office": {
+    "Oratio": {
+     "la": "Dómine, sancte Pater, qui ad imitatiónem Fílii tui Iesu Nazaréni sanctum Cárolum, presbýterum, vocásti, concéde, quǽsumus, eius intercessióne, ut, Eucharístia enutríti, in altiórem christiánam caritátem et universálem fraternitátem quotídie progrediámur.\n$Per Dominum",
+     "fr": "Seigneur, Père très saint, vous qui avez appelé saint Charles, votre prêtre, à imiter votre Fils, Jésus de Nazareth, nous vous en prions, accordez-nous, par son intercession, que, nourris de l’Eucharistie, nous progressions chaque jour vers une charité chrétienne plus profonde et une fraternité universelle."
+    }
    },
-   "office": {},
-   "messe": {},
-   "note": ""
-  },
-  {
-   "id": "dedicace-cathedrale",
-   "groupe": "strasbourg",
-   "date": "09-07",
-   "nom_la": "In Dedicatione Ecclesiæ Cathedralis",
-   "nom_fr": "Dédicace de la Cathédrale",
-   "rang": 2,
-   "commun": "C8",
-   "base": null,
-   "romain": "commemorer",
-   "nom_oraison": {},
-   "office": {},
-   "messe": {},
+   "messe": {
+    "Introitus": {
+     "la": "!Ps 95, 3\nAnnuntiate inter gentes gloriam ejus ; in omnibus populis mirabilia ejus. (T. P. Allelúia, Allelúia.)\n!Ps 47, 2\nMagnus Dominus et laudabilis nimis\n&Gloria",
+     "fr": "Proclamez aux nations le salut de Dieu, et ses merveilles à tous les peuples.\nV. Il est grand le Seigneur, grande est sa gloire.\n&Gloria"
+    },
+    "Oratio": {
+     "la": "Dómine, sancte Pater, qui ad imitatiónem Fílii tui Iesu Nazaréni sanctum Cárolum, presbýterum, vocásti, concéde, quǽsumus, eius intercessióne, ut, Eucharístia enutríti, in altiórem christiánam caritátem et universálem fraternitátem quotídie progrediámur.\n$Per Dominum",
+     "fr": "Seigneur, Père très saint, vous qui avez appelé saint Charles, votre prêtre, à imiter votre Fils, Jésus de Nazareth, nous vous en prions, accordez-nous, par son intercession, que, nourris de l’Eucharistie, nous progressions chaque jour vers une charité chrétienne plus profonde et une fraternité universelle."
+    },
+    "Lectio": {
+     "la": "!Phil. 3, 7-14\nLecture de l’Épître de saint Paul aux Philippiens.\nFrères, tous les avantages que j’avais, je les ai considérés, à cause du Christ, comme une perte. Oui, je considère tout cela comme une perte à cause de ce bien qui dépasse tout : la connaissance du Christ Jésus, mon Seigneur. A cause de lui, j’ai tout perdu ; je considère tout comme des ordures, afin de gagner un seul avantage, le Christ, et, en lui, d’être reconnu juste, non pas de la justice venant de la loi de Moïse mais de celle qui vient de la foi au Christ, la justice venant de Dieu, qui est fondée sur la foi. Il s’agit pour moi de connaître le Christ, d’éprouver la puissance de sa résurrection et de communier aux souffrances de sa passion, en devenant semblable à lui dans sa mort, avec l’espoir de parvenir à la résurrection d’entre les morts. Certes, je n’ai pas encore obtenu cela, je n’ai pas encore atteint la perfection, mais je poursuis ma course pour tâcher de saisir, puisque j’ai moi-même été saisi par le Christ Jésus. Frères, quant à moi, je ne pense pas avoir déjà saisi cela. Une seule chose compte : oubliant ce qui est en arrière, et lancé vers l’avant, je cours vers le but en vue du prix auquel Dieu nous appelle là-haut dans le Christ Jésus.",
+     "fr": "!Phil. 3, 7-14\nLecture de l’Épître de saint Paul aux Philippiens.\nFrères, tous les avantages que j’avais, je les ai considérés, à cause du Christ, comme une perte. Oui, je considère tout cela comme une perte à cause de ce bien qui dépasse tout : la connaissance du Christ Jésus, mon Seigneur. A cause de lui, j’ai tout perdu ; je considère tout comme des ordures, afin de gagner un seul avantage, le Christ, et, en lui, d’être reconnu juste, non pas de la justice venant de la loi de Moïse mais de celle qui vient de la foi au Christ, la justice venant de Dieu, qui est fondée sur la foi. Il s’agit pour moi de connaître le Christ, d’éprouver la puissance de sa résurrection et de communier aux souffrances de sa passion, en devenant semblable à lui dans sa mort, avec l’espoir de parvenir à la résurrection d’entre les morts. Certes, je n’ai pas encore obtenu cela, je n’ai pas encore atteint la perfection, mais je poursuis ma course pour tâcher de saisir, puisque j’ai moi-même été saisi par le Christ Jésus. Frères, quant à moi, je ne pense pas avoir déjà saisi cela. Une seule chose compte : oubliant ce qui est en arrière, et lancé vers l’avant, je cours vers le but en vue du prix auquel Dieu nous appelle là-haut dans le Christ Jésus."
+    },
+    "Graduale": {
+     "la": "!Ps 91, 13-14\nJustus ut palma florebit ; sicut cedrus Libani multiplicabitur in domo Domini.\n!℣. Ibid 91, 3\nAd annuntiandum mane misericordiam tuam, et veritatem tuam per noctem. Alleluia, alleluia.\n!℣. Jc 1, 12\nBeatus vir qui suffert tentationem : quoniam cum probatus fuerit, accipiet coronam vit æ . Alleluia",
+     "fr": "Le juste grandira comme le palmier, il s’étendra comme le cèdre du Liban, dans la maison du Seigneur.\nV. Afin de publier dès le matin ton amour et ta fidélité au long des nuits. Alleluia, alleluia. V/ Heureux l’homme qui supporte l’épreuve, car après avoir été éprouvé, il recevra la couronne de vie. Alléluia."
+    },
+    "Evangelium": {
+     "la": "!Lc. 14, 1a. 7-14\nSuite du saint Evangile selon saint Luc.\nEn ce temps-là, un jour de sabbat, Jésus était entré dans la maison d’un chef des pharisiens pour y prendre son repas, et ces derniers l’observaient. Jésus dit une parabole aux invités lorsqu’il remarqua comment ils choisissaient les premières places, et il leur dit : « Quand quelqu’un t’invite à des noces, ne va pas t’installer à la première place, de peur qu’il ait invité un autre plus considéré que toi. Alors, celui qui vous a invités, toi et lui, viendra te dire : “Cède-lui ta place” ; et, à ce moment, tu iras, plein de honte, prendre la dernière place. Au contraire, quand tu es invité, va te mettre à la dernière place. Alors, quand viendra celui qui t’a invité, il te dira : “Mon ami, avance plus haut”, et ce sera pour toi un honneur aux yeux de tous ceux qui seront à la table avec toi. En effet, quiconque s’élève sera abaissé ; et qui s’abaisse sera élevé. » Jésus disait aussi à celui qui l’avait invité : « Quand tu donnes un déjeuner ou un dîner, n’invite pas tes amis, ni tes frères, ni tes parents, ni de riches voisins ; sinon, eux aussi te rendraient l’invitation et ce serait pour toi un don en retour. Au contraire, quand tu donnes une réception, invite des pauvres, des estropiés, des boiteux, des aveugles ; heureux seras-tu, parce qu’ils n’ont rien à te donner en retour : cela te sera rendu à la résurrection des justes. »",
+     "fr": "!Lc. 14, 1a. 7-14\nSuite du saint Evangile selon saint Luc.\nEn ce temps-là, un jour de sabbat, Jésus était entré dans la maison d’un chef des pharisiens pour y prendre son repas, et ces derniers l’observaient. Jésus dit une parabole aux invités lorsqu’il remarqua comment ils choisissaient les premières places, et il leur dit : « Quand quelqu’un t’invite à des noces, ne va pas t’installer à la première place, de peur qu’il ait invité un autre plus considéré que toi. Alors, celui qui vous a invités, toi et lui, viendra te dire : “Cède-lui ta place” ; et, à ce moment, tu iras, plein de honte, prendre la dernière place. Au contraire, quand tu es invité, va te mettre à la dernière place. Alors, quand viendra celui qui t’a invité, il te dira : “Mon ami, avance plus haut”, et ce sera pour toi un honneur aux yeux de tous ceux qui seront à la table avec toi. En effet, quiconque s’élève sera abaissé ; et qui s’abaisse sera élevé. » Jésus disait aussi à celui qui l’avait invité : « Quand tu donnes un déjeuner ou un dîner, n’invite pas tes amis, ni tes frères, ni tes parents, ni de riches voisins ; sinon, eux aussi te rendraient l’invitation et ce serait pour toi un don en retour. Au contraire, quand tu donnes une réception, invite des pauvres, des estropiés, des boiteux, des aveugles ; heureux seras-tu, parce qu’ils n’ont rien à te donner en retour : cela te sera rendu à la résurrection des justes. »"
+    },
+    "Offertorium": {
+     "la": "!Ps 88, 25\nveritas mea et misericordia mea cum ipso, et in nomine meo exaltabitur cornu ejus.",
+     "fr": "Ma fidélité et mon amour demeurent avec lui, et par mon nom grandira sa puissance."
+    },
+    "Secreta": {
+     "la": "Réspice quas offérimus hóstias, omnípotens Deus, in sancti Cároli festivitáte et præsta, ut, qui domínicæ passiónis mystéria celebrámus, imitémur quod ágimus.\n$Per Dominum",
+     "fr": "Regardez, Dieu tout puissant, le sacrifice que nous offrons en la fête de saint Charles, et donnez-nous d’imiter dans notre vie les mystères de la Passion du Sauveur que nous célébrons dans ces rites sacrés."
+    },
+    "Communio": {
+     "la": "!Jn 15,\n!4-5\nDominus dicit nobis : Manete in me, et ego in vobis. Qui manet in me, et ego in eo, hic fert fructum multum. »",
+     "fr": "Le Seigneur nous a dit : « Demeurez en Moi comme Moi en vous ; celui qui demeure en Moi et en qui Je demeure, celui-là donne beaucoup de fruits. »"
+    },
+    "Postcommunio": {
+     "la": "Refectióne sacra enutrítos, fac nos, omnípotens Deus, exémpla sancti Cároli iúgiter sequéntes, te pérpeti devotióne cólere, et indeféssa ómnibus caritáte profícere.\n$Per Dominum",
+     "fr": "Vous avez refait nos forces à cette table sainte, Dieu tout-puissant : donnez-nous d’imiter les exemples de saint Charles, en cherchant à vous servir d’un cœur toujours fidèle, animés d’une inlassable charité pour tous les hommes."
+    }
+   },
    "note": ""
   },
   {
@@ -366,96 +456,6 @@
    "nom_oraison": {
     "la": "Odíliæ Vírginis tuæ",
     "fr": "Odile, votre vierge"
-   },
-   "office": {},
-   "messe": {},
-   "note": ""
-  },
-  {
-   "id": "translation-odile",
-   "groupe": "strasbourg",
-   "date": "07-07",
-   "nom_la": "In Translatione S. Odiliæ Virginis",
-   "nom_fr": "Translation des reliques de Sainte Odile",
-   "rang": 3,
-   "commun": "C6a",
-   "base": null,
-   "romain": "commemorer",
-   "nom_oraison": {
-    "la": "Odíliæ Vírginis tuæ",
-    "fr": "Odile, votre vierge"
-   },
-   "office": {},
-   "messe": {},
-   "note": ""
-  },
-  {
-   "id": "materne",
-   "groupe": "strasbourg",
-   "date": "09-12",
-   "nom_la": "S. Materni Episcopi et Sociorum",
-   "nom_fr": "Saint Materne et les premiers apôtres de l’Alsace",
-   "rang": 3,
-   "commun": "C4",
-   "base": null,
-   "romain": "omettre",
-   "nom_oraison": {
-    "la": "Matérnum",
-    "fr": "Materne"
-   },
-   "office": {},
-   "messe": {},
-   "note": ""
-  },
-  {
-   "id": "eugenie-attale",
-   "groupe": "strasbourg",
-   "date": "09-25",
-   "nom_la": "Ss. Eugeniæ et Attalæ Virginum",
-   "nom_fr": "Saintes Eugénie et Attale, vierges",
-   "rang": 3,
-   "commun": "C6a",
-   "base": null,
-   "romain": "commemorer",
-   "nom_oraison": {
-    "la": "Eugéniæ et Attalæ Vírginum tuárum",
-    "fr": "Eugénie et Attale, vos vierges"
-   },
-   "office": {},
-   "messe": {},
-   "note": "Commun d'une vierge : oraison propre au pluriel à saisir."
-  },
-  {
-   "id": "amand",
-   "groupe": "strasbourg",
-   "date": "10-26",
-   "nom_la": "S. Amandi Episcopi Confessoris",
-   "nom_fr": "Saint Amand, premier évêque de Strasbourg",
-   "rang": 3,
-   "commun": "C4",
-   "base": null,
-   "romain": "commemorer",
-   "nom_oraison": {
-    "la": "Amándum",
-    "fr": "Amand"
-   },
-   "office": {},
-   "messe": {},
-   "note": ""
-  },
-  {
-   "id": "florent",
-   "groupe": "strasbourg",
-   "date": "11-07",
-   "nom_la": "S. Florentii Episcopi Confessoris",
-   "nom_fr": "Saint Florent, évêque",
-   "rang": 3,
-   "commun": "C4",
-   "base": null,
-   "romain": "commemorer",
-   "nom_oraison": {
-    "la": "Floréntium",
-    "fr": "Florent"
    },
    "office": {},
    "messe": {},
