@@ -208,12 +208,12 @@
 "comm": "Commemoratio: Feria II infra Hebdomadam I Adventus"
 },
 "2026-12-01": {
-"titre": "Feria III infra Hebdomadam I Adventus",
-"titre_fr": "Mardi de la première semaine de l’Avent",
-"couleur": "Violet",
+"titre": "S. Caroli de Foucauld Presbyteri",
+"titre_fr": "Saint Charles de Foucauld, prêtre",
+"couleur": "Blanc",
 "classe": "3e classe",
 "rang": 3,
-"comm": ""
+"comm": "Commemoratio: Feria III infra Hebdomadam I Adventus"
 },
 "2026-12-02": {
 "titre": "S. Bibianæ Virginis et Martyris",
@@ -320,12 +320,12 @@
 "comm": ""
 },
 "2026-12-15": {
-"titre": "Feria III infra Hebdomadam III Adventus",
-"titre_fr": "Mardi de la troisième semaine de l’Avent",
-"couleur": "Violet",
+"titre": "S. Luciæ Virginis et Martyris",
+"titre_fr": "Sainte Lucie, vierge et martyre",
+"couleur": "Rouge",
 "classe": "3e classe",
 "rang": 3,
-"comm": ""
+"comm": "Commemoratio: Feria III infra Hebdomadam III Adventus"
 },
 "2026-12-16": {
 "titre": "Feria IV Quattuor Temporum in Adventu",
@@ -821,7 +821,7 @@
 "couleur": "Violet",
 "classe": "3e classe",
 "rang": 3,
-"comm": "Commemoratio : SS. Faustini et Jovitæ"
+"comm": "Commemoratio : B. Michaëlis Sopoćko Presbyteri"
 },
 "2027-02-16": {
 "titre": "Feria Tertia infra Hebdomadam I in Quadragesima",
@@ -1320,12 +1320,12 @@
 "comm": ""
 },
 "2027-04-19": {
-"titre": "Feria Secunda infra Hebdomadam III post Octavam Paschæ",
-"titre_fr": "Lundi de la troisième semaine après l’Octave de Pâques",
+"titre": "S. Leonis IX Papæ Confessoris",
+"titre_fr": "Saint Léon IX, pape",
 "couleur": "Blanc",
-"classe": "4e classe",
-"rang": 4,
-"comm": ""
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria Secunda infra Hebdomadam III post Octavam Paschæ"
 },
 "2027-04-20": {
 "titre": "Feria Tertia infra Hebdomadam III post Octavam Paschæ",
@@ -1952,12 +1952,12 @@
 "comm": ""
 },
 "2027-07-07": {
-"titre": "Ss. Cyrilli et Methodii Pont. et Conf.",
-"titre_fr": "Ss Cyrille et Méthode, Évêques et Confesseurs",
+"titre": "In Translatione S. Odiliæ Virginis",
+"titre_fr": "Translation des reliques de Sainte Odile",
 "couleur": "Blanc",
 "classe": "3e classe",
 "rang": 3,
-"comm": "Scriptura: Feria quarta infra Hebdomadam VII post Octavam Pentecostes"
+"comm": "Commemoratio ad Laudes tantum: Ss. Cyrilli et Methodii Pont. et Conf."
 },
 "2027-07-08": {
 "titre": "S. Elisabeth Reg. Portugaliæ Viduæ",
@@ -2064,12 +2064,12 @@
 "comm": "Commemoratio ad Laudes tantum: S. Margaritæ, Virg. et Mart."
 },
 "2027-07-21": {
-"titre": "S. Laurentii a Brundusio Confessoris et Ecclesiæ Doctoris",
-"titre_fr": "St Laurent de Brindes confesseur et docteur",
+"titre": "S. Arbogasti Episcopi Confessoris",
+"titre_fr": "Saint Arbogast, évêque, patron du diocèse",
 "couleur": "Blanc",
-"classe": "3e classe",
-"rang": 3,
-"comm": "Commemoratio ad Laudes tantum: S. Praxedis Virginis"
+"classe": "2e classe",
+"rang": 2,
+"comm": "Commemoratio ad Laudes tantum: S. Laurentii a Brundusio Confessoris et Ecclesiæ Doctoris"
 },
 "2027-07-22": {
 "titre": "S. Mariæ Magdalenæ Pœnitentis",
@@ -2448,12 +2448,12 @@
 "comm": ""
 },
 "2027-09-07": {
-"titre": "Feria Tertia infra Hebdomadam XVI post Octavam Pentecostes I. Septembris",
-"titre_fr": "Mardi de la 16e semaine après l’Octave de la Pentecôte 1er de septembre",
-"couleur": "Vert",
-"classe": "4e classe",
-"rang": 4,
-"comm": ""
+"titre": "In Dedicatione Ecclesiæ Cathedralis",
+"titre_fr": "Dédicace de la Cathédrale",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
+"comm": "Scriptura: Feria Tertia infra Hebdomadam XVI post Octavam Pentecostes I. Septembris"
 },
 "2027-09-08": {
 "titre": "Nativitate Beatæ Mariæ Virginis",
@@ -2597,7 +2597,7 @@
 "couleur": "Violet",
 "classe": "2e classe",
 "rang": 2,
-"comm": ""
+"comm": "Commemoratio : Ss. Eugeniæ et Attalæ Virginum"
 },
 "2027-09-26": {
 "titre": "Dominica XIX Post Pentecosten IV. Septembris",
@@ -2672,12 +2672,12 @@
 "comm": "Scriptura: Feria Secunda infra Hebdomadam XX post Octavam Pentecostes I. Octobris"
 },
 "2027-10-05": {
-"titre": "Feria Tertia infra Hebdomadam XX post Octavam Pentecostes I. Octobris",
-"titre_fr": "Mardi de la 20e semaine après l’Octave de la Pentecôte 1er d'octobre",
-"couleur": "Vert",
-"classe": "4e classe",
-"rang": 4,
-"comm": "Commemoratio : Ss. Placidi et Sociorum Martyrum"
+"titre": "S. Faustinæ Virginis",
+"titre_fr": "Sainte Faustine, vierge",
+"couleur": "Blanc",
+"classe": "1re classe",
+"rang": 1,
+"comm": "Commemoratio ad Laudes tantum: Ss. Placidi et Sociorum Martyrum"
 },
 "2027-10-06": {
 "titre": "S. Brunonis Confessoris",
@@ -2808,12 +2808,12 @@
 "comm": "Commemoratio : S. Hilarionis Abbatis"
 },
 "2027-10-22": {
-"titre": "Feria Sexta infra Hebdomadam XXII post Octavam Pentecostes III. Octobris",
-"titre_fr": "Vendredi de la 22e semaine après l’Octave de la Pentecôte 3e d'octobre",
-"couleur": "Vert",
-"classe": "4e classe",
-"rang": 4,
-"comm": ""
+"titre": "S. Joannis Pauli II Papæ",
+"titre_fr": "Saint Jean-Paul II, pape",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Scriptura: Feria Sexta infra Hebdomadam XXII post Octavam Pentecostes III. Octobris"
 },
 "2027-10-23": {
 "titre": "S. Antonii Mariæ Claret Episcopi et Confessoris",
@@ -2840,12 +2840,12 @@
 "comm": "Commemoratio : Ss. Chrysanthi et Dariæ Martyrum"
 },
 "2027-10-26": {
-"titre": "Feria Tertia infra Hebdomadam XXIII post Octavam Pentecostes IV. Octobris",
-"titre_fr": "Mardi de la 23e semaine après l’Octave de la Pentecôte 4e d'octobre",
-"couleur": "Vert",
-"classe": "4e classe",
-"rang": 4,
-"comm": "Commemoratio : S. Evaristi Papæ et Martyris"
+"titre": "S. Amandi Episcopi Confessoris",
+"titre_fr": "Saint Amand, premier évêque de Strasbourg",
+"couleur": "Blanc",
+"classe": "3e classe",
+"rang": 3,
+"comm": "Commemoratio ad Laudes tantum: S. Evaristi Papæ et Martyris"
 },
 "2027-10-27": {
 "titre": "Feria Quarta infra Hebdomadam XXIII post Octavam Pentecostes IV. Octobris",
@@ -3008,12 +3008,12 @@
 "comm": "Scriptura: Feria II infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
 },
 "2027-11-16": {
-"titre": "S. Gertrudis Virginis",
-"titre_fr": "Ste Gertrude Vierge",
+"titre": "Beatæ Mariæ Virginis Matris Misericordiæ",
+"titre_fr": "Notre-Dame de la Miséricorde",
 "couleur": "Blanc",
 "classe": "3e classe",
 "rang": 3,
-"comm": "Scriptura: Feria III infra Hebdomadam VI quæ superfuit post Epiphaniam IV. Novembris"
+"comm": "Commemoratio ad Laudes tantum: S. Gertrudis Virginis"
 },
 "2027-11-17": {
 "titre": "S. Gregorii Thaumaturgi Episcopi et Confessoris",
@@ -3128,12 +3128,12 @@
 "comm": "Commemoratio: Feria III infra Hebdomadam I Adventus"
 },
 "2027-12-01": {
-"titre": "Feria IV infra Hebdomadam I Adventus",
-"titre_fr": "Mercredi de la première semaine de l’Avent",
-"couleur": "Violet",
+"titre": "S. Caroli de Foucauld Presbyteri",
+"titre_fr": "Saint Charles de Foucauld, prêtre",
+"couleur": "Blanc",
 "classe": "3e classe",
 "rang": 3,
-"comm": ""
+"comm": "Commemoratio: Feria IV infra Hebdomadam I Adventus"
 },
 "2027-12-02": {
 "titre": "S. Bibianæ Virginis et Martyris",
@@ -3224,11 +3224,11 @@
 "comm": ""
 },
 "2027-12-13": {
-"titre": "S. Luciæ Virginis et Martyris",
-"titre_fr": "Ste Lucie Vierge et Martyre",
-"couleur": "Rouge",
-"classe": "3e classe",
-"rang": 3,
+"titre": "S. Odiliæ Abbatissæ Virginis",
+"titre_fr": "Sainte Odile, abbesse, patronne de l’Alsace",
+"couleur": "Blanc",
+"classe": "2e classe",
+"rang": 2,
 "comm": "Commemoratio: Feria II infra Hebdomadam III Adventus"
 },
 "2027-12-14": {
@@ -3245,7 +3245,7 @@
 "couleur": "Violet",
 "classe": "2e classe",
 "rang": 2,
-"comm": ""
+"comm": "Commemoratio : S. Luciæ Virginis et Martyris"
 },
 "2027-12-16": {
 "titre": "S. Eusebii Episcopi et Martyris",
@@ -3374,5 +3374,109 @@
 "classe": "2e classe",
 "rang": 2,
 "comm": "Commemoratio : S. Silvestri Papæ et Confessoris"
+},
+"_propre": {
+"version": "Rubrics 1960 - Croix glorieuse",
+"mentions": {
+"01-27": "S. Amarin, abbé",
+"02-01": "Ste Brigide, abbesse",
+"02-12": "S. Ludan, pèlerin",
+"02-13": "S. Benoît d’Aniane, abbé",
+"03-06": "S. Fridolin, moine missionnaire",
+"05-25": "S. Urbain Ier, pape",
+"06-04": "S. Morand, moine",
+"06-19": "Ss. Modeste Andlauer et André Bauer, martyrs",
+"07-04": "S. Ulrich, évêque",
+"07-20": "S. Apollinaire, évêque et martyr",
+"08-12": "B. Jean-Georges Rehm, prêtre et martyr",
+"08-30": "S. Adelphe, évêque",
+"09-09": "Bse Mère Alphonse-Marie",
+"09-11": "Saint Nom de Marie",
+"09-17": "S. Lambert, évêque et martyr",
+"09-18": "Ste Richarde, impératrice",
+"09-22": "S. Maurice et ses compagnons, martyrs",
+"10-05": "S. Léger, évêque et martyr",
+"10-13": "Ste Aurélie, vierge",
+"10-16": "S. Gall, missionnaire",
+"11-03": "S. Pirmin, évêque",
+"12-16": "Ste Adélaïde, impératrice"
+},
+"fetes": {
+"12-01": {
+"nom": "Saint Charles de Foucauld, prêtre",
+"groupe": "communaute",
+"rang": 3
+},
+"02-15": {
+"nom": "Bienheureux Michel Sopoćko, prêtre",
+"groupe": "communaute",
+"rang": 3
+},
+"10-05": {
+"nom": "Sainte Faustine, vierge",
+"groupe": "communaute",
+"rang": 1
+},
+"10-22": {
+"nom": "Saint Jean-Paul II, pape",
+"groupe": "communaute",
+"rang": 3
+},
+"11-16": {
+"nom": "Notre-Dame de la Miséricorde",
+"groupe": "communaute",
+"rang": 3
+},
+"04-19": {
+"nom": "Saint Léon IX, pape",
+"groupe": "strasbourg",
+"rang": 2
+},
+"07-21": {
+"nom": "Saint Arbogast, évêque, patron du diocèse",
+"groupe": "strasbourg",
+"rang": 2
+},
+"09-07": {
+"nom": "Dédicace de la Cathédrale",
+"groupe": "strasbourg",
+"rang": 2
+},
+"12-13": {
+"nom": "Sainte Odile, abbesse, patronne de l’Alsace",
+"groupe": "strasbourg",
+"rang": 2
+},
+"07-07": {
+"nom": "Translation des reliques de Sainte Odile",
+"groupe": "strasbourg",
+"rang": 3
+},
+"09-12": {
+"nom": "Saint Materne et les premiers apôtres de l’Alsace",
+"groupe": "strasbourg",
+"rang": 3
+},
+"09-25": {
+"nom": "Saintes Eugénie et Attale, vierges",
+"groupe": "strasbourg",
+"rang": 3
+},
+"10-26": {
+"nom": "Saint Amand, premier évêque de Strasbourg",
+"groupe": "strasbourg",
+"rang": 3
+},
+"11-07": {
+"nom": "Saint Florent, évêque",
+"groupe": "strasbourg",
+"rang": 3
+},
+"12-15": {
+"nom": "Sainte Lucie, vierge et martyre",
+"groupe": "strasbourg",
+"rang": 3
+}
+}
 }
 }
