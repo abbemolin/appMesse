@@ -211,8 +211,8 @@
 "titre": "S. Caroli de Foucauld Presbyteri",
 "titre_fr": "Saint Charles de Foucauld, prêtre",
 "couleur": "Blanc",
-"classe": "3e classe",
-"rang": 3,
+"classe": "2e classe",
+"rang": 2,
 "comm": "Commemoratio: Feria III infra Hebdomadam I Adventus"
 },
 "2026-12-02": {
@@ -3131,8 +3131,8 @@
 "titre": "S. Caroli de Foucauld Presbyteri",
 "titre_fr": "Saint Charles de Foucauld, prêtre",
 "couleur": "Blanc",
-"classe": "3e classe",
-"rang": 3,
+"classe": "2e classe",
+"rang": 2,
 "comm": "Commemoratio: Feria IV infra Hebdomadam I Adventus"
 },
 "2027-12-02": {
@@ -3402,14 +3402,39 @@
 "12-16": "Ste Adélaïde, impératrice"
 },
 "fetes": {
-"12-01": {
-"nom": "Saint Charles de Foucauld, prêtre",
-"groupe": "communaute",
-"rang": 3
-},
 "02-15": {
 "nom": "Bienheureux Michel Sopoćko, prêtre",
 "groupe": "communaute",
+"rang": 3
+},
+"04-19": {
+"nom": "Saint Léon IX, pape",
+"groupe": "strasbourg",
+"rang": 2
+},
+"07-07": {
+"nom": "Translation des reliques de Sainte Odile",
+"groupe": "strasbourg",
+"rang": 3
+},
+"07-21": {
+"nom": "Saint Arbogast, évêque, patron du diocèse",
+"groupe": "strasbourg",
+"rang": 2
+},
+"09-07": {
+"nom": "Dédicace de la Cathédrale",
+"groupe": "strasbourg",
+"rang": 2
+},
+"09-12": {
+"nom": "Saint Materne et les premiers apôtres de l’Alsace",
+"groupe": "strasbourg",
+"rang": 3
+},
+"09-25": {
+"nom": "Saintes Eugénie et Attale, vierges",
+"groupe": "strasbourg",
 "rang": 3
 },
 "10-05": {
@@ -3422,46 +3447,6 @@
 "groupe": "communaute",
 "rang": 3
 },
-"11-16": {
-"nom": "Notre-Dame de la Miséricorde",
-"groupe": "communaute",
-"rang": 3
-},
-"04-19": {
-"nom": "Saint Léon IX, pape",
-"groupe": "strasbourg",
-"rang": 2
-},
-"07-21": {
-"nom": "Saint Arbogast, évêque, patron du diocèse",
-"groupe": "strasbourg",
-"rang": 2
-},
-"09-07": {
-"nom": "Dédicace de la Cathédrale",
-"groupe": "strasbourg",
-"rang": 2
-},
-"12-13": {
-"nom": "Sainte Odile, abbesse, patronne de l’Alsace",
-"groupe": "strasbourg",
-"rang": 2
-},
-"07-07": {
-"nom": "Translation des reliques de Sainte Odile",
-"groupe": "strasbourg",
-"rang": 3
-},
-"09-12": {
-"nom": "Saint Materne et les premiers apôtres de l’Alsace",
-"groupe": "strasbourg",
-"rang": 3
-},
-"09-25": {
-"nom": "Saintes Eugénie et Attale, vierges",
-"groupe": "strasbourg",
-"rang": 3
-},
 "10-26": {
 "nom": "Saint Amand, premier évêque de Strasbourg",
 "groupe": "strasbourg",
@@ -3471,6 +3456,21 @@
 "nom": "Saint Florent, évêque",
 "groupe": "strasbourg",
 "rang": 3
+},
+"11-16": {
+"nom": "Notre-Dame de la Miséricorde",
+"groupe": "communaute",
+"rang": 3
+},
+"12-01": {
+"nom": "Saint Charles de Foucauld, prêtre",
+"groupe": "communaute",
+"rang": 2
+},
+"12-13": {
+"nom": "Sainte Odile, abbesse, patronne de l’Alsace",
+"groupe": "strasbourg",
+"rang": 2
 },
 "12-15": {
 "nom": "Sainte Lucie, vierge et martyre",
