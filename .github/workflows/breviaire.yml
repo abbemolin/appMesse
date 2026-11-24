@@ -43,6 +43,8 @@ jobs:
           sudo apt-get install -y -qq libcgi-pm-perl libcgi-session-perl libdate-calc-perl \
             libtimedate-perl liburi-perl libalgorithm-diff-perl cpanminus
           sudo cpanm -q --notest URL::Encode
+      - name: Calendrier propre dans le moteur
+        run: python3 tools/propre/construire.py --do-root _do/web
       - name: Tester l'extraction
         run: python3 tools/breviaire/test_generate.py
       - name: Générer

@@ -1,0 +1,85 @@
+name: Calendrier propre
+
+# Après une modification de propre/calendrier.json (page « Calendrier propre » du secrétariat) :
+# recalcule seulement les jours concernés (et leur veille), office et messe, avec le moteur figé.
+on:
+  push:
+    branches: [main]
+    paths: ["propre/calendrier.json"]
+  workflow_dispatch:
+    inputs:
+      dates:
+        description: "Jours AAAA-MM-JJ séparés par des virgules — vide : ceux qui ont changé au dernier envoi"
+        required: false
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: generation
+  cancel-in-progress: false
+
+env:
+  DO_REF: a7b3f34e142c9760087c3e5342501e231fccce5b
+
+jobs:
+  recalculer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Jours à recalculer
+        id: jours
+        env:
+          DATES: ${{ github.event.inputs.dates }}
+        run: |
+          if [ -n "$DATES" ]; then
+            echo "dates=$DATES" >> "$GITHUB_OUTPUT"
+          else
+            git show HEAD~1:propre/calendrier.json > /tmp/ancien.json 2>/dev/null || echo '{"fetes":[]}' > /tmp/ancien.json
+            echo "dates=$(python3 tools/propre/dates.py /tmp/ancien.json propre/calendrier.json --from "$(date +%F)" --to "$(( $(date +%Y) + 1 ))-12-31")" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.jours.outputs.dates != ''
+        with:
+          repository: DivinumOfficium/divinum-officium
+          ref: ${{ env.DO_REF }}
+          path: _do
+      - name: Installer Perl
+        if: steps.jours.outputs.dates != ''
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libcgi-pm-perl libcgi-session-perl libdate-calc-perl \
+            libtimedate-perl liburi-perl libalgorithm-diff-perl cpanminus
+          sudo cpanm -q --notest URL::Encode
+      - name: Calendrier propre dans le moteur
+        if: steps.jours.outputs.dates != ''
+        run: python3 tools/propre/construire.py --do-root _do/web
+      - name: Recalculer
+        if: steps.jours.outputs.dates != ''
+        run: |
+          echo "Jours : ${{ steps.jours.outputs.dates }}"
+          python3 tools/breviaire/generate.py --do-root _do/web --out data/breviaire --dates "${{ steps.jours.outputs.dates }}"
+          python3 tools/messe/generate.py --do-root _do/web --dates "${{ steps.jours.outputs.dates }}"
+      - name: Publier
+        if: always() && steps.jours.outputs.dates != ''
+        run: |
+          rm -rf _do
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/breviaire data/messe
+          git diff --cached --quiet || git commit -qm "Calendrier propre : jours recalculés"
+          for essai in 1 2 3 4 5; do
+            if git pull -q --rebase origin "$GITHUB_REF_NAME" && git push -q origin "HEAD:$GITHUB_REF_NAME"; then
+              # Un envoi fait par l'action ne relance pas la mise en ligne : on la demande
+              gh workflow run deploy.yml --ref "$GITHUB_REF_NAME"
+              exit 0
+            fi
+            sleep $(( essai * 30 ))
+          done
+          exit 1
+        env:
+          GH_TOKEN: ${{ github.token }}

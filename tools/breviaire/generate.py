@@ -21,7 +21,7 @@ import subprocess
 import sys
 import urllib.parse
 
-VERSION = "Rubrics 1960 - 1960"
+VERSION = os.environ.get("DO_VERSION", "Rubrics 1960 - Croix glorieuse")   # calendrier propre : tools/propre
 HOURS = ["Matutinum", "Laudes", "Prima", "Tertia", "Sexta", "Nona", "Vespera", "Completorium"]
 MIN_ROWS = 3
 

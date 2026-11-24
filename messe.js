@@ -52,9 +52,23 @@
     const ancienneCle = Ordo1962.getProperKey;
 
     // Mêmes champs qu'avant pour les pages ; hors calendrier généré, l'ancien calcul sert de repli
+    // Calendrier propre (tools/propre) : fêtes de la communauté et de Strasbourg calculées par le moteur ;
+    // ici, seulement les mentions facultatives. Sans lui (anciennes données), l'ajout ci-dessous.
+    const propre = () => (window.CALENDRIER_MESSE || {})._propre || null;
     Ordo1962.getDay = function (y, m, d) {
         const base = ancienGetDay(y, m, d);
         const c = (window.CALENDRIER_MESSE || {})[iso(y, m, d)];
+        const p = propre();
+        if (p && c) {
+            const r = Object.assign({}, base, {
+                date: iso(y, m, d), fete: titreFrancais(c.titre_fr || c.titre), classe: c.classe, rang: c.rang,
+                couleur: c.couleur, commemoration: c.comm || null, autres: [], source: 'divinum',
+            });
+            const nom = p.mentions[`${pad(m)}-${pad(d)}`];
+            const f = p.fetes[`${pad(m)}-${pad(d)}`];
+            if (f && r.fete && titreFrancais(c.titre_fr || '') === f.nom) r.source = f.groupe === 'communaute' ? 'smmd' : 'diocese';
+            return nom && c.rang >= 3 ? Object.assign(r, { fete: `${r.fete} · ${nom} (facultatif)`, mention: nom }) : r;
+        }
         const f = Smmd.fete(m, d);
         const r = c ? Object.assign({}, base, {
             date: iso(y, m, d), fete: titreFrancais(c.titre_fr || c.titre), classe: c.classe, rang: c.rang,
@@ -269,7 +283,7 @@
                 if (/chrism/i.test(_messe.messes[0].titre)) _messe.messes = _messe.messes.slice(0, 2);
             }
         } catch (e) { console.error(e); hs = true; }
-        const f = Smmd.fete(m, d);
+        const f = (window.CALENDRIER_MESSE || {})._propre ? null : Smmd.fete(m, d);   // calendrier propre : déjà dans le fichier du jour
         if (f) {
             try {
                 const rep = await fetch('data/messe/smmd.json');

@@ -12,10 +12,15 @@ COULEURS = {"": "Blanc", "black": "Blanc", "blue": "Blanc", "red": "Rouge", "gre
             "purple": "Violet", "grey": "Noir", "deeppink": "Rose"}
 CLASSES = {"I": "1re classe", "II": "2e classe", "III": "3e classe", "IV": "4e classe"}
 RANGS = {"I": 1, "II": 2, "III": 3, "IV": 4}
+VERSION_COMMUNAUTE = g.VERSION + " communaute"
+PROPRE = pathlib.Path(__file__).resolve().parents[2] / "propre" / "calendrier.json"
+_propre = json.loads(PROPRE.read_text(encoding="utf-8")) if PROPRE.exists() else {"fetes": [], "mentions": []}
+COMMUNAUTE = {f["date"]: f for f in _propre["fetes"] if f.get("groupe") == "communaute" and f.get("rang") != 1} \
+    if g.VERSION.endswith("Croix glorieuse") else {}
 
 
-def perl(root, date, lang1="Latin", lang2="Francais", numero=None):
-    q = {"command": "praySanctaMissa", "date": date.strftime("%m-%d-%Y"), "version": g.VERSION,
+def perl(root, date, lang1="Latin", lang2="Francais", numero=None, version=None):
+    q = {"command": "praySanctaMissa", "date": date.strftime("%m-%d-%Y"), "version": version or g.VERSION,
          "lang1": lang1, "lang2": lang2, "langfb": "Latin", "content": "1", "Propers": "1"}
     if numero:
         q["missanumber"] = str(numero)
@@ -51,6 +56,17 @@ def jour(args, d):
         messes.append({"titre": o["titre"], "titre_fr": re.split(r"\s+~\s+", fr)[0].strip(), "lignes": o["lignes"]})
         if tete is None:
             tete = (o, page)
+    # Fête de la communauté qui cède : sa messe reste proposée en second choix (calendrier « communaute »)
+    f = COMMUNAUTE.get(d.strftime("%m-%d"))
+    if f and not any(x["titre"].startswith(f["nom_la"]) for x in messes):
+        try:
+            o2 = g.parse_office(perl(args.do_root, d, version=VERSION_COMMUNAUTE))
+            fr2 = g.parse_office(perl(args.do_root, d, "Francais", "Francais", version=VERSION_COMMUNAUTE))["titre"]
+            if o2["titre"].startswith(f["nom_la"]) and len(o2["lignes"]) >= g.MIN_ROWS:
+                messes.append({"titre": o2["titre"].split(" ~ ")[0], "titre_fr": re.split(r"\s+~\s+", fr2)[0].strip(),
+                               "lignes": o2["lignes"], "smmd": True})
+        except Exception as err:
+            print("communauté", d, err, file=sys.stderr)
     o, page = tete
     rang = (re.search(r"~ (?:.*\s)?([IV]+)\. classis", o["titre"]) or [None, None])[1]
     principal = 0
@@ -69,11 +85,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--do-root", required=True)
     ap.add_argument("--out", default="data/messe")
-    ap.add_argument("--from", dest="start", required=True)
-    ap.add_argument("--to", dest="end", required=True)
+    ap.add_argument("--from", dest="start")
+    ap.add_argument("--to", dest="end")
+    ap.add_argument("--dates", help="dates AAAA-MM-JJ séparées par des virgules")
     a = ap.parse_args()
-    s, e = dt.date.fromisoformat(a.start), dt.date.fromisoformat(a.end)
-    dates = [s + dt.timedelta(n) for n in range((e - s).days + 1)]
+    if a.dates:
+        dates = [dt.date.fromisoformat(x.strip()) for x in a.dates.split(",") if x.strip()]
+    else:
+        s, e = dt.date.fromisoformat(a.start), dt.date.fromisoformat(a.end)
+        dates = [s + dt.timedelta(n) for n in range((e - s).days + 1)]
     out = pathlib.Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     cal_path = out / "calendrier.json"
@@ -89,6 +109,11 @@ def main():
                     repli[iso] = n
             except Exception as err:
                 echecs.append(f"{jobs[j]}: {err}")
+    # Calendrier propre : version du moteur, mentions facultatives (Strasbourg) et fêtes de la communauté
+    cal["_propre"] = {"version": g.VERSION,
+                      "mentions": {m["date"]: m["nom"] for m in _propre.get("mentions", [])},
+                      "fetes": {f["date"]: {"nom": f.get("nom_fr") or f["nom_la"], "groupe": f.get("groupe"), "rang": f["rang"]}
+                                for f in _propre["fetes"]}}
     cal = dict(sorted(cal.items()))
     cal_path.write_text(json.dumps(cal, ensure_ascii=False, indent=0), encoding="utf-8")
     (out / "calendrier.js").write_text("window.CALENDRIER_MESSE=" + json.dumps(cal, ensure_ascii=False, separators=(",", ":")) + ";\n", encoding="utf-8")

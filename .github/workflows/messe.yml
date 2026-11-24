@@ -27,6 +27,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq libcgi-pm-perl libcgi-session-perl libdate-calc-perl libtimedate-perl liburi-perl libalgorithm-diff-perl cpanminus
           sudo cpanm -q --notest URL::Encode
+      - name: Calendrier propre dans le moteur
+        run: python3 tools/propre/construire.py --do-root _do/web
       - name: Générer
         env:
           DEBUT: ${{ github.event.inputs.debut }}
